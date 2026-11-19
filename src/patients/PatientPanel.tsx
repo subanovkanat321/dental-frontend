@@ -73,6 +73,8 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
   const [contractAsked, setContractAsked] = useState<{ id: number; n: number } | null>(null)
   // «Деньги»: открытая форма — напомнить о долге или «обещал оплатить» (напомнить можно и из «Связаться»)
   const [debtForm, setDebtForm] = useState<'remind' | 'promise' | null>(null)
+  // Окно «＋ Задача» или «＋ Заказ в лабораторию» из строки ссылок
+  const [adding, setAdding] = useState<'task' | 'lab' | null>(null)
   // Деньги и заметки — админу и врачу; регистратуре сервер их не отдаст
   const staff = Boolean(me.admin || me.doctorId != null)
   // Медкарту сервер (ChartService) открывает админу клиники, врачам и ассистентам; регистратуре — никогда
@@ -206,10 +208,16 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
         {debtTotal > 0 && <div className={overdue ? 'tone-bad' : 'tone-wait'}><dt>Долг</dt><dd className="num">{somText(debtTotal)}</dd></div>}
       </dl>
 
-      {/* Задачи о пациенте («перезвонить после удаления») и «＋ Задача» с ним */}
-      {patient && <PatientTasks patient={{ id: patient.id, fullName: patient.fullName }} />}
-      {/* Работы зубного техника: ждём, готово, установлено — и «＋ Заказ в лабораторию» с ним */}
-      {patient && <PatientLab me={me} patient={{ id: patient.id, fullName: patient.fullName }} />}
+      {/* «＋ Задача» и «＋ Заказ в лабораторию» — одной строкой ссылок, как в карточке приёма (раньше — две кнопки
+          справа, каждая на своей строке); ниже — открытые задачи и работы техника, если есть */}
+      {patient && (
+        <div className="patient-adds">
+          <button type="button" className="link" onClick={() => setAdding('task')}>＋ Задача</button>
+          <button type="button" className="link" onClick={() => setAdding('lab')}>＋ Заказ в лабораторию</button>
+        </div>
+      )}
+      {patient && <PatientTasks patient={{ id: patient.id, fullName: patient.fullName }} adding={adding === 'task'} onAdding={(on) => setAdding(on ? 'task' : null)} />}
+      {patient && <PatientLab me={me} patient={{ id: patient.id, fullName: patient.fullName }} adding={adding === 'lab'} onAdding={(on) => setAdding(on ? 'lab' : null)} />}
 
       <div className="segments tabs" role="tablist" aria-label="Разделы карточки пациента">
         {tabs.map(([key, title]) => (

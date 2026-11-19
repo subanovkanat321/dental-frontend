@@ -22,6 +22,7 @@ import { useNowMinutes } from './gridScale'
 import { addDays, dateOf, dayTitle, formatPhone, minutesOf, slotInstant, somText, timeOf, todayIn } from '../lib/time'
 import { ChairEdit, CommentEdit, PromoEdit, Remind, Reschedule, ServiceEdit, Supplies, VisitNote } from './AppointmentExtras'
 import { useChairs } from '../team/chairs'
+import { ActionMenu } from '../layout/ActionMenu'
 import { ContactMenu } from './ContactMenu'
 import { useAppointmentContacts } from './useAppointmentContacts'
 import { DebtRemindForm } from '../cash/DebtRemind'
@@ -61,7 +62,7 @@ type Status = NonNullable<Schemas['AppointmentRequestsChangeStatus']['status']>
  * «Приём» для врача по приоритету: продолжение лечения → заметка и диктовка → «Зубы» → «План лечения» →
  * «Материалы» → «Расход (техник, лаборатория)» → лаборатория на этот приём (если есть работа) → «Снимки»
  * (раскрывашками) → «Сообщение после приёма» → перенести → «Ещё» (редкое:
- * промокод, предоплата, лист ожидания, откуда узнал, квитанция, удалить).
+ * промокод, предоплата, лист ожидания, откуда узнал, квитанция). «⋯» в шапке — удалить запись (владелец Tish).
  * Приём коллеги — только посмотреть и позвонить. Esc — закрыть.
  */
 type Rare = 'promo' | 'deposit' | 'waitlist' | 'source'
@@ -121,8 +122,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
   // Подпись «Ещё»: что внутри, кратко
   const more = [
     ...rare.map((r) => RARE_TEXT[r]),
-    canEdit && a.status === 'DONE' ? 'квитанция' : null,
-    me.owner ? 'удалить' : null,
+    canEdit && a.status === 'DONE' && seesMoneyOf(me, a.doctorId) && (a.paidSom != null || a.chargeSom != null) ? 'квитанция' : null,
   ].filter(Boolean)
   const moreMeta = more.join(', ')
   // Аллергия и важное из анкеты — перед лечением, тому, кто видит медкарту (врач приёма, админ)
@@ -258,6 +258,11 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
           {a.patient && a.status !== 'CANCELLED' && (
             <button type="button" className="btn ghost" aria-pressed={lesson} aria-label="Показать пациенту" title="Показать пациенту"
               onClick={() => setLesson(!lesson)}>📖</button>
+          )}
+          {/* «⋯» — редкое и опасное: удалить запись насовсем (только владелец Tish; клиники отменяют) */}
+          {me.owner && (
+            <ActionMenu label="Ещё действия" buttonLabel="Ещё действия" className="btn ghost" content="⋯" caret={false} align="right"
+              disabled={remove.isPending} items={[{ label: 'Удалить запись', danger: true, onSelect: () => void removeAppointment() }]} />
           )}
           <button type="button" className="btn ghost panel-expand" aria-pressed={full} onClick={toggleFull}
             aria-label={full ? 'Свернуть карточку' : 'Карточка на весь экран'} title={full ? 'Свернуть' : 'На весь экран'}>{full ? '⤡' : '⤢'}</button>
@@ -448,8 +453,8 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
       )}
       {editing === 'move' && <Reschedule appointment={a} me={me} onDone={(text) => { close(); setMoved(text ?? '') }} />}
 
-      {/* «Ещё» — редкое одной строкой: промокод, предоплата, лист ожидания, откуда узнал, квитанция,
-          исправить статус, удалить. Расход техника — в «Приёме» */}
+      {/* «Ещё» — редкое одной строкой: промокод, предоплата, лист ожидания, откуда узнал, квитанция (строкой: печать,
+          отправить). Статус исправляют в пилюле, удаляют — в «⋯» шапки. Расход техника — в «Приёме» */}
       {canEdit && more.length > 0 && (
         <Fold title="Ещё" label="Ещё" meta={moreMeta}>
           <div className="rare">
@@ -460,10 +465,6 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
             {rare.includes('source') && a.patient.id != null && <SourceLine patient={a.patient} canEdit compact admin={Boolean(me.admin)} />}
             {/* Квитанция: печать и «Отправить пациенту» — только по нажатию */}
             {a.status === 'DONE' && <VisitDocs appointment={a} me={me} memo={false} />}
-            {/* Удалить насовсем (ошибочная или тестовая запись) — только владелец Tish; клиники отменяют */}
-            {me.owner && (
-              <button type="button" className="btn danger" disabled={remove.isPending} onClick={() => void removeAppointment()}>Удалить запись</button>
-            )}
           </div>
         </Fold>
       )}

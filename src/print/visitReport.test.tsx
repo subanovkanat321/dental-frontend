@@ -86,7 +86,8 @@ test('два входа: «Написать самому» — без ИИ, ср
   renderApp()
   const b = await box()
   expect(within(b).getByRole('button', { name: 'Написать самому' })).toBeInTheDocument()
-  expect(b).toHaveTextContent('Без ИИ')
+  // Пояснения под кнопками нет — оно в подсказке кнопки
+  expect(within(b).getByRole('button', { name: 'Написать самому' })).toHaveAttribute('title', expect.stringContaining('Без ИИ'))
   // ИИ у клиники выключен — второй вход «по шаблону», и подписано, что будет
   expect(await within(b).findByRole('button', { name: 'Составить по шаблону' })).toBeInTheDocument()
   expect(within(b).queryByRole('button', { name: /с ИИ/ })).not.toBeInTheDocument()
@@ -304,4 +305,27 @@ test('оценку уже спрашивали — о ней в предпрос
   await userEvent.click(await within(b).findByRole('button', { name: 'Проверить и отправить' }))
   await within(b).findByRole('document', { name: 'Предпросмотр сообщения' })
   expect(within(b).queryByRole('note', { name: 'Оценка приёма' })).not.toBeInTheDocument()
+})
+
+test('сообщение уже отправлено — блок одной строкой; «Отправить ещё раз ▾»: написать самому, с ИИ / по шаблону, только памятка, распечатать', async () => {
+  const calls = backend(DRAFT)
+  server.use(http.get('*/api/appointments/:id/visit-report', () => HttpResponse.json({ ai: false, via: 'WHATSAPP', sentAt: '2026-11-19T06:20:00Z' } satisfies Schemas['VisitReportsSent'])))
+  renderApp()
+  const b = await box()
+  expect(await within(b).findByText(/✓ Сообщение отправлено 19 нояб.* в WhatsApp/)).toBeInTheDocument()
+  // Длинного пояснения и кнопок нет — только строка и меню
+  expect(within(b).queryByRole('button', { name: 'Написать самому' })).toBeNull()
+  expect(within(b).queryByRole('button', { name: 'Отправить памятку пациенту' })).toBeNull()
+  await userEvent.click(within(b).getByRole('button', { name: /Отправить ещё раз/ }))
+  expect(screen.getAllByRole('menuitem').map((i) => i.querySelector('.menu-text')?.firstChild?.textContent))
+    .toEqual(['Написать самому', 'По шаблону', 'Только памятка', 'Распечатать памятку'])
+  // «Только памятка» — тот же предпросмотр и отправка, что раньше
+  await userEvent.click(screen.getByRole('menuitem', { name: /^Только памятка/ }))
+  expect(await within(b).findByRole('document', { name: 'Предпросмотр памятки' })).toHaveTextContent('После пломбы')
+  await userEvent.click(within(b).getByRole('button', { name: 'Отмена' }))
+  // Снова свернулось; «Написать самому» — сразу редактор
+  await userEvent.click(await within(b).findByRole('button', { name: /Отправить ещё раз/ }))
+  await userEvent.click(screen.getByRole('menuitem', { name: /^Написать самому/ }))
+  expect(await within(b).findByRole('textbox', { name: 'Текст сообщения' })).toBeInTheDocument()
+  expect(calls).toEqual(['draft:SELF'])
 })

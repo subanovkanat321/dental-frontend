@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { appointment, me, renderApp, openMore, openPay, pickStatus } from '../test/fixtures'
+import { appointment, me, renderApp, openPay, pickStatus } from '../test/fixtures'
 import { server } from '../test/server'
 import { waitForSlow } from '../test/wait'
 
@@ -77,14 +77,16 @@ test('владелец удаляет и приём с оплатой или з�
   renderApp()
   // С оплатой — сразу вопрос, что пропадёт, и удаление с force
   const paid = await card(/Бакыт М\./)
-  await openMore(paid)
-  await userEvent.click(within(paid).getByRole('button', { name: 'Удалить запись' }))
+  // «Удалить запись» — в «⋯» шапки карточки
+  await userEvent.click(within(paid).getByRole('button', { name: 'Ещё действия' }))
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Удалить запись' }))
   expect(confirm).toHaveBeenLastCalledWith(expect.stringMatching(/У записи есть оплата 2\s000 сом\. Удалить всё вместе с ней\?.*Вернуть нельзя/))
   await waitForSlow(() => expect(deleted).toContain('10:true'))
   // Без денег, но с заметкой: обычный вопрос → 409 → второй вопрос → force
   const noted = await card(/Нурлан К\./)
-  await openMore(noted)
-  await userEvent.click(within(noted).getByRole('button', { name: 'Удалить запись' }))
+  // «Удалить запись» — в «⋯» шапки карточки
+  await userEvent.click(within(noted).getByRole('button', { name: 'Ещё действия' }))
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Удалить запись' }))
   await waitForSlow(() => expect(deleted).toEqual(['10:true', '11:false', '11:true']))
   expect(confirm).toHaveBeenLastCalledWith(expect.stringMatching(/заметка о приёме или отметки зубов/))
   confirm.mockRestore()

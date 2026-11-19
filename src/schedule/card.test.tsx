@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
 import { addDays, todayIn } from '../lib/time'
-import { appointment, contactMenu, me, openMore, pickContact, pickStatus, renderApp, statusMenu } from '../test/fixtures'
+import { appointment, contactMenu, me, pickContact, pickStatus, renderApp, statusMenu } from '../test/fixtures'
 import { fixNow } from '../test/now'
 import { server } from '../test/server'
 import { waitForSlow } from '../test/wait'
@@ -91,8 +91,9 @@ test('отменённую запись — «Записан» в списке (
   // «Восстановить» — это «Записан» в списке статуса
   await pickStatus(panel, 'Записан')
   await waitForSlow(() => expect(statusMenu(panel)).toHaveAccessibleName('Статус: Записан'))
-  await openMore(panel)
-  await userEvent.click(within(panel).getByRole('button', { name: 'Удалить запись' }))
+  // «Удалить запись» — в «⋯» шапки карточки
+  await userEvent.click(within(panel).getByRole('button', { name: 'Ещё действия' }))
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Удалить запись' }))
   await waitForSlow(() => expect(screen.queryByRole('complementary', { name: 'Карточка приёма' })).not.toBeInTheDocument())
   expect(sent).toEqual([{ status: 'SCHEDULED' }, 'delete'])
   window.history.replaceState(null, '', '/')
@@ -103,8 +104,8 @@ test('админ клиники запись не удаляет — тольк�
   renderApp()
   const panel = await open(/Бакыт М\./)
   expect(statusMenu(panel)).toBeInTheDocument()
-  await openMore(panel)
-  expect(within(panel).queryByRole('button', { name: 'Удалить запись' })).not.toBeInTheDocument()
+  // «⋯» с «Удалить запись» — только у владельца Tish
+  expect(within(panel).queryByRole('button', { name: 'Ещё действия' })).toBeNull()
 })
 
 test('состоялся: «Записать на следующий визит» — «Новая запись» на того же пациента через неделю', async () => {

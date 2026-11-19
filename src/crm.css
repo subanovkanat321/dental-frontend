@@ -1107,6 +1107,12 @@ button.timesheet-day:hover { border-color: var(--accent); }
   gap: 4px;
 }
 
+/* Квитанция под «Ещё» карточки приёма — строкой, без серой коробки (2026-11-19, экономия места) */
+.rare .visit-docs .doc-box { grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 10px; padding: 0; border: 0; background: none; }
+.rare .visit-docs .doc-box > :not(p:first-child) { grid-column: 1 / -1; }
+.rare .visit-docs .doc-box > .doc-actions { grid-column: 2; }
+.rare .visit-docs .doc-actions .btn { min-height: 36px; padding: 0 12px; }
+
 .doc-actions .actions {
   flex-wrap: wrap;
 }
@@ -1561,13 +1567,19 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
 .visit-report-text { width: 100%; min-height: 220px; font: inherit; line-height: 1.5; padding: 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); resize: vertical; }
 .ai-switch { display: grid; gap: 6px; padding: 10px; border-radius: var(--r-md); background: var(--sunken); }
 /* «Сообщение после приёма»: два входа (написать самому / с ИИ), памятка отдельно, предпросмотр как в мессенджере */
-.after-visit-start { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.after-visit-start { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .after-visit-way { display: grid; gap: 4px; align-content: start; }
-.after-visit-way .btn { justify-self: start; }
 .after-visit-saved { grid-column: 1 / -1; }
 .after-visit-saved-text { max-height: 220px; overflow: auto; padding: 10px 12px; border-radius: var(--r-md); background: var(--sunken); white-space: pre-wrap; overflow-wrap: anywhere; }
-.after-visit-memo { display: grid; gap: 8px; padding-top: 10px; border-top: 1px solid var(--separator); }
+/* «Отправить памятку пациенту» — в одном ряду с двумя входами; открыли предпросмотр — на всю ширину под ними */
+.after-visit-memo { display: contents; }
+.after-visit-memo.open { display: grid; flex-basis: 100%; gap: 8px; padding-top: 10px; border-top: 1px solid var(--separator); }
 .after-visit-memo .actions { align-items: center; }
+.after-visit-memo:not(.open) .actions { display: contents; }
+/* Уже отправили — одна строка: «✓ Сообщение отправлено 19 нояб в WhatsApp · Отправить ещё раз ▾» */
+.visit-report.visit-report-sent { padding: 10px 12px; }
+.visit-report-line { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
+.visit-report-line .action-menu-caret { color: inherit; }
 .msg-preview { display: grid; gap: 6px; padding: 12px; border-radius: var(--r-md); background: var(--sunken); }
 .msg-bubble { justify-self: start; max-width: min(100%, 520px); padding: 10px 12px; border-radius: 4px 12px 12px 12px; background: var(--card);
   border: 1px solid var(--separator); white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.45; font-size: .95rem; }
@@ -2095,7 +2107,12 @@ button.status-pill:focus-visible { outline: 2px solid var(--accent); outline-off
 .patient-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .patient-actions .contact { display: contents; }
 .patient-actions .btn { flex: 1 1 0; }
-.patient-actions .btn.primary { flex-basis: 100%; }
+.patient-actions .btn.primary { flex: 3 1 0; }
+/* «📞 Связаться ▾» — в одном ряду с «＋ Записать» (2026-11-19): одна строка вместо двух */
+.patient-actions .action-menu-wrap { flex: 2 1 0; }
+.patient-actions .action-menu-wrap > .btn { width: 100%; justify-content: center; }
+/* «＋ Задача   ＋ Заказ в лабораторию» — одной строкой ссылок под сводкой, как в карточке приёма */
+.patient-adds { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: -4px; }
 .patient-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: 6px; margin: 0; }
 .patient-summary .summary-bad { display: block; color: var(--bad-ink); font-size: .85rem; font-weight: 400; }
 .patient-summary > div { display: grid; align-content: start; gap: 0; padding: 6px 10px; border-radius: var(--r-md); background: var(--sunken); min-width: 0; }
@@ -2515,6 +2532,7 @@ a.menu-item { box-sizing: border-box; text-decoration: none; }
 .action-menu-caret { margin-left: 2px; font-size: .8em; color: var(--hint); }
 .pop-menu.action-menu { position: absolute; top: calc(100% + 4px); left: 0; width: max-content; min-width: 100%; max-width: min(320px, calc(100vw - 32px)); }
 .pop-menu.action-menu.up { top: auto; bottom: calc(100% + 4px); }
+.pop-menu.action-menu.right { left: auto; right: 0; }
 .pop-menu.action-menu.sheet { position: static; cursor: auto; width: 100%; max-width: none; min-width: 0; gap: 2px; padding: 10px 10px calc(14px + env(safe-area-inset-bottom));
   border: 0; border-radius: 20px 20px 0 0; animation: sheet-up .2s ease-out; }
 .pop-menu.action-menu.sheet::before { content: ""; justify-self: center; width: 40px; height: 4px; margin-bottom: 6px; border-radius: 2px; background: var(--line-strong); }

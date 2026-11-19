@@ -32,7 +32,7 @@ const isPhone = () => typeof window.matchMedia === 'function' && window.matchMed
  * Доступность: aria-haspopup=menu и aria-expanded у кнопки, role=menu/menuitem у списка; открыли — фокус на
  * первый пункт, ↑/↓ — по пунктам, Esc закрывает только меню (не карточку под ним) и возвращает фокус на кнопку.
  */
-export function ActionMenu({ label, items, className = 'btn', disabled, content, buttonLabel }: {
+export function ActionMenu({ label, items, className = 'btn', disabled, content, buttonLabel, caret = true, align = 'left' }: {
   /** Подпись кнопки и имя меню для скринридера */
   label: string
   items: ActionItem[]
@@ -42,6 +42,10 @@ export function ActionMenu({ label, items, className = 'btn', disabled, content,
   content?: ReactNode
   /** Имя кнопки для скринридера, если отличается от подписи («Статус: Пришёл») */
   buttonLabel?: string
+  /** ▾ после подписи; у «⋯» шапки не нужен */
+  caret?: boolean
+  /** Список под кнопкой — от левого края кнопки или от правого (кнопка у правого края шапки) */
+  align?: 'left' | 'right'
 }) {
   const [open, setOpen] = useState(false)
   const [sheet, setSheet] = useState(false)
@@ -92,7 +96,7 @@ export function ActionMenu({ label, items, className = 'btn', disabled, content,
   }
 
   const list = (
-    <div ref={menu} id={id} role="menu" aria-label={label} className={['pop-menu action-menu', sheet && 'sheet', !sheet && up && 'up'].filter(Boolean).join(' ')} onKeyDown={onMenuKey}>
+    <div ref={menu} id={id} role="menu" aria-label={label} className={['pop-menu action-menu', sheet && 'sheet', !sheet && up && 'up', !sheet && align === 'right' && 'right'].filter(Boolean).join(' ')} onKeyDown={onMenuKey}>
       {items.map((i, at) => (
         <Fragment key={`${i.group ?? ''}-${i.label}`}>
           {i.group && i.group !== items[at - 1]?.group && <div className="menu-group" role="presentation">{i.group}</div>}
@@ -126,7 +130,7 @@ export function ActionMenu({ label, items, className = 'btn', disabled, content,
           setUp(below < items.length * 52 + 24)
           setOpen((v) => !v)
         }}>
-        {content ?? label} <span aria-hidden="true" className="action-menu-caret">▾</span>
+        {content ?? label}{caret && <> <span aria-hidden="true" className="action-menu-caret">▾</span></>}
       </button>
       {open && (sheet
         ? createPortal(<div className="ui-select-backdrop" onClick={(e) => e.target === e.currentTarget && close(false)}>{list}</div>, document.body)
