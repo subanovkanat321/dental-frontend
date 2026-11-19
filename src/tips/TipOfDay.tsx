@@ -1,7 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 
 import { api, unwrap, type Schemas } from '../api/client'
+import { useBack } from '../lib/back'
 import { usePlatformInfo } from '../api/platform'
 import { openMine } from '../lib/route'
 import { openLink, telegram } from '../lib/telegram'
@@ -25,7 +27,7 @@ function go(target: string) {
 }
 
 /**
- * «Совет дня» над «Расписанием»: одна короткая подсказка не чаще раза в день на человека — на первом входе за день,
+ * «Совет дня» — окно по центру экрана (и на телефоне), закрыть — ✕, «Понятно», тап по фону, Esc или «Назад»: одна короткая подсказка не чаще раза в день на человека — на первом входе за день,
  * на любом устройстве (решает сервер: POST /api/me/tips/shown отвечает granted один раз в день). Не в день тура и
  * не до него, не поверх плашки профиля и окна уведомлений (useFirstScreensBusy), не после «Не показывать советы».
  *
@@ -97,7 +99,7 @@ function choose(me: Me, view: TipsView, groupUrl: string | undefined, phone: boo
 function TipCard({ tip, onClose, onOff }: { tip: Tip; onClose: () => void; onOff: () => void }) {
   const action = tip.action
   return (
-    <section className="tip-card" aria-label="Совет дня">
+    <TipModal label="Совет дня" onClose={onClose}>
       <div className="tip-head">
         <span className="tip-kicker"><span aria-hidden="true">💡</span> Совет дня</span>
         <button type="button" className="tip-close" aria-label="Закрыть совет" title="Закрыть" onClick={onClose}>✕</button>
@@ -111,13 +113,13 @@ function TipCard({ tip, onClose, onOff }: { tip: Tip; onClose: () => void; onOff
         <button type="button" className="btn small" onClick={onClose}>Понятно</button>
         <button type="button" className="tip-off" onClick={onOff}>Не показывать советы</button>
       </div>
-    </section>
+    </TipModal>
   )
 }
 
 function GroupInvite({ onJoin, onDecline, onClose }: { onJoin: () => void; onDecline: () => void; onClose: () => void }) {
   return (
-    <section className="tip-card" aria-label="Группа врачей Tish">
+    <TipModal label="Группа врачей Tish" onClose={onClose}>
       <div className="tip-head">
         <span className="tip-kicker">Приглашение</span>
         <button type="button" className="tip-close" aria-label="Закрыть приглашение" title="Закрыть" onClick={onClose}>✕</button>
@@ -128,6 +130,32 @@ function GroupInvite({ onJoin, onDecline, onClose }: { onJoin: () => void; onDec
         <button type="button" className="btn small primary" onClick={onJoin}>Вступить</button>
         <button type="button" className="btn small" onClick={onDecline}>Не надо</button>
       </div>
-    </section>
+    </TipModal>
+  )
+}
+
+/** Окно по центру поверх экрана: фон затемнён, тап по фону, Esc и «Назад» телефона — закрыть. Фокус — на окно. */
+function TipModal({ label, onClose, children }: { label: string; onClose: () => void; children: ReactNode }) {
+  const box = useRef<HTMLElement>(null)
+  useBack(onClose)
+  useEffect(() => {
+    const back = document.activeElement as HTMLElement | null
+    box.current?.querySelector<HTMLElement>('.btn.primary')?.focus()
+    return () => back?.focus?.()
+  }, [])
+  return createPortal(
+    <div className="ui-select-backdrop tip-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <section ref={box} className="tip-card" role="dialog" aria-modal="true" aria-label={label}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') {
+            e.preventDefault()
+            e.stopPropagation()
+            onClose()
+          }
+        }}>
+        {children}
+      </section>
+    </div>,
+    document.body,
   )
 }

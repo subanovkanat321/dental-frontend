@@ -61,7 +61,7 @@ function fakeTips(who: Me = me, start: Partial<View> = {}, groupUrl?: string) {
   return { calls, view: () => view }
 }
 
-const card = (name: string | RegExp = 'Совет дня') => screen.findByRole('region', { name }, { timeout: 5000 })
+const card = (name: string | RegExp = 'Совет дня') => screen.findByRole('dialog', { name }, { timeout: 5000 })
 
 beforeEach(() => {
   // Плашку «Заполните профиль» уже закрыли — иначе совет ждёт её (свой тест ниже)
@@ -84,14 +84,14 @@ test('совет показывается один раз в день: «Пон�
   expect(fake.calls).toEqual(['shown:drag'])
 
   await userEvent.click(within(c).getByRole('button', { name: 'Понятно' }))
-  expect(screen.queryByRole('region', { name: 'Совет дня' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('dialog', { name: 'Совет дня' })).not.toBeInTheDocument()
 
   // Тот же день, другое устройство (новое приложение): сервер говорит «сегодня уже было»
   app.unmount()
   renderApp()
   await screen.findByRole('navigation', { name: 'Разделы' })
   await new Promise((r) => setTimeout(r, 1300))
-  expect(screen.queryByRole('region', { name: 'Совет дня' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('dialog', { name: 'Совет дня' })).not.toBeInTheDocument()
   expect(fake.calls).toEqual(['shown:drag'])
 })
 
@@ -149,7 +149,7 @@ test('«Не показывать советы» — сразу на серве�
   renderApp()
   const c = await card()
   await userEvent.click(within(c).getByRole('button', { name: 'Не показывать советы' }))
-  expect(screen.queryByRole('region', { name: 'Совет дня' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('dialog', { name: 'Совет дня' })).not.toBeInTheDocument()
   await waitForSlow(() => expect(fake.calls).toEqual(['shown:drag', 'off:true']))
 
   await userEvent.click(screen.getByRole('button', { name: 'Помощь' }))
@@ -166,7 +166,7 @@ test('приглашение в группу: без ссылки — обычн
   const app = renderApp()
   await card()
   expect(noUrl.calls).toEqual(['shown:drag'])
-  expect(screen.queryByRole('region', { name: 'Группа врачей Tish' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('dialog', { name: 'Группа врачей Tish' })).not.toBeInTheDocument()
   app.unmount()
 
   const open = vi.fn()
@@ -178,7 +178,7 @@ test('приглашение в группу: без ссылки — обычн
   expect(fake.calls).toEqual(['shown:group'])
   await userEvent.click(within(g).getByRole('button', { name: 'Вступить' }))
   expect(open).toHaveBeenCalledWith('https://t.me/+tishdoctors', '_blank', 'noopener')
-  expect(screen.queryByRole('region', { name: 'Группа врачей Tish' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('dialog', { name: 'Группа врачей Tish' })).not.toBeInTheDocument()
   await waitForSlow(() => expect(fake.calls).toEqual(['shown:group', 'group-done']))
   expect(fake.view().groupDue).toBe(false)
 })
@@ -189,7 +189,7 @@ test('не поверх тура: пока тур не пройден, сове�
   renderApp()
   await screen.findByRole('dialog', { name: /./, description: /./ }, { timeout: 5000 })
   await new Promise((r) => setTimeout(r, 1300))
-  expect(screen.queryByRole('region', { name: 'Совет дня' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('dialog', { name: 'Совет дня' })).not.toBeInTheDocument()
   expect(fake.calls).toEqual([])
 })
 
@@ -200,7 +200,7 @@ test('не поверх плашки «Заполните профиль»: по
   renderApp()
   await screen.findByRole('region', { name: 'Заполните профиль' }, { timeout: 5000 })
   await new Promise((r) => setTimeout(r, 1300))
-  expect(screen.queryByRole('region', { name: 'Совет дня' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('dialog', { name: 'Совет дня' })).not.toBeInTheDocument()
   expect(fake.calls).toEqual([])
   // Закрыли плашку — совет появится
   await userEvent.click(screen.getByRole('button', { name: 'Скрыть подсказку' }))

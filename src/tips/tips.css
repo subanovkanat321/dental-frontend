@@ -1,12 +1,16 @@
 /*
- * «Совет дня» и приглашение в группу врачей — спокойная карточка над «Расписанием» (DESIGN.md: белая поверхность,
- * рамка separator (line), одна залитая кнопка на карточку, акцент — только маленькой подписью). В потоке страницы, не поверх:
- * на телефоне компактная — расписание остаётся видно; на компьютере — по ширине контента, текст до 75ch.
+ * «Совет дня» и приглашение в группу врачей — окно по центру экрана поверх затемнённого фона, и на компьютере, и на
+ * телефоне (владелец: «в середине экрана алерт, потом закрыть»). DESIGN.md: белая поверхность, одна залитая кнопка,
+ * акцент — только маленькой подписью. Раз в день — решает сервер.
  */
+.ui-select-backdrop.tip-backdrop { align-items: center; justify-content: center; padding: 16px; }
 .tip-card {
-  display: grid; gap: 4px; margin-bottom: 12px; padding: 10px 12px 12px 14px;
-  border: 1px solid var(--separator); border-radius: var(--r-md); background: var(--card); color: var(--text);
+  display: grid; gap: 6px; width: min(440px, 100%); max-height: calc(100dvh - 32px); overflow-y: auto; padding: 16px 18px 18px;
+  border-radius: var(--radius); background: var(--card); color: var(--text); box-shadow: var(--panel-shadow);
+  cursor: auto; animation: tip-pop .18s ease-out;
 }
+@keyframes tip-pop { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .tip-card { animation: none; } }
 .tip-head { display: flex; align-items: center; gap: 8px; min-height: 24px; }
 .tip-kicker { flex: 1; color: var(--accent); font-size: .8rem; font-weight: 600; }
 .tip-close {
@@ -14,8 +18,8 @@
   background: none; color: var(--hint); font: inherit; cursor: pointer;
 }
 .tip-close:hover { background: color-mix(in srgb, var(--text) 8%, transparent); color: var(--text); }
-.tip-title { margin: 0; font-size: 1rem; font-weight: 600; }
-.tip-text { margin: 0; max-width: 75ch; color: var(--hint); font-size: .9rem; line-height: 1.45; }
+.tip-title { margin: 0; font-size: 1.1rem; font-weight: 600; }
+.tip-text { margin: 0; color: var(--hint); font-size: .9rem; line-height: 1.45; }
 .tip-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 6px; }
 .tip-off {
   margin-left: auto; padding: 4px 2px; border: 0; background: none; color: var(--hint);
@@ -24,13 +28,7 @@
 .tip-off:hover { color: var(--text); }
 .tip-card :focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 
-@media (max-width: 760px) {
-  .tip-card { gap: 2px; margin-bottom: 8px; padding: 8px 10px 10px 12px; }
-  .tip-title { font-size: .95rem; }
-  /* Не больше двух строк: длинный совет не сдвигает расписание вниз */
-  .tip-text { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: .85rem; }
-  .tip-actions { gap: 6px; margin-top: 4px; }
-  /* Кнопки ниже обычных телефонных 44px: карточка — подсказка, а не форма; ширина касания остаётся */
-  .tip-actions .btn.small { min-height: 36px; padding: 0 12px; font-size: .85rem; }
-  .tip-off { white-space: nowrap; }
+@media (max-width: 640px) {
+  .tip-actions .btn.small { min-height: 44px; padding: 0 16px; }
+  .tip-off { width: 100%; margin: 4px 0 0; text-align: center; }
 }
