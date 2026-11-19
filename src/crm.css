@@ -2073,7 +2073,17 @@ button.status-pill:focus-visible { outline: 2px solid var(--accent); outline-off
 .appt-who { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; }
 .appt-card .appt-what { gap: 6px; }
 .appt-card .appt-what > .link { justify-self: start; }
+.appt-add-links { display: flex; flex-wrap: wrap; gap: 4px 18px; margin: 0; }
+/* «Откуда узнал» в карточке приёма — строкой, как «Услуга: … изменить», без серой плашки */
+.appt-what .source-line { margin: 0; }
+.appt-what .source-line.empty { padding: 0; background: none; border: 0; box-shadow: none; }
 .history-line { margin: 0; }
+/* Номер пациента — кнопка «Связаться ▾» рядом с именем; история и «＋ Задача · ＋ В лабораторию» — одной строкой */
+.appt-who .appt-phone { color: var(--text); text-decoration: none; }
+.appt-who .appt-phone .action-menu-caret { color: var(--accent); }
+.appt-history-row { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 14px; }
+.appt-quick { display: inline-flex; flex-wrap: wrap; gap: 2px 14px; }
+.appt-quick:only-child { margin-right: auto; }
 .appt-card .appt-visit:empty { display: none; }
 .appt-card .appt-visit { gap: 0; padding-top: 4px; border-top: 1px solid var(--line-strong); }
 .appt-visit > .dictation, .appt-visit > form { margin: 10px 0; }

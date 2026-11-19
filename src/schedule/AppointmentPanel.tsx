@@ -65,8 +65,8 @@ type Status = NonNullable<Schemas['AppointmentRequestsChangeStatus']['status']>
  * промокод, предоплата, лист ожидания, откуда узнал, квитанция). «⋯» в шапке — удалить запись (владелец Tish).
  * Приём коллеги — только посмотреть и позвонить. Esc — закрыть.
  */
-type Rare = 'promo' | 'deposit' | 'waitlist' | 'source'
-const RARE_TEXT: Record<Rare, string> = { promo: 'промокод', deposit: 'предоплата', waitlist: 'лист ожидания', source: 'откуда узнал' }
+type Rare = 'deposit' | 'waitlist'
+const RARE_TEXT: Record<Rare, string> = { deposit: 'предоплата', waitlist: 'лист ожидания' }
 
 export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, onBook, onMedical }: {
   appointment: Appointment
@@ -113,17 +113,11 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
   const [labOpen, setLabOpen] = useState(false)
   const active = a.status === 'REQUESTED' || a.status === 'SCHEDULED'
   const rare = ([
-    canEditDoctor(me, a.doctorId) && a.status !== 'CANCELLED' && !a.promoCode && editing !== 'promo' ? 'promo' : null,
     active && seesMoneyOf(me, a.doctorId) && !a.depositStatus ? 'deposit' : null,
     active && future && a.patient ? 'waitlist' : null,
-    // Откуда узнал о клинике — тоже под «Ещё»: в шапке занимал много места
-    a.patient.id != null ? 'source' : null,
   ] as const).filter((x): x is Rare => x != null)
   // Подпись «Ещё»: что внутри, кратко
-  const more = [
-    ...rare.map((r) => RARE_TEXT[r]),
-    canEdit && a.status === 'DONE' && seesMoneyOf(me, a.doctorId) && (a.paidSom != null || a.chargeSom != null) ? 'квитанция' : null,
-  ].filter(Boolean)
+  const more = rare.map((r) => RARE_TEXT[r])
   const moreMeta = more.join(', ')
   // Аллергия и важное из анкеты — перед лечением, тому, кто видит медкарту (врач приёма, админ)
   // …и ассистенту этого врача (смотрит медкарту, как сервер — ChartService)
@@ -275,7 +269,6 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
       <div className="appt-status-row">
         <StatusPill appointment={a} options={statusMenu} disabled={action.isPending} />
         {next && <button type="button" className="btn primary" disabled={action.isPending} onClick={next.run}>{next.label}</button>}
-        <ContactMenu items={contacts.items} />
       </div>
       {contacts.error && <p className="error" role="alert">{Object.values(contacts.error.fieldErrors)[0] ?? contacts.error.message}</p>}
       {debtForm && a.patient.id && <DebtRemindForm patientId={a.patient.id} name={a.patient.fullName} onDone={() => setDebtForm(false)} />}
@@ -304,10 +297,22 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
           {onOpenPatient && a.patient.id
             ? <button type="button" className="link patient-name" onClick={() => onOpenPatient(a.patient.id)}>{a.patient.fullName} ›</button>
             : <strong className="patient-name">{a.patient.fullName}</strong>}
-          {a.patient.phone && <span className="num">{formatPhone(a.patient.phone)}</span>}
-          {/* «Перезвонить после удаления», «отправить снимок в лабораторию» — задача с этим пациентом и приёмом */}
-          {a.patient.id ? <button type="button" className="link appt-task" onClick={() => setTaskOpen(true)}>＋ Задача</button> : null}
-          {a.patient.id && canEdit ? <button type="button" className="link appt-lab-new" onClick={() => setLabOpen(true)}>＋ В лабораторию</button> : null}
+          {/* Номер — он же «📞 Связаться ▾»: позвонить, WhatsApp, напомнить, попросить оценку, долг (2026-11-19) */}
+          {contacts.items.length
+            ? <ContactMenu items={contacts.items} className="link appt-phone"
+                content={a.patient.phone ? <span className="num">{formatPhone(a.patient.phone)}</span> : <><span aria-hidden="true">📞 </span>Связаться</>} />
+            : a.patient.phone && <span className="num">{formatPhone(a.patient.phone)}</span>}
+        </div>
+        {/* История одной строкой слева, «＋ Задача» и «＋ В лабораторию» — справа в той же строке */}
+        <div className="appt-history-row">
+          <PatientHistory appointment={a} me={me} />
+          {a.patient.id ? (
+            <span className="appt-quick">
+              {/* «Перезвонить после удаления», «отправить снимок в лабораторию» — задача с этим пациентом и приёмом */}
+              <button type="button" className="link appt-task" onClick={() => setTaskOpen(true)}>＋ Задача</button>
+              {canEdit && <button type="button" className="link appt-lab-new" onClick={() => setLabOpen(true)}>＋ В лабораторию</button>}
+            </span>
+          ) : null}
         </div>
         {taskOpen && a.patient.id ? (
           <TaskDialog patient={{ id: a.patient.id, fullName: a.patient.fullName }} appointmentId={a.id} onClose={() => setTaskOpen(false)} />
@@ -320,7 +325,6 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
             наверху (успеть позвонить технику); на приёме и после — в секции «Приём», после расхода */}
         {a.patient.id && canEdit && !visitTools ? <AppointmentLab appointment={a} /> : null}
         <KidInfo patient={a.patient} />
-        <PatientHistory appointment={a} me={me} />
         {sourceHint && <p className="hint small">{sourceHint}</p>}
         {a.reminderOpenedAt && a.status === 'SCHEDULED' && <ReminderSent a={a} canEdit={canEdit} />}
         {a.rating != null && (
@@ -341,19 +345,26 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
         {editing === 'comment' ? <CommentEdit appointment={a} onDone={close} /> : a.comment ? (
           <p className="comment line-edit"><span>{a.comment}</span>
             {canEdit && <button type="button" className="link" onClick={() => setEditing('comment')}>изменить</button>}</p>
-        ) : canEdit && a.status !== 'CANCELLED' && (
-          <button type="button" className="link" onClick={() => setEditing('comment')}>＋ Комментарий</button>
+        ) : null}
+        {/* «＋ Комментарий» и «＋ Промокод» — одной строкой ссылок (промокод раньше прятался под «Ещё») */}
+        {canEdit && a.status !== 'CANCELLED' && ((!a.comment && editing !== 'comment') || (!a.promoCode && editing !== 'promo' && canEditDoctor(me, a.doctorId))) && (
+          <p className="appt-add-links">
+            {!a.comment && editing !== 'comment' && <button type="button" className="link" onClick={() => setEditing('comment')}>＋ Комментарий</button>}
+            {!a.promoCode && editing !== 'promo' && canEditDoctor(me, a.doctorId) && <button type="button" className="link" onClick={() => setEditing('promo')}>＋ Промокод</button>}
+          </p>
         )}
         {/* Кресло приёма (V210) — только когда оно не кресло врача (chair_manual): у остальных и так кресло врача; сменить — у предстоящего */}
         {editing === 'chair' ? <ChairEdit appointment={a} onDone={close} /> : chairs.data && chairs.data.length > 1 && a.chairId != null && a.chairManual && (
           <p className="line-edit appt-chair"><span><span className="hint">Кресло:</span> 🪑 {chairName}<span className="hint"> · не кресло врача</span></span>
             {canEdit && active && future && <button type="button" className="link" onClick={() => setEditing('chair')}>сменить</button>}</p>
         )}
-        {/* Промокод рекламы: пациент ввёл в боте или назвал по телефону; пустой — «＋ Промокод» под «Ещё» */}
+        {/* Промокод рекламы: пациент ввёл в боте или назвал по телефону; пустой — «＋ Промокод» рядом с «＋ Комментарий» */}
         {editing === 'promo' ? <PromoEdit appointment={a} onDone={close} /> : a.promoCode && (
           <p className="line-edit"><span><span className="hint">Промокод:</span> <b>{`🎟 ${a.promoCode}`}</b></span>
             {canEdit && <button type="button" className="link" onClick={() => setEditing('promo')}>изменить</button>}</p>
         )}
+        {/* Откуда узнал о клинике — строкой «Откуда узнал о клинике? выбрать» / «… Instagram изменить» (раньше — под «Ещё») */}
+        {canEdit && a.patient.id != null && <SourceLine patient={a.patient} canEdit compact admin={Boolean(me.admin)} />}
       </section>
 
       {undo && (
@@ -401,6 +412,8 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
           {a.status === 'DONE' && seesMoney && (
             <PaymentBox key={[a.id, a.version, a.paidSom, a.chargeSom, a.debtSom, a.dueOn, a.depositStatus].join('-')} appointment={a} me={me} />
           )}
+          {/* Квитанция — строкой сразу под оплатой: «Печать» и «Отправить пациенту» (раньше — под «Ещё») */}
+          {a.status === 'DONE' && canEdit && <VisitDocs appointment={a} me={me} memo={false} />}
           {a.status === 'DONE' && (
             <>
               {onBook && <button type="button" className={payPending ? 'btn' : 'btn primary'} onClick={() => bookAgain(addDays(date > todayIn() ? date : todayIn(), 7))}>Записать на следующий визит</button>}
@@ -453,18 +466,13 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
       )}
       {editing === 'move' && <Reschedule appointment={a} me={me} onDone={(text) => { close(); setMoved(text ?? '') }} />}
 
-      {/* «Ещё» — редкое одной строкой: промокод, предоплата, лист ожидания, откуда узнал, квитанция (строкой: печать,
-          отправить). Статус исправляют в пилюле, удаляют — в «⋯» шапки. Расход техника — в «Приёме» */}
+      {/* «Ещё» — редкое у предстоящего приёма: предоплата (ещё не просили), лист ожидания. Статус исправляют в пилюле,
+          удаляют — в «⋯» шапки, промокод и «откуда узнал» — строками у услуги, квитанция — под оплатой */}
       {canEdit && more.length > 0 && (
         <Fold title="Ещё" label="Ещё" meta={moreMeta}>
           <div className="rare">
-            {rare.includes('promo') && <button type="button" className="link" onClick={() => setEditing('promo')}>＋ Промокод</button>}
             {rare.includes('deposit') && <DepositBox key="none" appointment={a} />}
             {rare.includes('waitlist') && a.patient && <div className="sub-form"><WaitlistBox patient={a.patient} me={me} defaultMinutes={length} /></div>}
-            {/* Откуда узнал — пациент не ответил в боте, отметят здесь */}
-            {rare.includes('source') && a.patient.id != null && <SourceLine patient={a.patient} canEdit compact admin={Boolean(me.admin)} />}
-            {/* Квитанция: печать и «Отправить пациенту» — только по нажатию */}
-            {a.status === 'DONE' && <VisitDocs appointment={a} me={me} memo={false} />}
           </div>
         </Fold>
       )}

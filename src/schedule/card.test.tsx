@@ -195,14 +195,15 @@ test('до начала приёма — без заметки и материа
   expect(panel).not.toHaveClass('panel-full')
 })
 
-test('редкое — под «Ещё»: промокод, предоплата, лист ожидания; уже заданный промокод — на виду', async () => {
+test('«＋ Промокод» — рядом с «＋ Комментарий»; под «Ещё» — предоплата и лист ожидания', async () => {
   backend(appointment(11, 1, '23:59', 'Айгуль С.', { version: 1 }))
   renderApp()
   const panel = await open(/Айгуль С\./)
-  expect(within(panel).queryByRole('button', { name: '＋ Промокод' })).not.toBeInTheDocument()
+  expect(within(panel).getByRole('button', { name: '＋ Промокод' }).parentElement).toContainElement(within(panel).getByRole('button', { name: '＋ Комментарий' }))
   expect(within(panel).queryByRole('button', { name: 'Попросить предоплату' })).not.toBeInTheDocument()
-  await userEvent.click(within(panel).getByRole('button', { name: /^Ещё/ }))
-  expect(within(panel).getByRole('button', { name: '＋ Промокод' })).toBeInTheDocument()
+  const more = within(panel).getByRole('button', { name: /^Ещё/ })
+  expect(more).not.toHaveAccessibleName(/промокод|откуда узнал/)
+  await userEvent.click(more)
   expect(within(panel).getByRole('button', { name: 'Попросить предоплату' })).toBeInTheDocument()
 })
 

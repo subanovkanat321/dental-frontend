@@ -56,10 +56,8 @@ test('«Расход (техник, лаборатория)» — в «Приё�
   expect(await within(fold).findByText(/4\s500 сом/)).toBeInTheDocument()
   await userEvent.click(within(fold).getByRole('button', { name: /^Расход \(техник, лаборатория\)/ }))
   expect(within(fold).getByRole('button', { name: '💸 Расход по пациенту (техник)' })).toBeInTheDocument()
-  // В «Ещё» расхода больше нет
-  const more = within(panel).getByRole('button', { name: /^Ещё/ })
-  expect(more).not.toHaveAccessibleName(/расход/)
-  await userEvent.click(more)
+  // «Ещё» у прошедшего приёма нет вовсе; расход — одна кнопка, в «Приёме»
+  expect(within(panel).queryByRole('button', { name: /^Ещё/ })).toBeNull()
   expect(within(panel).getAllByRole('button', { name: '💸 Расход по пациенту (техник)' })).toHaveLength(1)
 })
 
