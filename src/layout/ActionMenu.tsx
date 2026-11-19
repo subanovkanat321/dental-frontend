@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
+import { Fragment, useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 
 import { useBack } from '../lib/back'
@@ -10,22 +10,35 @@ export type ActionItem = {
   /** Опасное действие (неявка, отмена) — красным */
   danger?: boolean
   disabled?: boolean
+  /** Почему пункт недоступен или что он сделает — мелко под подписью («с дня приёма») */
+  hint?: string
+  /** Эмодзи перед подписью (статусы приёма: 🟢 Пришёл) */
+  icon?: string
+  /** Выбор одного из (статус приёма): true — текущий, с ✓ (role=menuitemradio); undefined — обычный пункт */
+  checked?: boolean
+  /** Подзаголовок группы («Связаться», «Отправить в WhatsApp») — ставится перед первым пунктом группы */
+  group?: string
 }
 
 const PHONE = '(max-width: 640px)'
 const isPhone = () => typeof window.matchMedia === 'function' && window.matchMedia(PHONE).matches
 
 /**
- * Кнопка с меню действий: «Неявка или отмена ▾». Компьютер — список под кнопкой, телефон — нижний лист
+ * Кнопка с меню действий: пилюля статуса приёма «🟢 Пришёл ▾», «📞 Связаться ▾». Компьютер — список под кнопкой, телефон — нижний лист
  * (как у Select): пальцем по крупным пунктам, закрыть — фон, свайп вниз или «назад».
  * Доступность: aria-haspopup=menu и aria-expanded у кнопки, role=menu/menuitem у списка; открыли — фокус на
  * первый пункт, ↑/↓ — по пунктам, Esc закрывает только меню (не карточку под ним) и возвращает фокус на кнопку.
  */
-export function ActionMenu({ label, items, className = 'btn', disabled }: {
+export function ActionMenu({ label, items, className = 'btn', disabled, content, buttonLabel }: {
+  /** Подпись кнопки и имя меню для скринридера */
   label: string
   items: ActionItem[]
   className?: string
   disabled?: boolean
+  /** Своё содержимое кнопки вместо подписи (пилюля статуса: значок и слово); ▾ ставится само */
+  content?: ReactNode
+  /** Имя кнопки для скринридера, если отличается от подписи («Статус: Пришёл») */
+  buttonLabel?: string
 }) {
   const [open, setOpen] = useState(false)
   const [sheet, setSheet] = useState(false)
@@ -45,7 +58,7 @@ export function ActionMenu({ label, items, className = 'btn', disabled }: {
 
   useEffect(() => {
     if (!open) return
-    menu.current?.querySelector<HTMLButtonElement>('[role=menuitem]:not(:disabled)')?.focus({ preventScroll: true })
+    menu.current?.querySelector<HTMLButtonElement>('[role^=menuitem]:not(:disabled):not([aria-checked=true])')?.focus({ preventScroll: true })
     const onKey = (e: globalThis.KeyboardEvent) => {
       if (e.key !== 'Escape') return
       // Esc закрывает меню, а не карточку приёма под ним (её Esc слушает window — до него не дойдёт)
@@ -70,30 +83,38 @@ export function ActionMenu({ label, items, className = 'btn', disabled }: {
   const onMenuKey = (e: KeyboardEvent) => {
     if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return
     e.preventDefault()
-    const list = [...(menu.current?.querySelectorAll<HTMLButtonElement>('[role=menuitem]:not(:disabled)') ?? [])]
+    const list = [...(menu.current?.querySelectorAll<HTMLButtonElement>('[role^=menuitem]:not(:disabled)') ?? [])]
     const at = list.indexOf(document.activeElement as HTMLButtonElement)
     list[(at + (e.key === 'ArrowDown' ? 1 : list.length - 1)) % list.length]?.focus()
   }
 
   const list = (
     <div ref={menu} id={id} role="menu" aria-label={label} className={['pop-menu action-menu', sheet && 'sheet', !sheet && up && 'up'].filter(Boolean).join(' ')} onKeyDown={onMenuKey}>
-      {items.map((i) => (
-        <button key={i.label} type="button" role="menuitem" className={i.danger ? 'menu-item danger' : 'menu-item'} disabled={i.disabled}
-          onClick={() => { close(false); i.onSelect() }}>{i.label}</button>
+      {items.map((i, at) => (
+        <Fragment key={`${i.group ?? ''}-${i.label}`}>
+          {i.group && i.group !== items[at - 1]?.group && <div className="menu-group" role="presentation">{i.group}</div>}
+          <button type="button" role={i.checked === undefined ? 'menuitem' : 'menuitemradio'} aria-checked={i.checked}
+            className={['menu-item', i.danger && 'danger', i.checked && 'checked'].filter(Boolean).join(' ')} disabled={i.disabled}
+            onClick={() => { close(false); i.onSelect() }}>
+            {i.icon && <span className="menu-emoji" aria-hidden="true">{i.icon}</span>}
+            {i.hint ? <span className="menu-text"><span>{i.label}</span>{' '}<span className="menu-hint">{i.hint}</span></span> : <span className="menu-text">{i.label}</span>}
+            {i.checked && <span className="menu-check" aria-hidden="true">✓</span>}
+          </button>
+        </Fragment>
       ))}
     </div>
   )
 
   return (
     <span className="action-menu-wrap" ref={wrap}>
-      <button ref={button} type="button" className={className} disabled={disabled} aria-haspopup="menu" aria-expanded={open}
+      <button ref={button} type="button" className={className} disabled={disabled} aria-haspopup="menu" aria-expanded={open} aria-label={buttonLabel}
         aria-controls={open ? id : undefined} onClick={() => {
           setSheet(isPhone())
           const below = window.innerHeight - (button.current?.getBoundingClientRect().bottom ?? 0)
-          setUp(below < items.length * 44 + 24)
+          setUp(below < items.length * 52 + 24)
           setOpen((v) => !v)
         }}>
-        {label} <span aria-hidden="true" className="action-menu-caret">▾</span>
+        {content ?? label} <span aria-hidden="true" className="action-menu-caret">▾</span>
       </button>
       {open && (sheet
         ? createPortal(<div className="ui-select-backdrop" onClick={(e) => e.target === e.currentTarget && close(false)}>{list}</div>, document.body)

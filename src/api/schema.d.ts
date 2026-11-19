@@ -4868,6 +4868,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/appointments/{id}/arrived": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["arrived"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/appointments/report": {
         parameters: {
             query?: never;
@@ -9212,6 +9228,8 @@ export interface components {
             chairId?: number;
             chairManual: boolean;
             ratingVia?: string;
+            /** Format: date-time */
+            arrivedAt?: string;
         };
         FamiliesBooker: {
             fullName?: string;
@@ -10685,6 +10703,11 @@ export interface components {
             memoId?: number;
             /** @enum {string} */
             lang?: "RU" | "KY";
+        };
+        AppointmentRequestsArrived: {
+            /** Format: int64 */
+            version: number;
+            arrived: boolean;
         };
         ReportControllerRequest: {
             month?: string;
@@ -22488,6 +22511,32 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    arrived: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AppointmentRequestsArrived"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppointmentView"];
+                };
             };
         };
     };

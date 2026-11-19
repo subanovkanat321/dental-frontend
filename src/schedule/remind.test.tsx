@@ -36,17 +36,17 @@ function backend(start: Appointment) {
   return calls
 }
 
-test('напомнить в Telegram (пациент записан через бота) — сервер шлёт, статус «Ждём ответа»', async () => {
+test('напомнить в Telegram (пациент записан через бота) — сервер шлёт, «Уже напоминали»', async () => {
   const calls = backend(appointment(10, 1, '23:30', 'Бакыт М.', { patient: { id: 10, fullName: 'Бакыт М.', phone: '996555123456', telegram: true } }))
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: /Бакыт М\./ }))
   const panel = screen.getByRole('complementary', { name: 'Карточка приёма' })
   await userEvent.click(within(panel).getByRole('button', { name: 'Напомнить в Telegram' }))
-  expect(await within(panel).findByText('Ждём ответа')).toBeInTheDocument()
+  expect(await within(panel).findByText(/^Уже напоминали/)).toBeInTheDocument()
   expect(calls).toEqual(['telegram'])
 })
 
-test('напомнить в WhatsApp — текст с подписью клиники; ответ «Придёт», повторно — снять', async () => {
+test('напомнить в WhatsApp — текст с подписью клиники; ответ «Подтвердил», повторно — снять', async () => {
   const calls = backend(appointment(10, 1, '23:30', 'Бакыт М.'))
   const opened: string[] = []
   vi.spyOn(window, 'open').mockImplementation((url) => { opened.push(String(url)); return null })
@@ -58,9 +58,9 @@ test('напомнить в WhatsApp — текст с подписью клин
   expect(decodeURIComponent(opened[0]!)).toContain('Стоматология «Тест»')
 
   const replies = within(panel).getByRole('group', { name: 'Ответ пациента' })
-  await userEvent.click(within(replies).getByRole('button', { name: 'Придёт' }))
-  expect(await within(replies).findByRole('button', { name: 'Придёт', pressed: true })).toBeInTheDocument()
-  await userEvent.click(within(replies).getByRole('button', { name: 'Придёт' }))
+  await userEvent.click(within(replies).getByRole('button', { name: 'Подтвердил' }))
+  expect(await within(replies).findByRole('button', { name: 'Подтвердил', pressed: true })).toBeInTheDocument()
+  await userEvent.click(within(replies).getByRole('button', { name: 'Подтвердил' }))
   await waitForSlow(() => expect(calls).toEqual(['opened', 'reply:CONFIRMED:v0', 'reply:NONE:v1']))
   vi.restoreAllMocks()
 })

@@ -19,6 +19,7 @@ type Action =
   | { kind: 'comment'; body: Schemas['AppointmentRequestsComment'] }
   | { kind: 'promo'; body: Schemas['AppointmentRequestsPromoCode'] }
   | { kind: 'reply'; body: Schemas['AppointmentRequestsChangeReply'] }
+  | { kind: 'arrived'; body: Schemas['AppointmentRequestsArrived'] }
   | { kind: 'remindTelegram' }
   | { kind: 'deposit'; body: Schemas['DepositControllerAction'] }
   | { kind: 'undo'; body: Schemas['AppointmentRequestsUndo'] }
@@ -56,6 +57,8 @@ export function sendAppointmentAction(id: number, action: Action): Promise<Appoi
       return unwrap(api.PUT('/api/appointments/{id}/promo-code', { ...path, body: action.body }))
     case 'reply':
       return unwrap(api.POST('/api/appointments/{id}/reply', { ...path, body: action.body }))
+    case 'arrived':
+      return unwrap(api.POST('/api/appointments/{id}/arrived', { ...path, body: action.body }))
     case 'remindTelegram':
       return unwrap(api.POST('/api/appointments/{id}/remind-telegram', path))
     case 'undo':

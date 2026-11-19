@@ -32,12 +32,12 @@ import { seesDebts, usePatientDebts } from '../lib/debt'
 import { useMedAlert } from '../lib/medAlerts'
 import { PatientExpensesFold } from '../patients/PatientExpenses'
 import type { Slot } from './NewAppointmentPanel'
-import { statusOf } from './status'
+import { StatusPill } from './StatusPill'
+import { statusOptions } from './statusOptions'
 import { colleagueMarkText, colleagueTimeOf } from './chairTime'
 import { refreshAppointmentData, useAppointmentAction } from './useAppointmentAction'
 import { VisitDocs } from '../print/VisitDocs'
 import { LessonPicker } from '../learn/LessonButton'
-import { ActionMenu } from '../layout/ActionMenu'
 import { Fold } from '../layout/Fold'
 import { AfterVisit } from '../print/VisitReport'
 import { canEditDoctor, editableDoctors, isAssistant, seesMoneyOf, seesAllMoney } from '../lib/roles'
@@ -55,13 +55,14 @@ type Patient = Schemas['PatientView']
 type Status = NonNullable<Schemas['AppointmentRequestsChangeStatus']['status']>
 
 /**
- * Карточка приёма — сверху вниз: шапка (время, врач, статус; 📖 «Показать пациенту») → пациент
- * (история одной строкой, аллергии) → услуга и комментарий → главное действие статуса (одна залитая
- * кнопка: «Подтвердить», «Приём состоялся», «Принять оплату», «Восстановить», «Записать снова») →
+ * Карточка приёма — сверху вниз: шапка (время, врач; 📖 «Показать пациенту») → статус пилюлей «🟢 Пришёл ▾»
+ * (все статусы одним списком) и рядом следующий шаг одной залитой кнопкой («Подтвердить», «Пришёл»,
+ * «Приём состоялся») → пациент (история одной строкой, аллергии) → услуга и комментарий → после приёма
+ * «Принять оплату» / «Записать снова» →
  * «Приём» для врача по приоритету: продолжение лечения → заметка и диктовка → «Зубы» → «План лечения» →
  * «Материалы» → «Расход (техник, лаборатория)» → лаборатория на этот приём (если есть работа) → «Снимки»
- * (раскрывашками) → «Сообщение после приёма» → перенести / неявка / отменить → «Ещё» (редкое:
- * промокод, предоплата, лист ожидания, откуда узнал, квитанция, исправить статус, удалить).
+ * (раскрывашками) → «Сообщение после приёма» → перенести → «Ещё» (редкое:
+ * промокод, предоплата, лист ожидания, откуда узнал, квитанция, удалить).
  * Приём коллеги — только посмотреть и позвонить. Esc — закрыть.
  */
 type Rare = 'promo' | 'deposit' | 'waitlist' | 'source'
@@ -88,7 +89,6 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
   const close = () => setEditing(null)
   // После переноса или передачи — что сделать дальше (напомнить заново)
   const [moved, setMoved] = useState('')
-  const s = statusOf(a)
   const doctors = (me.doctors ?? []).filter((d) => d.active !== false)
   const doctor = (me.doctors ?? []).find((d) => d.id === a.doctorId)
   const date = a.startAt ? dateOf(a.startAt) : todayIn()
@@ -100,8 +100,10 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
   const nowMinutes = useNowMinutes()
   const inChair = date < todayIn() || (date === todayIn() && nowMinutes >= minutesOf(a.startAt) - 15)
   const [early, setEarly] = useState(false)
-  const visitTools = a.status === 'DONE' || (a.status === 'SCHEDULED' && started && (inChair || early))
+  // «Пришёл» (V234) — пациент уже в кресле: заметка, зубы и материалы сразу
+  const visitTools = a.status === 'DONE' || (a.status === 'SCHEDULED' && started && (inChair || early || Boolean(a.arrivedAt)))
   const future = a.startAt ? new Date(a.startAt) > new Date() : false
+  const ended = a.endAt ? new Date(a.endAt) < new Date() : false
   const canEdit = canEditDoctor(me, a.doctorId)
   // «📖 Показать пациенту» — строка выбора темы под шапкой, по значку
   const [lesson, setLesson] = useState(false)
@@ -121,7 +123,6 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
   const more = [
     ...rare.map((r) => RARE_TEXT[r]),
     canEdit && a.status === 'DONE' ? 'квитанция' : null,
-    canEdit && (a.status === 'DONE' || a.status === 'NO_SHOW') ? 'исправить' : null,
     me.owner ? 'удалить' : null,
   ].filter(Boolean)
   const moreMeta = more.join(', ')
@@ -188,6 +189,9 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
       : 'Вернуть приём в запланированные? Отметка «Неявка» снимется.')) return
     action.mutate({ kind: 'undo', body: { version: current.version, previousStatus: 'SCHEDULED' } })
   }
+  // «Пришёл» (V234) и ответ пациента «Подтвердил» — отметки у запланированного приёма, не статус на сервере
+  const arrive = (arrived: boolean) => action.mutate({ kind: 'arrived', body: { version: a.version, arrived } })
+  const reply = (confirmed: boolean) => action.mutate({ kind: 'reply', body: { version: a.version, reply: confirmed ? 'CONFIRMED' : 'NONE' } })
   const back = (updated: Appointment) => action.mutate({ kind: 'undo', body: { version: updated.version, previousStatus: undo!.previous } },
     { onSuccess: () => setUndo(null) })
   // То же время, что у этого приёма, — если оно ещё не прошло; иначе форма откроется без времени (сетка свободного)
@@ -200,6 +204,25 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
 
   // Главная кнопка — одна на карточку (DESIGN.md): после приёма, пока не оплачено, это «Принять оплату»
   const payPending = a.status === 'DONE' && seesMoney && a.paidSom == null
+  // Статус — пилюлей со списком; выбор делает то же, что раньше отдельные кнопки: вопросы, «Вернуть», «Что сделали сегодня?»
+  const statusMenu = canEdit ? statusOptions(a, { started, paid: a.status === 'DONE' && seesMoney && (a.paidSom != null || a.chargeSom != null) }, {
+    schedule: () => void setStatus('SCHEDULED'),
+    reopen: () => void reopen(a),
+    reply,
+    arrive,
+    done: () => void setStatus('DONE'),
+    noShow: () => void setStatus('NO_SHOW', { question: `Отметить неявку: ${a.patient.fullName} не пришёл(ла) на приём?`, undo: 'Отмечено: неявка' }),
+    cancel: () => void setStatus('CANCELLED', a.status === 'REQUESTED'
+      ? { question: 'Отклонить заявку? Пациенту придёт сообщение.', undo: 'Заявка отклонена' }
+      : { question: `Отменить запись ${a.patient.fullName}? Время освободится.`, undo: 'Запись отменена' }),
+  }) : null
+  // Следующий шаг — одним касанием рядом со статусом: заявка → «Подтвердить», до прихода → «Пришёл»,
+  // пришёл (или время приёма уже прошло — отмечать приход поздно) → «Приём состоялся»
+  const next = !canEdit ? null
+    : a.status === 'REQUESTED' ? { label: 'Подтвердить', run: () => void setStatus('SCHEDULED') }
+      : a.status === 'SCHEDULED' && started && !a.arrivedAt && !ended ? { label: 'Пришёл', run: () => arrive(true) }
+        : a.status === 'SCHEDULED' && started ? { label: 'Приём состоялся', run: () => void setStatus('DONE') }
+          : null
   // Долг пациента за все визиты (кто видит «Должников»; врачу — за его приёмы) и за прошлые — без этого приёма
   const debts = usePatientDebts(a.patient.id ?? undefined, seesDebts(me))
   const patientDebt = (debts.data ?? []).reduce((sum, d) => sum + d.debtSom, 0)
@@ -242,7 +265,10 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
       {lesson && a.patient && (
         <LessonPicker key={`${a.id}-${a.serviceName ?? ''}`} serviceName={a.serviceName} patientId={a.patient.id} onClose={() => setLesson(false)} />
       )}
-      <span className={`chip s-${s.kind} appt-status`}><span className="ico" aria-hidden="true">{s.icon}</span>{s.label}</span>
+      <div className="appt-status-row">
+        <StatusPill appointment={a} options={statusMenu} disabled={action.isPending} />
+        {next && <button type="button" className="btn primary" disabled={action.isPending} onClick={next.run}>{next.label}</button>}
+      </div>
       {/* Метки пациента одной строкой, по важности, как на записи в сетке: ❗ важно для врача (тем, кому анкета закрыта —
           остальным ниже плашка с текстом), 🧾 долг, ⭐ ВИП. Первый визит — строкой «Впервые в клинике» у пациента */}
       {(() => {
@@ -334,18 +360,10 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
         </>
       ) : (
         <>
-          {/* Главное действие для статуса — одна залитая кнопка, рядом — связаться */}
-          {a.status === 'REQUESTED' && (
-            <div className="actions">
-              <button type="button" className="btn primary" disabled={action.isPending} onClick={() => setStatus('SCHEDULED')}>Подтвердить</button>
-              <ContactButtons phone={contactPhone(a.patient)} whatsapp={false} />
-            </div>
-          )}
+          {/* Заявку подтверждают звонком: «Подтвердить» — рядом со статусом */}
+          {a.status === 'REQUESTED' && <ContactButtons phone={contactPhone(a.patient)} whatsapp={false} />}
           {moved && <p className="tone-ok" role="status">{moved}</p>}
           {a.status === 'SCHEDULED' && <Remind appointment={a} />}
-          {a.status === 'SCHEDULED' && started && (
-            <button type="button" className="btn primary" disabled={action.isPending} onClick={() => setStatus('DONE')}>Приём состоялся</button>
-          )}
           {a.status === 'SCHEDULED' && !future && <ContactButtons phone={contactPhone(a.patient)} />}
           {/* Предоплату уже попросили — на виду; ещё не просили — под «Ещё». Ассистенту деньги не показываем */}
           {(a.status === 'REQUESTED' || a.status === 'SCHEDULED') && seesMoney && a.depositStatus && <DepositBox key={a.depositStatus} appointment={a} />}
@@ -357,8 +375,6 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
                 <p className="cancelled-by">Отменён: {[a.cancelledBy ?? 'кто — не записано', a.cancelledAt ? cancelledWhen(a.cancelledAt, { sayToday: true }) : null].filter(Boolean).join(', ')}</p>
               )}
               {a.depositStatus === 'RECEIVED' && seesMoney && <p className="tone-wait">Предоплата {somText(a.depositSom ?? 0)} получена — верните пациенту или запишите его снова.</p>}
-              <button type="button" className="btn primary" disabled={action.isPending} onClick={() => setStatus('SCHEDULED')}>Восстановить</button>
-              <p className="hint small">Восстановленный приём попросит напомнить пациенту заново.</p>
             </>
           )}
 
@@ -425,24 +441,11 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
       {/* «Сообщение после приёма» — отчёт пациенту: личная часть и уход дома из памятки */}
       {canEdit && a.status === 'DONE' && <AfterVisit appointment={a} me={me} />}
 
-      {/* Частые опасные действия — на виду внизу; неявку и отмену можно «Вернуть» */}
+      {/* Перенести — на виду внизу; неявка и отмена — в списке статуса (пилюля вверху), их можно «Вернуть» */}
       {canEdit && (a.status === 'REQUESTED' || a.status === 'SCHEDULED') && (
         <div className="danger-zone actions">
           {editing !== 'move' && (
             <button type="button" className="btn" onClick={() => { setMoved(''); setEditing('move') }}>{editableDoctors(me, doctors).length > 1 ? 'Перенести или передать врачу' : 'Перенести'}</button>
-          )}
-          {a.status === 'REQUESTED' && (
-            <button type="button" className="btn danger" disabled={action.isPending}
-              onClick={() => setStatus('CANCELLED', { question: 'Отклонить заявку? Пациенту придёт сообщение.', undo: 'Заявка отклонена' })}>Отклонить заявку</button>
-          )}
-          {/* Неявка и отмена — одной кнопкой с меню: две красные кнопки под «Перенести» пугали и занимали место.
-              До начала приёма неявки ещё не бывает — в меню только «Отменить запись» */}
-          {a.status === 'SCHEDULED' && (
-            <ActionMenu label={started ? 'Неявка или отмена' : 'Отменить'} disabled={action.isPending} items={[
-              ...(started ? [{ label: 'Неявка — пациент не пришёл', danger: true, onSelect: () => setStatus('NO_SHOW', { undo: 'Отмечено: неявка' }) }] : []),
-              { label: 'Отменить запись', danger: true,
-                onSelect: () => setStatus('CANCELLED', { question: `Отменить запись ${a.patient.fullName}? Время освободится.`, undo: 'Запись отменена' }) },
-            ]} />
           )}
         </div>
       )}
@@ -460,19 +463,6 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
             {rare.includes('source') && a.patient.id != null && <SourceLine patient={a.patient} canEdit compact admin={Boolean(me.admin)} />}
             {/* Квитанция: печать и «Отправить пациенту» — только по нажатию */}
             {a.status === 'DONE' && <VisitDocs appointment={a} me={me} memo={false} />}
-            {a.status === 'NO_SHOW' && (
-              <button type="button" className="btn" disabled={action.isPending} onClick={() => setStatus('DONE')}>Исправить: приём состоялся</button>
-            )}
-            {a.status === 'DONE' && (
-              <button type="button" className="btn danger" disabled={action.isPending} onClick={() => setStatus('NO_SHOW', { undo: 'Отмечено: неявка' })}>Исправить: неявка</button>
-            )}
-            {/* Отметили «состоялся» или «неявку» по ошибке — обратно в запланированные. С оплатой нельзя:
-                сначала снять её («Оплата» → «Снять отметку оплаты»), иначе разойдутся касса и зарплата */}
-            {(a.status === 'DONE' || a.status === 'NO_SHOW') && (a.status === 'DONE' && seesMoney && (a.paidSom != null || a.chargeSom != null) ? (
-              <p className="hint small">Вернуть в запланированные: сначала «Снять отметку оплаты» в оплате.</p>
-            ) : (
-              <button type="button" className="btn danger" disabled={action.isPending} onClick={() => reopen(a)}>Вернуть в запланированные</button>
-            ))}
             {/* Удалить насовсем (ошибочная или тестовая запись) — только владелец Tish; клиники отменяют */}
             {me.owner && (
               <button type="button" className="btn danger" disabled={remove.isPending} onClick={() => void removeAppointment()}>Удалить запись</button>

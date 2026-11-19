@@ -35,6 +35,18 @@ function backend(a: Appointment, who: Schemas['BookingViewsMe'] = me) {
       current = { ...current, status: body.previousStatus, version: current.version + 1 }
       return HttpResponse.json(current)
     }),
+    http.post('*/api/appointments/:id/arrived', async ({ request }) => {
+      const body = await request.json() as { arrived: boolean }
+      sent.push({ arrived: body.arrived })
+      current = { ...current, arrivedAt: body.arrived ? new Date().toISOString() : undefined, version: current.version + 1 }
+      return HttpResponse.json(current)
+    }),
+    http.post('*/api/appointments/:id/reply', async ({ request }) => {
+      const body = await request.json() as { reply: Appointment['reply'] }
+      sent.push({ reply: body.reply })
+      current = { ...current, reply: body.reply, version: current.version + 1 }
+      return HttpResponse.json(current)
+    }),
     http.delete('*/api/appointments/:id', () => {
       sent.push('delete')
       return new HttpResponse(null, { status: 204 })
@@ -48,21 +60,25 @@ const open = async (name: RegExp) => {
   return screen.getByRole('complementary', { name: 'Карточка приёма' })
 }
 
-test('неявка — «Вернуть» возвращает как было', async () => {
+test('неявка — после вопроса; «Вернуть» возвращает как было', async () => {
+  const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true)
   const sent = backend(appointment(10, 1, '00:05', 'Бакыт М.', { version: 1 }))
   renderApp()
   const panel = await open(/Бакыт М\./)
-  await pickStatus(panel, /^Неявка/)
+  await pickStatus(panel, 'Неявка')
+  expect(confirm).toHaveBeenCalledWith(expect.stringContaining('Отметить неявку'))
   expect(await within(panel).findByText('Отмечено: неявка')).toBeInTheDocument()
-  // Исправить статус — редкое, под «Ещё»; главная кнопка неявки — «Записать снова»
-  await openMore(panel)
-  expect(within(panel).getByRole('button', { name: 'Исправить: приём состоялся' })).toBeInTheDocument()
+  expect(statusMenu(panel)).toHaveAccessibleName('Статус: Неявка')
+  // Исправить — тем же списком статусов: из неявки можно «Приём состоялся» и «Записан»
+  await userEvent.click(statusMenu(panel)!)
+  expect(screen.getByRole('menuitemradio', { name: /^Приём состоялся/ })).toBeEnabled()
+  await userEvent.keyboard('{Escape}')
   await userEvent.click(within(panel).getByRole('button', { name: 'Вернуть' }))
   expect(await within(panel).findByRole('button', { name: 'Приём состоялся' })).toBeInTheDocument()
   expect(sent).toEqual([{ status: 'NO_SHOW' }, { undo: 'SCHEDULED' }])
 })
 
-test('отменённую запись — «Восстановить»; удалить запись может только владелец Tish', async () => {
+test('отменённую запись — «Записан» в списке (восстановить); удалить запись может только владелец Tish', async () => {
   vi.spyOn(window, 'confirm').mockReturnValue(true)
   const cancelled = appointment(10, 1, '10:00', 'Бакыт М.', { status: 'CANCELLED', version: 1 })
   const sent = backend(cancelled, { ...me, owner: true })
@@ -71,8 +87,10 @@ test('отменённую запись — «Восстановить»; уда
   window.history.replaceState(null, '', '/?appointment=10')
   renderApp()
   const panel = await screen.findByRole('complementary', { name: 'Карточка приёма' })
-  await userEvent.click(within(panel).getByRole('button', { name: 'Восстановить' }))
-  await waitForSlow(() => expect(statusMenu(panel)).toBeInTheDocument())
+  expect(statusMenu(panel)).toHaveAccessibleName('Статус: Отменён')
+  // «Восстановить» — это «Записан» в списке статуса
+  await pickStatus(panel, 'Записан')
+  await waitForSlow(() => expect(statusMenu(panel)).toHaveAccessibleName('Статус: Записан'))
   await openMore(panel)
   await userEvent.click(within(panel).getByRole('button', { name: 'Удалить запись' }))
   await waitForSlow(() => expect(screen.queryByRole('complementary', { name: 'Карточка приёма' })).not.toBeInTheDocument())
@@ -106,7 +124,10 @@ test('приём коллеги — только посмотреть и поз�
   const panel = await open(/Айгуль Т\./)
   expect(within(panel).getByText(/Приём коллеги/)).toBeInTheDocument()
   expect(within(panel).getByRole('link', { name: /Позвонить/ })).toHaveAttribute('href', 'tel:+996555123456')
+  // Статус виден пилюлей без ▾ — только посмотреть
   expect(statusMenu(panel)).not.toBeInTheDocument()
+  expect(within(panel).getByLabelText('Статус: Записан')).toBeInTheDocument()
+  expect(within(panel).queryByRole('button', { name: 'Приём состоялся' })).toBeNull()
 })
 
 test('имя пациента в карточке — его карточка в «Пациентах»', async () => {
@@ -132,24 +153,27 @@ test('ребёнка записала мама из бота — в карточ
   expect(within(panel).queryByText('Запись через бота')).toBeNull()
 })
 
-test('«Приём состоялся» по ошибке — «Вернуть в запланированные»; с оплатой — сначала снять оплату', async () => {
-  vi.spyOn(window, 'confirm').mockReturnValue(true)
+test('«Приём состоялся» по ошибке — «Записан» (вернуть в запланированные); с оплатой — серый пункт с причиной', async () => {
+  const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true)
   const sent = backend(appointment(10, 1, '00:05', 'Бакыт М.', { version: 1, status: 'DONE' }))
   const { unmount } = renderApp()
   const panel = await open(/Бакыт М\./)
-  await openMore(panel)
-  await userEvent.click(within(panel).getByRole('button', { name: 'Вернуть в запланированные' }))
+  await pickStatus(panel, 'Записан')
+  expect(confirm).toHaveBeenCalledWith(expect.stringContaining('Вернуть приём в запланированные'))
   expect(await within(panel).findByRole('button', { name: 'Приём состоялся' })).toBeInTheDocument()
   expect(sent).toEqual([{ undo: 'SCHEDULED' }])
+  // Отдельной кнопки «Вернуть в запланированные» больше нет — ни внизу, ни под «Ещё»
+  expect(within(panel).queryByRole('button', { name: 'Вернуть в запланированные' })).toBeNull()
   unmount()
 
-  // Оплата уже внесена — кнопки нет, подсказка, что сделать сначала
+  // Оплата уже внесена — «Записан» серый, причина — под ним в списке
   backend(appointment(11, 1, '00:05', 'Айгуль С.', { version: 1, status: 'DONE', paidSom: 3000, paymentMethod: 'CASH' }))
   renderApp()
   const paid = await open(/Айгуль С\./)
-  await openMore(paid)
-  expect(within(paid).queryByRole('button', { name: 'Вернуть в запланированные' })).not.toBeInTheDocument()
-  expect(within(paid).getByText(/сначала «Снять отметку оплаты»/)).toBeInTheDocument()
+  await userEvent.click(statusMenu(paid)!)
+  const back = screen.getByRole('menuitemradio', { name: /^Записан/ })
+  expect(back).toBeDisabled()
+  expect(back).toHaveTextContent(/сначала «Снять отметку оплаты»/)
 })
 
 test('до начала приёма — без заметки и материалов («Показать сейчас»); карточка — на весь экран', async () => {
@@ -201,38 +225,91 @@ test('снимки и фото — прямо из карточки приёма
   expect(await within(files).findByRole('region', { name: 'Для Instagram' })).toBeInTheDocument()
 })
 
-test('«Неявка или отмена ▾» — меню из двух пунктов; Esc закрывает меню, а не карточку', async () => {
+test('пилюля статуса: текущий с ✓, допустимые статусы списком; Esc закрывает список, а не карточку', async () => {
   backend(appointment(10, 1, '00:05', 'Бакыт М.', { version: 1 }))
   renderApp()
   const panel = await open(/Бакыт М\./)
-  // Двух красных кнопок под «Перенести» больше нет — одна кнопка с меню
-  expect(within(panel).queryByRole('button', { name: 'Неявка' })).toBeNull()
-  expect(within(panel).queryByRole('button', { name: 'Отменить запись' })).toBeNull()
-  const button = within(panel).getByRole('button', { name: 'Неявка или отмена' })
-  expect(button).toHaveAttribute('aria-haspopup', 'menu')
-  expect(button).toHaveAttribute('aria-expanded', 'false')
-  await userEvent.click(button)
-  expect(button).toHaveAttribute('aria-expanded', 'true')
-  const menu = screen.getByRole('menu', { name: 'Неявка или отмена' })
-  expect(within(menu).getAllByRole('menuitem').map((i) => i.textContent)).toEqual(['Неявка — пациент не пришёл', 'Отменить запись'])
-  expect(within(menu).getByRole('menuitem', { name: /^Неявка/ })).toHaveFocus()
+  // Прежних отдельных кнопок статуса нет
+  expect(within(panel).queryByRole('button', { name: /^Неявка или отмена/ })).toBeNull()
+  expect(within(panel).queryByRole('button', { name: 'Отклонить заявку' })).toBeNull()
+  const pill = statusMenu(panel)!
+  expect(pill).toHaveAccessibleName('Статус: Записан')
+  expect(pill).toHaveAttribute('aria-haspopup', 'menu')
+  await userEvent.click(pill)
+  expect(pill).toHaveAttribute('aria-expanded', 'true')
+  const menu = screen.getByRole('menu', { name: 'Статус приёма' })
+  // Заявкой приём снова не станет — пункта нет
+  expect(within(menu).getAllByRole('menuitemradio').map((i) => i.querySelector('.menu-text')?.firstChild?.textContent))
+    .toEqual(['Записан', 'Подтвердил (придёт)', 'Пришёл', 'Приём состоялся', 'Неявка', 'Отменён'])
+  expect(within(menu).getByRole('menuitemradio', { name: /^Записан/ })).toHaveAttribute('aria-checked', 'true')
+  expect(within(menu).getByRole('menuitemradio', { name: /^Подтвердил/ })).toHaveFocus()
   await userEvent.keyboard('{Escape}')
   expect(screen.queryByRole('menu')).toBeNull()
   expect(screen.getByRole('complementary', { name: 'Карточка приёма' })).toBeInTheDocument()
-  expect(button).toHaveFocus()
+  expect(pill).toHaveFocus()
 })
 
-test('приём на завтра — неявки ещё не бывает: в меню «Отменить ▾» только «Отменить запись»', async () => {
+test('приём на завтра — «Пришёл», «Состоялся» и «Неявка» серые «с дня приёма»; отмена — с вопросом', async () => {
+  const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true)
   const today = appointment(10, 1, '10:00', 'Бакыт М.', { version: 1 })
   const day = 24 * 3600_000
   const tomorrow = { ...today, startAt: new Date(Date.parse(today.startAt) + day).toISOString(), endAt: new Date(Date.parse(today.endAt) + day).toISOString() }
-  backend(tomorrow)
+  const sent = backend(tomorrow)
   server.use(http.get('*/api/appointments/10', () => HttpResponse.json(tomorrow)))
   // Открываем кнопкой бота «Открыть приём» — без листания расписания на завтра
   window.history.replaceState(null, '', '/?appointment=10')
   renderApp()
   const panel = await screen.findByRole('complementary', { name: 'Карточка приёма' })
-  await userEvent.click(await within(panel).findByRole('button', { name: 'Отменить' }))
-  expect(within(screen.getByRole('menu')).getAllByRole('menuitem').map((i) => i.textContent)).toEqual(['Отменить запись'])
+  // Следующего шага до дня приёма нет
+  expect(within(panel).queryByRole('button', { name: 'Пришёл' })).toBeNull()
+  await userEvent.click(await waitForSlow(() => statusMenu(panel)!))
+  for (const name of ['Пришёл', 'Приём состоялся', 'Неявка']) {
+    const item = screen.getByRole('menuitemradio', { name: new RegExp(`^${name}`) })
+    expect(item).toBeDisabled()
+    expect(item).toHaveTextContent('с дня приёма')
+  }
+  await userEvent.click(screen.getByRole('menuitemradio', { name: /^Отменён/ }))
+  expect(confirm).toHaveBeenCalledWith(expect.stringContaining('Отменить запись Бакыт М.? Время освободится.'))
+  expect(await within(panel).findByText('Запись отменена')).toBeInTheDocument()
+  expect(sent).toEqual([{ status: 'CANCELLED' }])
   window.history.replaceState(null, '', '/')
+})
+
+test('следующий шаг одним касанием: «Пришёл» → «Приём состоялся» → «Что сделали сегодня?» и оплата', async () => {
+  // 10:10 по Бишкеку: приём 10:00–10:30 идёт
+  fixNow(`${todayIn()}T10:10:00+06:00`, { frozen: true })
+  const sent = backend(appointment(10, 1, '10:00', 'Бакыт М.', { version: 1 }))
+  renderApp()
+  const panel = await open(/Бакыт М\./)
+  await userEvent.click(within(panel).getByRole('button', { name: 'Пришёл' }))
+  await waitForSlow(() => expect(statusMenu(panel)).toHaveAccessibleName('Статус: Пришёл'))
+  await userEvent.click(within(panel).getByRole('button', { name: 'Приём состоялся' }))
+  await waitForSlow(() => expect(statusMenu(panel)).toHaveAccessibleName('Статус: Приём состоялся'))
+  expect(sent).toEqual([{ arrived: true }, { status: 'DONE' }])
+  // После приёма главная — оплата
+  expect(within(panel).getByRole('button', { name: 'Принять оплату' })).toBeInTheDocument()
+})
+
+test('«Подтвердил (придёт)» в списке — ответ пациента; «Записан» снимает его', async () => {
+  const sent = backend(appointment(10, 1, '23:00', 'Бакыт М.', { version: 1 }))
+  renderApp()
+  const panel = await open(/Бакыт М\./)
+  await pickStatus(panel, 'Подтвердил')
+  await waitForSlow(() => expect(statusMenu(panel)).toHaveAccessibleName('Статус: Подтвердил'))
+  await pickStatus(panel, 'Записан')
+  await waitForSlow(() => expect(statusMenu(panel)).toHaveAccessibleName('Статус: Записан'))
+  expect(sent).toEqual([{ reply: 'CONFIRMED' }, { reply: 'NONE' }])
+})
+
+test('заявка: «Подтвердить» рядом со статусом; «Отменён» в списке — «Отклонить заявку?»', async () => {
+  const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true)
+  const sent = backend(appointment(10, 1, '23:00', 'Бакыт М.', { version: 1, status: 'REQUESTED' }))
+  renderApp()
+  const panel = await open(/Бакыт М\./)
+  expect(statusMenu(panel)).toHaveAccessibleName('Статус: Заявка')
+  expect(within(panel).getByRole('button', { name: 'Подтвердить' })).toHaveClass('primary')
+  await pickStatus(panel, 'Отменён')
+  expect(confirm).toHaveBeenCalledWith('Отклонить заявку? Пациенту придёт сообщение.')
+  expect(await within(panel).findByText('Заявка отклонена')).toBeInTheDocument()
+  expect(sent).toEqual([{ status: 'CANCELLED' }])
 })

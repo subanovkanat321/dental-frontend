@@ -88,17 +88,21 @@ export async function openMore(panel: HTMLElement) {
   await userEvent.click(await within(panel).findByRole('button', { name: /^Ещё/ }))
 }
 
-/** Карточка приёма → кнопка «Неявка или отмена ▾» (до начала приёма — «Отменить ▾»); без `item` — сама кнопка. */
+/** Карточка приёма → пилюля статуса «🟢 Пришёл ▾» (имя «Статус: Пришёл»); без прав — без меню (null). */
 export function statusMenu(panel: HTMLElement) {
-  return within(panel).queryByRole('button', { name: /^(Неявка или отмена|Отменить)$/ })
+  return within(panel).queryByRole('button', { name: /^Статус: / })
 }
 
-/** Карточка приёма → меню «Неявка или отмена» → пункт («Неявка — пациент не пришёл», «Отменить запись»). */
+/**
+ * Карточка приёма → пилюля статуса → статус в списке («Неявка», «Отменён», «Записан», «Приём состоялся»…).
+ * Имя пункта — подпись и мелкая причина под ней («Неявка с дня приёма»), поэтому по умолчанию — по началу.
+ */
 export async function pickStatus(panel: HTMLElement, item: string | RegExp) {
   const button = statusMenu(panel)
-  if (!button) throw new Error('Нет кнопки «Неявка или отмена»')
+  if (!button) throw new Error('Нет пилюли статуса — приём только посмотреть?')
   await userEvent.click(button)
-  await userEvent.click(await screen.findByRole('menuitem', { name: item }))
+  const name = typeof item === 'string' ? new RegExp(`^${item.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`) : item
+  await userEvent.click(await screen.findByRole('menuitemradio', { name }))
 }
 
 /** Строка-раскрывашка (layout/Fold: «Зубы», «Материалы», «Продолжение лечения») — раскрыть, если свёрнута. */

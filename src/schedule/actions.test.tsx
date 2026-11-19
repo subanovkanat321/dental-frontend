@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
 import { todayIn } from '../lib/time'
-import { appointment, me, renderApp, expand, openPay, pickStatus } from '../test/fixtures'
+import { appointment, me, renderApp, expand, openPay, pickStatus, statusMenu } from '../test/fixtures'
 import { server } from '../test/server'
 import { choose } from '../test/select'
 
@@ -50,12 +50,13 @@ test('заявку подтверждают из карточки: уходит 
   const sent = backend([appointment(10, 1, '10:00', 'Бакыт М.', { status: 'REQUESTED', version: 3 })])
   renderApp()
   const panel = await open(/Бакыт М\./)
-  expect(panel).toHaveTextContent('Заявка — подтвердите')
+  expect(statusMenu(panel)).toHaveAccessibleName('Статус: Заявка')
 
   await userEvent.click(within(panel).getByRole('button', { name: 'Подтвердить' }))
-  expect(await within(panel).findByRole('button', { name: 'Приём состоялся' })).toBeInTheDocument()
+  // Следующий шаг: до конца приёма — «Пришёл», после — сразу «Приём состоялся» (зависит от часов)
+  expect(await within(panel).findByRole('button', { name: /^(Пришёл|Приём состоялся)$/ })).toBeInTheDocument()
   expect(sent).toEqual([{ path: 'status', body: { version: 3, status: 'SCHEDULED' } }])
-  expect(panel).not.toHaveTextContent('Заявка — подтвердите')
+  expect(statusMenu(panel)).toHaveAccessibleName('Статус: Записан')
 })
 
 test('приём состоялся — оплата: сумма из цены услуги, способ «Карта»', async () => {
@@ -90,10 +91,10 @@ test('отменить запись — только после подтверж
   renderApp()
   const panel = await open(/Бакыт М\./)
 
-  await pickStatus(panel, 'Отменить запись')
+  await pickStatus(panel, 'Отменён')
   expect(sent).toEqual([])
-  await pickStatus(panel, 'Отменить запись')
-  expect(await within(panel).findByText(/Отменён/)).toBeInTheDocument()
+  await pickStatus(panel, 'Отменён')
+  expect(await within(panel).findByText('Запись отменена')).toBeInTheDocument()
   expect(sent).toEqual([{ path: 'status', body: { version: 0, status: 'CANCELLED' } }])
   confirm.mockRestore()
 })
@@ -279,7 +280,7 @@ test('приём успели изменить в другом окне (409 sta
   await waitFor(() => expect(dayCalls).toBeGreaterThan(before))
 
   await userEvent.click(within(panel).getByRole('button', { name: 'Подтвердить' }))
-  expect(await within(panel).findByRole('button', { name: 'Приём состоялся' })).toBeInTheDocument()
+  expect(await within(panel).findByRole('button', { name: /^(Пришёл|Приём состоялся)$/ })).toBeInTheDocument()
   expect(sent).toEqual([{ version: 3, status: 'SCHEDULED' }, { version: 4, status: 'SCHEDULED' }])
 })
 

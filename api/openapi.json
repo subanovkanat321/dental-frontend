@@ -12150,6 +12150,43 @@
         }
       }
     },
+    "/api/appointments/{id}/arrived" : {
+      "post" : {
+        "tags" : [ "appointment-controller" ],
+        "operationId" : "arrived",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AppointmentRequestsArrived"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AppointmentView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/appointments/report" : {
       "get" : {
         "tags" : [ "report-controller" ],
@@ -21150,6 +21187,10 @@
           },
           "ratingVia" : {
             "type" : "string"
+          },
+          "arrivedAt" : {
+            "type" : "string",
+            "format" : "date-time"
           }
         },
         "required" : [ "chairManual", "debtSom", "doctorId", "endAt", "firstVisit", "id", "patient", "source", "startAt", "status", "version" ]
@@ -24767,6 +24808,18 @@
             "enum" : [ "RU", "KY" ]
           }
         }
+      },
+      "AppointmentRequestsArrived" : {
+        "properties" : {
+          "version" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "arrived" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "arrived", "version" ]
       },
       "ReportControllerRequest" : {
         "properties" : {

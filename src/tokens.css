@@ -144,6 +144,8 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 .s-request { background: var(--req-bg); color: var(--req-ink); }
 .s-wait { background: var(--wait-bg); color: var(--wait-ink); }
 .s-ok { background: var(--ok-bg); color: var(--ok-ink); }
+/* «Пришёл» (V234): пациент в клинике сейчас — бирюзовая мягкая заливка */
+.s-here { background: var(--accent-soft); color: var(--accent-ink); }
 .s-done { background: var(--done-bg); color: var(--done-ink); }
 .s-cashier { background: var(--cash-bg); color: var(--cash-ink); }
 .s-bad { background: var(--bad-bg); color: var(--bad-ink); }

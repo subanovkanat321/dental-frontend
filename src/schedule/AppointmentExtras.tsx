@@ -370,7 +370,7 @@ function SuggestedSupplies({ appointment: a }: { appointment: Appointment }) {
   )
 }
 
-const REPLIES = [['CONFIRMED', 'Придёт'], ['RESCHEDULE', 'Перенос'], ['NO_ANSWER', 'Нет ответа']] as const
+const REPLIES = [['CONFIRMED', 'Подтвердил'], ['RESCHEDULE', 'Перенос'], ['NO_ANSWER', 'Нет ответа']] as const
 
 /**
  * Напомнить о приёме и отметить ответ — как в «Дне» приложения:
@@ -383,7 +383,8 @@ const REPLIES = [['CONFIRMED', 'Придёт'], ['RESCHEDULE', 'Перенос']
  * - уже напоминали (reminderOpenedAt) — у кнопок «Уже напоминали: сегодня в 10:15», нажатие спрашивает
  *   «Отправить ещё раз?» (ответил «Приду» — «Всё равно напомнить?»), и уходит другой текст — повтор
  *   («Напоминаем ещё раз…»: бот сам, WhatsApp/SMS — useRepeatReminderText);
- * - ответ пациента (по телефону, в WhatsApp) — «Придёт / Перенос / Нет ответа», повторное нажатие снимает.
+ * - ответ пациента (по телефону, в WhatsApp) — «Подтвердил / Перенос / Нет ответа» (то же «Подтвердил», что в статусе
+ *   карточки), повторное нажатие снимает.
  */
 export function Remind({ appointment: a }: { appointment: Appointment }) {
   // Один путь с быстрой кнопкой и свайпом в «Дне» (useRemind): бот, WhatsApp с тем же текстом, отметка

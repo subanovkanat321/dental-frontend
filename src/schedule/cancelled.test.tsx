@@ -3,13 +3,13 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import { addDays, slotInstant, timeOf, todayIn } from '../lib/time'
-import { appointment, me, renderApp } from '../test/fixtures'
+import { appointment, me, renderApp, statusMenu } from '../test/fixtures'
 import { server } from '../test/server'
 import { cancelledText, cancelledWhen } from './cancelled'
 
 /**
  * «Было 4 пациента, вижу 2»: отменённые не пропадают молча — внизу дня «Отменено: N ›», раскрыть — кто и
- * когда отменил, нажать — карточка со строкой «Отменён: …» и «Восстановить».
+ * когда отменил, нажать — карточка со строкой «Отменён: …» и «Записан» (восстановить).
  */
 afterEach(() => {
   vi.unstubAllGlobals()
@@ -49,7 +49,7 @@ test('кто и когда отменил — словами', () => {
   expect(cancelledWhen(cancelledNow, { sayToday: true })).toBe(`сегодня ${timeOf(cancelledNow)}`)
 })
 
-test('телефон: внизу дня «Отменено: 2 ›» — раскрыть, кто отменил; нажать — карточка «Отменён: …» и «Восстановить»', async () => {
+test('телефон: внизу дня «Отменено: 2 ›» — раскрыть, кто отменил; нажать — карточка «Отменён: …» и «Записан» (восстановить)', async () => {
   screenWidth(true)
   backend([appointment(10, 1, '10:00', 'Бакыт М.'), byPatient, byStaff])
   localStorage.setItem('crm.schedule.view', '1')
@@ -74,7 +74,8 @@ test('телефон: внизу дня «Отменено: 2 ›» — раск
   await userEvent.click(rows[0]!)
   const panel = await screen.findByRole('complementary', { name: 'Карточка приёма' })
   expect(within(panel).getByText(`Отменён: пациент в боте, сегодня ${timeOf(cancelledNow)}`)).toBeInTheDocument()
-  expect(within(panel).getByRole('button', { name: 'Восстановить' })).toBeInTheDocument()
+  // «Записан» (восстановить) — «Записан» в списке пилюли статуса
+  expect(statusMenu(panel)).toHaveAccessibleName('Статус: Отменён')
 })
 
 test('телефон: в дне только отменённые — «записей нет», но «Отменено: 1» видно', async () => {
@@ -98,7 +99,7 @@ test('компьютер: под сеткой дня «Отменено: 1 ›»
     .toHaveTextContent('15:00Нурлан К. · Айгерим Садыковаотменил(а) Айгерим Садыкова · вчера 18:05') // «Все врачи» — с именем врача
 })
 
-test('карточка старой отмены (до записи «кто») — без строки «Отменён:», «Восстановить» есть', async () => {
+test('карточка старой отмены (до записи «кто») — без строки «Отменён:», «Записан» (восстановить) есть', async () => {
   screenWidth(false)
   const old = appointment(14, 1, '16:00', 'Старая О.', { status: 'CANCELLED' })
   backend([old])
@@ -108,5 +109,6 @@ test('карточка старой отмены (до записи «кто») 
   await userEvent.click(within(screen.getByRole('list', { name: 'Отменённые записи' })).getByRole('button'))
   const panel = await screen.findByRole('complementary', { name: 'Карточка приёма' })
   expect(within(panel).queryByText(/^Отменён:/)).not.toBeInTheDocument()
-  expect(within(panel).getByRole('button', { name: 'Восстановить' })).toBeInTheDocument()
+  // «Записан» (восстановить) — «Записан» в списке пилюли статуса
+  expect(statusMenu(panel)).toHaveAccessibleName('Статус: Отменён')
 })
