@@ -23,6 +23,9 @@ export const server = setupServer(
   // «Кто может давать скидку» (форма оплаты): по умолчанию — только руководитель, и он же вошёл (fixtures.me — админ)
   http.get('*/api/clinic/discounts', () => HttpResponse.json(
     { who: 'ADMIN', maxPercent: 10, canGive: true, myMaxPercent: 100 } satisfies Schemas['DiscountPoliciesPolicy'])),
+  // Диагнозы (шаг 3): подсказки в «Диагнозе» и «Аналитика → Диагнозы за период» — по умолчанию пусто
+  http.get('*/api/diagnoses/suggest', () => HttpResponse.json({ codes: [], own: [] } satisfies Schemas['DiagnosesSuggestions'])),
+  http.get('*/api/diagnoses/report', () => HttpResponse.json([] satisfies Schemas['DiagnosesCodeCount'][])),
   // Долги (полоса «Сегодня», карточка приёма): по умолчанию нет. Без обработчика запрос падал бы обрывом
   // сети — а это плашка «Tish обновляется» (api/updating.ts) поверх того, что проверяет тест
   http.get('*/api/appointments/debts', () => HttpResponse.json([] satisfies Schemas['PaymentQueryDebt'][])),

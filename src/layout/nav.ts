@@ -34,6 +34,8 @@ export function subsOf(page: Page, me: Me): Sub[] {
         isAssistant(me) ? { key: 'recall', title: 'Профосмотр' } : { key: 'comeback', title: 'Позвать снова' },
         // «Бросили лечение» (волна 1, часть B) — рядом с «Позвать снова»; ассистенту нет (в списке суммы, сервер — 403)
         ...(isAssistant(me) ? [] : [{ key: 'dropped', title: 'Бросили лечение' }]),
+        // «Без бота» (2026-11-20) — кого пригласить в бот клиники: напоминания станут бесплатными
+        { key: 'nobot', title: 'Без бота' },
         { key: 'questions', title: 'Вопросы' }, { key: 'tasks', title: 'Задачи' },
         ...(seesRatings(me) ? [{ key: 'ratings', title: 'Оценки' }] : [])]
     case 'cash': {

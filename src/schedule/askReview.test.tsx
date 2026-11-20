@@ -91,7 +91,7 @@ test('пациент в Telegram или уже оценил — кнопки н�
   await user.click(await screen.findByRole('button', { name: /Бакыт М\./ }))
   expect(await screen.findByText(/оценка пациента · по ссылке/)).toBeInTheDocument()
   await user.click(contactMenu(screen.getByRole('complementary', { name: 'Карточка приёма' }))!)
-  expect(screen.getAllByRole('menuitem').map((i) => i.querySelector('.menu-text')?.firstChild?.textContent)).toEqual(['Позвонить', 'Написать в WhatsApp'])
+  expect(screen.getAllByRole('menuitem').map((i) => i.querySelector('.menu-text')?.firstChild?.textContent)).toEqual(['Позвонить', 'Написать в WhatsApp', 'Пригласить в Telegram-бот'])
 })
 
 test('под расписанием: «💬 Попросить отзыв у N пациентов» (не в «Требует внимания») → список с кнопкой WhatsApp у каждого', async () => {

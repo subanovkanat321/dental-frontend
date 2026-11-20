@@ -25,6 +25,7 @@ import { CalmRow } from './CalmList'
 import { TasksTab } from '../tasks/TasksTab'
 import { RatingsTab } from './RatingsTab'
 import { DroppedTab } from './DroppedTab'
+import { NoBotTab } from './NoBotTab'
 
 type Me = Schemas['BookingViewsMe']
 type Row = Schemas['PatientListControllerPatientRow']
@@ -63,7 +64,7 @@ export function PatientsPage({ me, onBook, initialPatient, initialQuestion, init
   // Подраздел (бывшие вкладки): все пациенты, записаны, лист ожидания, «позвать снова», вопросы —
   // в меню слева (на телефоне — лист из заголовка), адрес #/patients/<подраздел>
   const { sub, subTitle } = useSection('patients', me)
-  const tab = sub as 'all' | 'booked' | 'waitlist' | 'recall' | 'comeback' | 'dropped' | 'questions' | 'tasks' | 'ratings'
+  const tab = sub as 'all' | 'booked' | 'waitlist' | 'recall' | 'comeback' | 'dropped' | 'nobot' | 'questions' | 'tasks' | 'ratings'
   const close = useCallback(() => setSelected(null), [])
   // Вопрос пациента справа (вкладка «Вопросы»); открыли карточку пациента — вопрос закрываем, и наоборот
   const [question, setQuestion] = useState<number | null>(initialQuestion ?? null)
@@ -162,6 +163,7 @@ export function PatientsPage({ me, onBook, initialPatient, initialQuestion, init
         {tab === 'tasks' && <TasksTab onOpenPatient={setSelected} initialTask={initialTask} initialDraft={initialTaskDraft} />}
         {tab === 'ratings' && <RatingsTab me={me} onOpenAppointment={onOpenAppointment} onOpenPatient={setSelected} />}
         {tab === 'dropped' && <DroppedTab me={me} onOpen={setSelected} onBook={onBook} />}
+        {tab === 'nobot' && <NoBotTab onOpen={setSelected} />}
         {tab === 'comeback' && <ComebackTab onOpen={setSelected} onBook={onBook} canEditServices={canEditServices(me)} />}
         {tab === 'all' && recent.error && <p className="error">{recent.error.message}</p>}
         {tab === 'all' && recent.isSuccess && sorted.length === 0 && (

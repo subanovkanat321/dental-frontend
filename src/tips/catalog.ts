@@ -72,16 +72,9 @@ export const TIPS: Tip[] = [
   },
   {
     id: 'discount',
-    title: '🏷 Скидка прямо в оплате',
-    text: 'В форме оплаты «＋ Скидка» — процент или сумма и причина. Итог к оплате Tish посчитает сам, скидка будет в квитанции и отчётах.',
+    title: '🏷 Скидка в оплате и «Касса дня»',
+    text: 'В форме оплаты «＋ Скидка» — процент или сумма и причина: итог посчитает Tish. А «Касса → Касса дня» покажет, сколько наличных должно быть в ящике.',
     action: { guide: 'raspisanie/skidka' },
-    show: (me) => Boolean(me.admin),
-  },
-  {
-    id: 'cash-day',
-    title: '💵 Касса дня',
-    text: '«Касса → Касса дня»: остаток на начало, приход, расходы из кассы, внесение и изъятие — и сколько должно быть в ящике вечером.',
-    action: { guide: 'kassa/kassa-dnya' },
     show: (me) => Boolean(me.admin),
   },
   {
@@ -89,6 +82,13 @@ export const TIPS: Tip[] = [
     title: '📄 Шаблон приёма — заметка одной кнопкой',
     text: 'В карточке приёма «📄 Шаблон» заполнит заметку, зубы и план. Свой шаблон — «Сохранить как шаблон» под заметкой.',
     action: { guide: 'raspisanie/shablony-priema' },
+    show: (me) => me.doctorId != null,
+  },
+  {
+    id: 'diagnosis-icd',
+    title: '🩺 Диагноз по МКБ-10 — с подсказками',
+    text: 'В заметке «＋ Диагноз»: печатайте «K02» или «пульп» — Tish подскажет код МКБ-10 и частые формулировки вашей клиники.',
+    action: { guide: 'raspisanie/diagnoz-mkb' },
     show: (me) => me.doctorId != null,
   },
   {
@@ -219,6 +219,13 @@ export const TIPS: Tip[] = [
     text: 'Кто давно не приходил или не записался после плана — список с готовым приглашением в WhatsApp.',
     action: { show: 'patients/comeback' },
     show: (me) => hasSub(me, 'patients', 'comeback'),
+  },
+  {
+    id: 'bot-invite',
+    title: 'Пригласите пациентов в бот — напоминания бесплатно',
+    text: '«📞 Связаться ▾» → «📲 Пригласить в Telegram-бот»: личная ссылка в WhatsApp или SMS. Кого ещё нет в боте — «Пациенты → Без бота».',
+    action: { show: 'patients/nobot' },
+    show: (me) => hasSub(me, 'patients', 'nobot'),
   },
   {
     id: 'dropped',

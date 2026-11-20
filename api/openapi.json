@@ -9113,6 +9113,70 @@
         }
       }
     },
+    "/api/patients/{id}/bot-invite" : {
+      "post" : {
+        "tags" : [ "patient-invite-controller" ],
+        "operationId" : "invite",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PatientInviteControllerBotInvite"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/patients/{id}/bot-invite/sent" : {
+      "post" : {
+        "tags" : [ "patient-invite-controller" ],
+        "operationId" : "sent_1",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PatientInviteControllerSentRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PatientInviteControllerSent"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/patients/shared-contact" : {
       "post" : {
         "tags" : [ "patient-controller" ],
@@ -9744,7 +9808,7 @@
     "/api/members/invite" : {
       "post" : {
         "tags" : [ "staff-members-controller" ],
-        "operationId" : "invite",
+        "operationId" : "invite_1",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -10609,7 +10673,7 @@
     "/api/doctors/{id}/invite" : {
       "post" : {
         "tags" : [ "doctor-controller" ],
-        "operationId" : "invite_1",
+        "operationId" : "invite_2",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -10684,7 +10748,7 @@
     "/api/comebacks/{patientId}/invite" : {
       "post" : {
         "tags" : [ "comeback-controller" ],
-        "operationId" : "invite_2",
+        "operationId" : "invite_3",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "path",
@@ -13115,7 +13179,7 @@
     "/web/referral" : {
       "get" : {
         "tags" : [ "referral-controller" ],
-        "operationId" : "invite_3",
+        "operationId" : "invite_4",
         "parameters" : [ {
           "name" : "code",
           "in" : "query",
@@ -15314,6 +15378,51 @@
                   "items" : {
                     "$ref" : "#/components/schemas/PatientListControllerPatientRow"
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/patients/no-bot" : {
+      "get" : {
+        "tags" : [ "bot-coverage-controller" ],
+        "operationId" : "noBot",
+        "parameters" : [ {
+          "name" : "invited",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean",
+            "default" : true
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/BotCoverageControllerNoBot"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/patients/bot-coverage" : {
+      "get" : {
+        "tags" : [ "bot-coverage-controller" ],
+        "operationId" : "coverage",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/BotCoverageControllerCoverage"
                 }
               }
             }
@@ -20417,6 +20526,10 @@
               "type" : "integer",
               "format" : "int64"
             }
+          },
+          "botInvitedAt" : {
+            "type" : "string",
+            "format" : "date-time"
           }
         },
         "required" : [ "fullName", "id", "telegram" ]
@@ -24671,6 +24784,48 @@
             "format" : "int64"
           }
         }
+      },
+      "PatientInviteControllerBotInvite" : {
+        "properties" : {
+          "url" : {
+            "type" : "string"
+          },
+          "expiresAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "textRu" : {
+            "type" : "string"
+          },
+          "textKy" : {
+            "type" : "string"
+          },
+          "guardian" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "expiresAt", "guardian", "textKy", "textRu", "url" ]
+      },
+      "PatientInviteControllerSentRequest" : {
+        "properties" : {
+          "channel" : {
+            "type" : "string",
+            "enum" : [ "WHATSAPP", "SMS", "COPY" ]
+          },
+          "lang" : {
+            "type" : "string",
+            "enum" : [ "RU", "KY" ]
+          }
+        }
+      },
+      "PatientInviteControllerSent" : {
+        "properties" : {
+          "invitedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "invitedAt" ]
       },
       "SharedContactRequest" : {
         "properties" : {
@@ -29530,6 +29685,67 @@
           }
         },
         "required" : [ "id", "telegram" ]
+      },
+      "BotCoverageControllerCoverage" : {
+        "properties" : {
+          "inBot" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "total" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "percent" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "inBot", "percent", "total" ]
+      },
+      "BotCoverageControllerNoBot" : {
+        "properties" : {
+          "coverage" : {
+            "$ref" : "#/components/schemas/BotCoverageControllerCoverage"
+          },
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/BotCoverageControllerNoBotRow"
+            }
+          }
+        },
+        "required" : [ "coverage", "items" ]
+      },
+      "BotCoverageControllerNoBotRow" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "fullName" : {
+            "type" : "string"
+          },
+          "phone" : {
+            "type" : "string"
+          },
+          "guardianName" : {
+            "type" : "string"
+          },
+          "lastVisit" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "nextVisit" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "invitedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "fullName", "id" ]
       },
       "BookingViewsPromo" : {
         "properties" : {
