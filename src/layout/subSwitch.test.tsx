@@ -110,7 +110,7 @@ test('Настройки (с 2026-11-13 — вкладками): «⌄» — л�
   renderApp()
   await userEvent.click(within(await tabs('Настройки')).getByRole('button', { name: 'Все подразделы: Настройки' }))
   const sheet = screen.getByRole('dialog', { name: 'Подразделы: Настройки' })
-  expect([...sheet.querySelectorAll('.nav-group')].map((p) => p.textContent)).toEqual(['Что получают пациенты', 'Аккаунт клиники'])
+  expect([...sheet.querySelectorAll('.nav-group')].map((p) => p.textContent)).toEqual(['Что получают пациенты', 'Карточка пациента', 'Аккаунт клиники'])
   for (const a of within(sheet).getAllByRole('link')) expect(a.querySelector('svg.sub-ico')).toHaveAttribute('aria-hidden', 'true')
   await userEvent.click(within(sheet).getByRole('link', { name: 'Тариф и оплата' }))
   expect(window.location.hash).toBe('#/settings/plan')

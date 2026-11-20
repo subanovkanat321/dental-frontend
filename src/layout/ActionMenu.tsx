@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useId, useRef, useState, type KeyboardEvent, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react'
+import { Fragment, useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 
 import { useBack } from '../lib/back'
@@ -25,6 +25,101 @@ export type ActionItem = {
 
 const PHONE = '(max-width: 640px)'
 const isPhone = () => typeof window.matchMedia === 'function' && window.matchMedia(PHONE).matches
+
+/** ↑/↓ — по пунктам меню (по кругу). */
+function moveFocus(e: KeyboardEvent, menu: HTMLElement | null) {
+  if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return
+  e.preventDefault()
+  const list = [...(menu?.querySelectorAll<HTMLButtonElement>('[role^=menuitem]:not(:disabled)') ?? [])]
+  const at = list.indexOf(document.activeElement as HTMLButtonElement)
+  list[(at + (e.key === 'ArrowDown' ? 1 : list.length - 1)) % list.length]?.focus()
+}
+
+/** Пункты меню с подзаголовками групп: общие у кнопки-меню (ActionMenu) и меню по месту (ActionPopup). onPick — закрыть меню. */
+function MenuItems({ items, onPick }: { items: ActionItem[]; onPick: () => void }) {
+  return (
+    <>
+      {items.map((i, at) => (
+        <Fragment key={`${i.group ?? ''}-${i.label}`}>
+          {i.group && i.group !== items[at - 1]?.group && <div className="menu-group" role="presentation">{i.group}</div>}
+          {(() => {
+            const className = ['menu-item', i.danger && 'danger', i.checked && 'checked'].filter(Boolean).join(' ')
+            const inner = (
+              <>
+                {i.icon && <span className="menu-emoji" aria-hidden="true">{i.icon}</span>}
+                {i.hint ? <span className="menu-text"><span>{i.label}</span>{' '}<span className="menu-hint">{i.hint}</span></span> : <span className="menu-text">{i.label}</span>}
+                {i.checked && <span className="menu-check" aria-hidden="true">✓</span>}
+              </>
+            )
+            return i.href && !i.disabled
+              ? <a role="menuitem" className={className} href={i.href} onClick={(e) => { onPick(); i.onSelect(e) }}>{inner}</a>
+              : (
+                <button type="button" role={i.checked === undefined ? 'menuitem' : 'menuitemradio'} aria-checked={i.checked}
+                  className={className} disabled={i.disabled} onClick={() => { onPick(); i.onSelect() }}>{inner}</button>
+              )
+          })()}
+        </Fragment>
+      ))}
+    </>
+  )
+}
+
+/**
+ * Меню действий по месту, без своей кнопки: правая кнопка мыши или «⋯» на записи в сетке (at — точка, где открыть),
+ * долгое нажатие на строку в списке дня (at = null). Телефон и at = null — нижний лист, как у ActionMenu (фон, свайп
+ * вниз, «назад» закрывают); компьютер — список у точки, не выходя за край окна. Esc — закрыть; ↑/↓ — по пунктам.
+ */
+export function ActionPopup({ label, title, items, at, onClose }: {
+  label: string
+  /** Заголовок над пунктами (о чём меню: «10:00 · Бакыт Т.») — меню по месту без кнопки, иначе непонятно, чьё оно */
+  title?: string
+  items: ActionItem[]
+  at: { x: number; y: number } | null
+  onClose: () => void
+}) {
+  const [sheet] = useState(() => at == null || isPhone())
+  const menu = useRef<HTMLDivElement>(null)
+  const [pos, setPos] = useState<{ left: number; top: number } | null>(null)
+  useBack(onClose)
+  useSwipeDown(menu, sheet ? onClose : null)
+  useLayoutEffect(() => {
+    if (sheet || !at || !menu.current) return
+    const r = menu.current.getBoundingClientRect()
+    const left = Math.max(8, Math.min(at.x, window.innerWidth - r.width - 8))
+    const top = at.y + r.height > window.innerHeight - 8 ? Math.max(8, at.y - r.height) : at.y
+    setPos({ left, top })
+  }, [sheet, at])
+  useEffect(() => {
+    const back = document.activeElement as HTMLElement | null
+    menu.current?.querySelector<HTMLButtonElement>('[role^=menuitem]:not(:disabled):not([aria-checked=true])')?.focus({ preventScroll: true })
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      if (e.key !== 'Escape') return
+      e.stopPropagation()
+      e.preventDefault()
+      onClose()
+    }
+    const onDown = (e: PointerEvent) => {
+      if (menu.current?.contains(e.target as Node)) return
+      onClose()
+    }
+    document.addEventListener('keydown', onKey, true)
+    if (!sheet) document.addEventListener('pointerdown', onDown)
+    return () => {
+      document.removeEventListener('keydown', onKey, true)
+      document.removeEventListener('pointerdown', onDown)
+      if (back?.isConnected) back.focus?.({ preventScroll: true })
+    }
+  }, [sheet, onClose])
+  const list = (
+    <div ref={menu} role="menu" aria-label={label} className={sheet ? 'pop-menu action-menu sheet' : 'pop-menu action-menu at-point'}
+      style={sheet ? undefined : { position: 'fixed', left: pos?.left ?? at?.x, top: pos?.top ?? at?.y, visibility: pos ? undefined : 'hidden' }}
+      onKeyDown={(e) => moveFocus(e, menu.current)}>
+      {title && <div className="menu-title" role="presentation">{title}</div>}
+      <MenuItems items={items} onPick={onClose} />
+    </div>
+  )
+  return createPortal(sheet ? <div className="ui-select-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>{list}</div> : list, document.body)
+}
 
 /**
  * Кнопка с меню действий: пилюля статуса приёма «🟢 Пришёл ▾», «📞 Связаться ▾». Компьютер — список под кнопкой, телефон — нижний лист
@@ -87,37 +182,11 @@ export function ActionMenu({ label, items, className = 'btn', disabled, content,
     }
   }, [open, sheet])
 
-  const onMenuKey = (e: KeyboardEvent) => {
-    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return
-    e.preventDefault()
-    const list = [...(menu.current?.querySelectorAll<HTMLButtonElement>('[role^=menuitem]:not(:disabled)') ?? [])]
-    const at = list.indexOf(document.activeElement as HTMLButtonElement)
-    list[(at + (e.key === 'ArrowDown' ? 1 : list.length - 1)) % list.length]?.focus()
-  }
+  const onMenuKey = (e: KeyboardEvent) => moveFocus(e, menu.current)
 
   const list = (
     <div ref={menu} id={id} role="menu" aria-label={label} className={['pop-menu action-menu', sheet && 'sheet', !sheet && up && 'up', !sheet && align === 'right' && 'right'].filter(Boolean).join(' ')} onKeyDown={onMenuKey}>
-      {items.map((i, at) => (
-        <Fragment key={`${i.group ?? ''}-${i.label}`}>
-          {i.group && i.group !== items[at - 1]?.group && <div className="menu-group" role="presentation">{i.group}</div>}
-          {(() => {
-            const className = ['menu-item', i.danger && 'danger', i.checked && 'checked'].filter(Boolean).join(' ')
-            const inner = (
-              <>
-                {i.icon && <span className="menu-emoji" aria-hidden="true">{i.icon}</span>}
-                {i.hint ? <span className="menu-text"><span>{i.label}</span>{' '}<span className="menu-hint">{i.hint}</span></span> : <span className="menu-text">{i.label}</span>}
-                {i.checked && <span className="menu-check" aria-hidden="true">✓</span>}
-              </>
-            )
-            return i.href && !i.disabled
-              ? <a role="menuitem" className={className} href={i.href} onClick={(e) => { close(false); i.onSelect(e) }}>{inner}</a>
-              : (
-                <button type="button" role={i.checked === undefined ? 'menuitem' : 'menuitemradio'} aria-checked={i.checked}
-                  className={className} disabled={i.disabled} onClick={() => { close(false); i.onSelect() }}>{inner}</button>
-              )
-          })()}
-        </Fragment>
-      ))}
+      <MenuItems items={items} onPick={() => close(false)} />
     </div>
   )
 

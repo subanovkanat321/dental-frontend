@@ -31,7 +31,15 @@ export type SwipeActions = {
   /** Нет — жест вправо неактивен */
   right?: () => void
   left?: () => void
+  /**
+   * Долгое нажатие (палец лежит LONG_MS и не сдвинулся на SLOP) — меню быстрых действий. Сдвинулся — это свайп или
+   * прокрутка, таймер снимается; сработало — жест закончен (свайпа уже не будет), клик после него глушим.
+   */
+  long?: () => void
 }
+
+/** Долгое нажатие — как в системных меню телефона */
+export const LONG_MS = 500
 
 type Sample = { x: number; t: number }
 type Gesture = { id: number; x0: number; y0: number; dx: number; side: 'right' | 'left' | null; width: number; samples: Sample[] }
@@ -60,6 +68,14 @@ export function useRowSwipe(ref: RefObject<HTMLElement | null>, enabled: boolean
     if (!enabled || !el) return
     let g: Gesture | null = null
     let swallowUntil = 0
+    let timer: ReturnType<typeof setTimeout> | undefined
+    // Сработало долгое нажатие, палец ещё лежит: отпускание не должно стать кликом — ни по строке, ни по пункту
+    // открывшегося под пальцем листа
+    let longFired = false
+    const stopTimer = () => {
+      if (timer !== undefined) clearTimeout(timer)
+      timer = undefined
+    }
 
     const paint = (dx: number, side: 'right' | 'left' | null, armed: boolean) => {
       if (side) el.dataset.swipe = side
@@ -83,6 +99,18 @@ export function useRowSwipe(ref: RefObject<HTMLElement | null>, enabled: boolean
       if (t.clientX <= EDGE) return
       const width = el.getBoundingClientRect().width || window.innerWidth
       g = { id: t.identifier, x0: t.clientX, y0: t.clientY, dx: 0, side: null, width, samples: [{ x: t.clientX, t: swipeClock.now() }] }
+      stopTimer()
+      if (latest.current.long) {
+        timer = setTimeout(() => {
+          timer = undefined
+          if (!g || g.side) return
+          // Жест закончен: дальнейшее движение пальца не станет свайпом, а отпускание — кликом по строке
+          g = null
+          longFired = true
+          swallowUntil = Date.now() + 700
+          latest.current.long?.()
+        }, LONG_MS)
+      }
     }
 
     const onMove = (e: TouchEvent) => {
@@ -95,6 +123,7 @@ export function useRowSwipe(ref: RefObject<HTMLElement | null>, enabled: boolean
       if (g.samples.length > 12) g.samples.shift()
       if (!g.side) {
         if (Math.abs(dx) < SLOP && Math.abs(dy) < SLOP) return
+        stopTimer()
         const side = dx > 0 ? 'right' : 'left'
         // Круче 30° — прокрутка; вбок без действия на этой стороне — не наш жест
         if (Math.abs(dy) > Math.abs(dx) * TAN_MAX_ANGLE || !latest.current[side]) {
@@ -111,6 +140,13 @@ export function useRowSwipe(ref: RefObject<HTMLElement | null>, enabled: boolean
     }
 
     const onEnd = (e: TouchEvent) => {
+      stopTimer()
+      if (longFired) {
+        longFired = false
+        // Без синтетических мыши и клика после касания (они попали бы в пункт листа под пальцем)
+        if (e.cancelable) e.preventDefault()
+        swallowClicks()
+      }
       const gesture = g
       g = null
       if (!gesture?.side) return
@@ -127,6 +163,8 @@ export function useRowSwipe(ref: RefObject<HTMLElement | null>, enabled: boolean
     }
 
     const onCancel = () => {
+      stopTimer()
+      longFired = false
       const gesture = g
       g = null
       if (gesture?.side) release()
@@ -147,7 +185,33 @@ export function useRowSwipe(ref: RefObject<HTMLElement | null>, enabled: boolean
     el.addEventListener('touchend', onEnd)
     el.addEventListener('touchcancel', onCancel)
     el.addEventListener('click', onClick, true)
+    // Android сам шлёт contextmenu по долгому нажатию (и правая кнопка мыши): системное меню не нужно — наше уже открыто
+    // таймером или откроется сейчас (мышь)
+    // Клик сразу после долгого нажатия — по всему документу (лист открылся поверх строки): глушим один раз
+    const swallowClicks = () => {
+      const until = Date.now() + 700
+      const onDocClick = (ev: MouseEvent) => {
+        document.removeEventListener('click', onDocClick, true)
+        if (Date.now() > until) return
+        ev.preventDefault()
+        ev.stopPropagation()
+      }
+      document.addEventListener('click', onDocClick, true)
+      setTimeout(() => document.removeEventListener('click', onDocClick, true), 700)
+    }
+    const onContext = (e: MouseEvent) => {
+      if (!latest.current.long || !(e.target instanceof Element) || !e.target.closest('.row-slide')) return
+      e.preventDefault()
+      if (Date.now() < swallowUntil) return
+      stopTimer()
+      g = null
+      swallowUntil = Date.now() + 700
+      latest.current.long()
+    }
+    el.addEventListener('contextmenu', onContext)
     return () => {
+      stopTimer()
+      el.removeEventListener('contextmenu', onContext)
       release()
       el.removeEventListener('touchstart', onStart)
       el.removeEventListener('touchmove', onMove)

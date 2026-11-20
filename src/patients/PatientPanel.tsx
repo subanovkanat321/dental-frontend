@@ -30,6 +30,7 @@ import { Loading } from '../layout/Loading'
 import { OpeningDebtsBox } from '../cash/OpeningDebts'
 import { EmptyState } from '../layout/EmptyState'
 import { PlanProgressLine } from '../medical/PlanProgress'
+import { PatientTagsLine } from '../tags/TagDots'
 
 type Me = Schemas['BookingViewsMe']
 type Patient = Schemas['PatientView']
@@ -150,7 +151,15 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
     .sort((x, y) => Date.parse(x.startAt) - Date.parse(y.startAt))[0]
   const debtRows = (debts.data ?? []).filter((d) => debtLine(d))
   const debtTotal = debtRows.reduce((sum, d) => sum + d.debtSom, 0)
+  // Просрочен (обещал и не оплатил) — тот же красный, но с подсказкой
   const overdue = debtRows.some((d) => debtLine(d)?.tone === 'bad')
+  // Деньги одной строкой в шапке: «Долг 4 000 · оплачено 52 000». Оплачено — за все приёмы с сервера (null — денег этого
+  // пациента не видно: ассистент, коллега без прав); долг — тот же, что во вкладке «Деньги»
+  const paidTotal = card.data.paidSom ?? null
+  const moneyLine = debtTotal > 0 || (paidTotal ?? 0) > 0
+  // Лечащий врач — врач последнего состоявшегося приёма (past — последний первым). Только когда врачей больше одного
+  const treating = many ? past.find((a) => a.status === 'DONE' && a.doctorId != null) : undefined
+  const treatingName = treating ? doctorName(treating.doctorId) : undefined
   // «📞 Связаться ▾» — как в карточке приёма: позвонить, WhatsApp; есть долг — «Напомнить о долге» (форма во вкладке «Деньги»)
   const remindsDebt = debtRows.length > 0 && patient?.id != null && seesDebts(me)
   const contacts: ContactItem[] = [
@@ -182,6 +191,23 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
             {` · ${patient?.telegram ? 'пишет боту' : 'без бота — WhatsApp'}`}
           </span>
           <KidInfo patient={patient} />
+          {/* Свои метки клиники (V239): чипы; руководитель и регистратура нажимают — список с ✓ */}
+          {patient && <PatientTagsLine patient={patient} me={me} />}
+          {(moneyLine || treatingName) && (
+            <div className="patient-facts">
+              {moneyLine && (
+                <p className="patient-money-line num">
+                  {debtTotal > 0 && (
+                    <button type="button" className="link patient-debt" onClick={() => setTab('money')}
+                      title={overdue ? "Просрочен срок «обещал оплатить»" : undefined} aria-label={`Долг ${somText(debtTotal)} — открыть «Деньги»`}>Долг {somText(debtTotal)}</button>
+                  )}
+                  {debtTotal > 0 && (paidTotal ?? 0) > 0 && <span className="hint"> · </span>}
+                  {(paidTotal ?? 0) > 0 && <span className="hint">оплачено {somText(paidTotal!)}</span>}
+                </p>
+              )}
+              {treatingName && <p className="hint patient-treating">Лечащий врач: {treatingName}</p>}
+            </div>
+          )}
         </div>
         <div className="panel-head-actions">
           {/* Редкие действия — в «⋯»: договор с пациентом (по желанию клиники, V209) */}
@@ -201,12 +227,11 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
         <ContactMenu items={contacts} />
       </div>
 
-      {/* Сводка: визиты (и неявки), ближайшая запись, долг */}
+      {/* Сводка: визиты (и неявки), ближайшая запись; долг — строкой денег в шапке */}
       <dl className="patient-summary">
         <div><dt>Визитов</dt><dd><span className="num">{done ?? 0}</span>
           {(noShow ?? 0) > 0 && <span className="summary-bad">не пришёл <span className="num">{noShow}</span></span>}</dd></div>
         <div><dt>Следующий</dt><dd>{next ? <span className="num">{shortDate(next.startAt, true)}</span> : 'не записан'}</dd></div>
-        {debtTotal > 0 && <div className={overdue ? 'tone-bad' : 'tone-wait'}><dt>Долг</dt><dd className="num">{somText(debtTotal)}</dd></div>}
       </dl>
       {/* Прогресс плана лечения — тем, кто видит медкарту (сервер: ChartService); суммы — не ассистенту */}
       {patient && <PlanProgressLine patientId={patient.id} enabled={clinical} />}

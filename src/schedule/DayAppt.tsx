@@ -2,6 +2,7 @@ import { memo } from 'react'
 
 import type { Schemas } from '../api/client'
 import { timeOf } from '../lib/time'
+import { TagDots } from '../tags/TagDots'
 import { ApptBadges } from './ApptBadges'
 import { MAX_BADGES, narrowAppt } from './badges'
 import { colleagueTimeOf } from './chairTime'
@@ -18,7 +19,7 @@ type Appointment = Schemas['AppointmentView']
  * сохраняет тот же объект, если приём не изменился), выбор или раскладка. Все props — значения или
  * стабильные функции (onOpen — useCallback, hover — из хранилища наведения).
  */
-export const DayAppt = memo(function DayAppt({ a, date, from, limit, active, money, chairTime, hover, onOpen }: {
+export const DayAppt = memo(function DayAppt({ a, date, from, limit, active, money, chairTime, hover, onOpen, onQuick }: {
   a: Appointment
   date: string
   /** Минута, с которой начинается сетка. */
@@ -31,6 +32,8 @@ export const DayAppt = memo(function DayAppt({ a, date, from, limit, active, mon
   chairTime: Schemas['SlotsViewChairTime'][] | undefined
   hover: ReturnType<typeof useApptHover>['bind']
   onOpen: (id: number) => void
+  /** Меню быстрых действий: правая кнопка мыши или «⋯» (у точки) — стабильная функция (useCallback) */
+  onQuick?: (a: Appointment, at: { x: number; y: number }) => void
 }) {
   const s = statusOf(a)
   // Через полночь: в своём дне — целиком (сетка продлена после 24:00) или, если сетка и так на сутки
@@ -43,9 +46,11 @@ export const DayAppt = memo(function DayAppt({ a, date, from, limit, active, mon
   const h = Math.max((endMin - startMin) * PX - 2, carried || continues ? 24 : 22)
   const short = h < SHORT
   return (
+    <>
     <button type="button" className={`appt s-${s.kind}${short ? ' short' : ''}${active ? ' active' : ''}${carried ? ' carried' : ''}${continues ? ' continues' : ''}`}
       style={{ top, height: h }} {...hover(a)}
       onClick={() => onOpen(a.id)}
+      onContextMenu={onQuick ? (e) => { e.preventDefault(); e.stopPropagation(); onQuick(a, { x: e.clientX, y: e.clientY }) } : undefined}
       aria-label={`${carried ? 'со вчера ' : ''}${timeOf(a.startAt)}–${timeOf(a.endAt)}, ${a.patient.fullName}: ${s.label}`}>
       {/* Обёртка — для широкого блока (один врач на экране): там она сеткой «время | имя и услуга | значки и статус»
           (container query в crm.css). В узком блоке она display: contents — раскладка прежняя.
@@ -57,7 +62,7 @@ export const DayAppt = memo(function DayAppt({ a, date, from, limit, active, mon
             ? <span className="appt-until appt-cut">→ до {timeOf(a.endAt)}</span>
             : <span className={`appt-until${short ? ' wide-only' : ''}`}>–{timeOf(a.endAt)}</span>}
         </span>
-        <span className="appt-name">{a.patient.fullName}</span>
+        <span className="appt-name"><TagDots patient={a.patient} />{a.patient.fullName}</span>
         <ApptBadges appointment={a} money={money} chair={colleagueTimeOf(a, chairTime)} max={narrowAppt(a) ? 1 : MAX_BADGES} />
         {/* Статус словом и у короткого приёма: цвет без слова не читается (FINDING-002) */}
         <span className={`appt-state${short || h > 56 ? '' : ' wide-only'}`}><span className="ico" aria-hidden="true">{s.icon}</span> {s.label}</span>
@@ -70,5 +75,17 @@ export const DayAppt = memo(function DayAppt({ a, date, from, limit, active, mon
         </span>
       </span>
     </button>
+    {/* «⋯» — меню быстрых действий: соседом блока (кнопка в кнопке недопустима), в правом нижнем углу; видна при
+        наведении на запись и с клавиатуры, на сенсорном экране — всегда (crm.css) */}
+    {onQuick && (
+      <button type="button" className="appt-more" style={{ top: top + h - 24 }} aria-label="Быстрые действия с записью"
+        title="Действия" onClick={(e) => {
+          // Колонка сетки по нажатию открывает новую запись — до неё нажатие не доходит
+          e.stopPropagation()
+          const r = e.currentTarget.getBoundingClientRect()
+          onQuick(a, { x: r.left, y: r.bottom + 4 })
+        }}>⋯</button>
+    )}
+    </>
   )
 })

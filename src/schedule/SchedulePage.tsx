@@ -29,6 +29,7 @@ import { OffDaysHint } from './OffDaysHint'
 import './doctorChips.css'
 import { colorOf as doctorColor, initials, specialtyOf } from '../lib/avatars'
 import { NewAppointmentPanel, type Slot } from './NewAppointmentPanel'
+import { QuickMenu } from './QuickMenu'
 import { DAY, fromYesterday, gridRange, hourLabel, offSpans, slotsHoursText, workSpans } from './workSpans'
 import { statusOf } from './status'
 import { PAD, PX, useFitToWindow, useNowMinutes } from './gridScale'
@@ -55,7 +56,7 @@ type Appointment = Schemas['AppointmentView']
 /** Расписание само перечитывается раз в минуту: кто-то записал с телефона — видно без F5. */
 const REFRESH_MS = 60_000
 
-type Side = { kind: 'appointment'; id: number; fallback?: Appointment } | { kind: 'new'; slot: Slot; patient?: Schemas['PatientView']; contact?: SharedContact } | null
+type Side = { kind: 'appointment'; id: number; fallback?: Appointment; intent?: 'move' | 'pay' } | { kind: 'new'; slot: Slot; patient?: Schemas['PatientView']; contact?: SharedContact } | null
 
 /** Имя и номер контакта, присланного боту (кнопка «📅 Записать», ?contact=токен). */
 export type SharedContact = Schemas['SharedContactsContact']
@@ -353,7 +354,7 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
 
   /** Пустое место в колонке врача → «Новая запись» на это время, вниз до 15 минут. */
   const pick = (doctorId: number) => (e: MouseEvent<HTMLDivElement>) => {
-    if ((e.target as HTMLElement).closest('.appt, .grid-free, .grid-chair')) return
+    if ((e.target as HTMLElement).closest('.appt, .appt-more, .grid-free, .grid-chair')) return
     // Расписание коллеги — только просмотр: записать к нему может он сам, регистратура или админ
     if (!canEditDoctor(me, doctorId)) return
     const y = e.clientY - e.currentTarget.getBoundingClientRect().top - PAD
@@ -404,8 +405,13 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
 
   // Всплывающая карточка приёма при наведении мышью (компьютер) — общая для «Дня»
   const hover = useApptHover(me, (id) => doctors.find((d) => d.id === id)?.fullName ?? '')
+  const hide = hover.hide
   // Нажали на блок приёма — карточка справа; стабильная функция, чтобы DayAppt (memo) не перерисовывался
   const openAppt = useCallback((id: number) => setSide({ kind: 'appointment', id }), [])
+  // Меню быстрых действий на записи: «⋯» или правая кнопка в сетке (у точки), долгое нажатие в списке дня (лист снизу)
+  const [quick, setQuick] = useState<{ a: Appointment; at: { x: number; y: number } | null } | null>(null)
+  const openQuick = useCallback((a: Appointment, at: { x: number; y: number } | null) => { hide(); setQuick({ a, at }) }, [hide])
+  const closeQuick = useCallback(() => setQuick(null), [])
 
   // Чьё расписание. Телефон: переключателя «День | Месяц» нет — месяц открывается нажатием на дату (лист снизу)
   const doctorSwitch = doctors.length > 1 && (narrow || doctors.length > MAX_CHIPS ? (
@@ -592,7 +598,7 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
             all={view === 'all' && doctors.length > 1}
             doctorsNote={partial || offHidden.length ? <>{partial && <span className="shown-of">{partial.replace(/^./, (c) => c.toUpperCase())}</span>}{partial && offHidden.length ? ' · ' : ''}{offHint}</> : undefined}
             onNewHere={bookable.length > 0 ? newHere : undefined}
-            onOpen={(a) => setSide({ kind: 'appointment', id: a.id, fallback: a })}
+            onOpen={(a) => setSide({ kind: 'appointment', id: a.id, fallback: a })} onQuick={openQuick}
             onNew={(doctorId, minutes) => setSide({ kind: 'new', slot: { doctorId, date, minutes } })} />
         ) : monthMode ? (
           <MonthGrid month={month} today={today} selected={date} data={monthData} compact={narrow}
@@ -708,7 +714,7 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
                     {q?.error && <div className="error grid-loading">{q.error.message}</div>}
                     {(q?.data ?? []).filter((a) => a.status !== 'CANCELLED').map((a) => (
                       <DayAppt key={a.id} a={a} date={date} from={from} limit={limit} active={selected?.id === a.id} money={seesMoneyOf(me, a.doctorId)}
-                        chairTime={sl?.chairTime} hover={hover.bind} onOpen={openAppt} />
+                        chairTime={sl?.chairTime} hover={hover.bind} onOpen={openAppt} onQuick={openQuick} />
                     ))}
                   </div>
                 )
@@ -735,12 +741,18 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
           reviewAsks={date === today ? reviewAsks : 0} onReviewAsks={() => setReviewAsksOpen(true)} />
       )}
       {/* key: другой приём — новая карточка, формы и «Вернуть» прежнего не переносятся */}
-      {selected && <AppointmentPanel key={selected.id} appointment={selected} me={me} onClose={close} onOpenPatient={onOpenPatient}
+      {selected && <AppointmentPanel key={`${selected.id}-${side?.kind === 'appointment' ? side.intent ?? '' : ''}`} appointment={selected} me={me} onClose={close} onOpenPatient={onOpenPatient}
+        intent={side?.kind === 'appointment' ? side.intent : undefined}
         onMedical={(patient, tab) => setMedical({ patient, from: selected.id, tab })}
         onBook={(slot, patient) => setSide({ kind: 'new', slot, patient })} />}
       {side?.kind === 'new' && (
         <NewAppointmentPanel slot={side.slot} me={me} initialPatient={side.patient} initialContact={side.contact} nowDoctorId={firstBookable()?.id} onClose={close}
           onCreated={(a) => setSide({ kind: 'appointment', id: a.id, fallback: a })} />
+      )}
+      {quick && (
+        <QuickMenu key={quick.a.id} appointment={withCarried.find((x) => x.id === quick.a.id) ?? quick.a} me={me} at={quick.at} onClose={closeQuick}
+          onOpen={(a, intent) => setSide({ kind: 'appointment', id: a.id, fallback: a, intent })}
+          onOpenPatient={onOpenPatient} onBook={(slot, patient) => setSide({ kind: 'new', slot, patient })} />
       )}
       {reviewAsksOpen && <ReviewAsksDialog doctorName={doctorName} onClose={() => setReviewAsksOpen(false)} />}
     </div>

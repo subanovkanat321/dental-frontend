@@ -1,5 +1,6 @@
 import type { MouseEvent } from 'react'
 
+import type { ActionItem } from '../layout/ActionMenu'
 import { contactPhone } from '../lib/guardian'
 import { inTelegram, openLink } from '../lib/telegram'
 import { formatPhone } from '../lib/time'
@@ -32,4 +33,12 @@ export function talkItems(patient: Parameters<typeof contactPhone>[0], { whatsap
     },
     ...(whatsapp ? [{ label: 'Написать в WhatsApp', group: 'contact' as const, icon: '💬', onSelect: () => openLink(`https://wa.me/${phone}`) }] : []),
   ]
+}
+
+/** Пункты «Связаться ▾» как пункты меню (с подзаголовками групп) — для ContactMenu и меню быстрых действий на записи. */
+export function contactActionItems(items: ContactItem[]): ActionItem[] {
+  return items.map((i) => ({
+    label: i.label, icon: i.icon, hint: i.hint, disabled: i.disabled, onSelect: i.onSelect, href: i.href,
+    group: i.group === 'contact' ? 'Связаться' : 'Отправить пациенту',
+  }))
 }
