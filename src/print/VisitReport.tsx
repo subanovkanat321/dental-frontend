@@ -10,8 +10,8 @@ import { whatsappUrl } from '../lib/texts'
 import { shortDate } from '../lib/time'
 import { canPrint, docDate } from './paper'
 import { PrintSheet } from './PrintSheet'
-import { MemoDocs, MemoSheet } from './VisitDocs'
-import { ChannelSwitch, MessagePreview, type Channel } from './MessagePreview'
+import { MemoDocs, MemoPaper, MemoSheet } from './VisitDocs'
+import { DocPreview } from './DocPreview'
 import { Spinner } from '../layout/Loading'
 import { ActionMenu, type ActionItem } from '../layout/ActionMenu'
 
@@ -111,10 +111,10 @@ function AfterVisitMessage({ appointment: a, me, last }: { appointment: Appointm
   const [careTitle, setCareTitle] = useState<string | null>(null)
   const [withPhone, setWithPhone] = useState(phoneFlag)
   const [preview, setPreview] = useState<Preview | null>(null)
-  const [channel, setChannel] = useState<Channel>('TELEGRAM')
   const [printing, setPrinting] = useState(false)
   const [memoPrinting, setMemoPrinting] = useState(false)
-  const [memoSending, setMemoSending] = useState(false)
+  // «Только памятка» — просмотр на вкладке сообщения, «Распечатать памятку» — сразу на вкладке листа
+  const [memoSending, setMemoSending] = useState<'message' | 'paper' | null>(null)
   const [memoNotice, setMemoNotice] = useState('')
   const [done, setDone] = useState('')
   const textArea = useRef<HTMLTextAreaElement>(null)
@@ -163,10 +163,7 @@ function AfterVisitMessage({ appointment: a, me, last }: { appointment: Appointm
   const body = { text, care: care.trim() ? care : undefined, doctorPhone: draft?.doctorPhone ? withPhone : false }
   const check = useMutation<Preview, ApiError>({
     mutationFn: () => unwrap(api.POST('/api/appointments/{id}/visit-report/preview', { params: { path: { id } }, body })),
-    onSuccess: (p) => {
-      setPreview(p)
-      setChannel(p.telegram ? 'TELEGRAM' : 'WHATSAPP')
-    },
+    onSuccess: setPreview,
   })
   const send = useMutation<Schemas['PatientMessage'] | undefined, ApiError, Via>({
     mutationFn: (via) => unwrap(api.POST('/api/appointments/{id}/visit-report/send', {
@@ -206,13 +203,14 @@ function AfterVisitMessage({ appointment: a, me, last }: { appointment: Appointm
       { label: aiOn ? (saved ? 'С ИИ ✨ заново' : 'С ИИ ✨') : 'По шаблону', icon: aiOn ? 'ai' : 'doc',
         hint: aiOn ? 'без имени и телефона пациента — вы проверите' : 'из данных приёма — вы дополните', onSelect: () => make.mutate(write) },
       ...(m?.memoId != null ? [{ label: 'Только памятка', icon: 'memo' as const, hint: memoTo ?? 'без сообщения', disabled: memoTo != null,
-        group: 'Памятка', onSelect: () => { setMemoNotice(''); setMemoSending(true) } }] : []),
-      ...(m?.memoId != null && canPrint() ? [{ label: 'Распечатать памятку', icon: 'print' as const, onSelect: () => setMemoPrinting(true) }] : []),
+        group: 'Памятка', onSelect: () => { setMemoNotice(''); setMemoSending('message') } }] : []),
+      ...(m?.memoId != null && canPrint() ? [{ label: 'Распечатать памятку', icon: 'print' as const, hint: 'сначала просмотр листа', onSelect: () => { setMemoNotice(''); setMemoSending('paper') } }] : []),
     ]
     return (
       <section className="visit-report visit-report-sent" aria-label="Сообщение после приёма">
         {memoSending && m?.memoId != null ? (
-          <MemoOnly appointment={a} memo={m} onDone={(t) => { setMemoSending(false); setMemoNotice(t) }} />
+          <MemoOnly appointment={a} memo={m} tab={memoSending} onPrint={() => setMemoPrinting(true)}
+            onDone={(t) => { setMemoSending(null); setMemoNotice(t) }} />
         ) : (
           <p className="visit-report-line">
             {last ? (
@@ -243,31 +241,20 @@ function AfterVisitMessage({ appointment: a, me, last }: { appointment: Appointm
         <h3>Сообщение после приёма</h3>
       </div>
       {preview ? (
-        <>
-          <p className="hint small">Так увидит пациент{preview.lang === 'KY' ? ' · на кыргызском, как у него в боте' : ''}. Проверьте и отправьте.</p>
-          <ChannelSwitch value={channel} telegram={preview.telegram} whatsapp={Boolean(phone)} onChange={setChannel} />
-          <MessagePreview text={preview.text ?? ''} channel={channel} parts={preview.parts} />
-          {preview.review && (
+        <DocPreview label="сообщение после приёма" messageLabel="Предпросмотр сообщения" text={preview.text ?? ''}
+          telegram={preview.telegram} phone={phone} parts={preview.parts} busy={busy}
+          hint={<p className="hint small">Так увидит пациент{preview.lang === 'KY' ? ' · на кыргызском, как у него в боте' : ''}. Проверьте и отправьте или распечатайте.</p>}
+          paper={{ render: () => <ReportPaper appointment={a} text={text} care={care} careHeading={careHeading} /> }}
+          note={(c) => preview.review && (
             <p className="hint small" role="note" aria-label="Оценка приёма">
-              ⭐ В конце спросим «Как прошёл приём?»{channel === 'TELEGRAM' && preview.telegram ? ' — кнопки ⭐1–5 под сообщением' : ' — ссылка на оценку'}.
+              ⭐ В конце спросим «Как прошёл приём?»{c === 'TELEGRAM' ? ' — кнопки ⭐1–5 под сообщением' : ' — ссылка на оценку'}.
               Отдельно бот спрашивать уже не будет.
             </p>
           )}
-          <div className="actions">
-            {channel === 'TELEGRAM' && preview.telegram && (
-              <button type="button" className="btn primary" disabled={busy} onClick={() => send.mutate('TELEGRAM')}>Отправить в Telegram</button>
-            )}
-            {(channel === 'WHATSAPP' || !preview.telegram) && phone && (
-              <button type="button" className="btn primary" disabled={busy} onClick={() => send.mutate('WHATSAPP')}>Отправить в WhatsApp</button>
-            )}
-            <button type="button" className="btn ghost" disabled={busy} onClick={() => setPreview(null)}>Изменить</button>
-          </div>
-          {!preview.telegram && !phone && <p className="hint small">Пациент не в Telegram и без телефона — отправить некуда, можно распечатать.</p>}
+          onTelegram={() => send.mutate('TELEGRAM')} onWhatsapp={() => send.mutate('WHATSAPP')} onPrint={() => send.mutate('PRINT')}
+          onClose={() => setPreview(null)} closeText="Изменить">
           {fallback && <button type="button" className="btn small" onClick={() => send.mutate('WHATSAPP')}>Отправить в WhatsApp</button>}
-          {canPrint() && (
-            <p className="hint small">Ещё: <button type="button" className="link" disabled={busy} onClick={() => send.mutate('PRINT')}>распечатать</button></p>
-          )}
-        </>
+        </DocPreview>
       ) : (
         <>
           <p className="hint small">{mode === 'SELF' ? 'Своими словами — приветствие и план лечения уже вставлены'
@@ -298,7 +285,7 @@ function AfterVisitMessage({ appointment: a, me, last }: { appointment: Appointm
           )}
           <div className="actions">
             <button type="button" className="btn primary" disabled={busy || !text.trim()} onClick={() => check.mutate()}>
-              {check.isPending && <Spinner />}Проверить и отправить</button>
+              {check.isPending && <Spinner />}👁 Просмотр</button>
             <button type="button" className="btn ghost" onClick={() => setDraft(null)}>Отмена</button>
             {draft.ai && saved?.previous && (
               <button type="button" className="link" onClick={restore}>↩ Вернуть прежний вариант</button>
@@ -311,22 +298,7 @@ function AfterVisitMessage({ appointment: a, me, last }: { appointment: Appointm
       {(make.error ?? check.error ?? send.error) && <p className="error" role="alert">{errorText(make.error ?? check.error ?? send.error)}</p>}
       {printing && (
         <PrintSheet title="После приёма" onClose={() => setPrinting(false)}>
-          {() => (
-            <>
-              <h1>После приёма</h1>
-              <dl>
-                <dt>Пациент</dt><dd>{a.patient.fullName}</dd>
-                <dt>Приём</dt><dd>{docDate(a.startAt)}</dd>
-              </dl>
-              <div className="memo-body">{text}</div>
-              {care.trim() && (
-                <>
-                  <h2>{careHeading}</h2>
-                  <div className="memo-body">{care}</div>
-                </>
-              )}
-            </>
-          )}
+          {() => <ReportPaper appointment={a} text={text} care={care} careHeading={careHeading} />}
         </PrintSheet>
       )}
       {memoPrinting && m?.memoId != null && (
@@ -341,9 +313,10 @@ function AfterVisitMessage({ appointment: a, me, last }: { appointment: Appointm
  * пациент пишет боту, иначе WhatsApp; язык пациента), потом «Отправить». Тот же отправитель памяток, что у
  * регистратуры (POST …/care-memo/send). Готово или «Отмена» — onDone с текстом итога (пустой — отменили).
  */
-function MemoOnly({ appointment: a, memo: m, onDone }: { appointment: Appointment; memo: CareMemo; onDone: (notice: string) => void }) {
+function MemoOnly({ appointment: a, memo: m, tab, onPrint, onDone }: {
+  appointment: Appointment; memo: CareMemo; tab: 'message' | 'paper'; onPrint: () => void; onDone: (notice: string) => void
+}) {
   const phone = contactPhone(a.patient)
-  const [channel, setChannel] = useState<Channel>(m.telegram ? 'TELEGRAM' : 'WHATSAPP')
   const bot = useMutation<unknown, ApiError>({
     mutationFn: () => unwrap(api.POST('/api/appointments/{id}/care-memo/send', { params: { path: { id: a.id } }, body: { memoId: m.memoId, lang: m.lang } })),
     onSuccess: () => {
@@ -360,18 +333,34 @@ function MemoOnly({ appointment: a, memo: m, onDone }: { appointment: Appointmen
   }
   return (
     <div className="after-visit-memo open">
-      <p className="hint small">Только памятка «{m.title}», без сообщения</p>
-      <ChannelSwitch value={channel} telegram={Boolean(m.telegram)} whatsapp={Boolean(phone)} onChange={setChannel} />
-      <MessagePreview text={m.text ?? ''} channel={channel} label="Предпросмотр памятки" />
-      <div className="actions">
-        {channel === 'TELEGRAM' && m.telegram
-          ? <button type="button" className="btn primary" disabled={bot.isPending} onClick={() => bot.mutate()}>Отправить в Telegram</button>
-          : <button type="button" className="btn primary" disabled={!phone} onClick={whatsapp}>Отправить в WhatsApp</button>}
-        <button type="button" className="btn ghost" onClick={() => onDone('')}>Отмена</button>
-      </div>
-      {bot.error && <p className="error small" role="alert">{bot.error.message}</p>}
-      {bot.error?.code === 'not-delivered' && phone && <button type="button" className="btn small" onClick={whatsapp}>Отправить в WhatsApp</button>}
+      <DocPreview label={`памятка «${m.title}»`} messageLabel="Предпросмотр памятки" text={m.text ?? ''} telegram={Boolean(m.telegram)}
+        phone={phone} initialTab={tab} busy={bot.isPending} hint={<p className="hint small">Только памятка «{m.title}», без сообщения</p>}
+        paper={{ render: () => <MemoPaper appointment={a} memo={m} /> }}
+        onTelegram={() => bot.mutate()} onWhatsapp={whatsapp} onPrint={onPrint} onClose={() => onDone('')} closeText="Отмена">
+        {bot.error && <p className="error small" role="alert">{bot.error.message}</p>}
+        {bot.error?.code === 'not-delivered' && phone && <button type="button" className="btn small" onClick={whatsapp}>Отправить в WhatsApp</button>}
+      </DocPreview>
     </div>
+  )
+}
+
+/** Лист «После приёма»: пациент, дата, текст сообщения и «Уход дома» — в окне печати и в «👁 Просмотре» одно и то же. */
+function ReportPaper({ appointment: a, text, care, careHeading }: { appointment: Appointment; text: string; care: string; careHeading: string }) {
+  return (
+    <>
+      <h1>После приёма</h1>
+      <dl>
+        <dt>Пациент</dt><dd>{a.patient.fullName}</dd>
+        <dt>Приём</dt><dd>{docDate(a.startAt)}</dd>
+      </dl>
+      <div className="memo-body">{text}</div>
+      {care.trim() && (
+        <>
+          <h2>{careHeading}</h2>
+          <div className="memo-body">{care}</div>
+        </>
+      )}
+    </>
   )
 }
 

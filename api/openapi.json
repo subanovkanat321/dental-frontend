@@ -8674,6 +8674,27 @@
         }
       }
     },
+    "/api/plan-templates/defaults" : {
+      "post" : {
+        "tags" : [ "plan-template-controller" ],
+        "operationId" : "addDefaults",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/PlanTemplatesView"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/patients" : {
       "post" : {
         "tags" : [ "patient-controller" ],

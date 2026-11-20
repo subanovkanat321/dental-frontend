@@ -1,5 +1,5 @@
 import { assignText, byTooth, dueText, overdueCount, parseTeeth } from './planSteps'
-import { defaultStart, STARTERS, starterSteps } from './planTemplates'
+import { defaultStart } from './planTemplates'
 
 test('срок этапа: «до 15 дек», другой год — с годом; врач и срок одной строкой', () => {
   expect(dueText('2026-12-15', '2026-11-20')).toBe('до 15 дек')
@@ -17,13 +17,7 @@ test('просрочено — только несделанные; по зуб�
   expect(parseTeeth('36, 46 36;x 11')).toEqual([36, 46, 11])
 })
 
-test('готовые шаблоны: услуга из прайса по названию; «начать с этапа» — после последнего этапа плана, если помещается', () => {
-  const steps = starterSteps(STARTERS[0]!, [
-    { id: 1, name: 'Имплант Osstem', durationMinutes: 60, active: true },
-    { id: 2, name: 'Коронка на имплант', durationMinutes: 60, active: true },
-    { id: 3, name: 'Формирователь', durationMinutes: 30, active: false },
-  ])
-  expect(steps.map((s) => s.serviceTypeId)).toEqual([undefined, 1, undefined, 2])
+test('«начать с этапа» — после последнего этапа плана, если помещается', () => {
   const t = { id: 1, title: 'x', shared: false, editable: true, usesTeeth: false, steps: [{ title: 'a', stage: 1, perTooth: false }, { title: 'b', stage: 3, perTooth: false }] }
   expect(defaultStart([], t)).toBe(1)
   expect(defaultStart([{ id: 1, stage: 2 }], t)).toBe(3)

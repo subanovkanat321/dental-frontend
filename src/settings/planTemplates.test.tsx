@@ -79,3 +79,21 @@ test('шаблоны плана: новый со шагами и услугой,
   await userEvent.click(await screen.findByRole('button', { name: 'Удалить: Санация' }))
   await waitFor(() => expect(calls.deleted).toEqual([5]))
 })
+
+test('шаблоны уже есть — «Добавить готовые» внизу возвращает только недостающие (сервер, V246)', async () => {
+  backend()
+  let calls = 0
+  server.use(http.post('*/api/plan-templates/defaults', () => {
+    calls++
+    return HttpResponse.json([...templates, { id: 11, title: 'Имплант под ключ', shared: true, editable: true, usesTeeth: true, steps: [
+      { title: 'Установка импланта', stage: 1, perTooth: true, serviceTypeId: 3, serviceName: 'Имплант', priceSom: 40000 },
+    ] }] satisfies Schemas['PlanTemplatesView'][])
+  }))
+  renderPage()
+  await screen.findByRole('group', { name: 'Общие клиники' })
+  expect(screen.getByText(/Удалили готовый шаблон — его можно вернуть/)).toBeInTheDocument()
+  await userEvent.click(screen.getByRole('button', { name: /Добавить готовые/ }))
+  expect(await screen.findByRole('status')).toHaveTextContent('Добавлено готовых: 1')
+  expect(screen.getByText('Имплант под ключ')).toBeInTheDocument()
+  expect(calls).toBe(1)
+})

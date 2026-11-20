@@ -29,7 +29,8 @@ function summary(t: Template): string {
 /**
  * «Настройки → Приём → Шаблоны плана» (шаг 4А, опыт Dentist Plus): шаблоны плана лечения — свои (врач) и общие
  * клиники (заводит руководитель). Шаг: что сделать, услуга прайса (цена — из прайса, когда шаблон применяют), этап и
- * «каждому зубу». Применяют в плане лечения пациента — «📄 Из шаблона». Пусто — «Добавить готовые».
+ * «каждому зубу». Применяют в плане лечения пациента — «📄 Из шаблона». Готовые («Имплант под ключ», «Санация»…) у новой
+ * клиники уже есть (V246); «Добавить готовые» внизу возвращает удалённые.
  */
 export function PlanTemplatesPage({ me, onBack }: { me: Me; onBack: () => void }) {
   const list = useQuery({ queryKey: ['plan-templates'], queryFn: () => unwrap(api.GET('/api/plan-templates')) })
@@ -64,6 +65,7 @@ export function PlanTemplatesPage({ me, onBack }: { me: Me; onBack: () => void }
             </ul>
           </div>
         ))}
+        {list.isSuccess && list.data.length > 0 && editing == null && <NoTemplates empty={false} />}
       </section>
     </section>
   )

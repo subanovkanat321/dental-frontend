@@ -110,7 +110,10 @@ test('«🖨 План лечения»: этапы с итогом за этап
 test('ассистент — «📤 Отправить пациенту» в Telegram', async () => {
   const sent = backend({ ...me, admin: false, doctorId: undefined, fullName: 'Асель', assistantOf: [1] }, true)
   await openMedical()
-  await userEvent.click(await screen.findByRole('button', { name: 'Отправить пациенту в Telegram: план лечения' }))
+  // Просмотр → Отправить: сначала текст, как он придёт
+  await userEvent.click(await screen.findByRole('button', { name: 'Просмотр: план лечения' }))
+  expect(await screen.findByRole('document', { name: 'Предпросмотр: план лечения' })).toBeInTheDocument()
+  await userEvent.click(screen.getByRole('button', { name: 'Отправить пациенту в Telegram: план лечения' }))
   expect(await screen.findByText('Отправлено в Telegram')).toBeInTheDocument()
   expect(sent).toEqual(['send'])
 })
@@ -118,6 +121,7 @@ test('ассистент — «📤 Отправить пациенту» в Tel
 test('ассистент печатает план без цен', async () => {
   backend({ ...me, admin: false, doctorId: undefined, fullName: 'Асель', assistantOf: [1] }, false)
   await openMedical()
+  await userEvent.click(await screen.findByRole('button', { name: 'Просмотр: план лечения' }))
   await userEvent.click(await screen.findByRole('button', { name: 'Печать: план лечения' }))
   const sheet = await screen.findByRole('dialog', { name: 'Печать: План лечения' })
   expect(within(sheet).getAllByRole('row')[0]).not.toHaveTextContent('Цена')
@@ -143,5 +147,6 @@ test('история визитов: «📋 Памятка и квитанция
   await userEvent.click(within(card).getByRole('button', { name: 'Памятка и квитанция' }))
   expect(await within(card).findByText('После чистки')).toBeInTheDocument()
   expect(await within(card).findByText('🧾 Квитанция об оплате')).toBeInTheDocument()
+  await userEvent.click(within(card).getByRole('button', { name: 'Просмотр: памятка «После чистки»' }))
   expect(within(card).getByRole('button', { name: 'Отправить пациенту в WhatsApp: памятка «После чистки»' })).toBeEnabled()
 })

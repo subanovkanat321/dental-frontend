@@ -6,7 +6,7 @@ import { useMe } from '../api/me'
 import { Sheet } from '../layout/Sheet'
 import { Select } from '../layout/Select'
 import { parseTeeth } from '../lib/planSteps'
-import { defaultStart, STARTERS, starterSteps, templateStages } from '../lib/planTemplates'
+import { defaultStart, templateStages } from '../lib/planTemplates'
 import { somText } from '../lib/time'
 
 type Step = Schemas['TreatmentStepView']
@@ -17,7 +17,7 @@ const STAGES = [1, 2, 3, 4, 5, 6, 7, 8, 9]
 /**
  * «📄 Из шаблона» в плане лечения (шаг 4А): выбрать шаблон плана — свой или общий клиники, — зубы (если в шаблоне есть
  * шаги «каждому зубу») и с какого этапа начать → «Добавить в план». Цены ставит сервер — из прайса на сегодня; здесь —
- * только подсказка, сколько выйдет. Шаблонов нет — «Добавить готовые» («Имплант под ключ», «Санация», «Брекеты»).
+ * только подсказка, сколько выйдет. Шаблонов нет (удалили все) — «Добавить готовые»; новая клиника получает их сразу.
  */
 export function PlanTemplateSheet({ patientId, steps, onClose, onAdded }: {
   patientId: number
@@ -51,27 +51,40 @@ export function PlanTemplateSheet({ patientId, steps, onClose, onAdded }: {
   )
 }
 
-/** Шаблонов ещё нет — завести три готовых одной кнопкой (руководителю — общие, врачу — свои). */
-export function NoTemplates() {
+/**
+ * «＋ Добавить готовые» (V246): готовые шаблоны — «Имплант под ключ», «Санация», «Ортодонтия — брекеты», «Лечение
+ * каналов», «Профгигиена раз в 6 месяцев», «Удаление + имплант». Новая клиника получает их сразу; кнопка возвращает
+ * недостающие по названию (удалили — вернутся, свои и переделанные не трогаем). Услуги подбирает сервер — из прайса
+ * клиники по названию. Руководителю — общие клиники, врачу — свои.
+ *
+ * @param empty шаблонов нет совсем — объяснение крупнее; иначе — одна строка «вернуть недостающие»
+ */
+export function NoTemplates({ empty = true }: { empty?: boolean }) {
   const me = useMe().data
   const client = useQueryClient()
-  const services = useQuery({ queryKey: ['service-types'], queryFn: () => unwrap(api.GET('/api/service-types')), staleTime: 5 * 60_000 })
   const shared = Boolean(me?.admin)
-  const add = useMutation<unknown, ApiError>({
-    mutationFn: async () => {
-      for (const s of STARTERS) {
-        await unwrap(api.POST('/api/plan-templates', { body: { title: s.title, steps: starterSteps(s, services.data ?? []), shared } }))
-      }
+  const [done, setDone] = useState('')
+  const add = useMutation<Template[], ApiError>({
+    mutationFn: () => unwrap(api.POST('/api/plan-templates/defaults')),
+    onSuccess: (list) => {
+      const before = client.getQueryData<Template[]>(['plan-templates'])?.length ?? 0
+      const added = list.length - before
+      setDone(added > 0 ? `Добавлено готовых: ${added}` : 'Все готовые шаблоны уже есть')
+      client.setQueryData(['plan-templates'], list)
     },
-    onSettled: () => void client.invalidateQueries({ queryKey: ['plan-templates'] }),
   })
   return (
-    <div className="plan-templates-empty">
-      <p className="hint">Шаблонов плана пока нет. Добавьте готовые — «Имплант под ключ», «Санация», «Ортодонтия — брекеты» —
-        и поправьте под себя: услуги подберутся из вашего прайса по названию.</p>
-      <button type="button" className="btn" disabled={add.isPending || !services.isSuccess} onClick={() => add.mutate()}>
+    <div className={empty ? 'plan-templates-empty' : 'plan-templates-defaults'}>
+      {empty ? (
+        <p className="hint">Шаблонов плана пока нет. Добавьте готовые — «Имплант под ключ», «Санация», «Лечение каналов» и другие —
+          и поправьте под себя: услуги подберутся из вашего прайса по названию.</p>
+      ) : (
+        <p className="hint small">Удалили готовый шаблон — его можно вернуть: добавятся только недостающие, ваши не изменятся.</p>
+      )}
+      <button type="button" className={empty ? 'btn' : 'btn small'} disabled={add.isPending} onClick={() => { setDone(''); add.mutate() }}>
         ＋ Добавить готовые{shared ? ' (общие для клиники)' : ''}
       </button>
+      {done && <p className="tone-ok small" role="status">{done}</p>}
       {add.error && <p className="error small" role="alert">{add.error.message}</p>}
     </div>
   )

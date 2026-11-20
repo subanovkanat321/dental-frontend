@@ -30,6 +30,8 @@
 .plan-template-steps { display: grid; gap: 4px; margin: 0; padding-left: 20px; }
 .plan-templates-empty { display: grid; gap: 8px; justify-items: start; }
 .plan-templates-empty p { margin: 0; }
+.plan-templates-defaults { display: grid; gap: 6px; justify-items: start; margin-top: 12px; }
+.plan-templates-defaults p { margin: 0; }
 
 /* «💲 Обновить цены»: было → стало */
 .reprice-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }

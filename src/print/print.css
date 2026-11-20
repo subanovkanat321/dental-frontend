@@ -287,9 +287,51 @@
   gap: 6px;
 }
 
+/* «👁 Просмотр» документа (DocPreview): сообщение как в мессенджере или лист как на бумаге — внутри карточки, до
+   отправки и печати. Лист — тот же .print-sheet, только без высоты A4 и с прокруткой, если длинный */
+.doc-preview {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.doc-preview .segments {
+  justify-self: start;
+  background: color-mix(in srgb, var(--text, #111) 6%, transparent);
+}
+
+.doc-preview .segments button {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  padding: 6px 14px;
+}
+
+.doc-preview .actions {
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.doc-preview-paper {
+  max-height: 70vh;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 8px;
+  border-radius: var(--r-md, 10px);
+  background: var(--sunken, #eef2f2);
+}
+
+.doc-preview-paper .print-sheet {
+  min-height: 0;
+}
+
+.rare .visit-docs .doc-box > .doc-actions:has(.doc-preview) {
+  grid-column: 1 / -1;
+}
+
 /* Узкий экран (телефон): лист A4 не вылезает — меньше поля, таблица мельче, переносится только имя */
 @media screen and (max-width: 600px) {
   .print-root { padding: 8px; }
+  .doc-preview-paper { padding: 4px; }
   .print-sheet { padding: 6mm 4mm; overflow-wrap: break-word; }
   .print-sheet table { font-size: 0.88em; }
   .print-sheet th,
