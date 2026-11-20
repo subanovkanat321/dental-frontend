@@ -13,7 +13,8 @@ const rows: Schemas['PlanStatesDropped'][] = [
   { patientId: 2, fullName: 'Бакыт М.', phone: '996555111222', contactPhone: '996555111222', telegram: false, status: 'AGREED', done: 0, total: 1,
     leftSom: 20000, left: ['зуб 11 — Виниры'], doctorId: 1, doctor: 'Айгерим Садыкова' },
   { patientId: 3, fullName: 'Айгуль Т.', phone: '996700333444', contactPhone: '996700999888', telegram: true, status: 'IN_PROGRESS', done: 1, total: 3,
-    leftSom: 7000, left: ['зуб 37 — Пломба', 'Чистка'], lastVisit: '2026-10-10T04:00:00Z', doctorId: 2, doctor: 'Дастан Т.', invitedAt: '2026-11-15T04:00:00Z' },
+    leftSom: 7000, left: ['зуб 37 — Пломба', 'Чистка'], lastVisit: '2026-10-10T04:00:00Z', doctorId: 2, doctor: 'Дастан Т.', invitedAt: '2026-11-15T04:00:00Z',
+    overdueOn: '2026-11-01' },
 ]
 
 function serve(requests: string[]) {
@@ -70,6 +71,9 @@ test('«Бросили лечение»: список, итог, срок 30/60/
   expect(items[0]).toHaveTextContent('Согласован')
   expect(items[0]).toHaveTextContent('ещё не был')
   expect(items[1]).toHaveTextContent('В работе')
+  // Срок несделанного этапа прошёл (V241) — пометка в строке; у Бакыта срока нет
+  expect(within(items[1]!).getByText('просрочен этап')).toHaveAttribute('title', 'Срок этапа: до 1 нояб')
+  expect(items[0]).not.toHaveTextContent('просрочен')
   expect(items[1]).toHaveTextContent('выполнено 1 из 3 · зуб 37 — Пломба · Чистка · Дастан Т. · звали')
   expect(items[1]).toHaveTextContent('7 000 сом')
   expect(screen.getByLabelText('Итого')).toHaveTextContent('2 пациента · не долечено на 27 000 сом')

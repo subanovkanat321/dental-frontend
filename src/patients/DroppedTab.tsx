@@ -8,6 +8,7 @@ import { HeadTools, SubHelp } from '../layout/PageHead'
 import { Segments } from '../layout/Segments'
 import { ask } from '../lib/confirm'
 import { PLAN_STATUS, progressText } from '../lib/planStatus'
+import { dueText } from '../lib/planSteps'
 import { haptic, openLink } from '../lib/telegram'
 import { agoText, whatsappUrl } from '../lib/texts'
 import { shortDate, somText } from '../lib/time'
@@ -96,7 +97,13 @@ export function DroppedTab({ me, onOpen, onBook }: { me: Me; onOpen: (patientId:
             const busy = hide.isPending && hide.variables?.patientId === r.patientId
             return (
               <CalmRow key={r.patientId} open={() => onOpen(r.patientId)} name={r.fullName}
-                flags={status && <span className={`chip calm-flag s-${status.tone}`}>{status.label}</span>}
+                flags={(
+                  <>
+                    {status && <span className={`chip calm-flag s-${status.tone}`}>{status.label}</span>}
+                    {/* Срок несделанного этапа прошёл (V241) — ещё одна причина позвонить */}
+                    {r.overdueOn && <span className="chip calm-flag s-bad" title={`Срок этапа: ${dueText(r.overdueOn)}`}>просрочен этап</span>}
+                  </>
+                )}
                 sub={[progressText({ done: r.done, total: r.total }), ...(r.left ?? []).slice(0, 2), many ? r.doctor : null,
                   r.invitedAt ? `звали ${agoText(r.invitedAt)}` : null].filter(Boolean).join(' · ')}
                 // Справа — коротко, как в «Позвать снова»: сумма остатка и последний визит (на телефоне — над действием)

@@ -7,10 +7,13 @@ import { useMe } from '../api/me'
 import { isAssistant } from '../lib/roles'
 import { somText } from '../lib/time'
 import { stagesOf } from '../lib/planStages'
+import { assignText, byTooth } from '../lib/planSteps'
 import { canPrint, docDate } from './paper'
 import { PrintSheet } from './PrintSheet'
 import { DocActions } from './SendToPatient'
 import { PlanOffer } from './PlanOffer'
+import { PlanChart } from './PlanChart'
+import { PlanSendSheet } from './PlanSend'
 
 type Step = Schemas['TreatmentStepView']
 type Patient = Schemas['PatientView']
@@ -63,15 +66,23 @@ function PlainPlanDocs({ patient, steps }: { patient: Patient; steps: Step[] }) 
 
 /**
  * «🖨 План лечения» на A4 (печать браузера = сохранение в PDF): шапка клиники (PrintSheet), пациент и дата
- * рождения, врач, этапы (V140) с зубами, услугами и ценами, итог за этап и всего, сколько уже выполнено и
- * сколько осталось, долг за проведённое лечение (если есть), «ознакомлен(а)» и подписи с датой.
- * Ассистенту — без денег: цены ему сервер не присылает, долг не запрашиваем.
+ * рождения, врач, зубная формула обеих челюстей цветом (PlanChart, шаг 4А), этапы «По этапам» или «По зубам»
+ * с услугами, врачом и сроком этапа и ценами, итог за этап и всего, сколько выполнено и осталось, долг за проведённое
+ * лечение (если есть), «ознакомлен(а)» и подписи с датой. «С ценами» — кто видит деньги (ассистенту цены сервер не
+ * присылает, долг не запрашиваем); снять галочку — экземпляр пациенту без цен. «📤 Пациенту» — ссылка на план в WhatsApp
+ * или план в бот (PlanSendSheet) — у тех, кто ведёт план.
  */
+type View = 'stages' | 'teeth'
+
 function PlanPrint({ patient, steps, onClose }: { patient: Patient; steps: Step[]; onClose: () => void }) {
   const me = useMe().data
   const [note, setNote] = useState('')
+  const [view, setView] = useState<View>('stages')
   const money = Boolean(me && !isAssistant(me))
-  const prices = money && steps.some((s) => s.priceSom != null)
+  const [withPrices, setWithPrices] = useState(true)
+  const [sending, setSending] = useState(false)
+  const prices = money && withPrices && steps.some((s) => s.priceSom != null)
+  const assigned = steps.some((s) => s.doctorName || s.dueOn)
   const patientId = patient.id
   const debts = useQuery({
     queryKey: ['debts', 'patient', patientId],
@@ -84,12 +95,30 @@ function PlanPrint({ patient, steps, onClose }: { patient: Patient; steps: Step[
   const stages = stagesOf(steps)
   const left = steps.filter((s) => !s.doneAt).reduce((sum, s) => sum + (s.priceSom ?? 0), 0)
   const all = steps.reduce((sum, s) => sum + (s.priceSom ?? 0), 0)
-  // Сквозной номер строки через все этапы (не счётчиком в render: лист перерисовывается)
-  const number = new Map(stages.flatMap((st) => st.items).map((s, i) => [s.id, i + 1]))
+  const groups = view === 'stages'
+    ? stages.map((st) => ({ key: `s${st.stage}`, title: stages.length > 1 ? `Этап ${st.stage}` : null, items: st.items, total: st.total,
+      subtotal: `Итого за этап ${st.stage}` }))
+    : byTooth(steps).map((g) => ({ key: `t${g.tooth ?? 0}`, title: g.tooth != null ? `Зуб ${g.tooth}` : 'Вся полость рта', items: g.items,
+      total: g.items.reduce((sum, s) => sum + (s.priceSom ?? 0), 0), subtotal: g.tooth != null ? `Итого по зубу ${g.tooth}` : 'Итого' }))
+  // Сквозной номер строки через все группы (не счётчиком в render: лист перерисовывается)
+  const number = new Map(groups.flatMap((g) => g.items).map((s, i) => [s.id, i + 1]))
+  const columns = 4 + (assigned ? 1 : 0) + (prices ? 1 : 0)
   return (
     <PrintSheet title="План лечения" onClose={onClose}
-      tools={<textarea aria-label="Примечание на листе" rows={2} maxLength={1000} placeholder="Примечание — напечатается под планом"
-        value={note} onChange={(e) => setNote(e.target.value)} />}>
+      tools={
+        <>
+          <div className="segments" role="group" aria-label="Вид плана">
+            <button type="button" aria-pressed={view === 'stages'} onClick={() => setView('stages')}>По этапам</button>
+            <button type="button" aria-pressed={view === 'teeth'} onClick={() => setView('teeth')}>По зубам</button>
+          </div>
+          {money && steps.some((s) => s.priceSom != null) && (
+            <label className="check"><input type="checkbox" checked={withPrices} onChange={(e) => setWithPrices(e.target.checked)} /> С ценами</label>
+          )}
+          {money && steps.some((s) => !s.doneAt) && <button type="button" className="btn" onClick={() => setSending(true)}>📤 Пациенту</button>}
+          <textarea aria-label="Примечание на листе" rows={2} maxLength={1000} placeholder="Примечание — напечатается под планом"
+            value={note} onChange={(e) => setNote(e.target.value)} />
+        </>
+      }>
       {() => (
         <>
           <h1>План лечения</h1>
@@ -99,26 +128,28 @@ function PlanPrint({ patient, steps, onClose }: { patient: Patient; steps: Step[
             <dt>Дата</dt><dd>{docDate(new Date().toISOString())}</dd>
             <dt>Врач</dt><dd>{doctor ?? '________________________'}</dd>
           </dl>
+          <PlanChart patient={patient} steps={steps} />
           <table aria-label="Этапы плана" className="plan-table">
             <thead>
-              <tr><th>№</th><th>Зуб</th><th>Что сделать</th>{prices && <th className="r">Цена</th>}<th>Статус</th></tr>
+              <tr><th>№</th><th>Зуб</th><th>Что сделать</th>{assigned && <th>Врач, срок</th>}{prices && <th className="r">Цена</th>}<th>Статус</th></tr>
             </thead>
-            {stages.map((st) => (
-              <tbody key={st.stage}>
-                {stages.length > 1 && (
-                  <tr className="stage-row"><th colSpan={prices ? 5 : 4} scope="rowgroup">Этап {st.stage}</th></tr>
+            {groups.map((g) => (
+              <tbody key={g.key}>
+                {g.title && (view === 'teeth' || groups.length > 1) && (
+                  <tr className="stage-row"><th colSpan={columns} scope="rowgroup">{g.title}</th></tr>
                 )}
-                {st.items.map((s) => (
+                {g.items.map((s) => (
                   <tr key={s.id}>
                     <td>{number.get(s.id)}</td>
-                    <td>{s.tooth ?? '—'}</td>
+                    <td>{view === 'teeth' ? `этап ${s.stage}` : s.tooth ?? '—'}</td>
                     <td>{s.title}</td>
+                    {assigned && <td className={s.overdue ? 'assign overdue' : 'assign'}>{assignText(s)}{s.overdue ? ' · просрочен' : ''}</td>}
                     {prices && <td className="r">{s.priceSom != null ? somText(s.priceSom) : ''}</td>}
                     <td>{s.doneAt ? `сделано ${docDate(s.doneAt)}` : 'в плане'}</td>
                   </tr>
                 ))}
-                {prices && stages.length > 1 && st.total > 0 && (
-                  <tr className="subtotal"><td colSpan={3} className="r">Итого за этап {st.stage}</td><td className="r">{somText(st.total)}</td><td /></tr>
+                {prices && groups.length > 1 && g.total > 0 && (view === 'stages' || g.items.length > 1) && (
+                  <tr className="subtotal"><td colSpan={3 + (assigned ? 1 : 0)} className="r">{g.subtotal}</td><td className="r">{somText(g.total)}</td><td /></tr>
                 )}
               </tbody>
             ))}
@@ -129,7 +160,7 @@ function PlanPrint({ patient, steps, onClose }: { patient: Patient; steps: Step[
               {left !== all && <p className="r">Уже выполнено на {somText(all - left)}</p>}
             </>
           )}
-          {money && debt > 0 && <p className="r"><b>Осталось оплатить за проведённое лечение: {somText(debt)}</b></p>}
+          {money && withPrices && debt > 0 && <p className="r"><b>Осталось оплатить за проведённое лечение: {somText(debt)}</b></p>}
           {note.trim() && <p><b>Примечание:</b> {note.trim()}</p>}
           <p className="note">План может меняться по результатам лечения.{prices ? ' Цены — на дату плана.' : ''}</p>
           <p>С планом лечения{prices ? ' и его стоимостью' : ''} ознакомлен(а), согласен(на).</p>
@@ -138,6 +169,7 @@ function PlanPrint({ patient, steps, onClose }: { patient: Patient; steps: Step[
             <span>Пациент ____________________</span>
           </div>
           <p className="sign-date">Дата «____» ______________ 20____ г.</p>
+          {sending && <PlanSendSheet patient={patient} onClose={() => setSending(false)} />}
         </>
       )}
     </PrintSheet>

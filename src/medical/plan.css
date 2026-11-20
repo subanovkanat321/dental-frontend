@@ -1,0 +1,59 @@
+/*
+ * План лечения (шаг 4А): врач и срок у этапа, просроченный этап, «📄 Из шаблона», «💲 Обновить цены».
+ * Отдельным файлом рядом с компонентами — общие tokens.css и crm.css не трогаем.
+ */
+
+/* Строка этапа: кнопок стало больше (цена, 🦷, 👤, ✏️, ✕) — колонки по числу детей, а не четыре */
+.plan li { grid-template-columns: 1fr; grid-auto-flow: column; grid-auto-columns: auto; }
+.plan li.plan-stage { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.plan li.plan-assign-row { display: block; border-bottom: 0; }
+.plan li.overdue { box-shadow: inset 3px 0 0 var(--bad-ink); padding-left: 8px; }
+
+/* «👤 Иванова А. · до 15 дек» под названием этапа; просрочен — красным */
+.plan-assign { display: block; font-size: .8rem; font-weight: 400; color: var(--hint); }
+.plan li.done .plan-assign { text-decoration: none; }
+.plan-assign.overdue, .plan-overdue { color: var(--bad-ink); }
+.plan-overdue-line { margin: 0; padding: 6px 10px; border-radius: var(--r-md); background: var(--bad-bg); color: var(--bad-ink); font-size: .9rem; }
+
+.plan-assign-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px 12px; padding: 10px 12px;
+  border-radius: var(--r-md); background: var(--accent-soft); }
+.plan-assign-form .actions, .plan-assign-form .error { grid-column: 1 / -1; }
+.plan-assign-form .field { margin: 0; }
+
+.plan-tools { flex-wrap: wrap; }
+
+/* «📄 Из шаблона» */
+.plan-template-apply { display: grid; gap: 12px; }
+.plan-template-apply .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px 12px; }
+.plan-template-apply input { font: inherit; padding: 7px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md);
+  background: var(--card); color: var(--text); min-width: 0; }
+.plan-template-steps { display: grid; gap: 4px; margin: 0; padding-left: 20px; }
+.plan-templates-empty { display: grid; gap: 8px; justify-items: start; }
+.plan-templates-empty p { margin: 0; }
+
+/* «💲 Обновить цены»: было → стало */
+.reprice-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.reprice-list li { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--separator); }
+.reprice-list s { color: var(--hint); }
+.reprice-total { margin: 0; font-weight: 600; }
+
+@media (max-width: 640px) {
+  /* Телефон: этап — во всю ширину, ниже строкой цена слева и кнопки справа (иначе ✕ уезжал за край) */
+  .plan li:not(.plan-stage):not(.plan-assign-row) { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 4px; }
+  .plan li > label.check { flex: 1 1 100%; }
+  .plan li > label.check + .nowrap { margin-right: auto; padding-left: 28px; }
+  .plan li > .btn.small { padding: 0 10px; }
+  .plan li > form { flex: 1 1 0; min-width: 0; }
+  .plan-tools .btn, .plan-assign-form .actions .btn { flex: 1 1 auto; min-height: 44px; }
+  .reprice-list li { flex-wrap: wrap; }
+}
+
+/* «Настройки → Шаблоны плана»: строка шага — что сделать, услуга, этап, «каждому зубу», убрать */
+.plan-template-rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.plan-template-row { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 2fr) 110px auto auto; gap: 8px; align-items: center; }
+.plan-template-row input:not([type=checkbox]) { font: inherit; padding: 7px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md);
+  background: var(--card); color: var(--text); min-width: 0; }
+@media (max-width: 760px) {
+  .plan-template-row { grid-template-columns: 1fr 1fr; padding-bottom: 8px; border-bottom: 1px solid var(--separator); }
+  .plan-template-row > input:first-child { grid-column: 1 / -1; }
+}

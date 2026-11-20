@@ -71,6 +71,7 @@ export const SUB_ICONS: Partial<Record<Page, Record<string, ReactNode>>> = {
   settings: {
     reminder: P.bell, debt: P.debtor, reviews: P.star, questions: P.clipList, contract: P.signDoc, memos: P.note, 'patient-news': P.news, sources: P.megaphone,
     tags: P.tag, plan: P.card, agreement: P.checkDoc, data: P.database, ai: P.sparkles, 'visit-templates': P.layers,
+    'plan-templates': P.list,
   },
 }
 
@@ -84,6 +85,7 @@ export const SUB_TONES: Partial<Record<Page, Record<string, string>>> = {
   settings: {
     reminder: 'stock', debt: 'cash', reviews: 'instagram', questions: 'patients', contract: 'schedule', memos: 'memo', 'patient-news': 'platform', sources: 'instagram',
     tags: 'patients', plan: 'cash', agreement: 'settings', data: 'data', ai: 'ai', 'visit-templates': 'schedule',
+    'plan-templates': 'patients',
   },
   clinic: { about: 'clinic', staff: 'patients', services: 'stock', hours: 'schedule', chairs: 'learn' },
   platform: {
