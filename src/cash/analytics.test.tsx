@@ -255,7 +255,7 @@ test('аналитика: загрузка врачей и кресел — св
   expect(doctors[0]).toHaveClass('low')
   expect(doctors[0]).toHaveTextContent(/Дастан Т\.есть свободные окна.*40%.*16 ч из 40 ч/)
   expect(doctors[1]).not.toHaveClass('low')
-  expect(doctors[1].getAttribute('aria-label')).toMatch(/вне часов ещё 1 ч/)
+  expect(doctors[1]!.getAttribute('aria-label')).toMatch(/вне часов ещё 1 ч/)
   expect(within(within(load).getByRole('list', { name: 'Загрузка кресел' })).getByRole('listitem')).toHaveTextContent(/Кресло 1.*80%/)
 
   const conv = screen.getByRole('region', { name: 'Конверсия пациентов' })
