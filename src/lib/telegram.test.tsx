@@ -41,7 +41,10 @@ test('в Telegram: запросы с подписью initData, «Назад» T
 
   tg.press()
   await waitForSlow(() => expect(screen.queryByRole('complementary', { name: 'Карточка приёма' })).not.toBeInTheDocument())
-  expect(tg.back.visible).toBe(false)
+  // Стрелку прячет уборка эффекта закрытой карточки (useBack → remove), а React зовёт её уже после того, как убрал
+  // карточку из DOM, — отдельной задачей. Под нагрузкой между ними проходило время, и проверка сразу после исчезновения
+  // карточки падала через раз (2026-11-20): ждём и стрелку
+  await waitForSlow(() => expect(tg.back.visible).toBe(false))
 })
 
 test('в Telegram подпись устарела (401) — «откройте заново из бота», а не вход через сайт', async () => {
