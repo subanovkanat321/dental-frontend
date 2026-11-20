@@ -21,6 +21,8 @@ export type NavApi = {
   go: (page: Page, sub: string) => void
   /** Числа у подразделов: вопросы, лист ожидания */
   counts: Counts
+  /** Какие числа заметные (красные): LOUD и «Лист ожидания» с новыми; нет — только LOUD */
+  loud?: ReadonlySet<string>
   /** Место панели вкладок (телефон) — первым в рабочей области, вне шапки страницы: так она прилипает к верху */
   tabsSlot: HTMLElement | null
   /** Место «?» подраздела в панели вкладок (`SubHelp`, layout/PageHead.tsx); нет панели — null */

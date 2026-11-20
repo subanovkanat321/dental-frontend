@@ -9,6 +9,7 @@ import { confirmRemind, remindedText } from './remindAgain'
 import { addDays, emptyDayText, minutesOf, somText, timeOf, todayIn } from '../lib/time'
 import { serviceEmoji } from '../lib/serviceEmoji'
 import { MonthSheet } from './month/MonthSheet'
+import { isShaky } from './paint'
 import { statusOf } from './status'
 import { useAppointmentAction } from './useAppointmentAction'
 import { colleagueMarkText, colleagueTimeOf, listedChairTime } from './chairTime'
@@ -60,7 +61,7 @@ function shortName(name: string): string {
  * Один врач — его день; «Все врачи» — все приёмы вместе, у строки имя врача, свободные окна
  * каждого врача отдельно. У приёма — быстрое напоминание (Telegram или WhatsApp). Завтра — «Готово X из Y».
  */
-export function DayList({ me, doctors, date, onDate, onOpen, onQuick, onNew, onNewHere, selectedId, all, doctorsNote }: {
+export function DayList({ me, doctors, date, onDate, onOpen, onQuick, onNew, onNewHere, selectedId, all, doctorsNote, paintOf, onCalendar }: {
   me: Me
   doctors: Doctor[]
   date: string
@@ -76,6 +77,10 @@ export function DayList({ me, doctors, date, onDate, onOpen, onQuick, onNew, onN
   all?: boolean
   /** «Показано 4 из 10 · Выходной: Айгерим · показать» (SchedulePage) */
   doctorsNote?: ReactNode
+  /** «Чем красить запись» (schedule/paint.ts): цвет заливки строки по врачу или услуге; по статусу — undefined */
+  paintOf?: (a: Appointment) => string | undefined
+  /** «Все врачи»: нажали на имя в шапке колонки — мини-календарь врача */
+  onCalendar?: (doctorId: number) => void
 }) {
   const today = todayIn()
   const many = all ?? doctors.length > 1
@@ -182,7 +187,7 @@ export function DayList({ me, doctors, date, onDate, onOpen, onQuick, onNew, onN
                   {swipe && g.items.some((i) => i.kind === 'appointment') && <SwipeHint />}
                   <ul className="rows">
                     {g.items.map((item) => item.kind === 'appointment'
-                      ? <Row key={`a${item.a.id}`} a={item.a} me={me} color={g.doctor.color} chair={item.chair} next={item.a === next} active={item.a.id === selectedId}
+                      ? <Row key={`a${item.a.id}`} a={item.a} me={me} color={g.doctor.color} paint={paintOf?.(item.a)} chair={item.chair} next={item.a === next} active={item.a.id === selectedId}
                           canEdit={canEditDoctor(item.a.doctorId)} money={seesMoneyOf(me, item.a.doctorId)} onOpen={onOpen} onQuick={onQuick} swipe={swipe} />
                       : item.kind === 'colleague' ? (
                         <li key={`c${item.at}`} className="row pause colleague" role="note" aria-label={`${timeOf(item.at)}–${timeOf(item.end)}: время ${item.name}`}>
@@ -211,7 +216,10 @@ export function DayList({ me, doctors, date, onDate, onOpen, onQuick, onNew, onN
                 <section key={g.doctor.id} className="doctor-day" aria-label={g.doctor.name}>
                   <h3 className="doctor-day-head" title={g.doctor.name}>
                     <span className="avatar" style={g.doctor.color ? { background: g.doctor.color, color: '#fff' } : undefined} aria-hidden="true">{g.doctor.name.slice(0, 1)}</span>
-                    <span className="doctor-day-name">{shortName(g.doctor.name)}{g.doctor.id === me.doctorId ? ' (я)' : ''}</span>
+                    {onCalendar ? (
+                      <button type="button" className="doctor-day-name link" aria-haspopup="dialog" aria-label={`Календарь врача: ${g.doctor.name}`}
+                        onClick={() => onCalendar(g.doctor.id)}>{shortName(g.doctor.name)}{g.doctor.id === me.doctorId ? ' (я)' : ''}</button>
+                    ) : <span className="doctor-day-name">{shortName(g.doctor.name)}{g.doctor.id === me.doctorId ? ' (я)' : ''}</span>}
                     <span className="doctor-day-count" aria-label={`записей: ${g.booked}`}>{g.booked}</span>
                   </h3>
                   {rows}
@@ -261,8 +269,10 @@ function FreeRow({ start, end, canEdit, doctor, onPick }: {
  * Ошибка — под строкой. WhatsApp — только когда загружены настройки (подпись клиники и ссылка на бота).
  * Телефон (swipe): свайп вправо — то же напоминание, влево — «Приём состоялся» с «Вернуть» (useRowSwipe).
  */
-function Row({ a, me, color, chair, next, active, canEdit, money, onOpen, onQuick, swipe = false }: {
+function Row({ a, me, color, paint, chair, next, active, canEdit, money, onOpen, onQuick, swipe = false }: {
   a: Appointment
+  /** «Красить по врачу / услуге» — цвет заливки строки; статус остаётся словом */
+  paint?: string
   me: Me
   /** Цвет врача — полоска слева; статус остаётся заливкой строки и словом (DESIGN.md) */
   color?: string
@@ -360,8 +370,9 @@ function Row({ a, me, color, chair, next, active, canEdit, money, onOpen, onQuic
   const error = (r.notDelivered ? null : action.error) ?? opened.error ?? notSent.undo.error
   const statusError = status.error
   return (
-    <li ref={li} className={['row', `s-${s.kind}`, next ? 'next' : '', active ? 'active' : '', a.status === 'NO_SHOW' ? 'struck' : '', swipe ? 'swipe' : '', color ? 'doc' : ''].join(' ').trim()}
-      style={color ? { '--doc': color } as CSSProperties : undefined}>
+    <li ref={li} className={['row', `s-${s.kind}`, next ? 'next' : '', active ? 'active' : '', a.status === 'NO_SHOW' ? 'struck' : '', swipe ? 'swipe' : '', color ? 'doc' : '',
+      isShaky(a) ? 'shaky' : '', paint ? 'painted' : ''].filter(Boolean).join(' ')}
+      style={color || paint ? { ...(color ? { '--doc': color } : {}), ...(paint ? { '--paint': paint } : {}) } as CSSProperties : undefined}>
       {swipe && canSwipeRemind && <span className="swipe-under swipe-right" aria-hidden="true">📲 {viaBot ? 'Telegram' : r.nowhere ? 'Напомнить' : 'WhatsApp'}</span>}
       {swipe && canSwipeDone && <span className="swipe-under swipe-left" aria-hidden="true">Состоялся ✔️</span>}
       <div className="row-slide">

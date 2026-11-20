@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw'
 
 import { appointment, me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
-import { waitForSlow } from '../test/wait'
+import { waitForSlow, warmSchedule } from '../test/wait'
 
 /** Фальшивый Telegram.WebApp: подпись запуска и системная кнопка «Назад». */
 function fakeTelegram() {
@@ -14,6 +14,9 @@ function fakeTelegram() {
   window.Telegram = { WebApp: { initData: 'query_id=1&user=%7B%22id%22%3A111%7D&hash=abc', ready() {}, expand() {}, BackButton: back } }
   return { back, press: () => [...handlers].forEach((h) => h()) }
 }
+
+// Оболочка и «Расписание» — заранее, со своим сроком: под нагрузкой их сборка не влезала в 5 с findBy первого теста
+beforeAll(warmSchedule, 60_000)
 
 afterEach(() => {
   delete window.Telegram

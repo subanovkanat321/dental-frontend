@@ -27,6 +27,14 @@ const FLICK_MIN_PX = 40
 /** Часы жеста. Не Date: в тестах Date подменяют (fixNow), а тут нужны миллисекунды между касаниями */
 export const swipeClock = { now: () => performance.now() }
 
+/**
+ * Часы «глушим клик ещё N мс после жеста» — монотонные (performance.now), не Date. Date могут перевести (часы
+ * телефона), а в тестах он подменён (fixNow, shouldAdvanceTime): поддельные часы идут шагами по 20 мс на таймере
+ * и под нагрузкой отстают от настоящих — тест ждал 450 мс, а «прошло» меньше 400, клик глушился, и тест падал
+ * через раз (rowswipe.test.tsx, 2026-11-20). Отдельно от swipeClock: тот тесты ведут вручную.
+ */
+const monotonic = () => performance.now()
+
 export type SwipeActions = {
   /** Нет — жест вправо неактивен */
   right?: () => void
@@ -107,7 +115,7 @@ export function useRowSwipe(ref: RefObject<HTMLElement | null>, enabled: boolean
           // Жест закончен: дальнейшее движение пальца не станет свайпом, а отпускание — кликом по строке
           g = null
           longFired = true
-          swallowUntil = Date.now() + 700
+          swallowUntil = monotonic() + 700
           latest.current.long?.()
         }, LONG_MS)
       }
@@ -157,7 +165,7 @@ export function useRowSwipe(ref: RefObject<HTMLElement | null>, enabled: boolean
         gesture.dx = gesture.side === 'right' ? Math.max(0, dx) : Math.min(0, dx)
         endX = t.clientX
       }
-      swallowUntil = Date.now() + 400
+      swallowUntil = monotonic() + 400
       release()
       if (Math.abs(gesture.dx) >= armedAt(gesture.width) || isFlick(gesture, endX)) latest.current[gesture.side]?.()
     }
@@ -173,7 +181,7 @@ export function useRowSwipe(ref: RefObject<HTMLElement | null>, enabled: boolean
     // Отпустили после жеста — браузер может прислать клик: карточку не открываем
     const onClick = (e: MouseEvent) => {
       // Только по самой строке: «Вернуть» под ней нажимается сразу
-      if (Date.now() < swallowUntil && e.target instanceof Element && e.target.closest('.row-slide')) {
+      if (monotonic() < swallowUntil && e.target instanceof Element && e.target.closest('.row-slide')) {
         e.preventDefault()
         e.stopPropagation()
       }
@@ -189,10 +197,10 @@ export function useRowSwipe(ref: RefObject<HTMLElement | null>, enabled: boolean
     // таймером или откроется сейчас (мышь)
     // Клик сразу после долгого нажатия — по всему документу (лист открылся поверх строки): глушим один раз
     const swallowClicks = () => {
-      const until = Date.now() + 700
+      const until = monotonic() + 700
       const onDocClick = (ev: MouseEvent) => {
         document.removeEventListener('click', onDocClick, true)
-        if (Date.now() > until) return
+        if (monotonic() > until) return
         ev.preventDefault()
         ev.stopPropagation()
       }
@@ -202,10 +210,10 @@ export function useRowSwipe(ref: RefObject<HTMLElement | null>, enabled: boolean
     const onContext = (e: MouseEvent) => {
       if (!latest.current.long || !(e.target instanceof Element) || !e.target.closest('.row-slide')) return
       e.preventDefault()
-      if (Date.now() < swallowUntil) return
+      if (monotonic() < swallowUntil) return
       stopTimer()
       g = null
-      swallowUntil = Date.now() + 700
+      swallowUntil = monotonic() + 700
       latest.current.long()
     }
     el.addEventListener('contextmenu', onContext)

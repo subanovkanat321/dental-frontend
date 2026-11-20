@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useLayoutEffect, useState, type ReactNode } from 'react'
 
+import { PaintSwitch } from '../schedule/PaintSwitch'
 import type { AccountTab } from '../account/AccountPage'
 import { logout, logoutEverywhere, type Schemas } from '../api/client'
 import type { ClinicTab } from '../clinic/ClinicPage'
@@ -235,6 +236,15 @@ function AppearancePage({ title, onBack }: { title: string; onBack: () => void }
             <strong>10:30 · Бурулай Тестова</strong>
             <span>Лечение кариеса · Кресло 1</span>
           </div>
+        </div>
+      </section>
+      {/* «Чем красить запись» в расписании — тот же выбор, что строкой под сеткой «Дня» (на телефоне — только здесь) */}
+      <section className="settings-group" aria-label="Расписание: чем красить запись">
+        <h2>Расписание: чем красить запись</h2>
+        <div className="card-block">
+          <PaintSwitch />
+          <p className="hint small">Статус — как обычно (заявка синяя, подтвердил зелёная…). Врач — цветом врача, удобно на общем экране.
+            Услуга — цветом раздела прайса: терапия, хирургия, ортодонтия… Статус всё равно виден словом, а непрочные записи — штриховкой.</p>
         </div>
       </section>
     </div>

@@ -335,6 +335,13 @@ export const TIPS: Tip[] = [
     show: (me) => hasSub(me, 'settings', 'tags'),
   },
   {
+    id: 'schedule-colors',
+    title: 'Календарь врача и «чем красить»',
+    text: 'Нажмите на имя врача над колонкой — месяц: рабочие дни, отпуск, сколько свободно. Под расписанием — «Красить запись»: по статусу, врачу или услуге.',
+    action: { guide: 'raspisanie/chitat-raspisanie' },
+    show: (me) => Boolean(me.admin || me.reception || me.doctorId != null || isAssistant(me)),
+  },
+  {
     id: 'instagram',
     title: 'Tish в Instagram',
     text: 'Короткие видео «как сделать» и юмор про будни стоматолога. Подпишитесь — рилсы можно репостить в Instagram клиники.',

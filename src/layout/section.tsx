@@ -5,7 +5,8 @@ import type { Page } from '../lib/route'
 import { useSectionActive } from '../lib/section'
 import { subHref } from '../lib/sub'
 import { matches, useMedia } from '../lib/useMedia'
-import { countOf, LOUD, type Sub } from './nav'
+import { countOf, isLoud, type Sub } from './nav'
+import { NavCount } from './NavCount'
 import { SubIcon } from './subIcons'
 import { NavContext, type NavApi } from './useSection'
 
@@ -247,13 +248,13 @@ function SubTabs({ nav, page, title, hint }: { nav: NavApi; page: Page; title: s
           {subs.map((s) => {
             const on = s.key === active
             const n = countOf(nav.counts, page, s.key)
-            const loud = LOUD.has(`${page}/${s.key}`)
+            const loud = isLoud(nav.loud, page, s.key)
             return (
               <a key={s.key} className={on ? 'sub-tab active' : 'sub-tab'} href={subHref(page, s.key)} aria-current={on ? 'page' : undefined}
                 aria-label={n ? `${s.title} · ${n}` : undefined} data-count={n > 0 ? (loud ? 'loud' : 'quiet') : undefined}
                 onClick={(e) => { e.preventDefault(); closeTip(); if (!on) nav.go(page, s.key) }}>
                 {s.title}
-                {n > 0 && <span className={loud ? 'nav-count' : 'nav-count quiet'} aria-hidden="true">{n}</span>}
+                <NavCount n={n} loud={loud} />
               </a>
             )
           })}
@@ -286,7 +287,7 @@ function SubTabs({ nav, page, title, hint }: { nav: NavApi; page: Page; title: s
                     aria-label={n ? `${s.title} · ${n}` : undefined} onClick={(e) => { e.preventDefault(); pick(s.key) }}>
                     <SubIcon page={page} sub={s.key} />
                     <span className="nav-sub-title">{s.title}</span>
-                    {n > 0 && <span className={LOUD.has(`${page}/${s.key}`) ? 'nav-count' : 'nav-count quiet'} aria-hidden="true">{n}</span>}
+                    <NavCount n={n} loud={isLoud(nav.loud, page, s.key)} />
                   </a></Fragment>
                 )
               })}
