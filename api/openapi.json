@@ -18203,7 +18203,7 @@
     "/api/cash-day/movements/{id}" : {
       "delete" : {
         "tags" : [ "cash-day-controller" ],
-        "operationId" : "delete_22",
+        "operationId" : "delete_23",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
