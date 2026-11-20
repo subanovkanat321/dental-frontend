@@ -735,7 +735,8 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
             </div>
             {hover.card}
             {/* Ни одного приёма в дне — Тишка «водяным знаком» поверх видимой части сетки (вне прокрутки); нажатия проходят к свободным окнам */}
-            {shown.length > 0 && shown.every((d) => days[doctors.indexOf(d)]?.isSuccess)
+            {/* Одна колонка: при нескольких врачах надпись ложилась поверх чужих колонок и полос «время коллеги» */}
+            {shown.length === 1 && shown.every((d) => days[doctors.indexOf(d)]?.isSuccess)
               && shown.every((d) => !(days[doctors.indexOf(d)]?.data ?? []).some((a) => a.status !== 'CANCELLED')) && (
               <div className="grid-empty">
                 <EmptyState title={emptyDayText(date, today)}>{date >= today ? 'Нажмите на свободное время, чтобы записать.' : null}</EmptyState>

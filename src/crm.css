@@ -2247,13 +2247,14 @@ button.status-pill:focus-visible { outline: 2px solid var(--accent); outline-off
    пропускает к «Свободно»; подпись — внизу справа, чтобы не закрыть «Свободно». Вне часов врача — поверх серой
    штриховки «нерабочее»: лёгкая заливка тона ожидания, чтобы полоса не терялась на сером */
 .grid-colleague {
-  position: absolute; left: 0; right: 0; z-index: 2; display: flex; align-items: flex-end; justify-content: flex-end; padding: 2px 4px;
-  border-left: 3px solid var(--status-wait); pointer-events: none; overflow: hidden;
-  background: repeating-linear-gradient(45deg, color-mix(in srgb, var(--status-wait) 28%, transparent) 0 1.5px, transparent 1.5px 9px),
-    color-mix(in srgb, var(--status-wait) 7%, transparent);
+  position: absolute; left: 0; right: 0; z-index: 2; display: flex; align-items: flex-start; justify-content: flex-start; padding: 4px 6px;
+  pointer-events: none; overflow: hidden;
+  /* 2026-11-20: ровная мягкая заливка без своей штриховки — поверх серой «нерабочее» две штриховки давали сетку; тонкая линия сверху — граница смены */
+  background: color-mix(in srgb, var(--wait-bg) 70%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--status-wait) 45%, transparent);
 }
-.grid-colleague span { max-width: 100%; padding: 0 6px; border-radius: var(--r-sm); background: var(--wait-bg); color: var(--wait-ink);
-  font-size: .78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.grid-colleague span { max-width: 100%; padding: 0 6px; border-radius: var(--r-sm); color: var(--wait-ink);
+  font-size: .78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: .85; }
 /* …и строкой в карточке приёма под статусом */
 .appt-chair-mark { margin: 0; padding: 6px 10px; border-radius: var(--r-sm); background: var(--wait-bg); color: var(--wait-ink); font-size: .9rem; box-shadow: inset 3px 0 0 var(--status-wait); }
 /* Приём в часах коллеги по креслу (V187) — бейдж «🪑 время Айгерим» в строке списка дня */
