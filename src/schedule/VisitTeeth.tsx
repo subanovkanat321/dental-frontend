@@ -132,7 +132,7 @@ export function VisitTeeth({ appointment: a, readOnly, onMedical }: { appointmen
           <div className="chart-head">
             <p className="hint small">{multi ? 'Отметьте галочками зубы, которые лечили.' : 'Нажмите зуб, который лечили. Номера — FDI, как на карте зубов.'}</p>
             <button type="button" className="btn small" aria-pressed={multi}
-              onClick={() => { setMulti(!multi); setPicked([]); many.reset() }}>{multi ? '☑' : '☐'} Несколько</button>
+              onClick={() => { setMulti(!multi); setPicked([]); many.reset() }}>{multi ? '☑' : '☐'} Несколько зубов</button>
           </div>
           <ToothFormula className="visit-formula" render={tooth} dentition={dentition} teeth={chart.data} />
           {multi && (

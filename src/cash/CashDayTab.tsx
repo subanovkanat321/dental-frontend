@@ -3,9 +3,8 @@ import { useState, type FormEvent } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { ask } from '../lib/confirm'
-import { addDays, shortDate, somText, timeOf, todayIn } from '../lib/time'
-import { DateInput } from '../layout/DateInput'
-import { HeadTools } from '../layout/PageHead'
+import { shortDate, somText, timeOf, todayIn } from '../lib/time'
+import { DateBar } from '../layout/DateBar'
 import { Loading } from '../layout/Loading'
 import { PrintSheet } from '../print/PrintSheet'
 import { docDate } from '../print/paper'
@@ -31,7 +30,8 @@ const signed = (n: number) => (n < 0 ? `−${somText(-n)}` : somText(n))
  * руководитель вписывает остаток, записывает внесение/изъятие с причиной, закрывает и открывает день.
  */
 export function CashDayTab({ me }: { me: Me }) {
-  const [day, setDay] = useState(todayIn())
+  const today = todayIn()
+  const [day, setDay] = useState(today)
   const client = useQueryClient()
   const cash = useQuery({
     queryKey: ['cash-day', day],
@@ -60,36 +60,28 @@ export function CashDayTab({ me }: { me: Me }) {
     mutationFn: (id) => unwrap(api.DELETE('/api/cash-day/movements/{id}', { params: { path: { id } } })),
     onSuccess: done,
   })
-  const today = todayIn()
   const d = cash.data
   const error = errorText(close.error ?? reopen.error ?? remove.error)
 
   return (
     <section className="card-block cash-day" aria-label="Касса дня">
-      <HeadTools>
-        <div className="day-step" role="group" aria-label="День кассы">
-          <button type="button" className="btn ghost small" aria-label="Предыдущий день" onClick={() => setDay(addDays(day, -1))}>‹</button>
-          <DateInput weekday aria-label="День" value={day} max={today} onChange={(e) => e.target.value && setDay(e.target.value)} />
-          <button type="button" className="btn ghost small" aria-label="Следующий день" disabled={day >= today}
-            onClick={() => setDay(addDays(day, 1))}>›</button>
-          {day !== today && <button type="button" className="chip" onClick={() => setDay(today)}>Сегодня</button>}
-        </div>
-      </HeadTools>
+      {/* Дата крупно, как на главной: ‹ «Сегодня ▾ / пятница, 20 ноября» › */}
+      <DateBar date={day} today={today} max={today} onDate={setDay} label="День кассы" />
       {cash.isPending ? <Loading /> : cash.error ? <p className="error" role="alert">{cash.error.message}</p> : d && (
         <>
           <dl className="cash-day-sum" aria-label="Итог кассы дня">
             <div>
-              <dt><span className="cash-sign" aria-hidden="true" />Остаток на начало</dt>
-              <dd>{d.openingSom != null ? signed(d.openingSom) : <span className="tone-wait">не указан</span>}
+              <dt><span className="cash-sign" aria-hidden="true" />Было утром</dt>
+              <dd>{d.openingSom != null ? signed(d.openingSom) : <span className="tone-wait">не указано</span>}
                 <span className="hint small">{d.openingSource === 'MANUAL' ? 'вписан' : d.openingSource === 'PREVIOUS' && d.openingFrom
                   ? `с ${shortDate(`${d.openingFrom}T12:00:00Z`)}` : ''}</span></dd>
             </div>
             <div>
-              <dt><span className="cash-sign" aria-hidden="true">+</span>Приход наличными</dt>
+              <dt><span className="cash-sign" aria-hidden="true">+</span>Оплаты наличными</dt>
               <dd>{somText(d.cashInSom)}</dd>
             </div>
             <div>
-              <dt><span className="cash-sign" aria-hidden="true">−</span>Расходы из кассы</dt>
+              <dt><span className="cash-sign" aria-hidden="true">−</span>Расходы наличными</dt>
               <dd>{somText(d.expensesSom)}</dd>
             </div>
             {d.cashRefundsSom > 0 && (
@@ -99,15 +91,15 @@ export function CashDayTab({ me }: { me: Me }) {
               </div>
             )}
             <div>
-              <dt><span className="cash-sign" aria-hidden="true">+</span>Внесения</dt>
+              <dt><span className="cash-sign" aria-hidden="true">+</span>Положили в кассу</dt>
               <dd>{somText(d.depositsSom)}</dd>
             </div>
             <div>
-              <dt><span className="cash-sign" aria-hidden="true">−</span>Изъятия</dt>
+              <dt><span className="cash-sign" aria-hidden="true">−</span>Забрали из кассы</dt>
               <dd>{somText(d.withdrawalsSom)}</dd>
             </div>
             <div className={`cash-day-total${d.closingSom < 0 ? ' tone-bad' : ''}`}>
-              <dt><span className="cash-sign" aria-hidden="true">=</span>Остаток на конец</dt>
+              <dt><span className="cash-sign" aria-hidden="true">=</span>Должно быть в кассе</dt>
               <dd aria-label="Остаток на конец">{signed(d.closingSom)}</dd>
             </div>
           </dl>
@@ -116,12 +108,10 @@ export function CashDayTab({ me }: { me: Me }) {
             {METHODS.map(([k, t]) => (d.inByMethod?.[k] ? ` · ${t.toLowerCase()} ${somText(d.inByMethod[k]!)}` : '')).join('')}
             {d.inSom > d.cashInSom && ' — в ящик идут только наличные'}
           </p>
-          {d.openingSom == null && (
-            <p className="cash-day-note" role="note">
-              Первый раз: впишите, сколько денег было в ящике утром — дальше остаток будет переходить с прошлого дня сам.
-              {!admin && ' Вписывает руководитель.'}
-            </p>
-          )}
+          {/* Первый раз: сразу поле «сколько было утром» — без отдельной кнопки и формы ниже */}
+          {d.openingSom == null && !d.closed && (admin
+            ? <OpeningForm day={day} current={d} onDone={done} first />
+            : <p className="cash-day-note" role="note">Сколько денег было в кассе утром, вписывает руководитель — дальше будет переходить с прошлого дня сам.</p>)}
 
           {d.closed ? (
             <div className="cash-day-closed">
@@ -136,29 +126,40 @@ export function CashDayTab({ me }: { me: Me }) {
                 .then((ok) => ok && reopen.mutate())}>Открыть день</button>}
             </div>
           ) : admin && (
-            <div className="cash-day-actions" role="group" aria-label="Действия с кассой">
-              <button type="button" className="btn small" onClick={() => setForm('IN')}>+ Внесение</button>
-              <button type="button" className="btn small" onClick={() => setForm('OUT')}>− Изъятие</button>
-              <button type="button" className="btn small" onClick={() => setExpense(true)}>+ Расход из кассы</button>
-              <button type="button" className="btn small" onClick={() => setForm('OPENING')}>
-                {d.openingSource === 'MANUAL' ? 'Изменить остаток на начало' : 'Вписать остаток на начало'}</button>
-              <button type="button" className="btn primary small" disabled={close.isPending} onClick={() => void ask(
-                `Закрыть кассу за ${docDate(`${day}T12:00:00Z`)}? Остаток на конец — ${signed(d.closingSom)}. Закрытый день не правят, пока руководитель не откроет его снова.`,
-                { ok: 'Закрыть день' }).then((ok) => ok && close.mutate())}>Закрыть день</button>
-            </div>
+            <>
+              {/* Понятные действия с подписью «когда» вместо «Внесение / Изъятие» (2026-11-20, просьба владельца) */}
+              <div className="cash-day-actions" role="group" aria-label="Действия с кассой">
+                <button type="button" className="cash-act" onClick={() => setForm('IN')}>
+                  <span className="cash-act-title">+ Положить в кассу</span><span className="cash-act-hint">размен, деньги руководителя</span></button>
+                <button type="button" className="cash-act" onClick={() => setForm('OUT')}>
+                  <span className="cash-act-title">− Забрать из кассы</span><span className="cash-act-hint">сдали в банк, забрал руководитель</span></button>
+                <button type="button" className="cash-act" onClick={() => setExpense(true)}>
+                  <span className="cash-act-title">− Расход наличными</span><span className="cash-act-hint">купили материалы, такси, вода…</span></button>
+                {d.openingSom != null && (
+                  <button type="button" className="cash-act" onClick={() => setForm('OPENING')}>
+                    <span className="cash-act-title">✎ Было утром</span><span className="cash-act-hint">исправить сумму на начало дня</span></button>
+                )}
+              </div>
+              <div className="cash-day-close">
+                <button type="button" className="btn primary" disabled={close.isPending} onClick={() => void ask(
+                  `Закрыть кассу за ${docDate(`${day}T12:00:00Z`)}? В кассе должно быть ${signed(d.closingSom)} — пересчитайте наличные. Закрытый день не правят, пока руководитель не откроет его снова.`,
+                  { ok: 'Закрыть день' }).then((ok) => ok && close.mutate())}>Закрыть день</button>
+                <span className="hint small">В конце дня пересчитайте наличные — должно быть {signed(d.closingSom)}</span>
+              </div>
+            </>
           )}
           {form === 'IN' || form === 'OUT'
             ? <MovementForm day={day} kind={form} onDone={done} onCancel={() => setForm(null)} />
             : form === 'OPENING' ? <OpeningForm day={day} current={d} onDone={done} onCancel={() => setForm(null)} /> : null}
           {error && <p className="error" role="alert">{error}</p>}
 
-          <h3>Внесения и изъятия</h3>
+          <h3>Положили и забрали</h3>
           {d.movements?.length ? (
-            <ul className="cash-day-list" aria-label="Внесения и изъятия">
+            <ul className="cash-day-list" aria-label="Положили и забрали">
               {d.movements.map((m) => (
                 <li key={m.id}>
                   <span className="when num">{m.at ? timeOf(m.at) : ''}</span>
-                  <span className="what">{m.kind === 'IN' ? 'Внесение' : 'Изъятие'} · {m.reason}{m.by ? <span className="hint"> · {m.by}</span> : null}</span>
+                  <span className="what">{m.kind === 'IN' ? 'Положили' : 'Забрали'} · {m.reason}{m.by ? <span className="hint"> · {m.by}</span> : null}</span>
                   <span className={`sum num${m.kind === 'OUT' ? ' tone-bad' : ''}`}>{m.kind === 'OUT' ? '−' : '+'}{somText(m.amountSom)}</span>
                   {admin && !d.closed && (
                     <button type="button" className="btn ghost small" aria-label={`Удалить: ${m.reason}`} disabled={remove.isPending}
@@ -169,9 +170,9 @@ export function CashDayTab({ me }: { me: Me }) {
             </ul>
           ) : <p className="hint small">Не было</p>}
 
-          <h3>Расходы из кассы</h3>
+          <h3>Расходы наличными</h3>
           {d.expenses?.length ? (
-            <ul className="cash-day-list" aria-label="Расходы из кассы">
+            <ul className="cash-day-list" aria-label="Расходы наличными">
               {d.expenses.map((e) => (
                 <li key={e.id}>
                   <span className="what">{e.category}{e.comment ? <span className="hint"> · {e.comment}</span> : null}</span>
@@ -179,7 +180,7 @@ export function CashDayTab({ me }: { me: Me }) {
                 </li>
               ))}
             </ul>
-          ) : <p className="hint small">Не было. Расход наличными из ящика — отметка «Из кассы наличными» в форме расхода.</p>}
+          ) : <p className="hint small">Не было.</p>}
 
           {/* Возвраты аванса пациентам (V243): наличные — из ящика, перевод и карта — только для сведения */}
           {(d.refunds?.length ?? 0) > 0 && (
@@ -224,7 +225,7 @@ function MovementForm({ day, kind, onDone, onCancel }: { day: string; kind: Kind
     e.preventDefault()
     save.mutate()
   }
-  const title = kind === 'IN' ? 'Внесение в кассу' : 'Изъятие из кассы'
+  const title = kind === 'IN' ? 'Положить в кассу' : 'Забрать из кассы'
   return (
     <form className="pay-form cash-day-form" aria-label={title} onSubmit={submit}>
       <b>{title}</b>
@@ -241,7 +242,7 @@ function MovementForm({ day, kind, onDone, onCancel }: { day: string; kind: Kind
   )
 }
 
-function OpeningForm({ day, current, onDone, onCancel }: { day: string; current: Day; onDone: (d: Day) => void; onCancel: () => void }) {
+function OpeningForm({ day, current, onDone, onCancel, first = false }: { day: string; current: Day; onDone: (d: Day) => void; onCancel?: () => void; first?: boolean }) {
   const [amount, setAmount] = useState(current.openingSom != null && current.openingSom >= 0 ? String(current.openingSom) : '')
   const save = useMutation<Day, ApiError, number | null>({
     mutationFn: (som) => unwrap(api.PUT('/api/cash-day/opening', { body: { day, amountSom: som ?? undefined } })),
@@ -249,16 +250,16 @@ function OpeningForm({ day, current, onDone, onCancel }: { day: string; current:
   })
   return (
     <form className="pay-form cash-day-form" aria-label="Остаток на начало" onSubmit={(e) => { e.preventDefault(); save.mutate(Number(amount)) }}>
-      <b>Остаток на начало дня</b>
-      <p className="hint small">Сколько наличных было в ящике в начале дня — пересчитайте деньги.</p>
+      <b>{first ? 'Сколько денег было в кассе утром?' : 'Было утром'}</b>
+      <p className="hint small">{first ? 'Один раз — дальше сумма будет переходить с прошлого дня сама.' : 'Сколько наличных было в кассе в начале дня — пересчитайте деньги.'}</p>
       <label className="field"><span>Сумма, сом</span>
-        <input type="number" min={0} inputMode="numeric" required autoFocus value={amount} onChange={(e) => setAmount(e.target.value)} /></label>
+        <input type="number" min={0} inputMode="numeric" required autoFocus={!first} value={amount} onChange={(e) => setAmount(e.target.value)} /></label>
       {save.error && <p className="error" role="alert">{errorText(save.error)}</p>}
       <button type="submit" className="btn primary" disabled={save.isPending}>Сохранить</button>
       {current.openingSource === 'MANUAL' && (
         <button type="button" className="link" disabled={save.isPending} onClick={() => save.mutate(null)}>Считать от прошлого дня</button>
       )}
-      <button type="button" className="link" onClick={onCancel}>Отмена</button>
+      {onCancel && <button type="button" className="link" onClick={onCancel}>Отмена</button>}
     </form>
   )
 }
@@ -270,18 +271,18 @@ function CashDaySheet({ d }: { d: Day }) {
       <h1>Касса за {docDate(`${d.day}T12:00:00Z`)}</h1>
       <table aria-label="Касса за день">
         <tbody>
-          <tr><td>Остаток на начало</td><td className="r">{d.openingSom != null ? signed(d.openingSom) : 'не указан'}</td></tr>
+          <tr><td>Было утром</td><td className="r">{d.openingSom != null ? signed(d.openingSom) : 'не указано'}</td></tr>
           {METHODS.map(([k, t]) => <tr key={k}><td>Приход: {t.toLowerCase()}</td><td className="r">{somText(d.inByMethod?.[k] ?? 0)}</td></tr>)}
-          <tr><td>Расходы из кассы</td><td className="r">−{somText(d.expensesSom)}</td></tr>
+          <tr><td>Расходы наличными</td><td className="r">−{somText(d.expensesSom)}</td></tr>
           {d.cashRefundsSom > 0 && <tr><td>Возвраты аванса наличными</td><td className="r">−{somText(d.cashRefundsSom)}</td></tr>}
-          <tr><td>Внесения</td><td className="r">{somText(d.depositsSom)}</td></tr>
-          <tr><td>Изъятия</td><td className="r">−{somText(d.withdrawalsSom)}</td></tr>
-          <tr><td><b>Остаток на конец (наличные)</b></td><td className="r"><b>{signed(d.closingSom)}</b></td></tr>
+          <tr><td>Положили в кассу</td><td className="r">{somText(d.depositsSom)}</td></tr>
+          <tr><td>Забрали из кассы</td><td className="r">−{somText(d.withdrawalsSom)}</td></tr>
+          <tr><td><b>Должно быть в кассе (наличные)</b></td><td className="r"><b>{signed(d.closingSom)}</b></td></tr>
         </tbody>
       </table>
       {(d.movements?.length ?? 0) > 0 && (
-        <ul className="payments" aria-label="Внесения и изъятия">
-          {d.movements!.map((m) => <li key={m.id}>{m.kind === 'IN' ? 'Внесение' : 'Изъятие'} · {somText(m.amountSom)} · {m.reason}{m.by ? ` · ${m.by}` : ''}</li>)}
+        <ul className="payments" aria-label="Положили и забрали">
+          {d.movements!.map((m) => <li key={m.id}>{m.kind === 'IN' ? 'Положили' : 'Забрали'} · {somText(m.amountSom)} · {m.reason}{m.by ? ` · ${m.by}` : ''}</li>)}
         </ul>
       )}
       {d.closed && <p>День закрыт{d.closedBy ? `: ${d.closedBy}` : ''}{d.closedAt ? `, ${docDate(d.closedAt)} ${timeOf(d.closedAt)}` : ''}</p>}
