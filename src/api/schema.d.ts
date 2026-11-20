@@ -1348,6 +1348,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/clinic/visit-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["visitSettings"];
+        put: operations["updateVisitSettings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/clinic/visit-report-ai": {
         parameters: {
             query?: never;
@@ -9943,6 +9959,10 @@ export interface components {
             recallMonths: number;
             patientContracts?: boolean;
             googleReviewUrl?: string;
+            markArrival?: boolean;
+        };
+        VisitSettingsControllerVisitSettingsView: {
+            markArrival?: boolean;
         };
         VisitReportControllerAiChange: {
             on?: boolean;
@@ -17145,6 +17165,50 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ClinicView"];
+                };
+            };
+        };
+    };
+    visitSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VisitSettingsControllerVisitSettingsView"];
+                };
+            };
+        };
+    };
+    updateVisitSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VisitSettingsControllerVisitSettingsView"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VisitSettingsControllerVisitSettingsView"];
                 };
             };
         };

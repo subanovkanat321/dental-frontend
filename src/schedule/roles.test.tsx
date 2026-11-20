@@ -42,8 +42,8 @@ test('ассистент: без предоплаты и цен услуг, пе
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: /Бакыт М\./ }))
   const panel = screen.getByRole('complementary', { name: 'Карточка приёма' })
-  expect(within(panel).queryByRole('button', { name: 'Попросить предоплату' })).not.toBeInTheDocument()
-  await userEvent.click(within(panel).getByRole('button', { name: 'изменить' }))
+  expect(within(panel).queryByRole('button', { name: '＋ Предоплата' })).not.toBeInTheDocument()
+  await userEvent.click(within(panel).getByRole('button', { name: 'Изменить услугу' }))
   await userEvent.click(await within(panel).findByLabelText('Услуга'))
   // Цен ассистенту нет: «Чистка · 60 мин», без сомов
   expect(await screen.findByRole('option', { name: /Чистка/ })).not.toHaveTextContent('сом')

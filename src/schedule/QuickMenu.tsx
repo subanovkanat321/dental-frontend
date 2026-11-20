@@ -8,7 +8,7 @@ import { contactActionItems } from './contactItems'
 import type { Slot } from './NewAppointmentPanel'
 import { askPlanDone } from './planDoneStore'
 import { ReasonSheet } from './ReasonSheet'
-import { nextStep } from './statusOptions'
+import { marksArrival, nextStep } from './statusOptions'
 import { useAppointmentAction } from './useAppointmentAction'
 import { useAppointmentContacts } from './useAppointmentContacts'
 
@@ -36,7 +36,7 @@ function useQuickItems(a: Appointment, me: Me, h: QuickHandlers, act: {
   const date = a.startAt ? dateOf(a.startAt) : todayIn()
   const started = date <= todayIn()
   const ended = a.endAt ? new Date(a.endAt) < new Date() : false
-  const step = nextStep(a, { canEdit, started, ended })
+  const step = nextStep(a, { canEdit, started, ended, arrivals: marksArrival(me) })
   const contacts = useAppointmentContacts(a, { canEdit, debtSom: 0 })
   const active = a.status === 'REQUESTED' || a.status === 'SCHEDULED'
   const items: ActionItem[] = []
@@ -90,7 +90,7 @@ export function QuickMenu({ appointment: a, me, at, onClose, ...h }: QuickHandle
   }
   const canEdit = canEditDoctor(me, a.doctorId)
   const date = a.startAt ? dateOf(a.startAt) : todayIn()
-  const step = nextStep(a, { canEdit, started: date <= todayIn(), ended: a.endAt ? new Date(a.endAt) < new Date() : false })
+  const step = nextStep(a, { canEdit, started: date <= todayIn(), ended: a.endAt ? new Date(a.endAt) < new Date() : false, arrivals: marksArrival(me) })
   const runStep = () => {
     if (!step) return
     if (step.kind === 'confirm') send({ kind: 'status', body: { version: a.version, status: 'SCHEDULED' } })

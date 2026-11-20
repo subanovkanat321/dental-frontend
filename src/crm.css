@@ -401,6 +401,15 @@
 /* Карточка приёма: строки с «изменить», вложенные формы, материалы */
 .line-edit { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
 .line-edit .link { font-size: .86rem; flex: none; }
+/* Карандаш «Изменить» (layout/EditButton): прозрачная круглая кнопка цвета ссылки; в строке — по центру текста.
+   Телефон — 44×44 под палец, компьютер — 32×32 */
+.edit-btn { flex: none; display: inline-grid; place-items: center; width: 32px; height: 32px; margin: -6px -6px -6px 0; padding: 0;
+  border: 0; border-radius: 50%; background: none; color: var(--link); cursor: pointer; }
+.edit-btn:hover { background: color-mix(in srgb, var(--link) 10%, transparent); }
+.edit-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.edit-btn:disabled { opacity: .5; cursor: default; }
+.line-edit:has(> .edit-btn) { align-items: center; }
+@media (max-width: 640px) { .edit-btn { width: 44px; height: 44px; margin: -10px -10px -10px 0; } }
 /* «📖 Показать пациенту» (src/learn): кнопка темы и выбор другой темы одной строкой */
 .lesson-line { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .lesson-line .btn { flex: none; }
@@ -438,7 +447,6 @@
 .candidate-who { display: grid; flex: 1 1 12em; min-width: 0; }
 .candidate .actions { display: flex; gap: 6px; flex-wrap: nowrap; }
 .candidate .actions .btn { white-space: nowrap; }
-.remind { display: grid; gap: 8px; }
 
 /* Касса: расходы, прибыль, оценки */
 .expense-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; align-items: center; }
@@ -3151,6 +3159,10 @@ button.cash-entry:hover, button.cash-entry.active { background: var(--sunken); }
 .appt-card .appt-bar .action-menu-wrap { flex: none; margin-left: auto; }
 .appt-card .appt-bar-more { min-width: 48px; min-height: 48px; padding: 0 12px; font-size: 1.2rem; }
 .appt-card .appt-bar:not(:has(.appt-bar-main)) { justify-content: flex-end; }
+/* «🚷 Неявка» ссылкой рядом с главной «Приём состоялся» (клиника не отмечает приход, V245): вторичное действие — не
+   кнопка, а ссылка цвета неявки; на телефоне — палец-размер 48px */
+.appt-card .appt-noshow { flex: none; color: var(--bad-ink); white-space: nowrap; }
+.appt-card .appt-bar .appt-noshow { min-height: 48px; padding: 0 4px; }
 /* Врачу на приёме — «О записи» внизу: услуга, комментарий, промокод, откуда узнал, задачи */
 .appt-card .appt-about { display: grid; gap: 8px; padding-bottom: 6px; }
 

@@ -32,6 +32,7 @@ const BirthdaysPage = lazy(() => import('./BirthdaysPage').then((m) => ({ defaul
 const DebtTextPage = lazy(() => import('./DebtTextPage').then((m) => ({ default: m.DebtTextPage })))
 const ReminderTextPage = lazy(() => import('./ReminderTextPage').then((m) => ({ default: m.ReminderTextPage })))
 const VisitTemplatesPage = lazy(() => import('./VisitTemplatesPage').then((m) => ({ default: m.VisitTemplatesPage })))
+const VisitMarksPage = lazy(() => import('./VisitMarksPage').then((m) => ({ default: m.VisitMarksPage })))
 const PlanTemplatesPage = lazy(() => import('./PlanTemplatesPage').then((m) => ({ default: m.PlanTemplatesPage })))
 const AiPage = lazy(() => import('./AiPage').then((m) => ({ default: m.AiPage })))
 const SourcesPage = lazy(() => import('./SourcesPage').then((m) => ({ default: m.SourcesPage })))
@@ -80,6 +81,7 @@ const RENDER: Record<string, (title: string) => Render> = {
   ai: () => (_me, back) => <AiPage onBack={back} />,
   'visit-templates': () => (me, back) => <VisitTemplatesPage me={me} onBack={back} />,
   'plan-templates': () => (me, back) => <PlanTemplatesPage me={me} onBack={back} />,
+  'visit-marks': () => (_me, back) => <VisitMarksPage onBack={back} />,
   // «Выйти на всех устройствах» — внизу «Моего профиля» (обычный «Выйти» — в блоке «Я»)
   profile: () => (me, back) => <ProfilePage me={me} onBack={back} footer={<LogoutSection />} />,
   appearance: (t) => (_me, back) => <AppearancePage title={t} onBack={back} />,

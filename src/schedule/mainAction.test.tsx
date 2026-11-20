@@ -5,7 +5,7 @@ import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
 import { addDays, todayIn } from '../lib/time'
-import { appointment, me } from '../test/fixtures'
+import { appointment, me, statusMenu } from '../test/fixtures'
 import { server } from '../test/server'
 import { AppointmentPanel } from './AppointmentPanel'
 
@@ -164,15 +164,20 @@ describe('по моменту', () => {
     expect(await within(done).findByText(/У пациента долг 4 000 сом за прошлые визиты/)).toBeInTheDocument()
   })
 
-  test('ответ «Подтвердил / Перенос / Нет ответа» — до прихода; пришёл — нет, и «Ещё» (предоплата, лист ожидания) нет', () => {
+  test('ответ пациента — в списке статуса (отдельного ряда «Подтвердил / Перенос / Нет ответа» нет), до прихода; пришёл — нет, и «＋ Предоплата» нет', async () => {
     backend()
     const { panel } = renderPanel(tomorrow(), reception)
-    expect(within(panel).getByRole('group', { name: 'Ответ пациента' })).toBeInTheDocument()
-    expect(within(panel).getByRole('region', { name: 'Ещё' })).toBeInTheDocument()
+    expect(within(panel).queryByRole('group', { name: 'Ответ пациента' })).not.toBeInTheDocument()
+    expect(within(panel).getByRole('button', { name: '＋ Предоплата' })).toBeInTheDocument()
+    await userEvent.click(statusMenu(panel)!)
+    const items = screen.getAllByRole('menuitemradio').map((i) => i.querySelector('.menu-text')?.firstChild?.textContent)
+    expect(items).toEqual(['Записан', 'Подтвердил (придёт)', 'Просит перенести', 'Нет ответа', 'Приём состоялся', 'Неявка', 'Отменён'])
     cleanup()
     const arrived = renderPanel({ ...base, arrivedAt: now() }, reception).panel
-    expect(within(arrived).queryByRole('group', { name: 'Ответ пациента' })).not.toBeInTheDocument()
-    expect(within(arrived).queryByRole('region', { name: 'Ещё' })).not.toBeInTheDocument()
+    expect(within(arrived).queryByRole('button', { name: '＋ Предоплата' })).not.toBeInTheDocument()
+    await userEvent.click(statusMenu(arrived)!)
+    expect(screen.queryByRole('menuitemradio', { name: /^Просит перенести/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('menuitemradio', { name: /^Нет ответа/ })).not.toBeInTheDocument()
   })
 
   test('после визита промокод и «откуда узнал» — в свёрнутом «О записи»; до визита — строками', async () => {
@@ -199,10 +204,10 @@ describe('по моменту', () => {
     expect(within(doctor).getByRole('region', { name: 'Материалы на приёме' })).toBeInTheDocument()
   })
 
-  test('шапка коротко: «пт, 20 нояб · Айгерим С.» — врач без фамилии целиком', () => {
+  test('шапка коротко: «пт, 20 нояб · врач Айгерим С.» — врач приёма с подписью, без фамилии целиком', () => {
     backend()
     const { panel } = renderPanel(base, reception)
     const day = panel.querySelector('.appt-day')!
-    expect(day.textContent).toMatch(/^[а-я]{2}, \d{1,2} [а-я]+ · Айгерим С\.$/)
+    expect(day.textContent).toMatch(/^[а-я]{2}, \d{1,2} [а-я]+ · врач Айгерим С\.$/)
   })
 })

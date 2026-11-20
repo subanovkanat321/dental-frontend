@@ -93,7 +93,7 @@ test('передать другому врачу — /transfer с врачом',
 test('услуга и комментарий меняются прямо в карточке', async () => {
   const sent = backend(appointment(10, 1, '15:00', 'Бакыт М.'))
   const panel = await openCard(/Бакыт М\./)
-  await userEvent.click(within(panel).getAllByRole('button', { name: 'изменить' })[0]!)
+  await userEvent.click(within(panel).getByRole('button', { name: 'Изменить услугу' }))
   const service = within(panel).getByRole('form', { name: 'Услуга приёма' })
   await pickService(service, /Чистка/)
   await userEvent.click(within(service).getByRole('button', { name: 'Сохранить' }))
@@ -116,7 +116,7 @@ test('услуга приёма убрана из прайса — остаёт�
   ] satisfies Schemas['ServiceTypeView'][])))
   const panel = await openCard(/Бакыт М\./)
   expect(within(panel).getByText('Синус-лифтинг')).toBeInTheDocument()
-  await userEvent.click(within(panel).getAllByRole('button', { name: 'изменить' })[0]!)
+  await userEvent.click(within(panel).getByRole('button', { name: 'Изменить услугу' }))
   const service = within(panel).getByRole('form', { name: 'Услуга приёма' })
   const select = await within(service).findByLabelText('Услуга')
   await waitForSlow(() => expect(select).toHaveTextContent('Синус-лифтинг'))

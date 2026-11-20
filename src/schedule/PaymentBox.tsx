@@ -18,6 +18,7 @@ import { discountText, reasonText } from '../lib/discount'
 import { DiscountField } from './DiscountField'
 import { initialPayView, type PayView } from './payView'
 import { draftOf, draftProblem, draftSom, useDiscountPolicy, type DiscountDraft } from './discountDraft'
+import { EditButton } from '../layout/EditButton'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
@@ -121,7 +122,7 @@ export function PaymentBox({ appointment: a, me, open, mainOutside = false, quie
           : fullyPaid ? `✅ Оплачено ${somText(a.paidSom ?? 0)}${split || !a.paymentMethod ? '' : ` · ${methodName(a.paymentMethod)}`}`
           : a.chargeSom != null && !(a.discount && (a.paidSom ?? 0) >= a.chargeSom) ? `${somText(a.paidSom ?? 0)} из ${somText(a.chargeSom)}`
           : split ? somText(a.paidSom ?? 0) : `${somText(a.paidSom ?? 0)} · ${methodName(a.paymentMethod)}`}</span>
-        {!installments && <button type="button" className="link" onClick={() => setView('edit')}>{fullyPaid ? 'изменить' : 'Изменить'}</button>}
+        {!installments && <EditButton label="Изменить оплату" onClick={() => setView('edit')} />}
       </p>
       {a.paidSom === 0 && !allInDebt && a.freeComment && <p className="hint small payment-note">{a.freeComment}</p>}
       {a.discount && (

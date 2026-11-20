@@ -17,6 +17,7 @@ import { Loading, Spinner } from '../layout/Loading'
 import { HeadTools, SubHelp } from '../layout/PageHead'
 import { CalmRow, RowMenu } from './CalmList'
 import { DAY_PARTS, dayPartOf, hhmm, WEEKDAYS, wishText, type Wish } from './wish'
+import { EditButton } from '../layout/EditButton'
 
 type Me = Schemas['BookingViewsMe']
 type Patient = Schemas['PatientView']
@@ -126,7 +127,13 @@ export function RecallTab({ onOpen, onBook }: { onOpen: (patientId: number) => v
  * В карточке пациента: «В лист ожидания» (к какому врачу, на сколько и когда удобно) или «Убрать» / «изменить» — как
  * кнопка в карточке приложения. Освободится подходящее окно — «🔔 Окна» в «Расписании» и «Новая запись» предложат пациента.
  */
-export function WaitlistBox({ patient, me, defaultMinutes = 30 }: { patient: Patient; me: Me; defaultMinutes?: number }) {
+export function WaitlistBox({ patient, me, defaultMinutes = 30, onCancel }: {
+  patient: Patient
+  me: Me
+  defaultMinutes?: number
+  /** «Отмена» у новой строки (карточка приёма: форма открыта ссылкой «＋ В лист ожидания») */
+  onCancel?: () => void
+}) {
   const client = useQueryClient()
   const list = useWaitlist()
   const entry = list.data?.find((e) => e.patient?.id === patient.id)
@@ -155,7 +162,7 @@ export function WaitlistBox({ patient, me, defaultMinutes = 30 }: { patient: Pat
       <div className="waitlist-box">
         <span className="chip s-wait">В листе ожидания{entry.createdAt ? ` с ${shortDate(entry.createdAt)}` : ''} · {entry.durationMinutes} мин</span>
         <span className="hint small">{wishText(entry.wish)}</span>
-        <button type="button" className="link" onClick={() => setEditing(true)}>изменить</button>
+        <EditButton label="Изменить лист ожидания" onClick={() => setEditing(true)} />
         <button type="button" className="link" disabled={remove.isPending} onClick={() => remove.mutate(entry.id)}>убрать</button>
         {error && <p className="error">{error.message}</p>}
       </div>
@@ -163,7 +170,7 @@ export function WaitlistBox({ patient, me, defaultMinutes = 30 }: { patient: Pat
   }
   return (
     <WishFormBox me={me} initial={entry} defaultMinutes={defaultMinutes} busy={add.isPending || update.isPending} error={error}
-      submit={entry ? 'Сохранить' : 'В лист ожидания'} onCancel={entry ? () => setEditing(false) : undefined}
+      submit={entry ? 'Сохранить' : 'В лист ожидания'} onCancel={entry ? () => setEditing(false) : onCancel}
       onSubmit={(body) => (entry ? update.mutate(body) : add.mutate(body))} />
   )
 }
