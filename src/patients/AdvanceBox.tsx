@@ -3,7 +3,7 @@ import { useState, type FormEvent } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { refundsAdvance, takesAdvance } from '../lib/roles'
-import { shortDate, somText } from '../lib/time'
+import { dateOf, somText } from '../lib/time'
 import { useAdvance, type Advance } from './advance'
 
 type Me = Schemas['BookingViewsMe']
@@ -12,6 +12,12 @@ type Method = 'CASH' | 'TRANSFER' | 'CARD'
 
 const METHODS: [Method, string][] = [['CASH', 'Наличные'], ['TRANSFER', 'Перевод'], ['CARD', 'Карта']]
 const METHOD_TEXT: Record<string, string> = { CASH: 'наличными', TRANSFER: 'переводом', CARD: 'картой' }
+
+/** «20.11» — коротко, по Бишкеку: в истории аванса год не нужен. */
+function dayMonth(instant: string): string {
+  const [, m, d] = dateOf(instant).split('-')
+  return `${d}.${m}`
+}
 
 function errorText(e: ApiError | null): string | null {
   return e ? e.fieldErrors.amountSom ?? e.fieldErrors.method ?? e.fieldErrors.reason ?? e.fieldErrors.comment ?? e.message : null
@@ -23,7 +29,7 @@ function entryText(e: Entry): string {
   switch (e.kind) {
     case 'IN': return `Внесли${how}${e.comment ? ` · ${e.comment}` : ''}`
     case 'REFUND': return `Вернули${how}${e.comment ? ` · ${e.comment}` : ''}`
-    case 'SPEND': return `Оплата приёма${e.appointmentStartAt ? ` ${shortDate(e.appointmentStartAt)}` : ''}`
+    case 'SPEND': return `Оплата приёма${e.appointmentStartAt ? ` ${dayMonth(e.appointmentStartAt)}` : ''}`
     default: return e.deltaSom > 0 ? 'Перенос в семье' : 'Ушёл из семьи — аванс остался семье'
   }
 }
@@ -61,7 +67,7 @@ export function AdvanceBox({ patientId, me }: { patientId: number; me: Me }) {
         <ul className="cash-day-list advance-history" aria-label="История аванса">
           {shown.map((e, i) => (
             <li key={`${e.at}-${i}`}>
-              <span className="when num">{e.at ? shortDate(e.at) : ''}</span>
+              <span className="when num">{e.at ? dayMonth(e.at) : ''}</span>
               <span className="what">{entryText(e)}{a.familyId != null && e.patient ? <span className="hint"> · {e.patient}</span> : null}
                 {e.by ? <span className="hint"> · {e.by}</span> : null}</span>
               <span className={`sum num${e.deltaSom < 0 ? ' tone-bad' : ' tone-ok'}`}>{e.deltaSom > 0 ? '+' : '−'}{somText(Math.abs(e.deltaSom))}</span>

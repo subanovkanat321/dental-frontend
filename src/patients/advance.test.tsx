@@ -85,7 +85,7 @@ test('семья: в шапке «аванс семьи», руководите�
   await userEvent.click(line)
   expect(within(card).getByRole('tab', { name: 'Деньги' })).toHaveAttribute('aria-selected', 'true')
   expect(within(card).getByText(/Общий счёт «Семья Вымышленных» — ещё Тимур Вымышленный/)).toBeInTheDocument()
-  expect(within(card).getByRole('list', { name: 'История аванса' })).toHaveTextContent(/Оплата приёма 20 нояб[^·]* · Тимур В\./)
+  expect(within(card).getByRole('list', { name: 'История аванса' })).toHaveTextContent(/Оплата приёма 20\.11 · Тимур В\./)
 
   await userEvent.click(within(card).getByRole('button', { name: 'Вернуть аванс' }))
   const form = within(card).getByRole('form', { name: 'Вернуть аванс' })

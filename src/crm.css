@@ -3092,6 +3092,7 @@ button.cash-entry:hover, button.cash-entry.active { background: var(--sunken); }
 .advance-box h3 { margin: 0 0 6px; }
 .advance-box .actions { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 8px 0; }
 .advance-history { margin-top: 8px; }
+.advance-history li:last-child { border-bottom: 0; }
 /* «⋯» на записи в сетке: соседом блока, правый нижний угол; видна при наведении на запись и с клавиатуры */
 .appt-more {
   position: absolute; right: 8px; z-index: 3; width: 26px; height: 22px; padding: 0; border: 1px solid var(--line-strong); border-radius: var(--r-sm);
