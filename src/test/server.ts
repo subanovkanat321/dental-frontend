@@ -131,6 +131,9 @@ export const server = setupServer(
   http.get('*/api/patient-questions/new-count', () => HttpResponse.json({ count: 0 } satisfies Schemas['QuestionControllerNewCount'])),
   // Кресла (V185): по умолчанию у клиники их нет — значков и штриховки «кресло занято» нет
   http.get('*/api/chairs', () => HttpResponse.json([] satisfies Schemas['ChairOverview'][])),
+  // Новый врач в «＋ Добавить сотрудника» по умолчанию получает новое кресло: создать и назначить
+  http.post('*/api/chairs', () => HttpResponse.json({ id: 1, name: 'Кресло 1' } satisfies Schemas['ChairsChair'], { status: 201 })),
+  http.put('*/api/doctors/:id/chair', () => HttpResponse.json([] satisfies Schemas['ChairOverview'][])),
   // «Персонал»: по умолчанию сотрудников без кресла и приглашений нет — только врачи
   http.get('*/api/members', () => HttpResponse.json([] satisfies Schemas['StaffMembersMemberView'][])),
   http.get('*/api/members/invites', () => HttpResponse.json([] satisfies Schemas['StaffMembersInviteView'][])),
