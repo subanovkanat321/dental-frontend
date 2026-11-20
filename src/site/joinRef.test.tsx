@@ -29,7 +29,7 @@ test('/join?ref=…: «Вас пригласила клиника «…» — 3 
 test('/join с неизвестным или кривым кодом — страница как обычно, без приглашения', async () => {
   window.history.replaceState(null, '', '/join?ref=nosuch2')
   render(<Join />)
-  expect(await screen.findByText(/Попробовать — бесплатно/)).toBeInTheDocument()
+  expect(await screen.findByText(/Попробовать бесплатно: всё приложение/)).toBeInTheDocument()
   expect(screen.queryByRole('note', { name: 'Приглашение' })).not.toBeInTheDocument()
   for (const a of screen.getAllByRole('link', { name: 'Попробовать бесплатно' })) expect(a).toHaveAttribute('href', '/start')
 

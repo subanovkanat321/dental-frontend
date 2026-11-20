@@ -10,8 +10,9 @@ import { DownloadPage } from './pwa/DownloadPage'
 import { ErrorBoundary } from './layout/ErrorBoundary'
 import { linkHash, readDeepLink, rememberLaunch, type DeepLink } from './lib/deepLink'
 import { dateOf, minutesOf } from './lib/time'
-import { isDownloadPath, isInvitePath, isLoginPath, isSignupConfirmPath, isSignupPath, usePage, type Page } from './lib/route'
+import { isDownloadPath, isInstagramPath, isInvitePath, isLoginPath, isSignupConfirmPath, isSignupPath, usePage, type Page } from './lib/route'
 import { SectionActive } from './lib/section'
+import { INSTAGRAM_SIGNUP } from './lib/brand'
 import { telegram } from './lib/telegram'
 import { launchedAsApp } from './pwa/pwa'
 import { noteSectionLeft, updateAtSafeMoment } from './pwa/version'
@@ -91,6 +92,11 @@ function Screens() {
   if (isDownloadPath()) return <DownloadPage />
   // /invite#join_… — приглашение врача или сотрудника: без входа, до проверки сессии
   if (isInvitePath()) return <ErrorBoundary><Suspense fallback={<Loading className="screen" />}><InvitePage /></Suspense></ErrorBoundary>
+  // tish.kg/ig (шапка Instagram) — сразу на регистрацию клиники с меткой канала; обычно это делает nginx
+  if (isInstagramPath()) {
+    window.location.replace(INSTAGRAM_SIGNUP)
+    return <Loading className="screen" />
+  }
   // /start — клиника регистрируется сама: без входа, до проверки сессии
   if (isSignupPath()) return <ErrorBoundary><Suspense fallback={<Loading className="screen" />}><SignupPage /></Suspense></ErrorBoundary>
   // /start/confirm?t=… — ссылка из письма регистрации (открыли из почты, уже в настоящем браузере)

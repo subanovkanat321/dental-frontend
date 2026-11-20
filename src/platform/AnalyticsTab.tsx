@@ -235,14 +235,24 @@ function RiskBlock({ a }: { a: Analytics }) {
   )
 }
 
+/**
+ * Откуда пришли клиники, зарегистрировавшиеся сами (V237): метка из ссылки /start?from=… — tish.kg/ig из шапки
+ * Instagram даёт INSTAGRAM; NONE — без метки.
+ */
+const SOURCE: Record<string, string> = {
+  INSTAGRAM: 'Instagram (tish.kg/ig)', REELS: 'рилсы', TWOGIS: '2ГИС', WHATSAPP: 'WhatsApp', QR: 'QR', NONE: 'без метки',
+}
+
 /** Воронка клиник, заведённых за период: где теряем новых. */
 function FunnelBlock({ a, period }: { a: Analytics; period: string }) {
   const steps = a.funnel?.steps ?? []
   const apps: Partial<NonNullable<NonNullable<Analytics['funnel']>['applications']>> = a.funnel?.applications ?? {}
   const first = steps[0]?.clinics ?? 0
+  const sources = a.funnel?.sources ?? []
   return (
     <Block title="Где теряем новые клиники" label="Воронка клиник"
-      hint={<>Заявок с сайта {period}: <b className="num">{apps.total ?? 0}</b> — одобрено {apps.approved ?? 0}, отклонено {apps.rejected ?? 0}, ждут {apps.waiting ?? 0}.</>}
+      hint={<>Заявок с сайта {period}: <b className="num">{apps.total ?? 0}</b> — одобрено {apps.approved ?? 0}, отклонено {apps.rejected ?? 0}, ждут {apps.waiting ?? 0}.
+        {sources.length > 0 && <> Сами зарегистрировались — откуда пришли: {sources.map((x) => `${SOURCE[x.channel ?? ''] ?? x.channel} — ${x.clinics}`).join(', ')}.</>}</>}
       help={`Полосы — клиники, заведённые ${period}, и до какого шага они дошли. Поздние шаги набираются со временем — смотрите период длиннее.`}>
       {first ? (
         <ul className="hbars" aria-label="Шаги воронки">

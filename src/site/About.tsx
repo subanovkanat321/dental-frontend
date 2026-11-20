@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 
-import { TISH_INSTAGRAM, TISH_INSTAGRAM_NAME } from '../lib/brand'
+import { OFFER, TISH_INSTAGRAM, TISH_INSTAGRAM_NAME } from '../lib/brand'
 import { CaseBlock } from './CaseBlock'
 import { getJson, type JoinCase } from './web'
 import './about.css'
@@ -177,7 +177,7 @@ const HOW: [string, string][] = [
 
 /** Частые вопросы клиник — коротко и только правда (договор: docs бэкенда agreement/template.md). */
 const FAQ: [string, ReactNode][] = [
-  ['Сколько стоит?', <>Попробовать — бесплатно: всё приложение, без ограничений и без предоплаты. Понравится — договоримся об условиях
+  ['Сколько стоит?', <>{OFFER}: всё приложение, без ограничений и без предоплаты. Понравится — договоримся об условиях
     (цена зависит от числа врачей); нет — просто перестанете пользоваться.</>],
   ['Данные в безопасности?', <>Данные клиники видит только клиника, у каждого сотрудника — свои права, важные действия — в журнале.
     Соединение защищено (HTTPS), резервная копия — каждый день, зашифрована и хранится отдельно от сервера.</>],
@@ -315,7 +315,7 @@ export function About() {
                 <a className="about-btn" href={ABOUT_CONTACTS.whatsapp} target="_blank" rel="noopener noreferrer">
                   <span aria-hidden="true">💬</span> Написать нам в WhatsApp</a>
               </div>
-              <p className="about-note">Бесплатно и без предоплаты — клиника готова за 5 минут, с телефона или компьютера</p>
+              <p className="about-note">{OFFER} — без предоплаты, клиника готова за 5 минут, с телефона или компьютера</p>
             </div>
             <HeroVideo />
           </div>
@@ -391,7 +391,7 @@ export function About() {
         <section id="contacts" className="about-slide about-final" aria-labelledby="about-final">
           <div className="about-inner narrow" data-reveal>
             <h2 id="about-final">Меньше рутины — <span className="about-hl">больше пациентов и спокойствия</span></h2>
-            <p className="about-lead">Попробуйте бесплатно: всё приложение, без ограничений и без предоплаты. Клиника создаётся за пару минут,
+            <p className="about-lead">{OFFER}: всё приложение, без ограничений и без предоплаты. Клиника создаётся за пару минут,
               а с переносом данных и настройкой поможем — просто напишите.</p>
             <div className="about-ctas center">
               <a className="about-btn primary big" href={START}>Попробовать бесплатно</a>

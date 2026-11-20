@@ -203,6 +203,11 @@ export function isSignupPath(path = window.location.pathname): boolean {
   return /^\/start\/?$/i.test(path)
 }
 
+/** Ссылка из шапки Instagram: tish.kg/ig → /start?from=instagram (на сервере — редирект nginx; это — запасной путь SPA). */
+export function isInstagramPath(path = window.location.pathname): boolean {
+  return /^\/ig\/?$/i.test(path)
+}
+
 /** Ссылка «Подтвердить и открыть Tish» из письма регистрации: /start/confirm?t=… — без входа. */
 export function isSignupConfirmPath(path = window.location.pathname): boolean {
   return /^\/start\/confirm\/?$/i.test(path)

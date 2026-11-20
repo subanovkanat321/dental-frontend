@@ -31,6 +31,7 @@ const report = (days: number): Schemas['PlatformAnalyticsAnalytics'] => ({
   funnel: {
     applications: { total: 4, approved: 2, rejected: 1, waiting: 1 },
     steps: [{ key: 'CREATED', clinics: 2 }, { key: 'ADMIN', clinics: 1 }, { key: 'CONFIGURED', clinics: 1 }, { key: 'FIRST_VISIT', clinics: 1 }, { key: 'MONTH', clinics: 0 }, { key: 'PAID', clinics: 0 }],
+    sources: [{ channel: 'INSTAGRAM', clinics: 2 }, { channel: 'NONE', clinics: 1 }],
   },
   geography: [{ city: 'Бишкек', clinics: 2, working: 2, paying: 1, patients: 300, applications: 1 }, { city: 'Талас', clinics: 0, working: 0, paying: 0, patients: 0, applications: 2 }],
   money: {
@@ -77,6 +78,8 @@ test('владелец: аналитика платформы — сводка, 
   expect(screen.getByRole('table', { name: 'Оплата: кому звонить' })).toHaveTextContent('через 17 дн.')
   expect(screen.getByRole('table', { name: 'Клиники в зоне риска' })).toHaveTextContent('Приёмов меньше на 83%')
   expect(screen.getByRole('list', { name: 'Шаги воронки' })).toHaveTextContent('Руководитель пришёл по ссылке1 · 50%')
+  // Откуда пришли клиники, зарегистрировавшиеся сами: tish.kg/ig из шапки Instagram — отдельной строкой
+  expect(screen.getByText(/откуда пришли: Instagram \(tish\.kg\/ig\) — 2, без метки — 1\./)).toBeInTheDocument()
   expect(screen.getByRole('table', { name: 'Клиники по городам' })).toHaveTextContent('Талас')
   expect(screen.getByRole('region', { name: 'Использование функций' })).toHaveTextContent('25%')
   expect(screen.getByRole('region', { name: 'Использование функций' })).toHaveTextContent('ИИ записал: 4')

@@ -56,7 +56,8 @@ const MANUAL = /(?<![а-яё])опрос|стикер|голосуй|викто�
 
 test('контент-план с 06.11: только пост, карусель и сторис — всё публикуется кнопкой само', () => {
   const auto = plan.filter((p) => p.date! >= AUTO_FROM)
-  expect(auto.length).toBeGreaterThanOrEqual(25)
+  // С 21.11 — только посты для клиник (аудит Instagram 2026-11-20): пациентские сняты в PATIENT_PARKED
+  expect(auto.length).toBeGreaterThanOrEqual(18)
   expect((auto.at(-1)?.date ?? '') >= '2026-12-06').toBe(true)
   for (const p of auto) {
     const where = `${p.date} «${p.title}»`
@@ -69,5 +70,25 @@ test('контент-план с 06.11: только пост, карусель 
     expect(p.caption!.length, where).toBeLessThanOrEqual(2200)
     expect((p.caption!.match(/#[\p{L}\d_]+/gu) ?? []).length, where).toBeLessThanOrEqual(10)
     expect(`${p.title} ${p.caption} ${p.note}`, where).not.toMatch(MANUAL)
+  }
+})
+
+// Аудит Instagram 2026-11-20: с 21.11 в плане только клиникам — без призыва «Записаться к стоматологу», с кодовым
+// словом в директ, 3–5 нишевыми хэштегами с «#» и без служебных пометок
+test('контент-план с 21.11: только для клиник, кодовое слово в директ, хэштеги с «#»', () => {
+  const next = plan.filter((p) => p.date! > '2026-11-20')
+  expect(next.length).toBeGreaterThan(0)
+  for (const p of next) {
+    const where = `${p.date} «${p.title}»`
+    const text = `${p.title} ${p.caption} ${p.note}`
+    expect(text, where).not.toMatch(/Записаться к стоматологу|Запишитесь|проверить носителем|не заменяет осмотр|30 дней бесплатно|месяц[а-я]* бесплатно/)
+    expect(p.title, where).toMatch(/^Клиникам/)
+    if (p.kind === 'STORIES') continue
+    expect(p.caption, where).toMatch(/Напишите [А-ЯЁ]+ в директ — .*подключим бесплатно\./)
+    const tags = p.caption!.match(/#[\p{L}\d_]+/gu) ?? []
+    expect(tags.length >= 3 && tags.length <= 5, where).toBe(true)
+    // Слово-хэштег без «#» в строке хэштегов
+    const last = p.caption!.trim().split('\n').at(-1) ?? ''
+    expect(last.split(' ').every((w) => w.startsWith('#')), where).toBe(true)
   }
 })

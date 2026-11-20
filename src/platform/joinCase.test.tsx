@@ -17,7 +17,7 @@ const empty: Schemas['JoinCaseCase'] = { metrics: [], consent: false, shown: fal
 test('/join: блок кейса есть, только когда сервер отдал опубликованный кейс', async () => {
   server.use(http.get('*/web/tariffs', () => HttpResponse.json({ pilotMonths: 3, tariffs: [] })))
   const first = render(<Join />)
-  expect(await screen.findByText(/Попробовать — бесплатно/)).toBeInTheDocument()
+  expect(await screen.findByText(/Попробовать бесплатно: всё приложение/)).toBeInTheDocument()
   expect(screen.queryByRole('region', { name: 'Как работает в клинике' })).not.toBeInTheDocument()
   first.unmount()
 
@@ -36,7 +36,7 @@ test('/join: shown = false (нет согласия или текста) — б�
     http.get('*/web/case', () => HttpResponse.json({ ...empty, title: 'Черновик' })),
   )
   render(<Join />)
-  expect(await screen.findByText(/Попробовать — бесплатно/)).toBeInTheDocument()
+  expect(await screen.findByText(/Попробовать бесплатно: всё приложение/)).toBeInTheDocument()
   expect(screen.queryByText('Черновик')).not.toBeInTheDocument()
 })
 

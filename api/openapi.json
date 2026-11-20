@@ -12111,6 +12111,43 @@
         }
       }
     },
+    "/api/appointments/{id}/in-chair" : {
+      "post" : {
+        "tags" : [ "appointment-controller" ],
+        "operationId" : "inChair",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AppointmentRequestsInChair"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AppointmentView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/appointments/{id}/dictation/parse" : {
       "post" : {
         "tags" : [ "visit-dictation-controller" ],
@@ -16839,6 +16876,52 @@
         }
       }
     },
+    "/api/appointments/cancel-reasons" : {
+      "get" : {
+        "tags" : [ "cancel-reasons-controller" ],
+        "operationId" : "reasons",
+        "parameters" : [ {
+          "name" : "from",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }, {
+          "name" : "to",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }, {
+          "name" : "doctorId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/CancelReasonsControllerReasonCount"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/appointments/by-patient/{patientId}" : {
       "get" : {
         "tags" : [ "appointment-controller" ],
@@ -21383,6 +21466,17 @@
           "arrivedAt" : {
             "type" : "string",
             "format" : "date-time"
+          },
+          "inChairAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "cancelReason" : {
+            "type" : "string",
+            "enum" : [ "CHANGED_MIND", "DUPLICATE", "ILL", "OTHER_TIME", "CLINIC", "OTHER", "PATIENT" ]
+          },
+          "cancelNote" : {
+            "type" : "string"
           }
         },
         "required" : [ "chairManual", "debtSom", "doctorId", "endAt", "firstVisit", "id", "patient", "source", "startAt", "status", "version" ]
@@ -21563,6 +21657,9 @@
             "type" : "string"
           },
           "ref" : {
+            "type" : "string"
+          },
+          "from" : {
             "type" : "string"
           }
         }
@@ -24718,6 +24815,15 @@
           "status" : {
             "type" : "string",
             "enum" : [ "REQUESTED", "SCHEDULED", "CANCELLED", "DONE", "NO_SHOW" ]
+          },
+          "reason" : {
+            "type" : "string",
+            "enum" : [ "CHANGED_MIND", "DUPLICATE", "ILL", "OTHER_TIME", "CLINIC", "OTHER", "PATIENT" ]
+          },
+          "reasonNote" : {
+            "type" : "string",
+            "maxLength" : 200,
+            "minLength" : 0
           }
         },
         "required" : [ "status", "version" ]
@@ -24857,6 +24963,18 @@
             "format" : "int32"
           }
         }
+      },
+      "AppointmentRequestsInChair" : {
+        "properties" : {
+          "version" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "inChair" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "inChair", "version" ]
       },
       "VisitDictationControllerText" : {
         "properties" : {
@@ -27760,6 +27878,12 @@
             "items" : {
               "$ref" : "#/components/schemas/PlatformAnalyticsStep"
             }
+          },
+          "sources" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PlatformAnalyticsSource"
+            }
           }
         }
       },
@@ -27884,6 +28008,18 @@
           }
         },
         "required" : [ "clinicId", "last14", "prev14" ]
+      },
+      "PlatformAnalyticsSource" : {
+        "properties" : {
+          "channel" : {
+            "type" : "string"
+          },
+          "clinics" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "clinics" ]
       },
       "PlatformAnalyticsStep" : {
         "properties" : {
@@ -30255,6 +30391,23 @@
           }
         },
         "required" : [ "amountSom", "viaBot" ]
+      },
+      "CancelReasonsControllerReasonCount" : {
+        "properties" : {
+          "reason" : {
+            "type" : "string",
+            "enum" : [ "CHANGED_MIND", "DUPLICATE", "ILL", "OTHER_TIME", "CLINIC", "OTHER", "PATIENT" ]
+          },
+          "cancelled" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "noShow" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "cancelled", "noShow" ]
       },
       "PatientCard" : {
         "properties" : {

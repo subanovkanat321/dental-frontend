@@ -5,6 +5,7 @@ import type { JoinCase } from './web'
 import { server } from '../test/server'
 
 import { About } from './About'
+import { OFFER } from '../lib/brand'
 
 test('сайт-визитка /about: герой, части ролика, заявка и контакты — кликабельные ссылки', () => {
   render(<About />)
@@ -30,6 +31,9 @@ test('сайт-визитка /about: герой, части ролика, за�
   expect(screen.queryByText(/месяц[а-я]* бесплатно|[0-9] месяц[а-я]* —/)).not.toBeInTheDocument()
   expect(screen.queryByText(/дней бесплатно|Оставьте заявку — мы позвоним и/)).not.toBeInTheDocument()
   expect(screen.getByRole('link', { name: 'Оставьте заявку' })).toHaveAttribute('href', '/join#form')
+  // Оффер — одна фраза, как на /go, /start и /join: под кнопкой вверху, внизу и в «Сколько стоит?»
+  expect(screen.getByText(`${OFFER} — без предоплаты, клиника готова за 5 минут, с телефона или компьютера`)).toBeInTheDocument()
+  expect(screen.getAllByText(new RegExp(`^${OFFER}: всё приложение, без ограничений`)).length).toBeGreaterThanOrEqual(2)
   // Сегодняшние функции: кресла, «Что сделали сегодня?», ИИ-сообщение, общие расходы
   for (const point of [/Два врача на одном кресле/, /Что сделали сегодня\?/, /После приёма ИИ готовит/, /Общие расходы клиники/]) {
     expect(screen.getByText(point)).toBeInTheDocument()

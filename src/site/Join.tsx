@@ -7,6 +7,7 @@ import { phoneFromInput } from '../clinic/phone'
 import { CaseBlock } from './CaseBlock'
 import { SiteHeader } from './SiteHeader'
 import { monthsText } from '../lib/plural'
+import { OFFER } from '../lib/brand'
 import { refFromUrl } from '../lib/referral'
 import { getJson, inAppBrowser, type JoinCase, type Links, type PublicMaterials, type ReferralInvite, type Tariffs } from './web'
 
@@ -145,7 +146,7 @@ export function Join() {
       {story && <CaseBlock story={story} />}
       {/* Цены пока не показываем (владелец, 2026-11-02): клиника сначала пробует бесплатно, о цене — в разговоре */}
       <h2 id="tariffs">Сколько стоит</h2>
-      <p>Попробовать — бесплатно: всё приложение, без ограничений и без предоплаты.
+      <p>{OFFER}: всё приложение, без ограничений и без предоплаты.
         Понравится — договоримся об условиях; нет — просто перестанете пользоваться.</p>
       <h2 id="form">Хочу, чтобы помогли подключить</h2>
       <p className="hint">Создать клинику самим — 5 минут: <a href={startHref}>Попробовать бесплатно</a>. Хотите, чтобы мы настроили всё и перенесли

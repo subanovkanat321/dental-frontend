@@ -20,7 +20,7 @@ import { passwordProblem } from '../lib/password'
 import { clearCodeSent, markCodeSent, recentCodeSent } from './codeMark'
 import { NextSteps } from './NextSteps'
 import { monthsText } from '../lib/plural'
-import { refFromUrl } from '../lib/referral'
+import { refFromUrl, signupFromUrl } from '../lib/referral'
 
 /** Как часто спрашиваем сервер, пока ждём «✅ Да, это я» в боте. */
 export const POLL_MS = 2000
@@ -100,6 +100,8 @@ export function SignupPage({ onDone = () => window.location.assign('/'), userAge
 
   // Пришли по ссылке-приглашению другой клиники (/join?ref=… → /start?ref=…): код уходит с формой, сверху — кто пригласил
   const [ref] = useState(() => refFromUrl())
+  // Откуда пришли (tish.kg/ig → /start?from=instagram): метка уходит с формой — регистрация посчитается по каналу
+  const [from] = useState(() => signupFromUrl())
   const invite = useQuery({
     queryKey: ['referral-invite', ref], enabled: Boolean(ref), retry: false, staleTime: Infinity,
     queryFn: async () => (await api.GET('/web/referral', { params: { query: { code: ref ?? '' } } })).data ?? null,
@@ -200,6 +202,7 @@ export function SignupPage({ onDone = () => window.location.assign('/'), userAge
       clinicName: field('clinicName'), city: field('city'),
       fullName: field('fullName'), phone: phoneFromInput(phone), consent: data.get('consent') === 'on',
       ...(ref ? { ref } : {}),
+      ...(from ? { from } : {}),
     }
   }
 
@@ -333,7 +336,7 @@ export function SignupPage({ onDone = () => window.location.assign('/'), userAge
         {invite.data && (
           <p className="tone-ok signup-invite" role="note">🎁 Вас пригласила клиника «{invite.data.clinicName}» — {monthsText(invite.data.freeMonths)} бесплатно</p>
         )}
-        <p className="hint">Создайте клинику за пару минут — без заявки и звонка. Всё приложение, без ограничений.</p>
+        <p className="hint">Создайте клинику за пару минут — без заявки, звонка и предоплаты. Всё приложение, без ограничений.</p>
         <form ref={formRef} className="form narrow invite-form signup-form" aria-label="Регистрация клиники"
           onSubmit={(ev: FormEvent) => {
             ev.preventDefault()

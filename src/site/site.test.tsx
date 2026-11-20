@@ -2,6 +2,7 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
+import { OFFER } from '../lib/brand'
 import { server } from '../test/server'
 import { Call } from './Call'
 import { ClinicSite } from './ClinicSite'
@@ -134,7 +135,8 @@ test('заявка клиники: ошибки полей с сервера, п
   const user = userEvent.setup()
   render(<Join />)
   // Цены и срок пилота не показываем — только «попробовать бесплатно»
-  expect(await screen.findByText(/Попробовать — бесплатно/)).toBeInTheDocument()
+  // Оффер — одна фраза, как на /go, /start и /about
+  expect(await screen.findByText(`${OFFER}: всё приложение, без ограничений и без предоплаты.`, { exact: false })).toBeInTheDocument()
   expect(screen.queryByText(/месяц[а-я]* — бесплатно/)).not.toBeInTheDocument()
   // Главный путь — регистрация самим; заявка — «помогите подключить»
   for (const a of screen.getAllByRole('link', { name: 'Попробовать бесплатно' })) expect(a).toHaveAttribute('href', '/start')
@@ -157,27 +159,45 @@ test('заявка клиники: ошибки полей с сервера, п
   expect(bodies[1]).toMatchObject({ clinicName: 'Стоматолог Айгерим', phone: '+996555000111', telegram: '@aigerim_dent', city: 'Ош', solo: true, consent: true, website: '', doctors: null })
 })
 
-test('/go: одно действие пациенту, акция ведёт к форме, без «Скачать», контакты из «Сведений о платформе»', async () => {
+test('/go: сначала клиникам (оффер → /start, ролик, WhatsApp, Telegram, вход), пациентам — мелкой ссылкой внизу', async () => {
   server.use(
     http.get('*/web/links', () => HttpResponse.json({
       supportUrl: 'https://t.me/tish_support', supportTelegram: 'tish_support', supportPhones: ['996555000111', '996700222333'],
       supportWhatsapp: '996770444555', botUrl: 'https://t.me/tish_bot',
     } satisfies Links)),
-    http.get('*/web/tariffs', () => HttpResponse.json({ pilotMonths: 3, tariffs: [], promo: { title: 'Попробуйте бесплатно', text: '', points: [] } })),
+    http.get('*/web/materials/public', () => HttpResponse.json({ video: '/web/materials/public/promo.mp4', poster: null, presentation: null })),
   )
-  render(<Go />)
-  // Акция — часть главной кнопки «Подключить», ведёт сразу к регистрации клиники
-  expect(await screen.findByRole('link', { name: /Попробуйте бесплатно/ })).toHaveAttribute('href', '/start')
-  const patients = screen.getByRole('region', { name: 'Пациентам' })
-  expect(within(patients).getAllByRole('link')).toHaveLength(1)
-  expect(within(patients).getByRole('link', { name: /Записаться к стоматологу/ })).toHaveAttribute('href', '/clinics')
-  expect(screen.queryByRole('link', { name: /Бот Tish в Telegram/ })).not.toBeInTheDocument()
+  const { container } = render(<Go />)
+  expect(screen.getByRole('heading', { level: 1, name: 'Tish — программа для стоматологий Кыргызстана' })).toBeInTheDocument()
+  expect(screen.getByText('Telegram-запись, ИИ-медкарта голосом, касса — в одном приложении')).toBeInTheDocument()
+  const clinics = screen.getByRole('region', { name: 'Для клиник и частных врачей' })
+  await within(clinics).findByRole('link', { name: /Спросить в WhatsApp/ })
+  expect(await within(clinics).findByRole('link', { name: /Как это работает/ })).toHaveAttribute('href', '/join#materials')
+  // Порядок: подключить (с оффером) → как это работает → WhatsApp → Telegram → вход
+  const links = within(clinics).getAllByRole('link')
+  expect(links.map((a) => a.getAttribute('href'))).toEqual(['/start', '/join#materials', 'https://wa.me/996770444555', 'https://t.me/tish_support', '/login'])
+  expect(links[0]).toHaveAccessibleName(expect.stringContaining(`Подключить клинику — ${OFFER.toLowerCase()}`))
+  expect(links[0]).toHaveAccessibleName(expect.stringContaining('Без предоплаты'))
+  expect(container.textContent).not.toMatch(/дней|месяц/)
+  expect(links[0]).toHaveClass('main')
+  // Первая ссылка страницы — подключение клиники, пациентская запись — последняя, мелко
+  const all = Array.from(container.querySelectorAll('main a')).map((a) => a.getAttribute('href'))
+  expect(all.indexOf('/start')).toBeLessThan(all.indexOf('/clinics'))
+  expect(screen.getByRole('link', { name: 'Пациентам: записаться к врачу →' })).toHaveAttribute('href', '/clinics')
+  expect(screen.queryByRole('region', { name: 'Пациентам' })).not.toBeInTheDocument()
   expect(screen.queryByRole('link', { name: /Скачать/ })).not.toBeInTheDocument()
-  expect(screen.getByText('Работать можно в Telegram и на сайте — с телефона и компьютера.')).toBeInTheDocument()
-  const contacts = screen.getByRole('region', { name: 'Связаться' })
-  expect(within(contacts).getByRole('link', { name: 'Написать в WhatsApp' })).toHaveAttribute('href', 'https://wa.me/996770444555')
+  // Звонок — на каждый номер, WhatsApp второй раз не повторяем
+  const contacts = screen.getByRole('region', { name: 'Позвонить' })
   expect(within(contacts).getAllByRole('link', { name: /^Позвонить/ }).map((a) => a.getAttribute('href'))).toEqual(['tel:+996555000111', 'tel:+996700222333'])
+  expect(within(contacts).queryByRole('link', { name: /WhatsApp/ })).not.toBeInTheDocument()
   expect(within(contacts).getByRole('link', { name: 'Instagram @tish.app.kg' })).toHaveAttribute('href', 'https://www.instagram.com/tish.app.kg/')
+})
+
+test('/go без ролика: «Как это работает» ведёт на /about', async () => {
+  server.use(http.get('*/web/links', () => HttpResponse.json({} satisfies Links)))
+  render(<Go />)
+  expect(await screen.findByRole('link', { name: /Как это работает/ })).toHaveAttribute('href', '/about')
+  expect(screen.getByRole('region', { name: 'Мы в Instagram' })).toBeInTheDocument()
 })
 
 test('/go и страница клиники: нет WhatsApp — нет и кнопки WhatsApp', async () => {
@@ -188,8 +208,7 @@ test('/go и страница клиники: нет WhatsApp — нет и кн
   )
   const go = render(<Go />)
   expect(await screen.findByRole('link', { name: /Позвонить/ })).toHaveAttribute('href', 'tel:+996555000111')
-  // Без акции — та же кнопка «Подключить» без плашки
-  expect(screen.getByRole('link', { name: /Подключить клинику бесплатно/ })).toHaveAttribute('href', '/start')
+  expect(screen.getByRole('link', { name: /Подключить клинику/ })).toHaveAttribute('href', '/start')
   expect(screen.queryByRole('link', { name: /WhatsApp/ })).not.toBeInTheDocument()
   go.unmount()
 
@@ -307,6 +326,7 @@ test('/join: «Посмотрите за минуту» — ролик без п
 
   server.use(http.get('*/web/materials/public', () => HttpResponse.json({ video: null, poster: null, presentation: null })))
   render(<Join />)
-  expect(await screen.findByText(/Попробовать — бесплатно/)).toBeInTheDocument()
+  // Оффер — одна фраза, как на /go, /start и /about
+  expect(await screen.findByText(`${OFFER}: всё приложение, без ограничений и без предоплаты.`, { exact: false })).toBeInTheDocument()
   expect(screen.queryByRole('region', { name: 'Посмотрите за минуту' })).not.toBeInTheDocument()
 })

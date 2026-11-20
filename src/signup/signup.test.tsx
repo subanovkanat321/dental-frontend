@@ -8,6 +8,9 @@ import { createQueryClient } from '../api/queryClient'
 import { renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 import { waitForSlow } from '../test/wait'
+import { INSTAGRAM_SIGNUP } from '../lib/brand'
+import { signupFromUrl } from '../lib/referral'
+import { isInstagramPath } from '../lib/route'
 import { SignupPage } from './SignupPage'
 
 /** Регистрация клиники (/start): клиники, имена и номера — вымышленные. */
@@ -86,7 +89,8 @@ test('/start открывается без входа — форма регис�
   window.history.replaceState(null, '', '/start')
   renderApp()
   expect(await screen.findByRole('heading', { name: 'Попробовать Tish бесплатно' })).toBeInTheDocument()
-  // Срок не обещаем
+  // Оффер — «Попробовать бесплатно», как на /go, /join и /about; срок не обещаем
+  expect(screen.getByText(/без заявки, звонка и предоплаты/)).toBeInTheDocument()
   expect(screen.queryByText(/дней|месяц/)).not.toBeInTheDocument()
   // Выбора «частный врач / клиника» и галочки «тоже веду приём» нет: кто регистрируется — руководитель и врач
   const form = screen.getByRole('form', { name: 'Регистрация клиники' })
@@ -143,6 +147,39 @@ test('/start?ref=… по приглашению: сверху — кто при
     expect(sent[0]?.body).toMatchObject({ clinicName: 'Стоматолог Айгерим', ref: 'abc2def' })
   } finally {
     window.history.replaceState(null, '', '/')
+  }
+})
+
+test('tish.kg/ig из шапки Instagram → /start?from=instagram: метка уходит с формой, мусор — нет', async () => {
+  const { sent } = backend()
+  window.history.replaceState(null, '', '/start?from=Instagram')
+  try {
+    const user = userEvent.setup()
+    show()
+    const form = await fill(user)
+    await user.click(within(form).getByRole('button', { name: 'Получить код по SMS' }))
+    expect(await screen.findByRole('heading', { name: 'Код из SMS' })).toBeInTheDocument()
+    expect(sent[0]?.body).toMatchObject({ clinicName: 'Стоматолог Айгерим', from: 'instagram' })
+  } finally {
+    window.history.replaceState(null, '', '/')
+  }
+  expect(signupFromUrl('?utm_source=instagram')).toBe('instagram')
+  expect(signupFromUrl('?from=<script>')).toBeNull()
+  expect(signupFromUrl('')).toBeNull()
+})
+
+test('/ig без nginx (SPA) уводит на регистрацию с меткой Instagram', () => {
+  expect(isInstagramPath('/ig')).toBe(true)
+  expect(isInstagramPath('/IG/')).toBe(true)
+  expect(isInstagramPath('/igor')).toBe(false)
+  expect(INSTAGRAM_SIGNUP).toBe('/start?from=instagram')
+  const replace = vi.fn()
+  vi.stubGlobal('location', { ...window.location, pathname: '/ig', search: '', hash: '', replace })
+  try {
+    renderApp()
+    expect(replace).toHaveBeenCalledWith('/start?from=instagram')
+  } finally {
+    vi.unstubAllGlobals()
   }
 })
 
