@@ -214,6 +214,13 @@ export const TIPS: Tip[] = [
     show: (me) => hasSub(me, 'patients', 'comeback'),
   },
   {
+    id: 'bot-invite',
+    title: 'Пригласите пациентов в бот — напоминания бесплатно',
+    text: '«📞 Связаться ▾» → «📲 Пригласить в Telegram-бот»: личная ссылка в WhatsApp или SMS. Кого ещё нет в боте — «Пациенты → Без бота».',
+    action: { show: 'patients/nobot' },
+    show: (me) => hasSub(me, 'patients', 'nobot'),
+  },
+  {
     id: 'dropped',
     title: '«Бросили лечение»',
     text: 'Кто согласился с планом или начал лечение и пропал — список с суммой остатка, звонком и готовым текстом в WhatsApp.',

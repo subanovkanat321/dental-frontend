@@ -382,7 +382,7 @@ test('«📞 Связаться ▾»: позвонить и WhatsApp сверх
   expect(within(menu).getByText('Связаться')).toHaveClass('menu-group')
   expect(within(menu).getByText('Отправить пациенту')).toHaveClass('menu-group')
   expect(within(menu).getAllByRole('menuitem').map((i) => i.querySelector('.menu-text')?.firstChild?.textContent))
-    .toEqual(['Позвонить', 'Написать в WhatsApp', 'Напомнить о приёме в WhatsApp'])
+    .toEqual(['Позвонить', 'Написать в WhatsApp', 'Напомнить о приёме в WhatsApp', 'Пригласить в Telegram-бот'])
   expect(within(menu).getByRole('menuitem', { name: /^Позвонить/ })).toHaveAttribute('href', 'tel:+996555123456')
 })
 

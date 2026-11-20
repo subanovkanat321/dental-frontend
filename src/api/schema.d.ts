@@ -3556,6 +3556,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/patients/{id}/bot-invite": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["invite"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/patients/{id}/bot-invite/sent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["sent_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/patients/shared-contact": {
         parameters: {
             query?: never;
@@ -3869,7 +3901,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["invite"];
+        post: operations["invite_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4221,7 +4253,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["invite_1"];
+        post: operations["invite_2"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4269,7 +4301,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["invite_2"];
+        post: operations["invite_3"];
         delete?: never;
         options?: never;
         head?: never;
@@ -5211,7 +5243,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["invite_3"];
+        get: operations["invite_4"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6412,6 +6444,38 @@ export interface paths {
             cookie?: never;
         };
         get: operations["recent"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/patients/no-bot": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["noBot"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/patients/bot-coverage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["coverage"];
         put?: never;
         post?: never;
         delete?: never;
@@ -8822,6 +8886,8 @@ export interface components {
             guardian?: components["schemas"]["Guardian"];
             vip?: boolean;
             tagIds?: number[];
+            /** Format: date-time */
+            botInvitedAt?: string;
         };
         DebtReminderControllerPromise: {
             /** Format: date */
@@ -10453,6 +10519,24 @@ export interface components {
         FamilyControllerJoin: {
             /** Format: int64 */
             relativeId?: number;
+        };
+        PatientInviteControllerBotInvite: {
+            url: string;
+            /** Format: date-time */
+            expiresAt: string;
+            textRu: string;
+            textKy: string;
+            guardian: boolean;
+        };
+        PatientInviteControllerSentRequest: {
+            /** @enum {string} */
+            channel?: "WHATSAPP" | "SMS" | "COPY";
+            /** @enum {string} */
+            lang?: "RU" | "KY";
+        };
+        PatientInviteControllerSent: {
+            /** Format: date-time */
+            invitedAt: string;
         };
         SharedContactRequest: {
             token: string;
@@ -12339,6 +12423,31 @@ export interface components {
             lastVisit?: string;
             /** Format: date-time */
             nextVisit?: string;
+        };
+        BotCoverageControllerCoverage: {
+            /** Format: int64 */
+            inBot: number;
+            /** Format: int64 */
+            total: number;
+            /** Format: int32 */
+            percent: number;
+        };
+        BotCoverageControllerNoBot: {
+            coverage: components["schemas"]["BotCoverageControllerCoverage"];
+            items: components["schemas"]["BotCoverageControllerNoBotRow"][];
+        };
+        BotCoverageControllerNoBotRow: {
+            /** Format: int64 */
+            id: number;
+            fullName: string;
+            phone?: string;
+            guardianName?: string;
+            /** Format: date-time */
+            lastVisit?: string;
+            /** Format: date-time */
+            nextVisit?: string;
+            /** Format: date-time */
+            invitedAt?: string;
         };
         BookingViewsPromo: {
             code?: string;
@@ -20514,6 +20623,54 @@ export interface operations {
             };
         };
     };
+    invite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatientInviteControllerBotInvite"];
+                };
+            };
+        };
+    };
+    sent_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PatientInviteControllerSentRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatientInviteControllerSent"];
+                };
+            };
+        };
+    };
     sharedContact: {
         parameters: {
             query?: never;
@@ -21041,7 +21198,7 @@ export interface operations {
             };
         };
     };
-    invite: {
+    invite_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -21757,7 +21914,7 @@ export interface operations {
             };
         };
     };
-    invite_1: {
+    invite_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -21823,7 +21980,7 @@ export interface operations {
             };
         };
     };
-    invite_2: {
+    invite_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -23606,7 +23763,7 @@ export interface operations {
             };
         };
     };
-    invite_3: {
+    invite_4: {
         parameters: {
             query?: {
                 code?: string;
@@ -25364,6 +25521,48 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PatientListControllerPatientRow"][];
+                };
+            };
+        };
+    };
+    noBot: {
+        parameters: {
+            query?: {
+                invited?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BotCoverageControllerNoBot"];
+                };
+            };
+        };
+    };
+    coverage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BotCoverageControllerCoverage"];
                 };
             };
         };

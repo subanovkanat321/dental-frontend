@@ -6,6 +6,7 @@ import { openLink, telegram } from '../lib/telegram'
 import { agoText, smsUrl } from '../lib/texts'
 import { somText, timeOf } from '../lib/time'
 import { isMobile } from '../pwa/pwa'
+import { useBotInvite } from './useBotInvite'
 import { talkItems, type ContactItem } from './contactItems'
 import { confirmRemind, isRepeat, remindedText } from './remindAgain'
 import { asksReview, useSendReview } from './reviewLinks'
@@ -20,10 +21,17 @@ type Appointment = Schemas['AppointmentView']
  *   текстом, на телефоне — SMS; повтор — после вопроса и другим текстом (confirmRemind), отметка «напомнили»;
  * - «Попросить оценку» — после приёма у пациента без Telegram (asksReview), не чаще, чем разрешает сервер:
  *   просили недавно — серый пункт с его объяснением; когда просили — мелко под пунктом;
- * - «Напомнить о долге» — у пациента долг и вы видите долги: та же форма, что в «Должниках» (onDebt).
+ * - «Напомнить о долге» — у пациента долг и вы видите долги: та же форма, что в «Должниках» (onDebt);
+ * - «📲 Пригласить в Telegram-бот» — пациенту без бота, с номером, не у заявки (invite: карточка приёма рендерит окно `inviteSheet`).
  */
-export function useAppointmentContacts(a: Appointment, { canEdit, debtSom, onDebt }: { canEdit: boolean; debtSom: number; onDebt?: () => void }) {
+export function useAppointmentContacts(a: Appointment, { canEdit, debtSom, onDebt, invite = false }: {
+  canEdit: boolean; debtSom: number; onDebt?: () => void
+  /** Пункт «Пригласить в бот» — там, где рендерят окно `inviteSheet` (карточка приёма; не меню быстрых действий) */
+  invite?: boolean
+}) {
   const remind = useRemind(a)
+  // Пригласить в бот — как WhatsApp: не у заявки (её подтверждают звонком) и есть куда отправить; без номера — из карточки пациента
+  const botInvite = useBotInvite(invite && canEdit && a.status !== 'REQUESTED' && contactPhone(a.patient) ? a.patient : null)
   const phone = contactPhone(a.patient)
   const canRemind = canEdit && a.status === 'SCHEDULED' && a.endAt != null && new Date(a.endAt) > new Date()
   const wantsReview = canEdit && asksReview(a)
@@ -83,5 +91,6 @@ export function useAppointmentContacts(a: Appointment, { canEdit, debtSom, onDeb
   if (onDebt && debtSom > 0) {
     items.push({ label: 'Напомнить о долге', group: 'send', icon: '🧾', hint: `долг ${somText(debtSom)}`, onSelect: onDebt })
   }
-  return { items, error: remind.action.error ?? remind.opened.error ?? sendReview.error, nowhere: canRemind && remind.nowhere }
+  if (botInvite.item) items.push(botInvite.item)
+  return { items, inviteSheet: botInvite.sheet, error: remind.action.error ?? remind.opened.error ?? sendReview.error, nowhere: canRemind && remind.nowhere }
 }

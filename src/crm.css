@@ -3113,3 +3113,13 @@ button.cash-entry:hover, button.cash-entry.active { background: var(--sunken); }
 .tag-color:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
 .tag-actions .danger { color: var(--destructive); }
 .pop-menu .menu-title { padding: 4px 10px 6px; font-weight: 600; font-size: .9rem; color: var(--text); border-bottom: 1px solid var(--separator); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Приглашение в бот (2026-11-20): окно с текстом и плитка «Пациенты в боте» в «Касса → Аналитика» */
+.bot-invite { display: grid; gap: 10px; }
+.bot-invite .segments { max-width: 280px; }
+.bot-invite-text { margin: 0; padding: 10px 12px; border-radius: var(--radius); background: var(--sunken); white-space: pre-wrap; overflow-wrap: anywhere; font-size: .9rem; line-height: 1.4; }
+.bot-invite .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.bot-invite-done { display: grid; gap: 6px; justify-items: start; }
+.bot-tile-bar { height: 8px; margin: 6px 0 8px; border-radius: 999px; background: var(--sunken); overflow: hidden; }
+.bot-tile-bar > span { display: block; height: 100%; border-radius: inherit; background: var(--accent); }
+.no-bot .calm-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
