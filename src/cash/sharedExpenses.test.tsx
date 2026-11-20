@@ -14,7 +14,7 @@ type Me = Schemas['BookingViewsMe']
 const dastan: Me = { ...me, admin: false, doctorId: 2, clinic: { ...me.clinic!, independentDoctors: true } }
 
 const rent: Schemas['ExpensesExpense'] = {
-  id: 5, spentOn: `${todayIn().slice(0, 7)}-01`, amountSom: 30000, category: 'Аренда', splitKey: 'CHAIRS', repeatMonthly: true,
+  id: 5, spentOn: `${todayIn().slice(0, 7)}-01`, amountSom: 30000, category: 'Аренда', splitKey: 'CHAIRS', repeatMonthly: true, fromCash: false,
   shares: [{ doctorId: 1, doctor: 'Айгерим Садыкова', amountSom: 22500 }, { doctorId: 2, doctor: 'Дастан Т.', amountSom: 7500 }],
 }
 
@@ -29,11 +29,11 @@ function backend(posted: unknown[]) {
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(dastan)),
     http.get('*/api/appointments/revenue', () => HttpResponse.json({
-      totalSom: 25000, paidCount: 5, unpaidCount: 0, freeCount: 0, prepaidCount: 0, debtCount: 0, debtSom: 0, partialCount: 0, partialDebtSom: 0, byMethod: { CASH: 25000 }, days: [],
+      totalSom: 25000, paidCount: 5, unpaidCount: 0, freeCount: 0, prepaidCount: 0, debtCount: 0, debtSom: 0, partialCount: 0, partialDebtSom: 0, discountCount: 0, discountSom: 0, byMethod: { CASH: 25000 }, days: [],
       cash: { totalSom: 31000, paymentsCount: 6, depositsSom: 0, byMethod: { CASH: 31000 }, days: [], openingDebtsSom: 0 },
     } satisfies Schemas['RevenueView'])),
     http.get('*/api/expenses', () => HttpResponse.json([
-      { id: 3, spentOn: todayIn(), amountSom: 2000, category: 'Зуботехническая лаборатория', doctorId: 2, repeatMonthly: false },
+      { id: 3, spentOn: todayIn(), amountSom: 2000, category: 'Зуботехническая лаборатория', doctorId: 2, repeatMonthly: false, fromCash: false },
     ] satisfies Schemas['ExpensesExpense'][])),
     http.get('*/api/expenses/shared', () => HttpResponse.json([rent])),
     http.get('*/api/expenses/categories', () => HttpResponse.json({ standard: ['Аренда', 'Материалы'], own: [] } satisfies Schemas['ExpenseControllerCategories'])),
@@ -76,7 +76,7 @@ test('«Деньги»: приход, расход (свои + доля общи
 
   await waitFor(() => expect(posted).toHaveLength(1))
   expect(posted[0]).toMatchObject({
-    amountSom: 30000, category: 'Аренда', splitKey: 'MANUAL', repeatMonthly: true,
+    amountSom: 30000, category: 'Аренда', splitKey: 'MANUAL', repeatMonthly: true, fromCash: false,
     shares: [{ doctorId: 1, amountSom: 20000 }, { doctorId: 2, amountSom: 10000 }],
   })
   expect(posted[0]).not.toHaveProperty('doctorId')

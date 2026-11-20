@@ -13,6 +13,9 @@ import { serviceOptions, usePopularServices } from '../clinic/serviceOptions'
 import { useEarnings } from '../earnings/earnings'
 import { seesOwnEarnings } from '../lib/roles'
 import { Loading } from '../layout/Loading'
+import { discountText, reasonText } from '../lib/discount'
+import { DiscountField } from './DiscountField'
+import { draftOf, draftProblem, draftSom, useDiscountPolicy, type DiscountDraft } from './discountDraft'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
@@ -87,11 +90,17 @@ export function PaymentBox({ appointment: a, me }: { appointment: Appointment; m
       <p className="payment-done">
         <span>{a.paidSom === 0 && !a.chargeSom ? (a.freeReason === 'PREPAID' ? '✅ Оплачено заранее' : '🎁 Бесплатно')
           : allInDebt ? `Всё в долг · ${somText(a.chargeSom ?? 0)}`
-          : a.chargeSom != null ? `${somText(a.paidSom ?? 0)} из ${somText(a.chargeSom)}`
+          : a.chargeSom != null && !(a.discount && (a.paidSom ?? 0) >= a.chargeSom) ? `${somText(a.paidSom ?? 0)} из ${somText(a.chargeSom)}`
           : split ? somText(a.paidSom ?? 0) : `${somText(a.paidSom ?? 0)} · ${methodName(a.paymentMethod)}`}</span>
         {!installments && <button type="button" className="link" onClick={() => setView('edit')}>Изменить</button>}
       </p>
       {a.paidSom === 0 && !allInDebt && a.freeComment && <p className="hint small payment-note">{a.freeComment}</p>}
+      {a.discount && (
+        <p className="payment-discount" aria-label="Скидка">
+          🏷 {discountText(a.discount)} · {reasonText(a.discount.reason)}{a.discount.comment ? ` — ${a.discount.comment}` : ''}
+          <span className="hint"> (цена {somText(a.discount.priceSom)})</span>
+        </p>
+      )}
       <EarningsGain a={a} me={me} />
       {installments && <p className="hint small">Есть доплаты — сумму меняют доплатой; ошиблись в платеже — напишите в техподдержку.</p>}
       {debt ? <p className={`tone-${debt.tone} payment-debt`}>{debt.text}</p>
@@ -141,7 +150,8 @@ function MethodButtons({ value, onChange, label = 'Как заплатили' }:
 function fieldError(e: { fieldErrors: Record<string, string>; message: string } | null): string {
   if (!e) return ''
   const f = e.fieldErrors
-  return f.amountSom ?? f.method ?? f.chargeSom ?? f.dueOn ?? f.freeReason ?? f.freeComment ?? e.message
+  return f.amountSom ?? f.method ?? f.chargeSom ?? f.priceSom ?? f.discount ?? f.discountReason ?? f.discountComment ?? f.dueOn
+    ?? f.freeReason ?? f.freeComment ?? e.message
 }
 
 /**
@@ -237,7 +247,10 @@ function PayForm({ a, me, billOnly, parts: initialParts, onCancel }: {
 }) {
   const action = useAppointmentAction(a)
   const hadDebt = a.debtSom > 0
-  const [cost, setCost] = useState(String(a.chargeSom ?? a.paidSom ?? a.servicePriceSom ?? ''))
+  // Со скидкой «стоимость» в форме — цена до скидки, к оплате — её посчитанный остаток
+  const [cost, setCost] = useState(String(a.discount?.priceSom ?? a.chargeSom ?? a.paidSom ?? a.servicePriceSom ?? ''))
+  const [discount, setDiscount] = useState<DiscountDraft | null>(() => draftOf(a.discount))
+  const policy = useDiscountPolicy()
   const [whole, setWhole] = useState(!hadDebt)
   const [paidNow, setPaidNow] = useState(hadDebt ? String(a.paidSom ?? '') : '')
   const [due, setDue] = useState(a.dueOn ?? '')
@@ -252,7 +265,10 @@ function PayForm({ a, me, billOnly, parts: initialParts, onCancel }: {
   const [problem, setProblem] = useState('')
   const toCashier = me.hasReception && !me.reception
 
-  const costNum = cost === '' ? null : Number(cost)
+  const priceNum = cost === '' ? null : Number(cost)
+  const off = draftSom(priceNum, discount)
+  // К оплате: цена минус скидка (подсказка — итог считает и проверяет сервер)
+  const costNum = priceNum == null ? null : Math.max(priceNum - off, 0)
   const paid = whole ? costNum : paidNow === '' ? null : Number(paidNow)
   const rest = costNum != null && paid != null ? costNum - paid : null
   const splitSum = METHODS.reduce((sum, [m]) => sum + (Number(split[m]) || 0), 0)
@@ -263,10 +279,16 @@ function PayForm({ a, me, billOnly, parts: initialParts, onCancel }: {
 
   const save = () => {
     setProblem('')
-    if (costNum == null || costNum < 1) {
+    if (priceNum == null || priceNum < 1) {
       setProblem('Впишите, сколько стоит приём')
       return
     }
+    const discountError = draftProblem(priceNum, discount, policy.data)
+    if (discountError) {
+      setProblem(discountError)
+      return
+    }
+    if (costNum == null) return
     if (!whole) {
       // 0 — «сейчас ничего, всё в долг»
       if (paid == null || paid < 0) {
@@ -293,13 +315,22 @@ function PayForm({ a, me, billOnly, parts: initialParts, onCancel }: {
         parts = undefined
       } else method = parts[0]!.method
     }
+    // Скидка: цена до скидки и сама скидка — стоимость со скидкой сервер посчитает сам (chargeSom не шлём)
+    const withDiscount = discount ? {
+      priceSom: priceNum,
+      discount: {
+        ...(discount.kind === 'percent' ? { percent: Number(discount.value) } : { som: Number(discount.value) }),
+        reason: discount.reason || undefined,
+        comment: discount.comment.trim() || undefined,
+      },
+    } : {}
     // Счёт с кассы, а пришло меньше — остаток долгом (стоимость = сумма счёта)
-    const charge = !whole || (a.chargeSom != null && amount < a.chargeSom) ? costNum : undefined
+    const charge = discount ? undefined : !whole || (a.chargeSom != null && amount < a.chargeSom) ? costNum : undefined
     action.mutate({
       kind: 'payment',
       // Всё в долг — денег не было: способ не отправляем (сервер его и не спросит)
-      body: nothingNow ? { amountSom: 0, chargeSom: costNum, dueOn: due || undefined }
-        : { amountSom: amount, method, chargeSom: charge, dueOn: !whole && due ? due : undefined, parts },
+      body: nothingNow ? { amountSom: 0, chargeSom: discount ? undefined : costNum, dueOn: due || undefined, ...withDiscount }
+        : { amountSom: amount, method, chargeSom: charge, dueOn: !whole && due ? due : undefined, parts, ...withDiscount },
     })
   }
   const unmark = async () => {
@@ -308,11 +339,12 @@ function PayForm({ a, me, billOnly, parts: initialParts, onCancel }: {
   }
   const bill = () => {
     setProblem('')
-    if (costNum == null || costNum < 1) {
+    if (priceNum == null || priceNum < 1) {
       setProblem('Впишите, сколько вышло за приём')
       return
     }
-    action.mutate({ kind: 'bill', body: { chargeSom: costNum } })
+    // На кассу — цена без скидки: скидку даёт тот, кто принимает оплату
+    action.mutate({ kind: 'bill', body: { chargeSom: priceNum } })
   }
 
   const error = problem || fieldError(action.error)
@@ -349,8 +381,9 @@ function PayForm({ a, me, billOnly, parts: initialParts, onCancel }: {
       <div className="pay-step">
         <span className="pay-step-n" aria-hidden="true">1</span>
         <div className="pay-step-body">
-          {costField('Стоимость приёма, сом')}
+          {costField(discount ? 'Цена приёма до скидки, сом' : 'Стоимость приёма, сом')}
           <PriceChips onPick={pick} />
+          <DiscountField price={priceNum} value={discount} onChange={setDiscount} policy={policy.data} />
         </div>
       </div>
 

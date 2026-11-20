@@ -58,7 +58,8 @@ export function CashEntries({ from, to, doctorId, count, onOpen, onOpenPatient, 
                   <span className="when num">{e.paidAt ? (oneDay ? timeOf(e.paidAt) : shortDate(e.paidAt, true)) : ''}</span>
                   <span className="what">{purposeText(e, today)}{e.patient ? <> · <span className="nowrap">{e.patient}</span></> : null}</span>
                   <span className="sum num">{somText(e.amountSom)}</span>
-                  <span className="sub">{[METHODS[e.method ?? ''] ?? e.method, who].filter(Boolean).join(' · ')}</span>
+                  <span className="sub">{[METHODS[e.method ?? ''] ?? e.method, who, e.discountSom ? `скидка ${somText(e.discountSom)}` : null]
+                    .filter(Boolean).join(' · ')}</span>
                 </>
               )
               return (

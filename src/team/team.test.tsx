@@ -570,3 +570,50 @@ test('персонал: пусто — «Персонала пока нет» с
   expect(await screen.findByRole('alert')).toHaveTextContent('Не загрузился персонал')
   expect(screen.queryByText('Персонала пока нет')).not.toBeInTheDocument()
 })
+
+test('«+ Добавить сотрудника»: врачу сразу кресло — новое «Кресло 2» или общее с коллегой', async () => {
+  const chairs: Schemas['ChairOverview'][] = [{ id: 1, name: 'Кресло 1', doctorIds: [1], overlaps: [], mode: 'STRICT' }]
+  const created: string[] = []
+  const assigned: { doctor: string; chairId?: number }[] = []
+  let nextDoctor = 20
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/doctors/admin', () => HttpResponse.json(doctors)),
+    http.get('*/api/doctors/:id/hours', () => HttpResponse.json({ custom: false, days: [] } satisfies Schemas['DoctorHoursView'])),
+    http.get('*/api/chairs', () => HttpResponse.json(chairs)),
+    http.post('*/api/staff', () => HttpResponse.json({ doctorId: nextDoctor++, summary: 'врача' } satisfies Schemas['StaffRolesAdded'], { status: 201 })),
+    http.post('*/api/chairs', async ({ request }) => {
+      const body = await request.json() as { name: string }
+      created.push(body.name)
+      return HttpResponse.json({ id: 2, name: body.name } satisfies Schemas['ChairsChair'], { status: 201 })
+    }),
+    http.put('*/api/doctors/:id/chair', async ({ params, request }) => {
+      assigned.push({ doctor: String(params.id), ...(await request.json() as { chairId?: number }) })
+      return HttpResponse.json(chairs)
+    }),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await screen.findByRole('table', { name: 'Персонал' })
+
+  // По умолчанию — новое кресло с готовым названием
+  await user.click(screen.getByRole('button', { name: '＋ Добавить сотрудника' }))
+  let form = await screen.findByRole('form', { name: 'Добавить сотрудника' })
+  await user.type(within(form).getByRole('textbox', { name: /Имя/ }), 'Бакыт')
+  await user.click(within(form).getByRole('button', { name: 'Позже' }))
+  expect(await within(form).findByRole('textbox', { name: 'Название кресла' })).toHaveAttribute('placeholder', 'Кресло 2')
+  await user.click(within(form).getByRole('button', { name: 'Добавить' }))
+  await waitForSlow(() => expect(assigned).toEqual([{ doctor: '20', chairId: 2 }]))
+  expect(created).toEqual(['Кресло 2'])
+
+  // Общее кресло с коллегой — без создания нового
+  await user.click(screen.getByRole('button', { name: '＋ Добавить сотрудника' }))
+  form = await screen.findByRole('form', { name: 'Добавить сотрудника' })
+  await user.type(within(form).getByRole('textbox', { name: /Имя/ }), 'Айпери')
+  await user.click(within(form).getByRole('button', { name: 'Позже' }))
+  await choose(within(form).getByRole('combobox', { name: 'Кресло' }), '1')
+  expect(form).toHaveTextContent('Общее кресло')
+  await user.click(within(form).getByRole('button', { name: 'Добавить' }))
+  await waitForSlow(() => expect(assigned).toContainEqual({ doctor: '21', chairId: 1 }))
+  expect(created).toHaveLength(1)
+})

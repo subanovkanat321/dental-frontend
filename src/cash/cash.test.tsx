@@ -35,7 +35,7 @@ test('админ: выручка за месяц, по способам; выб�
       const q = new URL(request.url).searchParams
       asked.push(`${q.get('from')}..${q.get('to')} ${q.get('doctorId') ?? 'все'}`)
       return HttpResponse.json({
-        totalSom: q.get('doctorId') ? 7000 : 25000, paidCount: 6, unpaidCount: 1, freeCount: 2, prepaidCount: 1, debtCount: 1, debtSom: 2500, partialCount: 1, partialDebtSom: 1500, byMethod: { CASH: 15000, TRANSFER: 10000 },
+        totalSom: q.get('doctorId') ? 7000 : 25000, paidCount: 6, unpaidCount: 1, freeCount: 2, prepaidCount: 1, debtCount: 1, debtSom: 2500, partialCount: 1, partialDebtSom: 1500, discountCount: 0, discountSom: 0, byMethod: { CASH: 15000, TRANSFER: 10000 },
         days: [{ date: '2026-10-01', totalSom: 5000 }, { date: '2026-10-02', totalSom: 20000 }],
         cash: { totalSom: q.get('doctorId') ? 8000 : 31000, paymentsCount: 8, depositsSom: 1000, byMethod: { CASH: 16000, CARD: 15000 }, days: [], openingDebtsSom: 0 },
       } satisfies Schemas['RevenueView'])
@@ -95,7 +95,7 @@ test('врач: на месте выбора врача — «ваша касс�
     http.get('*/api/appointments/revenue', ({ request }) => {
       asked.push(new URL(request.url).searchParams.get('doctorId') ?? 'все')
       return HttpResponse.json({
-        totalSom: 3000, paidCount: 1, unpaidCount: 0, freeCount: 0, prepaidCount: 0, debtCount: 1, debtSom: 2000, partialCount: 0, partialDebtSom: 0,
+        totalSom: 3000, paidCount: 1, unpaidCount: 0, freeCount: 0, prepaidCount: 0, debtCount: 1, debtSom: 2000, partialCount: 0, partialDebtSom: 0, discountCount: 0, discountSom: 0,
         byMethod: { CASH: 3000 }, days: [],
         cash: { totalSom: 9500, paymentsCount: 3, depositsSom: 1000, byMethod: { CASH: 3000, TRANSFER: 6500 }, days: [], openingDebtsSom: 5000 },
       } satisfies Schemas['RevenueView'])
