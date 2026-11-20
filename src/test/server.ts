@@ -125,6 +125,11 @@ export const server = setupServer(
   http.get('*/api/service-types/group-guess', () => HttpResponse.json({ group: 'OTHER' } satisfies Schemas['ServiceTypeControllerGroupGuess'])),
   http.get('*/api/appointments/:id/payments', () => HttpResponse.json([])),
   http.get('*/api/waitlist', () => HttpResponse.json([])),
+  // Шаг 6Б: окна для листа ожидания и кто подходит — по умолчанию никого; именинников нет, авто-поздравление выключено
+  http.get('*/api/waitlist/windows', () => HttpResponse.json([] satisfies Schemas['WaitlistWindowsFreeWindow'][])),
+  http.get('*/api/waitlist/fits', () => HttpResponse.json([] satisfies Schemas['WaitlistWindowsMatch'][])),
+  http.get('*/api/birthdays/today', () => HttpResponse.json({ date: '2026-11-20', items: [] } satisfies Schemas['BirthdaysToday'])),
+  http.get('*/api/clinic/birthday-settings', () => HttpResponse.json({ autoGreet: false, greetHour: 10 } satisfies Schemas['BirthdaysSettings'])),
   // График смен (V150): по умолчанию смен нет — в «Сводке дня» строки «На смене» нет
   // Неделя сотрудника (строка «Часы» в «Персонале»): по умолчанию — как у клиники
   http.get('*/api/shifts/weekly/:telegramId', () => HttpResponse.json({ telegramId: 0, custom: false, days: [] } satisfies Schemas['ShiftServiceWeekly'])),

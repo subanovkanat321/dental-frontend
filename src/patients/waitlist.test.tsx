@@ -30,7 +30,7 @@ function backend(start: Entry[] = []) {
     http.post('*/api/waitlist', async ({ request }) => {
       const body = (await request.json()) as Entry & { patientId: number }
       sent.push(body)
-      list = [{ id: 7, patient: aigul, doctorId: body.doctorId, durationMinutes: body.durationMinutes, createdAt: new Date().toISOString() }]
+      list = [{ id: 7, patient: aigul, doctorId: body.doctorId, durationMinutes: body.durationMinutes, createdAt: new Date().toISOString(), wish: body.wish }]
       return HttpResponse.json(list[0], { status: 201 })
     }),
     http.delete('*/api/waitlist/:id', () => {
@@ -53,7 +53,7 @@ test('карточка пациента: «В лист ожидания» на 4
   await choose(within(form).getByLabelText('К какому врачу'), 'Дастан Т.')
   await userEvent.click(within(form).getByRole('button', { name: 'В лист ожидания' }))
   expect(await within(panel).findByText(/В листе ожидания/)).toHaveTextContent('45 мин')
-  expect(sent).toEqual([{ patientId: 2, doctorId: 2, durationMinutes: 45 }])
+  expect(sent).toEqual([{ patientId: 2, doctorId: 2, durationMinutes: 45, wish: { weekdays: [] } }])
 
   // Убрать можно и в карточке — там же, где ставили
   expect(within(panel).getByRole('button', { name: 'убрать' })).toBeInTheDocument()
@@ -167,7 +167,9 @@ test('«Новая запись»: выбрали время в сетке — �
     booked = await request.json()
     return HttpResponse.json(appointment(55, 1, '09:00', 'Айгуль Т.'))
   }), http.get('*/api/slots', () => HttpResponse.json({ workingDay: true, starts: [nine],
-    free: [{ start: nine, end: new Date(`${todayIn()}T10:00:00+06:00`).toISOString() }] })))
+    free: [{ start: nine, end: new Date(`${todayIn()}T10:00:00+06:00`).toISOString() }] })),
+  // Кто подходит на 09:00 — считает сервер (шаг 6Б)
+  http.get('*/api/waitlist/fits', () => HttpResponse.json([{ entryId: 7, patient: aigul, startAt: nine, durationMinutes: 30, declined: false }])))
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: '＋ Новая запись' }))
   // Время не подставлено: окно выбирают в сетке, и тогда — кто его ждёт
@@ -201,4 +203,21 @@ test('вкладка «Лист ожидания»: «Добавить» — н�
   expect(await screen.findByRole('list', { name: 'Лист ожидания' })).toHaveTextContent('Айгуль Т.')
   expect(sent).toHaveLength(1)
   expect(sent[0]).toMatchObject({ patientId: 2 })
+})
+
+test('«Когда удобно…»: утро и пн/пт — уходит на сервер часами, в карточке — «утро · пн, пт»', async () => {
+  window.location.hash = '/patients'
+  const sent = backend()
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: 'Айгуль Т.' }))
+  const panel = await screen.findByRole('complementary', { name: 'Карточка пациента' })
+  await userEvent.click(within(panel).getByRole('tab', { name: 'Прочее' }))
+  const form = await within(panel).findByRole('form', { name: 'В лист ожидания' })
+  await userEvent.click(within(form).getByRole('button', { name: 'Когда удобно…' }))
+  await userEvent.click(within(form).getByRole('button', { name: 'Утро' }))
+  await userEvent.click(within(form).getByRole('button', { name: 'Пн' }))
+  await userEvent.click(within(form).getByRole('button', { name: 'Пт' }))
+  await userEvent.click(within(form).getByRole('button', { name: 'В лист ожидания' }))
+  expect(await within(panel).findByText('утро · пн, пт')).toBeInTheDocument()
+  expect(sent).toEqual([expect.objectContaining({ wish: { timeFrom: '08:00', timeTo: '12:00', weekdays: [1, 5] } })])
 })

@@ -1,3 +1,4 @@
+import '../schedule/attention.css'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ask } from '../lib/confirm'
 import { useEffect, useState } from 'react'
@@ -8,12 +9,14 @@ import { agoText, recallText, recentlyInvited, whatsappUrl } from '../lib/texts'
 import { formatPhone, shortDate } from '../lib/time'
 import { openLink } from '../lib/telegram'
 import { isAssistant } from '../lib/roles'
+import { DateInput } from '../layout/DateInput'
 import { EmptyState } from '../layout/EmptyState'
 import { Select } from '../layout/Select'
 import { dueText, monthsText } from '../clinic/services'
 import { Loading, Spinner } from '../layout/Loading'
 import { HeadTools, SubHelp } from '../layout/PageHead'
 import { CalmRow, RowMenu } from './CalmList'
+import { DAY_PARTS, dayPartOf, hhmm, WEEKDAYS, wishText, type Wish } from './wish'
 
 type Me = Schemas['BookingViewsMe']
 type Patient = Schemas['PatientView']
@@ -33,7 +36,8 @@ export function WaitlistTab({ me, onOpen }: { me: Me; onOpen: (patientId: number
 
   if (list.isPending) return <Loading />
   if (list.error) return <p className="error">{list.error.message}</p>
-  const help = <SubHelp title="Лист ожидания">Освободилось время — нажмите на него в «Расписании»: «Новая запись» предложит этих пациентов. Записали — уберите из листа в карточке пациента или в «⋯».</SubHelp>
+  const help = <SubHelp title="Лист ожидания">Укажите, когда пациенту удобно (время дня, дни недели, даты). Освободится подходящее окно — в «Расписании» появится «🔔 Окна»
+    с «Предложить» (бот или WhatsApp); «Новая запись» на это время тоже предложит пациента. Записали — уберите из листа в карточке или в «⋯».</SubHelp>
   if (!list.data.length) {
     return <>{help}<WaitlistAdd me={me} /><EmptyState fill title="Пока никто не ждёт" /></>
   }
@@ -44,7 +48,7 @@ export function WaitlistTab({ me, onOpen }: { me: Me; onOpen: (patientId: number
       <ul className="calm-list" aria-label="Лист ожидания">
         {list.data.map((e) => (
           <CalmRow key={e.id} open={() => onOpen(e.patient!.id)} name={e.patient?.fullName}
-            sub={[`${e.durationMinutes} мин`, e.doctorId == null ? 'к любому врачу' : doctor(e.doctorId),
+            sub={[`${e.durationMinutes} мин`, e.doctorId == null ? 'к любому врачу' : doctor(e.doctorId), wishText(e.wish) === 'когда угодно' ? null : wishText(e.wish),
               e.upcoming?.startAt ? `записан ${shortDate(e.upcoming.startAt, true)}` : null].filter(Boolean).join(' · ')}
             meta={e.createdAt ? `ждёт с ${shortDate(e.createdAt)}` : null}
             menu={<RowMenu label={`Ещё: ${e.patient?.fullName ?? 'пациент'}`} items={[{
@@ -119,54 +123,150 @@ export function RecallTab({ onOpen, onBook }: { onOpen: (patientId: number) => v
 }
 
 /**
- * В карточке пациента: «В лист ожидания» (к какому врачу и на сколько) или «Убрать» — как
- * кнопка в карточке приложения. Освободится окно — «Новая запись» предложит пациента.
+ * В карточке пациента: «В лист ожидания» (к какому врачу, на сколько и когда удобно) или «Убрать» / «изменить» — как
+ * кнопка в карточке приложения. Освободится подходящее окно — «🔔 Окна» в «Расписании» и «Новая запись» предложат пациента.
  */
 export function WaitlistBox({ patient, me, defaultMinutes = 30 }: { patient: Patient; me: Me; defaultMinutes?: number }) {
   const client = useQueryClient()
   const list = useWaitlist()
   const entry = list.data?.find((e) => e.patient?.id === patient.id)
-  // Ассистент ставит в лист только к своим врачам (сервер ответит 403)
-  const doctors = (me.doctors ?? []).filter((d) => d.active !== false && (!isAssistant(me) || me.assistantOf!.includes(d.id)))
-  const refresh = () => client.invalidateQueries({ queryKey: ['waitlist'] })
-  const add = useMutation<unknown, ApiError, { doctorId?: number; durationMinutes: number }>({
+  const [editing, setEditing] = useState(false)
+  const refresh = () => {
+    void client.invalidateQueries({ queryKey: ['waitlist'] })
+    void client.invalidateQueries({ queryKey: ['waitlist-windows'] })
+  }
+  const add = useMutation<unknown, ApiError, WishForm>({
     mutationFn: (body) => unwrap(api.POST('/api/waitlist', { body: { patientId: patient.id, ...body } })),
     onSuccess: refresh,
+  })
+  const update = useMutation<unknown, ApiError, WishForm>({
+    mutationFn: (body) => unwrap(api.PUT('/api/waitlist/{id}', { params: { path: { id: entry!.id } }, body })),
+    onSuccess: () => { setEditing(false); refresh() },
   })
   const remove = useMutation<unknown, ApiError, number>({
     mutationFn: (id) => unwrap(api.DELETE('/api/waitlist/{id}', { params: { path: { id } } })),
     onSuccess: refresh,
   })
-  const error = add.error ?? remove.error
+  const error = add.error ?? remove.error ?? update.error
 
   if (list.isPending) return null
-  if (entry) {
+  if (entry && !editing) {
     return (
       <div className="waitlist-box">
         <span className="chip s-wait">В листе ожидания{entry.createdAt ? ` с ${shortDate(entry.createdAt)}` : ''} · {entry.durationMinutes} мин</span>
+        <span className="hint small">{wishText(entry.wish)}</span>
+        <button type="button" className="link" onClick={() => setEditing(true)}>изменить</button>
         <button type="button" className="link" disabled={remove.isPending} onClick={() => remove.mutate(entry.id)}>убрать</button>
         {error && <p className="error">{error.message}</p>}
       </div>
     )
   }
   return (
-    <form className="waitlist-box" aria-label="В лист ожидания" onSubmit={(e) => {
+    <WishFormBox me={me} initial={entry} defaultMinutes={defaultMinutes} busy={add.isPending || update.isPending} error={error}
+      submit={entry ? 'Сохранить' : 'В лист ожидания'} onCancel={entry ? () => setEditing(false) : undefined}
+      onSubmit={(body) => (entry ? update.mutate(body) : add.mutate(body))} />
+  )
+}
+
+type WaitlistEntry = Schemas['WaitlistView']
+type WishForm = { doctorId?: number; durationMinutes: number; wish: Wish }
+
+/**
+ * Форма строки листа: длительность, врач и «Когда удобно» — даты «с … по …», время дня («утро / день / вечер» или свои часы),
+ * дни недели и услуга. Ничего не выбрали в «Когда удобно» — подходит любое время.
+ */
+function WishFormBox({ me, initial, defaultMinutes, busy, error, submit, onSubmit, onCancel }: {
+  me: Me
+  initial?: WaitlistEntry
+  defaultMinutes: number
+  busy: boolean
+  error: ApiError | null
+  submit: string
+  onSubmit: (body: WishForm) => void
+  onCancel?: () => void
+}) {
+  // Ассистент ставит в лист только к своим врачам (сервер ответит 403)
+  const doctors = (me.doctors ?? []).filter((d) => d.active !== false && (!isAssistant(me) || me.assistantOf!.includes(d.id)))
+  const services = useQuery({ queryKey: ['service-types'], queryFn: () => unwrap(api.GET('/api/service-types')), staleTime: 5 * 60_000 })
+  const w = initial?.wish
+  const [minutes, setMinutes] = useState(initial?.durationMinutes ?? defaultMinutes)
+  const [doctor, setDoctor] = useState(initial?.doctorId != null ? String(initial.doctorId) : '')
+  const [open, setOpen] = useState(Boolean(w && wishText(w) !== 'когда угодно'))
+  const [part, setPart] = useState(dayPartOf(w))
+  const [from, setFrom] = useState(hhmm(w?.timeFrom) ?? '')
+  const [to, setTo] = useState(hhmm(w?.timeTo) ?? '')
+  const [days, setDays] = useState<number[]>(w?.weekdays ?? [])
+  const [dateFrom, setDateFrom] = useState(w?.desiredFrom ?? '')
+  const [dateTo, setDateTo] = useState(w?.desiredTo ?? '')
+  const [service, setService] = useState(w?.serviceTypeId != null ? String(w.serviceTypeId) : '')
+  const fieldError = (k: string) => error?.fieldErrors[k] ?? error?.fieldErrors[`wish.${k}`]
+  const minuteOptions = [15, 30, 45, 60, 90, 120]
+  if (!minuteOptions.includes(minutes)) minuteOptions.push(minutes)
+  return (
+    <form className="waitlist-box waitlist-wish" aria-label={initial ? 'Лист ожидания: изменить' : 'В лист ожидания'} onSubmit={(e) => {
       e.preventDefault()
-      const form = new FormData(e.currentTarget)
-      const doctor = String(form.get('doctor') ?? '')
-      add.mutate({ doctorId: doctor ? Number(doctor) : undefined, durationMinutes: Number(form.get('minutes')) })
+      const preset = DAY_PARTS.find((p) => p.key === part)
+      const wish: Wish = {
+        timeFrom: preset ? preset.from : part === 'custom' && from ? from : undefined,
+        timeTo: preset ? preset.to : part === 'custom' && to ? to : undefined,
+        weekdays: days,
+        desiredFrom: dateFrom || undefined,
+        desiredTo: dateTo || undefined,
+        serviceTypeId: service ? Number(service) : undefined,
+      }
+      onSubmit({ doctorId: doctor ? Number(doctor) : undefined, durationMinutes: minutes, wish })
     }}>
-      <Select name="minutes" aria-label="Сколько нужно времени" defaultValue={defaultMinutes}>
-        {[15, 30, 45, 60, 90, 120].map((m) => <option key={m} value={m}>{m} мин</option>)}
+      <Select name="minutes" aria-label="Сколько нужно времени" value={minutes} onChange={(e) => setMinutes(Number(e.target.value))}>
+        {minuteOptions.map((m) => <option key={m} value={m}>{m} мин</option>)}
       </Select>
       {doctors.length > 1 && (
-        <Select name="doctor" aria-label="К какому врачу" defaultValue="">
+        <Select name="doctor" aria-label="К какому врачу" value={doctor} onChange={(e) => setDoctor(e.target.value)}>
           <option value="">к любому врачу</option>
           {doctors.map((d) => <option key={d.id} value={d.id}>{d.fullName}</option>)}
         </Select>
       )}
-      <button type="submit" className="btn" disabled={add.isPending}>В лист ожидания</button>
-      {error && <p className="error">{error.message}</p>}
+      {!open && <button type="button" className="link" onClick={() => setOpen(true)}>Когда удобно…</button>}
+      {open && (
+        <fieldset className="wish-fields">
+          <legend>Когда удобно</legend>
+          <div className="segments" role="group" aria-label="Время дня">
+            {[{ key: '', label: 'Любое' }, ...DAY_PARTS, { key: 'custom', label: 'Свои часы' }].map((p) => (
+              <button key={p.key} type="button" aria-pressed={part === p.key} onClick={() => setPart(p.key)}>{p.label}</button>
+            ))}
+          </div>
+          {part === 'custom' && (
+            <span className="wish-row">
+              <label>с <input type="time" aria-label="Удобно с" value={from} step={900} onChange={(e) => setFrom(e.target.value)} /></label>
+              <label>до <input type="time" aria-label="Удобно до" value={to} step={900} onChange={(e) => setTo(e.target.value)} /></label>
+            </span>
+          )}
+          {fieldError('timeTo') && <p className="error small">{fieldError('timeTo')}</p>}
+          <div className="segments wish-days" role="group" aria-label="Дни недели">
+            {WEEKDAYS.map((d, i) => (
+              <button key={d} type="button" aria-pressed={days.includes(i + 1)}
+                onClick={() => setDays(days.includes(i + 1) ? days.filter((x) => x !== i + 1) : [...days, i + 1])}>{d}</button>
+            ))}
+          </div>
+          <span className="wish-row">
+            <label>с <DateInput aria-label="Удобно с даты" placeholder="любой день" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} /></label>
+            <label>по <DateInput aria-label="Удобно по дату" placeholder="без конца" value={dateTo} min={dateFrom || undefined} onChange={(e) => setDateTo(e.target.value)} /></label>
+          </span>
+          {fieldError('desiredTo') && <p className="error small">{fieldError('desiredTo')}</p>}
+          {(services.data?.length ?? 0) > 0 && (
+            <Select aria-label="Услуга" value={service} onChange={(e) => {
+              setService(e.target.value)
+              const s = services.data!.find((x) => String(x.id) === e.target.value)
+              if (s && !initial) setMinutes(s.durationMinutes)
+            }}>
+              <option value="">услуга — любая</option>
+              {services.data!.filter((s) => s.active || String(s.id) === service).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </Select>
+          )}
+        </fieldset>
+      )}
+      <button type="submit" className="btn" disabled={busy}>{submit}</button>
+      {onCancel && <button type="button" className="link" onClick={onCancel}>отмена</button>}
+      {error && !fieldError('timeTo') && !fieldError('desiredTo') && <p className="error">{error.message}</p>}
     </form>
   )
 }

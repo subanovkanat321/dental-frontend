@@ -51,6 +51,7 @@ const P = {
   clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
   chair: <path d="M7 3v10h10M8 13l-1 7M16 13l1 7M7 9h7a2 2 0 0 1 2 2v2" />,
   star: <path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z" />,
+  gift: <><rect x="3.5" y="8" width="17" height="4" rx="1" /><path d="M5 12v8h14v-8M12 8v12M12 8c-1.5-3-5-3.5-5-1.2C7 8 9.5 8 12 8zM12 8c1.5-3 5-3.5 5-1.2C17 8 14.5 8 12 8z" /></>,
   bell: <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0" />,
   note: <><path d="M4 4h16v10l-6 6H4z" /><path d="M14 20v-6h6M8 9h8" /></>,
   news: <><path d="M4 5h13v14a2 2 0 0 0 2 2H6a2 2 0 0 1-2-2z" /><path d="M17 9h3v10a2 2 0 0 1-2 2M8 9h5M8 13h5M8 17h3" /></>,
@@ -69,7 +70,7 @@ export const SUB_ICONS: Partial<Record<Page, Record<string, ReactNode>>> = {
   },
   clinic: { about: P.clinic, staff: P.people, services: P.tag, hours: P.clock, chairs: P.chair },
   settings: {
-    reminder: P.bell, debt: P.debtor, reviews: P.star, questions: P.clipList, contract: P.signDoc, memos: P.note, 'patient-news': P.news, sources: P.megaphone,
+    reminder: P.bell, debt: P.debtor, reviews: P.star, birthdays: P.gift, questions: P.clipList, contract: P.signDoc, memos: P.note, 'patient-news': P.news, sources: P.megaphone,
     tags: P.tag, plan: P.card, agreement: P.checkDoc, data: P.database, ai: P.sparkles, 'visit-templates': P.layers, discounts: P.wallet,
     'plan-templates': P.list,
   },
@@ -83,7 +84,7 @@ export const SUB_ICONS: Partial<Record<Page, Record<string, ReactNode>>> = {
  */
 export const SUB_TONES: Partial<Record<Page, Record<string, string>>> = {
   settings: {
-    reminder: 'stock', debt: 'cash', reviews: 'instagram', questions: 'patients', contract: 'schedule', memos: 'memo', 'patient-news': 'platform', sources: 'instagram',
+    reminder: 'stock', debt: 'cash', reviews: 'instagram', birthdays: 'memo', questions: 'patients', contract: 'schedule', memos: 'memo', 'patient-news': 'platform', sources: 'instagram',
     tags: 'patients', plan: 'cash', agreement: 'settings', data: 'data', ai: 'ai', 'visit-templates': 'schedule', discounts: 'cash',
     'plan-templates': 'patients',
   },

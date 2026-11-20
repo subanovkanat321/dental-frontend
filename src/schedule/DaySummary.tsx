@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 
 import type { Schemas } from '../api/client'
 import type { Page } from '../lib/route'
@@ -28,7 +28,7 @@ function duration(minutes: number): string {
  * сеткой на ноутбуке поуже, — только столбиком; нажатие ведёт туда же. Когда открыта карточка
  * приёма, она занимает это место.
  */
-export function DaySummary({ date, today, all, doctorName, requests, waiting, toPay, revenueSom, earnings, onOpenEarnings, low, free, onOpen: openProp, onBook: bookProp, onNavigate: navigateProp, onClose, reviewAsks = 0, onReviewAsks }: {
+export function DaySummary({ date, today, all, doctorName, requests, waiting, toPay, revenueSom, earnings, onOpenEarnings, low, free, onOpen: openProp, onBook: bookProp, onNavigate: navigateProp, onClose, reviewAsks = 0, onReviewAsks, extra, windowsHint }: {
   date: string
   today: string
   /** Приёмы дня без отменённых */
@@ -51,6 +51,10 @@ export function DaySummary({ date, today, all, doctorName, requests, waiting, to
   /** Сколько пациентов без Telegram можно попросить оценить приём («⭐ N попросить оценку») */
   reviewAsks?: number
   onReviewAsks?: () => void
+  /** Ещё плашки в «Требует внимания» (шаг 6Б: «🎂 Дни рождения») */
+  extra?: ReactNode
+  /** Подсказка «Освободилось окно · подходят N из листа ожидания» — своим блоком под «Требует внимания» */
+  windowsHint?: ReactNode
 }) {
   // «На весь экран» — пока смотрят; открыли приём, запись или раздел — сводка снова сбоку
   const [full, setFull] = useState(false)
@@ -130,9 +134,11 @@ export function DaySummary({ date, today, all, doctorName, requests, waiting, to
             </button>
           )}
           {onReviewAsks && <ReviewAsksChip count={reviewAsks} onOpen={onReviewAsks} />}
+          {extra}
           {calm && <span className="stat s-quiet calm">Всё под контролем: заявок и срочных дел нет</span>}
         </div>
       </section>
+      {windowsHint}
 
       {free.length > 0 && (
         <section className="ds-block">

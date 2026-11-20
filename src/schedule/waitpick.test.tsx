@@ -33,8 +33,17 @@ const bakyt: Entry = { id: 2, patient: person(22, 'Бакыт М.'), durationMin
 const otherDoctor: Entry = { id: 3, doctorId: 2, patient: person(23, 'Чынара К.'), durationMinutes: 30, createdAt: '2026-10-22T04:00:00Z' }
 const tooLong: Entry = { id: 4, doctorId: 1, patient: person(24, 'Дина С.'), durationMinutes: 150, createdAt: '2026-10-23T04:00:00Z' }
 
+/**
+ * Кто подходит, считает сервер (/api/waitlist/fits, шаг 6Б): здесь — его ответ. Айгуль и Бакыт помещаются в 10:00
+ * у врача 1; Чынара ждёт другого врача, Дине нужно 2,5 часа.
+ */
+const FITTING = [1, 2]
+
 function backend(waitlist: Entry[]) {
   const created: unknown[] = []
+  const fits: Schemas['WaitlistWindowsMatch'][] = waitlist.filter((e) => FITTING.includes(e.id)).map((e) => ({
+    entryId: e.id, patient: e.patient!, startAt: at('10:00'), durationMinutes: e.durationMinutes, declined: false,
+  }))
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.get('*/api/appointments', () => HttpResponse.json([])),
@@ -43,6 +52,7 @@ function backend(waitlist: Entry[]) {
     http.get('*/api/slots', () => HttpResponse.json({ workingDay: true, breaks: [], starts: [at('10:00')],
       free: [{ start: at('10:00'), end: at('12:00') }] })),
     http.get('*/api/waitlist', () => HttpResponse.json(waitlist)),
+    http.get('*/api/waitlist/fits', () => HttpResponse.json(fits)),
     http.post('*/api/appointments', async ({ request }) => {
       created.push(await request.json())
       return HttpResponse.json(appointment(55, 1, '10:00', 'Айгуль Т.'), { status: 201 })

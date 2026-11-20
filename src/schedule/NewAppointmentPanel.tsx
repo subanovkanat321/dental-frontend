@@ -635,7 +635,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
           action={walkIn ? 'Начать приём' : 'Записать'} hidden={isChairError(create.error)} />}
 
         {/* Кто из листа ожидания помещается в это свободное окно — только пока пациент не выбран; никого — блока нет */}
-        {!walkIn && !patient && startAt && <WaitlistCandidates date={date} doctorId={doctorId} startAt={startAt} onPick={pickWaiting} onBooked={onCreated} />}
+        {!walkIn && !patient && startAt && <WaitlistCandidates doctorId={doctorId} startAt={startAt} onPick={pickWaiting} onBooked={onCreated} />}
 
         <label className="field">
           <span>Комментарий (необязательно)</span>
@@ -679,33 +679,13 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
 
 type WaitlistEntry = Schemas['WaitlistView']
 
-/** Конец свободного окна (/api/slots, free), в котором начинается приём; не в свободном окне — null. */
-function windowEnd(free: Schemas['TimeRange'][] | undefined, startAt: string): string | null {
-  const at = Date.parse(startAt)
-  const w = (free ?? []).find((r) => Date.parse(r.start) <= at && at < Date.parse(r.end))
-  return w?.end ?? null
-}
-
-/**
- * Помещается ли пациент из листа в окно [startAt, end) врача doctorId (как прежняя fits в «Дне»):
- * хочет к этому врачу или к любому; приём не длиннее окна; уже записан к этому врачу — окно раньше
- * его записи. Без записи («запишите, как появится место») — подходит в любое окно, где помещается.
- */
-function fitsWindow(e: WaitlistEntry, doctorId: number, startAt: string, end: string): boolean {
-  if (e.doctorId != null && e.doctorId !== doctorId) return false
-  const sameDoctor = !e.upcoming || e.upcoming.doctorId === doctorId
-  const earlier = !e.upcoming?.startAt || !sameDoctor || Date.parse(startAt) < Date.parse(e.upcoming.startAt)
-  return earlier && e.durationMinutes * 60_000 <= Date.parse(end) - Date.parse(startAt)
-}
-
 /**
  * «Подходит из листа ожидания» — нажали на свободное окно, а его ждут. «Записать сюда» выбирает
  * пациента в форме и ставит его длительность; дальше обычное «Записать» — сервер уберёт его из листа
  * (fromWaitlistId). Уже записан позже — «Перенести сюда»: сервер перенесёт ту запись, а не сделает
  * вторую. WhatsApp — «освободилось время».
  */
-function WaitlistCandidates({ date, doctorId, startAt, onPick, onBooked }: {
-  date: string
+function WaitlistCandidates({ doctorId, startAt, onPick, onBooked }: {
   doctorId: number
   startAt: string
   onPick: (e: WaitlistEntry) => void
@@ -714,10 +694,12 @@ function WaitlistCandidates({ date, doctorId, startAt, onPick, onBooked }: {
   const client = useQueryClient()
   const list = useWaitlist()
   const settings = useSettings()
-  // Те же окна, что в «Дне» и сетке (тот же ключ — из кэша, без лишнего запроса)
-  const slots = useQuery({
-    queryKey: ['slots', date, doctorId],
-    queryFn: () => unwrap(api.GET('/api/slots', { params: { query: { date, doctorId } } })),
+  // Кто подходит — считает сервер (шаг 6Б): врач, длительность в свободном окне, «Когда удобно» пациента (часы, дни
+  // недели, даты по Бишкеку) и уже записан — только раньше. Строки — из листа (там «записан на …» для «Перенести сюда»)
+  const fitting = useQuery({
+    queryKey: ['waitlist-fits', doctorId, startAt],
+    queryFn: () => unwrap(api.GET('/api/waitlist/fits', { params: { query: { doctorId, startAt } } })),
+    enabled: Boolean(list.data?.length),
   })
   const move = useMutation<Appointment, ApiError, WaitlistEntry>({
     mutationFn: (e) => withChairConfirm((confirm, chairId) => unwrap(api.POST('/api/waitlist/{id}/book',
@@ -728,8 +710,8 @@ function WaitlistCandidates({ date, doctorId, startAt, onPick, onBooked }: {
       onBooked(a)
     },
   })
-  const end = windowEnd(slots.data?.free, startAt)
-  const fits = end ? (list.data ?? []).filter((e) => fitsWindow(e, doctorId, startAt, end)) : []
+  const ids = new Set((fitting.data ?? []).map((m) => m.entryId))
+  const fits = (list.data ?? []).filter((e) => ids.has(e.id))
   if (!fits.length) return null
   return (
     <section className="candidates" aria-label="Подходит из листа ожидания">

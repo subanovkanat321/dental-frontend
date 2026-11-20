@@ -4,7 +4,7 @@
  */
 
 export interface paths {
-    "/api/visit-templates/{id}": {
+    "/api/waitlist/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -13,6 +13,22 @@ export interface paths {
         };
         get?: never;
         put: operations["update"];
+        post?: never;
+        delete: operations["remove"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/visit-templates/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["update_1"];
         post?: never;
         delete: operations["delete"];
         options?: never;
@@ -28,7 +44,7 @@ export interface paths {
             cookie?: never;
         };
         get: operations["get"];
-        put: operations["update_1"];
+        put: operations["update_2"];
         post?: never;
         delete: operations["delete_1"];
         options?: never;
@@ -44,7 +60,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_2"];
+        put: operations["update_3"];
         post?: never;
         delete: operations["delete_2"];
         options?: never;
@@ -124,7 +140,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_3"];
+        put: operations["update_4"];
         post?: never;
         delete: operations["delete_3"];
         options?: never;
@@ -156,7 +172,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_4"];
+        put: operations["update_5"];
         post?: never;
         delete: operations["delete_4"];
         options?: never;
@@ -268,7 +284,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_5"];
+        put: operations["update_6"];
         post?: never;
         delete: operations["delete_5"];
         options?: never;
@@ -300,7 +316,7 @@ export interface paths {
             cookie?: never;
         };
         get: operations["get_1"];
-        put: operations["update_6"];
+        put: operations["update_7"];
         post?: never;
         delete: operations["delete_6"];
         options?: never;
@@ -332,7 +348,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_7"];
+        put: operations["update_8"];
         post?: never;
         delete: operations["delete_7"];
         options?: never;
@@ -460,7 +476,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_8"];
+        put: operations["update_9"];
         post?: never;
         delete: operations["delete_8"];
         options?: never;
@@ -492,7 +508,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_9"];
+        put: operations["update_10"];
         post?: never;
         delete: operations["delete_9"];
         options?: never;
@@ -620,7 +636,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_10"];
+        put: operations["update_11"];
         post?: never;
         delete: operations["delete_10"];
         options?: never;
@@ -652,7 +668,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_11"];
+        put: operations["update_12"];
         post?: never;
         delete: operations["delete_11"];
         options?: never;
@@ -668,7 +684,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_12"];
+        put: operations["update_13"];
         post?: never;
         delete?: never;
         options?: never;
@@ -812,7 +828,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_13"];
+        put: operations["update_14"];
         post?: never;
         delete?: never;
         options?: never;
@@ -924,7 +940,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_14"];
+        put: operations["update_15"];
         post?: never;
         delete: operations["delete_12"];
         options?: never;
@@ -940,7 +956,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_15"];
+        put: operations["update_16"];
         post?: never;
         delete?: never;
         options?: never;
@@ -1054,7 +1070,7 @@ export interface paths {
         get: operations["get_2"];
         put: operations["set_4"];
         post?: never;
-        delete: operations["remove"];
+        delete: operations["remove_1"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1102,7 +1118,7 @@ export interface paths {
         get: operations["get_3"];
         put: operations["set_5"];
         post?: never;
-        delete: operations["remove_1"];
+        delete: operations["remove_2"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1164,7 +1180,7 @@ export interface paths {
             cookie?: never;
         };
         get: operations["get_4"];
-        put: operations["update_16"];
+        put: operations["update_17"];
         post?: never;
         delete: operations["delete_13"];
         options?: never;
@@ -1196,7 +1212,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_17"];
+        put: operations["update_18"];
         post?: never;
         delete: operations["delete_14"];
         options?: never;
@@ -1260,7 +1276,7 @@ export interface paths {
             cookie?: never;
         };
         get: operations["view"];
-        put: operations["update_18"];
+        put: operations["update_19"];
         post?: never;
         delete?: never;
         options?: never;
@@ -1324,7 +1340,7 @@ export interface paths {
             cookie?: never;
         };
         get: operations["view_1"];
-        put: operations["update_19"];
+        put: operations["update_20"];
         post?: never;
         delete?: never;
         options?: never;
@@ -1356,7 +1372,7 @@ export interface paths {
             cookie?: never;
         };
         get: operations["timing"];
-        put: operations["update_20"];
+        put: operations["update_21"];
         post?: never;
         delete?: never;
         options?: never;
@@ -1540,7 +1556,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/clinic/audit/settings": {
+    "/api/clinic/birthday-settings": {
         parameters: {
             query?: never;
             header?: never;
@@ -1548,6 +1564,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["settings_4"];
+        put: operations["update_22"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/clinic/audit/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["settings_5"];
         put: operations["saveSettings"];
         post?: never;
         delete?: never;
@@ -1612,7 +1644,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_21"];
+        put: operations["update_23"];
         post?: never;
         delete?: never;
         options?: never;
@@ -2174,6 +2206,22 @@ export interface paths {
         get: operations["list"];
         put?: never;
         post: operations["add"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/waitlist/{id}/offer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["offer"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4820,6 +4868,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/birthdays/{patientId}/greet": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["greet"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/assist/draft": {
         parameters: {
             query?: never;
@@ -5780,6 +5844,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/waitlist/windows": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["windows"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/waitlist/fits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["fits"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/tasks/summary": {
         parameters: {
             query?: never;
@@ -5915,7 +6011,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["settings_5"];
+        get: operations["settings_6"];
         put?: never;
         post?: never;
         delete?: never;
@@ -7444,6 +7540,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/birthdays/today": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["today"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/appointments/{id}": {
         parameters: {
             query?: never;
@@ -7940,22 +8052,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/waitlist/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete: operations["remove_2"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/time-off/{id}": {
         parameters: {
             query?: never;
@@ -8136,6 +8232,144 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        WaitlistControllerUpdate: {
+            /** Format: int64 */
+            doctorId?: number;
+            /** Format: int32 */
+            durationMinutes: number;
+            wish?: components["schemas"]["WaitlistWish"];
+        };
+        WaitlistWish: {
+            /** Format: date */
+            desiredFrom?: string;
+            /** Format: date */
+            desiredTo?: string;
+            /** Format: time-local */
+            timeFrom?: string;
+            /** Format: time-local */
+            timeTo?: string;
+            weekdays?: number[];
+            /** Format: int64 */
+            serviceTypeId?: number;
+        };
+        AppointmentView: {
+            /** Format: int64 */
+            id: number;
+            /** Format: int64 */
+            doctorId: number;
+            patient: components["schemas"]["PatientView"];
+            /** Format: date-time */
+            startAt: string;
+            /** Format: date-time */
+            endAt: string;
+            /** @enum {string} */
+            status: "REQUESTED" | "SCHEDULED" | "CANCELLED" | "DONE" | "NO_SHOW";
+            /** @enum {string} */
+            reply?: "NONE" | "CONFIRMED" | "RESCHEDULE" | "NO_ANSWER";
+            /** Format: date-time */
+            reminderOpenedAt?: string;
+            /** Format: int64 */
+            version: number;
+            /** @enum {string} */
+            source: "DOCTOR" | "PATIENT" | "WEB";
+            serviceName?: string;
+            /** Format: int32 */
+            servicePriceSom?: number;
+            /** Format: int32 */
+            rating?: number;
+            /** Format: int32 */
+            paidSom?: number;
+            /** @enum {string} */
+            paymentMethod?: "CASH" | "TRANSFER" | "CARD" | "ADVANCE";
+            /** Format: int32 */
+            chargeSom?: number;
+            /** Format: int32 */
+            debtSom: number;
+            /** Format: date */
+            dueOn?: string;
+            /** Format: int32 */
+            depositSom?: number;
+            depositStatus?: string;
+            reviewComment?: string;
+            comment?: string;
+            promoCode?: string;
+            bookedBy?: components["schemas"]["FamiliesBooker"];
+            firstVisit: boolean;
+            /** Format: date-time */
+            cancelledAt?: string;
+            cancelledBy?: string;
+            /** @enum {string} */
+            freeReason?: "FREE" | "PREPAID";
+            freeComment?: string;
+            /** Format: int64 */
+            chairId?: number;
+            chairManual: boolean;
+            ratingVia?: string;
+            /** Format: date-time */
+            arrivedAt?: string;
+            /** Format: date-time */
+            inChairAt?: string;
+            /** @enum {string} */
+            cancelReason?: "CHANGED_MIND" | "DUPLICATE" | "ILL" | "OTHER_TIME" | "CLINIC" | "OTHER" | "PATIENT";
+            cancelNote?: string;
+            discount?: components["schemas"]["PaymentDiscount"];
+        };
+        FamiliesBooker: {
+            fullName?: string;
+            /** @enum {string} */
+            relation?: "CHILD" | "SPOUSE" | "PARENT" | "SIBLING" | "OTHER";
+        };
+        Guardian: {
+            fullName?: string;
+            /** @enum {string} */
+            relation?: "MOTHER" | "FATHER" | "PARENT" | "GRANDMOTHER" | "GRANDFATHER" | "GUARDIAN" | "OTHER";
+            phone?: string;
+        };
+        PatientView: {
+            /** Format: int64 */
+            id: number;
+            fullName: string;
+            phone?: string;
+            telegram: boolean;
+            workplace?: string;
+            /** Format: date */
+            birthDate?: string;
+            /** Format: int64 */
+            sourceId?: number;
+            /** @enum {string} */
+            dentition?: "PERMANENT" | "PRIMARY" | "MIXED";
+            guardian?: components["schemas"]["Guardian"];
+            vip?: boolean;
+            tagIds?: number[];
+            /** Format: date-time */
+            botInvitedAt?: string;
+        };
+        PaymentDiscount: {
+            /** Format: int32 */
+            som: number;
+            /** Format: int32 */
+            percent?: number;
+            /** @enum {string} */
+            reason?: "PROMO" | "FAMILY" | "VIP" | "REGULAR" | "OTHER";
+            comment?: string;
+            /** Format: int32 */
+            priceSom: number;
+        };
+        WaitlistView: {
+            /** Format: int64 */
+            id: number;
+            /** Format: int64 */
+            doctorId?: number;
+            patient?: components["schemas"]["PatientView"];
+            /** Format: int32 */
+            durationMinutes: number;
+            /** Format: date-time */
+            createdAt?: string;
+            upcoming?: components["schemas"]["AppointmentView"];
+            wish?: components["schemas"]["WaitlistWish"];
+            /** Format: date-time */
+            offeredAt?: string;
+        };
         DiagnosisCode: {
             code: string;
             title?: string;
@@ -9186,31 +9420,6 @@ export interface components {
             /** @enum {string} */
             dentition?: "PERMANENT" | "PRIMARY" | "MIXED";
         };
-        Guardian: {
-            fullName?: string;
-            /** @enum {string} */
-            relation?: "MOTHER" | "FATHER" | "PARENT" | "GRANDMOTHER" | "GRANDFATHER" | "GUARDIAN" | "OTHER";
-            phone?: string;
-        };
-        PatientView: {
-            /** Format: int64 */
-            id: number;
-            fullName: string;
-            phone?: string;
-            telegram: boolean;
-            workplace?: string;
-            /** Format: date */
-            birthDate?: string;
-            /** Format: int64 */
-            sourceId?: number;
-            /** @enum {string} */
-            dentition?: "PERMANENT" | "PRIMARY" | "MIXED";
-            guardian?: components["schemas"]["Guardian"];
-            vip?: boolean;
-            tagIds?: number[];
-            /** Format: date-time */
-            botInvitedAt?: string;
-        };
         DebtReminderControllerPromise: {
             /** Format: date */
             dueOn?: string;
@@ -9815,6 +10024,13 @@ export interface components {
             defaultTitle?: string;
             defaultBody?: string;
         };
+        BirthdaysSettings: {
+            autoGreet: boolean;
+            /** Format: int32 */
+            greetHour: number;
+            /** Format: int64 */
+            promoCodeId?: number;
+        };
         AuditControllerSettingsChange: {
             disabled: string[];
         };
@@ -9979,84 +10195,6 @@ export interface components {
         AppointmentRequestsService: {
             /** Format: int64 */
             serviceTypeId?: number;
-        };
-        AppointmentView: {
-            /** Format: int64 */
-            id: number;
-            /** Format: int64 */
-            doctorId: number;
-            patient: components["schemas"]["PatientView"];
-            /** Format: date-time */
-            startAt: string;
-            /** Format: date-time */
-            endAt: string;
-            /** @enum {string} */
-            status: "REQUESTED" | "SCHEDULED" | "CANCELLED" | "DONE" | "NO_SHOW";
-            /** @enum {string} */
-            reply?: "NONE" | "CONFIRMED" | "RESCHEDULE" | "NO_ANSWER";
-            /** Format: date-time */
-            reminderOpenedAt?: string;
-            /** Format: int64 */
-            version: number;
-            /** @enum {string} */
-            source: "DOCTOR" | "PATIENT" | "WEB";
-            serviceName?: string;
-            /** Format: int32 */
-            servicePriceSom?: number;
-            /** Format: int32 */
-            rating?: number;
-            /** Format: int32 */
-            paidSom?: number;
-            /** @enum {string} */
-            paymentMethod?: "CASH" | "TRANSFER" | "CARD" | "ADVANCE";
-            /** Format: int32 */
-            chargeSom?: number;
-            /** Format: int32 */
-            debtSom: number;
-            /** Format: date */
-            dueOn?: string;
-            /** Format: int32 */
-            depositSom?: number;
-            depositStatus?: string;
-            reviewComment?: string;
-            comment?: string;
-            promoCode?: string;
-            bookedBy?: components["schemas"]["FamiliesBooker"];
-            firstVisit: boolean;
-            /** Format: date-time */
-            cancelledAt?: string;
-            cancelledBy?: string;
-            /** @enum {string} */
-            freeReason?: "FREE" | "PREPAID";
-            freeComment?: string;
-            /** Format: int64 */
-            chairId?: number;
-            chairManual: boolean;
-            ratingVia?: string;
-            /** Format: date-time */
-            arrivedAt?: string;
-            /** Format: date-time */
-            inChairAt?: string;
-            /** @enum {string} */
-            cancelReason?: "CHANGED_MIND" | "DUPLICATE" | "ILL" | "OTHER_TIME" | "CLINIC" | "OTHER" | "PATIENT";
-            cancelNote?: string;
-            discount?: components["schemas"]["PaymentDiscount"];
-        };
-        FamiliesBooker: {
-            fullName?: string;
-            /** @enum {string} */
-            relation?: "CHILD" | "SPOUSE" | "PARENT" | "SIBLING" | "OTHER";
-        };
-        PaymentDiscount: {
-            /** Format: int32 */
-            som: number;
-            /** Format: int32 */
-            percent?: number;
-            /** @enum {string} */
-            reason?: "PROMO" | "FAMILY" | "VIP" | "REGULAR" | "OTHER";
-            comment?: string;
-            /** Format: int32 */
-            priceSom: number;
         };
         AppointmentRequestsPromoCode: {
             promoCode?: string;
@@ -10354,18 +10492,15 @@ export interface components {
             doctorId?: number;
             /** Format: int32 */
             durationMinutes: number;
+            wish?: components["schemas"]["WaitlistWish"];
         };
-        WaitlistView: {
+        WaitlistControllerOffer: {
             /** Format: int64 */
-            id: number;
-            /** Format: int64 */
-            doctorId?: number;
-            patient?: components["schemas"]["PatientView"];
-            /** Format: int32 */
-            durationMinutes: number;
+            doctorId: number;
             /** Format: date-time */
-            createdAt?: string;
-            upcoming?: components["schemas"]["AppointmentView"];
+            startAt: string;
+            /** @enum {string} */
+            channel: "TELEGRAM" | "WHATSAPP";
         };
         WaitlistControllerBook: {
             /** Format: int64 */
@@ -11378,6 +11513,17 @@ export interface components {
             /** Format: int32 */
             services: number;
         };
+        BirthdayControllerGreet: {
+            /** @enum {string} */
+            channel?: "TELEGRAM" | "WHATSAPP" | "AUTO";
+            /** @enum {string} */
+            lang?: "RU" | "KY";
+        };
+        BirthdaysGreeting: {
+            text?: string;
+            /** @enum {string} */
+            lang: "RU" | "KY";
+        };
         AssistDraftRequest: {
             token: string;
         };
@@ -11855,6 +12001,33 @@ export interface components {
             end?: string;
             title?: string;
             emoji?: string;
+        };
+        WaitlistWindowsFreeWindow: {
+            /** Format: int64 */
+            doctorId: number;
+            /** Format: date-time */
+            start: string;
+            /** Format: date-time */
+            end: string;
+            freed: boolean;
+            matches: components["schemas"]["WaitlistWindowsMatch"][];
+        };
+        WaitlistWindowsMatch: {
+            /** Format: int64 */
+            entryId: number;
+            patient: components["schemas"]["PatientView"];
+            /** Format: date-time */
+            startAt: string;
+            /** Format: int32 */
+            durationMinutes: number;
+            /** Format: int64 */
+            doctorId?: number;
+            /** Format: date-time */
+            upcomingAt?: string;
+            /** Format: date-time */
+            offeredAt?: string;
+            offeredVia?: string;
+            declined: boolean;
         };
         TaskControllerSummary: {
             /** Format: int32 */
@@ -13469,6 +13642,21 @@ export interface components {
             memoId: number;
             memo?: string;
         };
+        BirthdaysRow: {
+            patient: components["schemas"]["PatientView"];
+            /** Format: int32 */
+            age: number;
+            /** Format: date-time */
+            greetedAt?: string;
+            /** @enum {string} */
+            greetedVia?: "TELEGRAM" | "WHATSAPP" | "AUTO";
+        };
+        BirthdaysToday: {
+            /** Format: date */
+            date: string;
+            items: components["schemas"]["BirthdaysRow"][];
+            promoCode?: string;
+        };
         VisitReportsSent: {
             text?: string;
             ai: boolean;
@@ -13945,6 +14133,52 @@ export interface operations {
         };
         requestBody: {
             content: {
+                "application/json": components["schemas"]["WaitlistControllerUpdate"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WaitlistView"];
+                };
+            };
+        };
+    };
+    remove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
                 "application/json": components["schemas"]["VisitTemplatesFields"];
             };
         };
@@ -14002,7 +14236,7 @@ export interface operations {
             };
         };
     };
-    update_1: {
+    update_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -14048,7 +14282,7 @@ export interface operations {
             };
         };
     };
-    update_2: {
+    update_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -14214,7 +14448,7 @@ export interface operations {
             };
         };
     };
-    update_3: {
+    update_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -14308,7 +14542,7 @@ export interface operations {
             };
         };
     };
-    update_4: {
+    update_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -14532,7 +14766,7 @@ export interface operations {
             };
         };
     };
-    update_5: {
+    update_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -14626,7 +14860,7 @@ export interface operations {
             };
         };
     };
-    update_6: {
+    update_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -14716,7 +14950,7 @@ export interface operations {
             };
         };
     };
-    update_7: {
+    update_8: {
         parameters: {
             query?: never;
             header?: never;
@@ -14952,7 +15186,7 @@ export interface operations {
             };
         };
     };
-    update_8: {
+    update_9: {
         parameters: {
             query?: never;
             header?: never;
@@ -15046,7 +15280,7 @@ export interface operations {
             };
         };
     };
-    update_9: {
+    update_10: {
         parameters: {
             query?: never;
             header?: never;
@@ -15306,7 +15540,7 @@ export interface operations {
             };
         };
     };
-    update_10: {
+    update_11: {
         parameters: {
             query?: never;
             header?: never;
@@ -15378,7 +15612,7 @@ export interface operations {
             };
         };
     };
-    update_11: {
+    update_12: {
         parameters: {
             query?: never;
             header?: never;
@@ -15424,7 +15658,7 @@ export interface operations {
             };
         };
     };
-    update_12: {
+    update_13: {
         parameters: {
             query?: never;
             header?: never;
@@ -15770,7 +16004,7 @@ export interface operations {
             };
         };
     };
-    update_13: {
+    update_14: {
         parameters: {
             query?: never;
             header?: never;
@@ -15965,7 +16199,7 @@ export interface operations {
             };
         };
     };
-    update_14: {
+    update_15: {
         parameters: {
             query?: never;
             header?: never;
@@ -16013,7 +16247,7 @@ export interface operations {
             };
         };
     };
-    update_15: {
+    update_16: {
         parameters: {
             query?: never;
             header?: never;
@@ -16245,7 +16479,7 @@ export interface operations {
             };
         };
     };
-    remove: {
+    remove_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -16393,7 +16627,7 @@ export interface operations {
             };
         };
     };
-    remove_1: {
+    remove_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -16529,7 +16763,7 @@ export interface operations {
             };
         };
     };
-    update_16: {
+    update_17: {
         parameters: {
             query?: never;
             header?: never;
@@ -16601,7 +16835,7 @@ export interface operations {
             };
         };
     };
-    update_17: {
+    update_18: {
         parameters: {
             query?: never;
             header?: never;
@@ -16769,7 +17003,7 @@ export interface operations {
             };
         };
     };
-    update_18: {
+    update_19: {
         parameters: {
             query?: never;
             header?: never;
@@ -16891,7 +17125,7 @@ export interface operations {
             };
         };
     };
-    update_19: {
+    update_20: {
         parameters: {
             query?: never;
             header?: never;
@@ -16979,7 +17213,7 @@ export interface operations {
             };
         };
     };
-    update_20: {
+    update_21: {
         parameters: {
             query?: never;
             header?: never;
@@ -17422,6 +17656,50 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    "application/json": components["schemas"]["BirthdaysSettings"];
+                };
+            };
+        };
+    };
+    update_22: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BirthdaysSettings"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BirthdaysSettings"];
+                };
+            };
+        };
+    };
+    settings_5: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
                     "application/json": components["schemas"]["AuditControllerSettings"];
                 };
             };
@@ -17547,7 +17825,7 @@ export interface operations {
             };
         };
     };
-    update_21: {
+    update_23: {
         parameters: {
             query?: never;
             header?: never;
@@ -18568,6 +18846,30 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["WaitlistView"];
                 };
+            };
+        };
+    };
+    offer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WaitlistControllerOffer"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -23728,6 +24030,32 @@ export interface operations {
             };
         };
     };
+    greet: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BirthdayControllerGreet"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BirthdaysGreeting"];
+                };
+            };
+        };
+    };
     draft_3: {
         parameters: {
             query?: never;
@@ -25287,6 +25615,49 @@ export interface operations {
             };
         };
     };
+    windows: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WaitlistWindowsFreeWindow"][];
+                };
+            };
+        };
+    };
+    fits: {
+        parameters: {
+            query: {
+                doctorId: number;
+                startAt: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WaitlistWindowsMatch"][];
+                };
+            };
+        };
+    };
     summary: {
         parameters: {
             query?: never;
@@ -25463,7 +25834,7 @@ export interface operations {
             };
         };
     };
-    settings_5: {
+    settings_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -27614,6 +27985,26 @@ export interface operations {
             };
         };
     };
+    today: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BirthdaysToday"];
+                };
+            };
+        };
+    };
     get_17: {
         parameters: {
             query?: never;
@@ -28341,26 +28732,6 @@ export interface operations {
                 content: {
                     "application/json": Record<string, never>;
                 };
-            };
-        };
-    };
-    remove_2: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description No Content */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
             };
         };
     };
