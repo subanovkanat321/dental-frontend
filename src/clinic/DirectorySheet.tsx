@@ -7,9 +7,8 @@ import { DirectoryEntryHint, type DirectoryEntry } from './DirectoryEntryForm'
 
 /**
  * Лист справочника — «Лаборатории» и «Поставщики» одинаково: строка-подсказка вверху (всегда — зачем этот список),
- * записи «название / телефон · WhatsApp … · заметка» с «Изменить» и «Убрать», «＋ …» и «Готово».
- * Список пуст — сразу форма (лишнее нажатие ни к чему), «Отмена» тогда закрывает лист. Пока форма открыта,
- * «Готово» нет: иначе лист закрылся бы и введённое пропало без сохранения.
+ * записи «название / телефон · WhatsApp … · заметка» с «Изменить» и «Убрать», «＋ …»; закрыть — ✕ в шапке.
+ * Список пуст — сразу форма (лишнее нажатие ни к чему), «Отмена» тогда закрывает лист.
  */
 export function DirectorySheet<T extends DirectoryEntry>({ title, intro, items, pending, addText, archive, form, onClose }: {
   title: string
@@ -60,11 +59,6 @@ export function DirectorySheet<T extends DirectoryEntry>({ title, intro, items, 
         ? form(undefined, done, () => (empty && editing == null ? onClose() : done()))
         : items && editing == null && <button type="button" className="btn dir-add" onClick={() => setEditing('new')}>{addText}</button>}
       {archive?.error && <p className="error" role="alert">{archive.error.message}</p>}
-      {editing == null && !adding && (
-        <div className="confirm-actions">
-          <button type="button" className="btn primary" onClick={onClose}>Готово</button>
-        </div>
-      )}
     </Sheet>
   )
 }

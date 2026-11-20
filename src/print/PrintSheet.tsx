@@ -6,10 +6,11 @@ import { useBack } from '../lib/back'
 import { formatPhone, timeOf } from '../lib/time'
 import { docDate, type PaperFormat } from './paper'
 import './print.css'
+import { CloseButton } from '../layout/SheetHead'
 
 /**
  * Лист для печати поверх CRM — не отдельная страница: в адресе нет ни имени пациента, ни id.
- * Открылся — сразу окно печати браузера; «🖨 Печать» — ещё раз, «Закрыть» (или Esc) — назад.
+ * Открылся — сразу окно печати браузера; «🖨 Печать» — ещё раз, ✕ (или Esc) — назад.
  * Шапка — клиника из «О клинике» (название, юрлицо, адрес, телефон), внизу — дата.
  *
  * @param formats есть — переключатель «A4 / Чек 80 мм» (квитанция)
@@ -63,7 +64,7 @@ export function PrintSheet({ title, onClose, formats = false, tools, children }:
           </div>
         )}
         <button type="button" className="btn primary" onClick={() => window.print()}>🖨 Печать</button>
-        <button type="button" className="btn" onClick={onClose}>Закрыть</button>
+        <CloseButton className="print-x" onClick={onClose} />
         {tools}
       </div>
       <article className={narrow ? 'print-sheet narrow' : 'print-sheet'}>

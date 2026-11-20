@@ -45,7 +45,6 @@ export function PlanTemplateSheet({ patientId, steps, onClose, onAdded }: {
               ))}
             </ul>
             <p className="hint small">Свои и общие шаблоны — «Настройки» → «Приём» → «Шаблоны плана».</p>
-            <div className="actions"><button type="button" className="btn ghost" onClick={onClose}>Закрыть</button></div>
           </>
         )}
     </Sheet>

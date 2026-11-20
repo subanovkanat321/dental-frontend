@@ -6,6 +6,7 @@ import { useBack } from '../lib/back'
 import { useReviewAsks, useSendReview } from './reviewLinks'
 import { dayTitle, dateOf, timeOf } from '../lib/time'
 import './askReview.css'
+import { SheetHead } from '../layout/SheetHead'
 
 type Candidate = Schemas['ReviewLinksCandidate']
 
@@ -54,7 +55,7 @@ export function ReviewAsksDialog({ doctorName, onClose }: { doctorName: (id: num
             onClose()
           }
         }}>
-        <h2 id="ask-review-title">⭐ Попросите оценку</h2>
+        <SheetHead id="ask-review-title" title="⭐ Попросите оценку" onClose={onClose} />
         <p className="hint">Пациенты без Telegram — бот их не спросит. Откроется WhatsApp с текстом и ссылкой: пациент оценит приём
           одним нажатием и увидит ссылку на отзыв в 2ГИС / Google.</p>
         {asks.isPending && <p className="hint">Загружаем…</p>}
@@ -76,9 +77,6 @@ export function ReviewAsksDialog({ doctorName, onClose }: { doctorName: (id: num
           ))}
         </ul>
         {send.error && <p className="error" role="alert">{send.error.message}</p>}
-        <div className="confirm-actions">
-          <button type="button" className="btn" onClick={onClose}>Готово</button>
-        </div>
       </div>
     </div>,
     document.body,

@@ -70,7 +70,6 @@ export function BotInviteSheet({ patient, onClose }: { patient: InvitePatient; o
               <div className="bot-invite-done">
                 <p className="tone-ok" role="status">✅ {done}</p>
                 <p className="hint small">Пациент нажмёт «Старт» — в карточке появится «в боте».</p>
-                <button type="button" className="btn" onClick={onClose}>Готово</button>
               </div>
             ) : (
               <div className="actions">

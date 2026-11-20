@@ -19,6 +19,7 @@ import { Thumb } from './Thumb'
 import { resizePhoto } from './thumb'
 import './beforeAfter.css'
 import { Loading, Spinner } from '../layout/Loading'
+import { CloseButton } from '../layout/SheetHead'
 
 type FileView = Schemas['PatientFilesView']
 type Consent = Schemas['PublicationConsentsView']
@@ -344,7 +345,7 @@ function BeforeAfter({ patientId, files, scope, onClose }: { patientId: number; 
       <div className="ba-panel">
         <header className="toolbar">
           <h2>До / после</h2>
-          <button type="button" className="btn" onClick={close}>Закрыть</button>
+          <CloseButton onClick={close} />
         </header>
         {scope === 'NO_FACE' && (
           <p className="ba-warning" role="note">Согласие — только без лица: закройте глаза полосой («Скрыть глаза» — потяните прямоугольник по фото).</p>

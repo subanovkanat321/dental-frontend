@@ -53,7 +53,7 @@ export function PlanSendSheet({ patient, onClose }: { patient: Patient; onClose:
           )}
         </>
       )}
-      <div className="actions"><button type="button" className="btn ghost" onClick={onClose}>{done ? 'Готово' : 'Отмена'}</button></div>
+      {!done && <div className="actions"><button type="button" className="btn ghost" onClick={onClose}>Отмена</button></div>}
     </Sheet>
   )
 }

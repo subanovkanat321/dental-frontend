@@ -52,7 +52,7 @@ export function PlanRepriceSheet({ patientId, onClose, onSaved }: {
         {changes.length > 0 && (
           <button type="button" className="btn primary" disabled={save.isPending} onClick={() => save.mutate()}>Обновить цены</button>
         )}
-        <button type="button" className="btn ghost" onClick={onClose}>{changes.length > 0 ? 'Отмена' : 'Закрыть'}</button>
+        {changes.length > 0 && <button type="button" className="btn ghost" onClick={onClose}>Отмена</button>}
       </div>
     </Sheet>
   )

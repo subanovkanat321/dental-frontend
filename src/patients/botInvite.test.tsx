@@ -130,7 +130,7 @@ test('«Пациенты → Без бота»: доля в боте, строк
   await user.click(await within(sheet).findByRole('button', { name: '📋 Скопировать ссылку' }))
   expect(writeText).toHaveBeenCalledWith(URL_)
   await waitFor(() => expect(sent).toEqual([{ id: 5, channel: 'COPY', lang: 'RU' }]))
-  await user.click(within(sheet).getByRole('button', { name: 'Готово' }))
+  await user.click(within(sheet).getByRole('button', { name: 'Закрыть' }))
 
   await user.click(screen.getByRole('checkbox', { name: 'Ещё не приглашали' }))
   await waitFor(() => expect(queries.at(-1)).toBe('false'))

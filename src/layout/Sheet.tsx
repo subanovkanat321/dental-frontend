@@ -2,11 +2,12 @@ import { useEffect, useRef, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 
 import { useBack } from '../lib/back'
+import { CloseButton, SheetHead } from './SheetHead'
 import { useSwipeDown } from './useSwipeDown'
 
 /**
  * Окно поверх карточки: компьютер — по центру, телефон — лист снизу (свайп вниз, «назад» и фон закрывают), как
- * ReasonSheet и подтверждения. Для «📄 Шаблон», «Из прошлого визита», «Сохранить как шаблон». Esc закрывает только
+ * ReasonSheet и подтверждения. Сверху — заголовок и ✕ (layout/SheetHead). Для «📄 Шаблон», «Из прошлого визита», «Сохранить как шаблон». Esc закрывает только
  * окно, а не карточку приёма под ним.
  */
 export function Sheet({ label, title, onClose, children, wide }: {
@@ -38,7 +39,7 @@ export function Sheet({ label, title, onClose, children, wide }: {
             onClose()
           }
         }}>
-        {title && <h3 className="tool-sheet-title">{title}</h3>}
+        {title ? <SheetHead title={title} level={3} className="tool-sheet-head" onClose={onClose} /> : <CloseButton className="tool-sheet-x" onClick={onClose} />}
         {children}
       </div>
     </div>,

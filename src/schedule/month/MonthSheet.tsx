@@ -5,6 +5,7 @@ import { useSwipeDown } from '../../layout/useSwipeDown'
 import { MonthGrid } from './MonthGrid'
 import { addMonths, monthTitle } from './monthModel'
 import { useMonthData } from './useMonth'
+import { SheetHead } from '../../layout/SheetHead'
 
 /**
  * Телефон: нажали на дату в «Дне» — снизу лист с месяцем, как вид «Месяц»: в ячейке число записей и
@@ -21,7 +22,7 @@ export function MonthSheet({ date, today, doctorIds, onPick, onClose }: {
   const [month, setMonth] = useState(date.slice(0, 7))
   const data = useMonthData(month, doctorIds, true)
   useBack(onClose)
-  // Ручка сверху — не только подсказка: потянуть лист вниз закрывает его, как «Закрыть»
+  // Ручка сверху — не только подсказка: потянуть лист вниз закрывает его, как ✕
   const sheet = useRef<HTMLDivElement>(null)
   useSwipeDown(sheet, onClose)
   // Esc на клавиатуре — тоже закрыть (как календарь DateInput)
@@ -37,6 +38,7 @@ export function MonthSheet({ date, today, doctorIds, onPick, onClose }: {
   return createPortal(
     <div className="ui-select-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div ref={sheet} className="month-sheet" role="dialog" aria-modal="true" aria-label="Выбрать день">
+        <SheetHead title="Выбрать день" onClose={onClose} className="month-sheet-top" />
         <div className="month-sheet-head">
           <button type="button" className="date-step" aria-label="Предыдущий месяц" onClick={() => setMonth(addMonths(month, -1))}>‹</button>
           <b>{monthTitle(month)}</b>
@@ -45,7 +47,6 @@ export function MonthSheet({ date, today, doctorIds, onPick, onClose }: {
         <MonthGrid month={month} today={today} selected={date} data={data} compact onOpenDay={pick} />
         <div className="month-sheet-foot">
           {date !== today && <button type="button" className="btn" onClick={() => pick(today)}>Сегодня</button>}
-          <button type="button" className="btn ghost" onClick={onClose}>Закрыть</button>
         </div>
       </div>
     </div>,

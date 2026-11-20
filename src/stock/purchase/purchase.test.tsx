@@ -174,7 +174,7 @@ test('карточка материала: где берём и цены у по
   expect(rows[1]).toHaveTextContent('Дент-Маркет · 10 ноября300 сом/шт')
 })
 
-test('«Поставщики»: пока открыта форма, «Готово» нет — введённое не пропадёт; одно поле номера, WhatsApp на другом — по ссылке', async () => {
+test('«Поставщики»: закрыть — ✕ в шапке; одно поле номера, WhatsApp на другом — по ссылке', async () => {
   window.location.hash = '/stock'
   backend(draft)
   const saved: unknown[] = []
@@ -186,12 +186,13 @@ test('«Поставщики»: пока открыта форма, «Готов
   await userEvent.click(await findSub('Заказ · 3'))
   await userEvent.click(await screen.findByRole('button', { name: 'Поставщики' }))
   const dialog = await screen.findByRole('dialog', { name: 'Поставщики' })
-  expect(within(dialog).getByRole('button', { name: 'Готово' })).toBeInTheDocument()
+  // Закрыть — ✕ в шапке листа, «Готово» текстом больше нет
+  expect(within(dialog).getByRole('button', { name: 'Закрыть' })).toHaveClass('x-btn')
+  expect(within(dialog).queryByRole('button', { name: 'Готово' })).toBeNull()
   // Номер в списке — как везде в приложении: «+996 555 111 222»
   expect(dialog).toHaveTextContent('+996 555 111 222 · доставка в тот же день')
 
   await userEvent.click(within(dialog).getByRole('button', { name: '＋ Поставщик' }))
-  expect(within(dialog).queryByRole('button', { name: 'Готово' })).toBeNull()
   const form = within(dialog).getByRole('group', { name: 'Новый поставщик' })
   await userEvent.type(within(form).getByLabelText('Название'), 'Мед-Склад')
   // Стандартное поле телефона: страна (Кыргызстан, +996) и номер без кода
@@ -204,7 +205,7 @@ test('«Поставщики»: пока открыта форма, «Готов
   await userEvent.click(within(form).getByRole('button', { name: 'Добавить поставщика' }))
   // Как другие формы (phoneFromInput): «+996 …» — сервер нормализует и проверяет
   await waitForSlow(() => expect(saved).toEqual([{ name: 'Мед-Склад', phone: '+996700000001', whatsapp: '+996700000009' }]))
-  expect(await within(dialog).findByRole('button', { name: 'Готово' })).toBeInTheDocument()
+  expect(await within(dialog).findByRole('button', { name: '＋ Поставщик' })).toBeInTheDocument()
 })
 
 test('«Поставщики»: «Изменить» — номер в поле без +996, сохраняется тем же форматом', async () => {

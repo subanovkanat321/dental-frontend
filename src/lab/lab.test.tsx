@@ -177,7 +177,8 @@ test('«Лаборатории»: новая — как у поставщика:
   // Подсказка вверху — всегда, как у поставщиков
   expect(within(dialog).getByText('Зуботехнические лаборатории: номер — для заказа технику в WhatsApp и звонка.')).toBeInTheDocument()
   await userEvent.click(within(dialog).getByRole('button', { name: '＋ Лаборатория' }))
-  expect(within(dialog).queryByRole('button', { name: 'Готово' })).toBeNull()
+  // Закрыть — ✕ в шапке листа (вместо «Готово»)
+  expect(within(dialog).getByRole('button', { name: 'Закрыть' })).toHaveClass('x-btn')
   const form = within(dialog).getByRole('group', { name: 'Новая лаборатория' })
   await userEvent.type(within(form).getByLabelText('Название'), 'Лаб-Тест')
   // Как у поставщика: по умолчанию одно поле, второе — по ссылке
@@ -190,7 +191,7 @@ test('«Лаборатории»: новая — как у поставщика:
   expect(within(form).getAllByRole('button').map((b) => b.textContent)).toEqual(['Отмена', 'Добавить лабораторию'])
   await userEvent.click(within(form).getByRole('button', { name: 'Добавить лабораторию' }))
   await waitForSlow(() => expect(saved).toEqual([{ name: 'Лаб-Тест', phone: '+996700000002', whatsapp: '0700000003', note: 'Техник Азамат' }]))
-  expect(await within(dialog).findByRole('button', { name: 'Готово' })).toBeInTheDocument()
+  expect(within(dialog).queryByRole('button', { name: 'Готово' })).toBeNull()
 })
 
 test('«Лаборатории»: «Изменить» — номер в поле без +996, Enter в поле сохраняет', async () => {

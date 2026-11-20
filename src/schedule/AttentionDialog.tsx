@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 
 import { useBack } from '../lib/back'
 import './attention.css'
+import { SheetHead } from '../layout/SheetHead'
 
 /**
  * Окно из полосы «Требует внимания» («🔔 Окна», «🎂 Дни рождения»): как «Попросите оценку» — по центру на компьютере,
@@ -26,11 +27,8 @@ export function AttentionDialog({ title, labelId, onClose, children }: { title: 
             onClose()
           }
         }}>
-        <h2 id={labelId}>{title}</h2>
+        <SheetHead id={labelId} title={title} onClose={onClose} />
         {children}
-        <div className="confirm-actions">
-          <button type="button" className="btn" onClick={onClose}>Готово</button>
-        </div>
       </div>
     </div>,
     document.body,

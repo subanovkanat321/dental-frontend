@@ -8,6 +8,7 @@ import { addDays, todayIn } from '../lib/time'
 import { DirectoryEntryForm, type DirectoryWords } from '../clinic/DirectoryEntryForm'
 import { DateInput } from '../layout/DateInput'
 import { Select } from '../layout/Select'
+import { SheetHead } from '../layout/SheetHead'
 import { useSwipeDown } from '../layout/useSwipeDown'
 import { PatientField, type TaskPatient } from '../tasks/TaskDialog'
 import { useLabs, useSaveLab, useSaveOrder, useVisits, type LabKind, type LabOrder } from './api'
@@ -236,7 +237,7 @@ export function Sheet({ title, onClose, onSubmit, className, children }: {
             onClose()
           }
         }}>
-        <h2 id={id}>{title}</h2>
+        <SheetHead id={id} title={title} onClose={onClose} />
         {children}
       </form>
     </div>,
