@@ -124,6 +124,29 @@ test('аналитика: отмены и неявки по причинам —
   expect(asked!.get('from')).toBe(addDays(todayIn(), -29))
 })
 
+test('аналитика: «Диагнозы за период» — коды МКБ-10 по числу, скольким пациентам', async () => {
+  let asked: URLSearchParams | null = null
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/diagnoses/report', ({ request }) => {
+      asked = new URL(request.url).searchParams
+      return HttpResponse.json([
+        { code: 'K02.1', title: 'Кариес дентина', count: 12, patients: 9 },
+        { code: 'K04.0', title: 'Пульпит', count: 3, patients: 3 },
+      ] satisfies Schemas['DiagnosesCodeCount'][])
+    }),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await findSub('Аналитика'))
+  const block = await screen.findByRole('region', { name: 'Диагнозы за период' })
+  expect(await within(block).findByText(/диагнозов/)).toHaveTextContent('15 диагнозов · кодов 2')
+  const rows = within(block).getAllByRole('listitem')
+  expect(rows.map((r) => r.querySelector('.hbar-name')?.textContent)).toEqual(['K02.1 Кариес дентина', 'K04.0 Пульпит'])
+  expect(rows[0]).toHaveAttribute('title', 'K02.1 Кариес дентина: 12 · пациентов: 9')
+  expect(asked!.get('from')).toBe(addDays(todayIn(), -29))
+})
+
 test('аналитика: ошибка сервера — сообщение, а не «0 сом» и «оплат нет»', async () => {
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),

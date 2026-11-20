@@ -6,7 +6,7 @@ import { Select } from '../layout/Select'
 import { haptic } from '../lib/telegram'
 import { TOOTH_STATES, hasSurfaces, surfacesText, type ToothState } from '../medical/toothStates'
 import { Spinner } from '../layout/Loading'
-import { cleanSections, hasText, renderSections, SECTION_TITLE, SECTIONS, type Sections } from './noteSections'
+import { cleanSections, dxLabel, hasText, renderSections, SECTION_TITLE, SECTIONS, type Sections } from './noteSections'
 import type { Review } from './review'
 import { refreshAppointmentData } from './useAppointmentAction'
 
@@ -70,7 +70,8 @@ export function ProposalReview({ appointment: a, initial, onSaved, onCancel }: {
     setReview((x) => ({ ...x, teeth: x.teeth.map((t, j) => (j === i ? { ...t, ...change } : t)) }))
   const setStepRow = (i: number, change: Partial<StepRow>) =>
     setReview((x) => ({ ...x, plan: x.plan.map((s, j) => (j === i ? { ...s, ...change } : s)) }))
-  const setSection = (k: keyof Sections, v: string) => setReview((x) => ({ ...x, sections: { ...x.sections, [k]: v } }))
+  const codes = r.sections?.diagnosisCodes ?? []
+  const setSection = (k: Exclude<keyof Sections, 'diagnosisCodes'>, v: string) => setReview((x) => ({ ...x, sections: { ...x.sections, [k]: v } }))
 
   return (
     <section className="dictation" aria-label={r.source ? 'Проверьте шаблон' : 'Проверьте диктовку'}>
@@ -134,6 +135,17 @@ export function ProposalReview({ appointment: a, initial, onSaved, onCancel }: {
                 value={r.sections?.[k] ?? ''} onChange={(e) => setSection(k, e.target.value)} />
             </label>
           ))}
+          {/* Диагноз МКБ от ИИ или шаблона — только из списка (сервер проверил); лишний — ✕ */}
+          {codes.length > 0 && (
+            <ul className="dx-chips" aria-label="Диагнозы МКБ-10">
+              {codes.map((d, i) => (
+                <li key={`${d.code}-${d.tooth ?? ''}`} className="chip dx-chip"><span>{dxLabel(d)}</span>
+                  <button type="button" className="dx-remove" aria-label={`Убрать диагноз ${dxLabel(d)}`}
+                    onClick={() => setReview((x) => ({ ...x, sections: { ...x.sections, diagnosisCodes: codes.filter((_, j) => j !== i) } }))}>✕</button>
+                </li>
+              ))}
+            </ul>
+          )}
           {!hasText(r.sections) && <p className="hint small">Текста для заметки нет.</p>}
         </fieldset>
       ) : (

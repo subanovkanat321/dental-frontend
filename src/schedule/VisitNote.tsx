@@ -9,6 +9,7 @@ import { ProposalReview } from './ProposalReview'
 import { asSections, cleanSections, hasText, joinText, mergeSections, renderSections, sameSections, SECTION_TITLE, SECTIONS, type SectionKey, type Sections } from './noteSections'
 import { reviewOf, type Review } from './review'
 import { PreviousSheet, SaveTemplateSheet, TemplateSheet } from './VisitNoteSheets'
+import { DiagnosisPicker } from './DiagnosisPicker'
 
 type Appointment = Schemas['AppointmentView']
 type Me = Schemas['BookingViewsMe']
@@ -110,9 +111,10 @@ export function VisitNote({ appointment: a, me }: { appointment: Appointment; me
     )
   }
 
-  const shownKeys = SECTIONS.map(([k]) => k).filter((k) => (sections[k] ?? '').trim() || opened.includes(k))
+  const hasCodes = (sections.diagnosisCodes ?? []).length > 0
+  const shownKeys = SECTIONS.map(([k]) => k).filter((k) => (sections[k] ?? '').trim() || opened.includes(k) || (k === 'diagnosis' && hasCodes))
   const hiddenKeys = SECTIONS.filter(([k]) => !shownKeys.includes(k))
-  const setPart = (k: SectionKey | 'other', v: string) => setDraft({ ...sections, [k]: v })
+  const setPart = (k: SectionKey | 'other', v: string) => setDraft((d) => ({ ...(d ?? base), [k]: v }))
 
   return (
     <>
@@ -130,7 +132,14 @@ export function VisitNote({ appointment: a, me }: { appointment: Appointment; me
       </div>
       {sectionsMode ? (
         <div className="note-sections">
-          {shownKeys.map((k) => (
+          {shownKeys.map((k) => k === 'diagnosis' ? (
+            // «Диагноз» (шаг 3): МКБ-10 и свои формулировки подсказками, зуб — в чипе, и текст своими словами
+            <div key={k} className="field note-section" role="group" aria-label="Диагноз"><span>{SECTION_TITLE[k]}</span>
+              <DiagnosisPicker codes={sections.diagnosisCodes ?? []} text={sections.diagnosis ?? ''}
+                autoFocus={opened.includes(k) && !(sections.diagnosis ?? '') && !hasCodes}
+                onCodes={(codes) => setDraft((d) => ({ ...(d ?? base), diagnosisCodes: codes }))} onText={(v) => setPart('diagnosis', v)} />
+            </div>
+          ) : (
             <label key={k} className="field note-section"><span>{SECTION_TITLE[k]}</span>
               <textarea rows={rowsFor(sections[k])} maxLength={2000} value={sections[k] ?? ''} autoFocus={opened.includes(k) && !(sections[k] ?? '')}
                 onChange={(e) => setPart(k, e.target.value)} />

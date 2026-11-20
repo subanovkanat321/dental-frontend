@@ -20,6 +20,9 @@ export const server = setupServer(
   // Отчёты об ошибках приложения (lib/clientErrors): сервер всегда отвечает 204
   http.post('*/web/client-error', () => new HttpResponse(null, { status: 204 })),
   http.get('*/api/supplies', () => HttpResponse.json([])),
+  // Диагнозы (шаг 3): подсказки в «Диагнозе» и «Аналитика → Диагнозы за период» — по умолчанию пусто
+  http.get('*/api/diagnoses/suggest', () => HttpResponse.json({ codes: [], own: [] } satisfies Schemas['DiagnosesSuggestions'])),
+  http.get('*/api/diagnoses/report', () => HttpResponse.json([] satisfies Schemas['DiagnosesCodeCount'][])),
   // Долги (полоса «Сегодня», карточка приёма): по умолчанию нет. Без обработчика запрос падал бы обрывом
   // сети — а это плашка «Tish обновляется» (api/updating.ts) поверх того, что проверяет тест
   http.get('*/api/appointments/debts', () => HttpResponse.json([] satisfies Schemas['PaymentQueryDebt'][])),

@@ -6820,6 +6820,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/diagnoses/suggest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["suggest"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/diagnoses/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["report_3"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/comebacks": {
         parameters: {
             query?: never;
@@ -7355,7 +7387,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["report_3"];
+        get: operations["report_4"];
         put?: never;
         post?: never;
         delete?: never;
@@ -7371,7 +7403,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["report_4"];
+        get: operations["report_5"];
         put?: never;
         post?: never;
         delete?: never;
@@ -7720,6 +7752,12 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        DiagnosisCode: {
+            code: string;
+            title?: string;
+            /** Format: int32 */
+            tooth?: number;
+        };
         NoteSections: {
             complaints?: string;
             objective?: string;
@@ -7727,6 +7765,7 @@ export interface components {
             treatment?: string;
             recommendations?: string;
             other?: string;
+            diagnosisCodes?: components["schemas"]["DiagnosisCode"][];
         };
         VisitTemplatesFields: {
             title?: string;
@@ -12523,6 +12562,29 @@ export interface components {
             doctor?: string;
             /** Format: date-time */
             invitedAt?: string;
+        };
+        DiagnosesFormulation: {
+            text: string;
+            code?: string;
+            title?: string;
+            /** Format: int32 */
+            uses: number;
+        };
+        DiagnosesSuggestions: {
+            codes: components["schemas"]["Icd10Code"][];
+            own: components["schemas"]["DiagnosesFormulation"][];
+        };
+        Icd10Code: {
+            code: string;
+            title: string;
+        };
+        DiagnosesCodeCount: {
+            code: string;
+            title: string;
+            /** Format: int32 */
+            count: number;
+            /** Format: int32 */
+            patients: number;
         };
         ComebacksBoard: {
             patients?: components["schemas"]["ComebacksCandidate"][];
@@ -25711,6 +25773,52 @@ export interface operations {
             };
         };
     };
+    suggest: {
+        parameters: {
+            query?: {
+                q?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DiagnosesSuggestions"];
+                };
+            };
+        };
+    };
+    report_3: {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+                doctorId?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DiagnosesCodeCount"][];
+                };
+            };
+        };
+    };
     board_1: {
         parameters: {
             query?: {
@@ -26458,7 +26566,7 @@ export interface operations {
             };
         };
     };
-    report_3: {
+    report_4: {
         parameters: {
             query: {
                 from: string;
@@ -26482,7 +26590,7 @@ export interface operations {
             };
         };
     };
-    report_4: {
+    report_5: {
         parameters: {
             query?: {
                 month?: string;

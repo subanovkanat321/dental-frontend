@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
+import { DiagnosisPicker } from '../schedule/DiagnosisPicker'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { Select } from '../layout/Select'
@@ -147,7 +148,13 @@ function TemplateForm({ me, template: t, onDone }: { me: Me; template?: Template
       </label>
       <label className="check"><input type="checkbox" checked={withSections} onChange={(e) => setWithSections(e.target.checked)} />
         <span>Разделы заметки (Жалобы, Лечение, Рекомендации…)</span></label>
-      {withSections && SECTIONS.map(([k, label]) => (
+      {withSections && SECTIONS.map(([k, label]) => k === 'diagnosis' ? (
+        // Диагноз шаблона (шаг 3): код МКБ ляжет на каждый зуб, выбранный при применении шаблона
+        <div key={k} className="field" role="group" aria-label="Диагноз"><span>{label}</span>
+          <DiagnosisPicker noTooth codes={sections.diagnosisCodes ?? []} text={sections.diagnosis ?? ''}
+            onCodes={(codes) => setSections((x) => ({ ...x, diagnosisCodes: codes }))} onText={(v) => setSections((x) => ({ ...x, diagnosis: v }))} />
+        </div>
+      ) : (
         <label key={k} className="field"><span>{label}</span>
           <textarea rows={1} maxLength={2000} value={sections[k] ?? ''} onChange={(e) => setSections({ ...sections, [k]: e.target.value })} />
         </label>
