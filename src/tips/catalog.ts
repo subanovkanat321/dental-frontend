@@ -200,6 +200,13 @@ export const TIPS: Tip[] = [
     show: (me) => hasSub(me, 'patients', 'comeback'),
   },
   {
+    id: 'dropped',
+    title: '«Бросили лечение»',
+    text: 'Кто согласился с планом или начал лечение и пропал — список с суммой остатка, звонком и готовым текстом в WhatsApp.',
+    action: { show: 'patients/dropped' },
+    show: (me) => hasSub(me, 'patients', 'dropped'),
+  },
+  {
     id: 'recall',
     title: '«Профосмотр»',
     text: 'Кому пора на осмотр или чистку — список с готовым приглашением.',

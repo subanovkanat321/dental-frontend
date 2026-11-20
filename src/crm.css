@@ -2971,3 +2971,15 @@ button.cash-entry:hover, button.cash-entry.active { background: var(--sunken); }
 .chair-conflict p { margin: 0; }
 .chair-offer { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .chair-offer .btn .hint { font-weight: 400; }
+
+/* Статус и прогресс плана лечения (волна 1, часть B): строка в карточке пациента, над этапами в редакторе плана,
+   справа в строке «План лечения» карточки приёма. Полоска — тонкая, цветом акцента, без процентов */
+.plan-progress { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 8px 0 0; font-size: .93rem; }
+.plan-progress-head { display: inline-flex; align-items: center; gap: 6px; }
+.plan-progress-text { font-variant-numeric: tabular-nums; }
+.plan-progress-bar { flex: 1 0 100%; height: 4px; border-radius: 2px; background: var(--sunken); overflow: hidden; }
+.plan-progress-bar > span { display: block; height: 100%; background: var(--accent); border-radius: 2px; }
+.plan-status { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin: 0 0 8px; }
+.plan-status-actions { display: inline-flex; flex-wrap: wrap; gap: 4px 12px; margin-left: auto; }
+.plan-meta { display: inline-flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 4px 6px; font-variant-numeric: tabular-nums; }
+.fold-meta:has(.plan-meta) { white-space: normal; overflow: visible; text-align: right; }

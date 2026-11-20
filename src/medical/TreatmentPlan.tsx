@@ -11,6 +11,8 @@ import { PlanDocs } from '../print/PlanDocs'
 import { useMe } from '../api/me'
 import { LabOrderDialog } from '../lab/LabOrderDialog'
 import { labKindOf } from '../lab/text'
+import { planSaved } from '../lib/planStatus'
+import { PlanStatusBar } from './PlanProgress'
 
 type Patient = Schemas['PatientView']
 type Step = Schemas['TreatmentStepView']
@@ -56,7 +58,8 @@ export function TreatmentPlan({ patient, prefill = null, readOnly, heading = tru
       title.current?.focus()
     }
   }, [prefill])
-  const saved = (steps: Step[]) => client.setQueryData(['plan', patientId], steps)
+  // Этапы поменялись — и статус плана («В работе», «Завершён», снятый отказ) пересчитать
+  const saved = (steps: Step[]) => planSaved(client, patientId, steps)
 
   const add = useMutation<Schemas['TreatmentStepView'][], ApiError>({
     mutationFn: () => unwrap(api.POST('/api/patients/{patientId}/plan', {
@@ -106,6 +109,7 @@ export function TreatmentPlan({ patient, prefill = null, readOnly, heading = tru
       {heading
         ? <h2>План лечения{total ? <span className="hint"> · {somText(total)}{left && left !== total ? `, осталось ${somText(left)}` : ''}</span> : null}</h2>
         : total ? <p className="hint small">{somText(total)}{left && left !== total ? `, осталось ${somText(left)}` : ''}</p> : null}
+      {steps.length > 0 && <PlanStatusBar patientId={patientId} readOnly={readOnly} />}
       {steps.length > 0 && (
         <ul className="plan" aria-label="Этапы лечения">
           {steps.map((s, i) => (

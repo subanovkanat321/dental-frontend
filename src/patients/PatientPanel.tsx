@@ -29,6 +29,7 @@ import { ContractBox } from '../contract/ContractBox'
 import { Loading } from '../layout/Loading'
 import { OpeningDebtsBox } from '../cash/OpeningDebts'
 import { EmptyState } from '../layout/EmptyState'
+import { PlanProgressLine } from '../medical/PlanProgress'
 
 type Me = Schemas['BookingViewsMe']
 type Patient = Schemas['PatientView']
@@ -207,6 +208,8 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
         <div><dt>Следующий</dt><dd>{next ? <span className="num">{shortDate(next.startAt, true)}</span> : 'не записан'}</dd></div>
         {debtTotal > 0 && <div className={overdue ? 'tone-bad' : 'tone-wait'}><dt>Долг</dt><dd className="num">{somText(debtTotal)}</dd></div>}
       </dl>
+      {/* Прогресс плана лечения — тем, кто видит медкарту (сервер: ChartService); суммы — не ассистенту */}
+      {patient && <PlanProgressLine patientId={patient.id} enabled={clinical} />}
 
       {/* «＋ Задача» и «＋ Заказ в лабораторию» — одной строкой ссылок, как в карточке приёма (раньше — две кнопки
           справа, каждая на своей строке); ниже — открытые задачи и работы техника, если есть */}

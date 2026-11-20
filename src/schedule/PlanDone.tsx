@@ -3,6 +3,7 @@ import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { Spinner } from '../layout/Loading'
+import { planSaved } from '../lib/planStatus'
 import { canMarkPlan, forgetPlanDone, preselected, stepsWord, useAskPlanDone, usePlanLeft } from './planDoneStore'
 
 type Me = Schemas['BookingViewsMe']
@@ -46,8 +47,9 @@ function PlanDoneForm({ a, me, steps, primary, onMarked }: {
   const mark = useMutation<Step[], ApiError, number[]>({
     mutationFn: (stepIds) => unwrap(api.POST('/api/appointments/{id}/plan-done', { params: { path: { id: a.id } }, body: { stepIds } })),
     onSuccess: (plan, stepIds) => {
-      client.setQueryData(['plan', a.patient.id], plan)
+      planSaved(client, a.patient.id, plan)
       void client.invalidateQueries({ queryKey: ['comebacks'] })
+      void client.invalidateQueries({ queryKey: ['dropped'] })
       onMarked(stepIds.length)
       forgetPlanDone(a.id)
     },

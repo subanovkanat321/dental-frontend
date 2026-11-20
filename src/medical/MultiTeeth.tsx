@@ -4,6 +4,7 @@ import { useState, type FormEvent } from 'react'
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { Select } from '../layout/Select'
 import { somText } from '../lib/time'
+import { planSaved } from '../lib/planStatus'
 import { SurfacePicker } from './SurfaceDiagram'
 import { TOOTH_STATES, hasSurfaces, type Surface, type ToothState } from './toothStates'
 import './toothChart.css'
@@ -78,7 +79,7 @@ function PlanForTeeth({ patientId, numbers, onDone }: { patientId: number; numbe
       },
     })),
     onSuccess: (steps) => {
-      client.setQueryData(['plan', patientId], steps)
+      planSaved(client, patientId, steps)
       onDone()
     },
   })
