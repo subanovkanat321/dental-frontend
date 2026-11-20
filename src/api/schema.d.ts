@@ -6516,6 +6516,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/patients/{patientId}/plan/next": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["nextStep"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/patients/{patientId}/plan/message": {
         parameters: {
             query?: never;
@@ -12888,6 +12904,14 @@ export interface components {
             nowSom: number;
             /** Format: int32 */
             manual: number;
+        };
+        TreatmentPlanNextStep: {
+            /** Format: int64 */
+            serviceTypeId?: number;
+            /** Format: int64 */
+            doctorId?: number;
+            /** Format: date */
+            dueOn?: string;
         };
         VisitNoteView: {
             /** Format: int64 */
@@ -26300,6 +26324,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["VisitTeethView"][];
+                };
+            };
+        };
+    };
+    nextStep: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TreatmentPlanNextStep"];
                 };
             };
         };

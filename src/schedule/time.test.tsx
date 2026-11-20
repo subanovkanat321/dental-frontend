@@ -3,10 +3,9 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import { slotInstant, todayIn } from '../lib/time'
-import { appointment, me, renderApp } from '../test/fixtures'
+import { appointment, me, renderApp, chosenDoctor, pickDoctorChip } from '../test/fixtures'
 import { fixNow } from '../test/now'
 import { server } from '../test/server'
-import { choose } from '../test/select'
 
 const DAY = '2026-11-02'
 
@@ -62,14 +61,14 @@ test('«⚡ Сейчас» подставляет сегодня и время, 
   await userEvent.click(await screen.findByRole('button', { name: '＋ Новая запись' }))
   const panel = screen.getByRole('complementary', { name: 'Новая запись' })
   // Выбрали другого врача — «Сейчас» ставит 10:45, а выбранного врача не меняет
-  await choose(within(panel).getByLabelText('Врач'), '2')
-  expect(within(panel).getByLabelText('Врач')).toHaveAttribute('data-value', '2')
+  await pickDoctorChip(panel, 'Дастан Т.')
+  expect(chosenDoctor(panel)).toBe('Дастан Т.')
   const now = within(panel).getByRole('button', { name: '⚡ Сейчас' })
   expect(now).toHaveAttribute('aria-pressed', 'false')
   await userEvent.click(now)
   expect(now).toHaveAttribute('aria-pressed', 'true')
   expect(within(panel).getByLabelText('Время')).toHaveValue('10:45')
-  expect(within(panel).getByLabelText('Врач')).toHaveAttribute('data-value', '2')
+  expect(chosenDoctor(panel)).toBe('Дастан Т.')
   expect(within(panel).queryByRole('group', { name: 'Свободное время' })).not.toBeInTheDocument()
   expect(within(panel).getByRole('button', { name: 'Начать приём' })).toBeInTheDocument()
   // Передумали — снова выбор свободного времени, кнопка «Записать»

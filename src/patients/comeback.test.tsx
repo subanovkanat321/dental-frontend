@@ -1,9 +1,9 @@
-import { screen, within } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { me, renderApp, findSub } from '../test/fixtures'
+import { me, renderApp, findSub, chosenDoctor, serviceField } from '../test/fixtures'
 import { server } from '../test/server'
 import { waitForSlow } from '../test/wait'
 
@@ -262,8 +262,8 @@ test('«Отменили»: «Записать» — «Новая запись»
   await userEvent.click(within(list).getByRole('menuitem', { name: /^Записать( ·|$)/ }))
   const form = await screen.findByRole('complementary', { name: 'Новая запись' })
   expect(form).toHaveTextContent('Динара Ж.')
-  expect(within(form).getByRole('combobox', { name: 'Врач' })).toHaveTextContent('Дастан Т.')
-  expect(await within(form).findByRole('button', { name: /Чистка/ })).toHaveAttribute('aria-pressed', 'true')
+  expect(chosenDoctor(form)).toBe('Дастан Т.')
+  await waitFor(() => expect(serviceField(form)).toHaveTextContent('Чистка'))
 })
 
 test('«Позвать снова»: «звали 3 дня назад · всего 2 раза»; позвать снова в течение недели — сначала вопрос', async () => {

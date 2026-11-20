@@ -140,7 +140,7 @@ test('история визитов: «📋 Памятка и квитанция
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: 'Айгуль Т.' }))
   const card = await screen.findByRole('complementary', { name: 'Карточка пациента' })
-  await userEvent.click(within(card).getByRole('button', { name: '📋 Памятка и квитанция' }))
+  await userEvent.click(within(card).getByRole('button', { name: 'Памятка и квитанция' }))
   expect(await within(card).findByText('После чистки')).toBeInTheDocument()
   expect(await within(card).findByText('🧾 Квитанция об оплате')).toBeInTheDocument()
   expect(within(card).getByRole('button', { name: 'Отправить пациенту в WhatsApp: памятка «После чистки»' })).toBeEnabled()

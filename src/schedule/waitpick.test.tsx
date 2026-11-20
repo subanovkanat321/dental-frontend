@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
 import { slotInstant, todayIn } from '../lib/time'
-import { appointment, me, renderApp } from '../test/fixtures'
+import { appointment, me, renderApp, openBooked } from '../test/fixtures'
 import { server } from '../test/server'
 import { waitForSlow } from '../test/wait'
 
@@ -71,7 +71,7 @@ test('свободное окно 10:00–12:00: подходят двое из 
   expect(within(panel).getByText('Айгуль Т.')).toBeInTheDocument()
   expect(panel).toHaveTextContent('из листа ожидания')
   await userEvent.click(within(panel).getByRole('button', { name: /^Записать( ·|$)/ }))
-  expect(await screen.findByRole('complementary', { name: 'Карточка приёма' })).toBeInTheDocument()
+  expect(await openBooked()).toBeInTheDocument()
   // Длительность — из листа; fromWaitlistId — сервер уберёт строку листа той же транзакцией
   expect(created).toEqual([expect.objectContaining({ patientId: 21, doctorId: 1, startAt: at('10:00'), durationMinutes: 45, fromWaitlistId: 1 })])
 })
@@ -87,7 +87,7 @@ test('выбрали из листа, потом «Другой» — обычн
   await userEvent.type(within(panel).getByLabelText('Найти пациента'), 'Эрм')
   await userEvent.click(await within(panel).findByRole('button', { name: /Эрмек Ж\./ }))
   await userEvent.click(within(panel).getByRole('button', { name: /^Записать( ·|$)/ }))
-  expect(await screen.findByRole('complementary', { name: 'Карточка приёма' })).toBeInTheDocument()
+  expect(await openBooked()).toBeInTheDocument()
   expect(created[0]).not.toHaveProperty('fromWaitlistId')
 })
 

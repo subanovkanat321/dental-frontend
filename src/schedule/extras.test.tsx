@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
 import { todayIn } from '../lib/time'
-import { appointment, expand, me, renderApp } from '../test/fixtures'
+import { appointment, expand, me, renderApp, pickService } from '../test/fixtures'
 import { server } from '../test/server'
 import { choose } from '../test/select'
 import { waitForSlow } from '../test/wait'
@@ -95,7 +95,7 @@ test('услуга и комментарий меняются прямо в ка
   const panel = await openCard(/Бакыт М\./)
   await userEvent.click(within(panel).getAllByRole('button', { name: 'изменить' })[0]!)
   const service = within(panel).getByRole('form', { name: 'Услуга приёма' })
-  await choose(within(service).getByLabelText('Услуга'), 'Чистка · 3 000 сом')
+  await pickService(service, /Чистка/)
   await userEvent.click(within(service).getByRole('button', { name: 'Сохранить' }))
   expect(await within(panel).findByText('Чистка')).toBeInTheDocument()
 
@@ -122,7 +122,7 @@ test('услуга приёма убрана из прайса — остаёт�
   await waitForSlow(() => expect(select).toHaveTextContent('Синус-лифтинг'))
   await userEvent.click(select)
   const options = within(screen.getByRole('listbox')).getAllByRole('option').map((o) => o.textContent?.replace(/\s/g, ' '))
-  expect(options).toEqual(['—', 'Чистка · 3 000 сом', 'Синус-лифтинг · 30 000 сом · не в прайсе'])
+  expect(options).toEqual(['Без услуги', expect.stringMatching(/Чистка · \d+ мин · 3 000 сом$/), expect.stringMatching(/Синус-лифтинг · 120 мин · 30 000 сом · не в прайсе$/)])
   await userEvent.keyboard('{Escape}')
   // Сохранили, ничего не меняя, — уходит та же услуга, а не «без услуги»
   await userEvent.click(within(service).getByRole('button', { name: 'Сохранить' }))

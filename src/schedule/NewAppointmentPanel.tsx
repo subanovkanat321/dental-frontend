@@ -11,7 +11,6 @@ import { openLink } from '../lib/telegram'
 import { addDays, dateOf as dateOfInstant, formatPhone, minutesOfTime, nowMinutes5, shortDate, shortDay, slotInstant, timeOf, todayIn } from '../lib/time'
 import { PhoneInput } from '../clinic/PhoneInput'
 import { phoneFromInput, phoneFromText } from '../clinic/phone'
-import { serviceEmoji } from '../lib/serviceEmoji'
 import { servicesOfDoctor } from '../lib/doctorServices'
 import { sourceChoices, useSources } from '../lib/sources'
 import { expired, usePromoCodes } from '../lib/promo'
@@ -27,12 +26,16 @@ import { useFreeDays } from '../lib/freeDays'
 import { TimeInput } from '../layout/TimeInput'
 import { Select } from '../layout/Select'
 import { useDebounced } from '../lib/useDebounced'
-import { serviceOptions, usePopularServices } from '../clinic/serviceOptions'
+import { ServicePicker } from '../clinic/ServicePicker'
 import { Spinner } from '../layout/Loading'
 import { HelpHint } from '../help/HelpHint'
 import { nameFromText } from './contactText'
 import { ContactPick } from '../patients/ContactPick'
 import { BookingContext } from './BookingContext'
+import { Fold } from '../layout/Fold'
+import { shortName } from '../lab/text'
+import { ageYears, yearsText } from '../lib/age'
+import { GUARDIAN_RELATION } from '../lib/guardian'
 import { activeUpcoming, treatingDoctorId, usePatientCard } from './patientCard'
 import type { QueryClient } from '@tanstack/react-query'
 
@@ -53,6 +56,25 @@ type Service = Schemas['ServiceTypeView']
 export type Slot = { doctorId: number; date: string; minutes: number | null; duration?: number; serviceId?: number; soft?: boolean; next?: boolean }
 
 const UNTOUCHED = { doctor: false, time: false, service: false }
+
+/** Врачей не больше — чипами, а не списком (телефон: одно касание). */
+const DOCTOR_CHIPS = 6
+
+/** Сколько недавних пациентов показать под пустым поиском. */
+const RECENT = 5
+
+/** «38 лет · был 5 нояб · +996 555 123 456», ребёнок — «7 лет · мама Гульнара Т.»: различать тёзок в найденных. */
+function foundMeta(p: Patient, lastVisit?: string | null): string {
+  const age = ageYears(p.birthDate)
+  const g = p.guardian
+  const guardian = g?.fullName ? `${g.relation && g.relation !== 'OTHER' ? `${GUARDIAN_RELATION[g.relation]} ` : 'предст. '}${shortName(g.fullName)}` : null
+  return [
+    age != null ? yearsText(age) : null,
+    lastVisit ? `был ${shortDate(lastVisit, true).replace(/,.*$/, '')}` : null,
+    guardian,
+    (p.phone ?? g?.phone) ? formatPhone((p.phone ?? g?.phone)!) : null,
+  ].filter(Boolean).join(' · ')
+}
 
 /** Сколько дней вперёд искать свободное время для «следующего визита». */
 const SNAP_DAYS = 14
@@ -108,7 +130,8 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
    * Без номера (помощник в боте: «Пациента … нет в базе») — сразу «Новый пациент» с этим именем. */
   initialContact?: { fullName: string; phone: string } | null
   onClose: () => void
-  onCreated: (a: Appointment) => void
+  /** walkIn — «⚡ Сейчас»: приём начинается, карточку открыть сразу; обычная запись — тост «Записано: … — Открыть» */
+  onCreated: (a: Appointment, how?: { walkIn: boolean }) => void
   /** «Уже записан: … Открыть ›» — карточка той записи. */
   onOpenAppointment?: (a: Appointment) => void
 }) {
@@ -191,14 +214,24 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
     enabled: planWanted,
     retry: false,
   })
+  // Регистратуре план закрыт — сервер отдаёт только следующий этап для записи: услугу, врача и срок (без названия,
+  // зуба и диагноза; GET /plan/next)
+  const nextWanted = Boolean(shown.next) && patient?.id != null && !seesPlan
+  const nextStep = useQuery({
+    queryKey: ['plan-next', patient?.id],
+    queryFn: () => unwrap(api.GET('/api/patients/{patientId}/plan/next', { params: { path: { patientId: patient!.id } } })),
+    enabled: nextWanted,
+    retry: false,
+  })
   // Подстановка — один раз на слот и пациента, когда пришли данные: врач (лечащий / этапа плана), услуга этапа; время —
   // ближайшее свободное (запросом, ниже). Меняем состояние при отрисовке, как у нового слота выше: без лишнего круга
   const presetKey = patient?.id != null && (shown.soft || shown.next) ? shown : null
-  const ready = card.isFetched && (!planWanted || plan.isFetched) && services.data != null
+  const ready = card.isFetched && (!planWanted || plan.isFetched) && (!nextWanted || nextStep.isFetched) && services.data != null
   if (presetKey && ready && patient?.id != null && !(presetDone?.slot === presetKey && presetDone.patientId === patient.id)) {
     setPresetDone({ slot: presetKey, patientId: patient.id })
     const bookable = (id?: number) => id != null && doctors.some((d) => d.id === id)
-    const step = presetKey.next ? (plan.data ?? []).filter((s) => !s.doneAt).sort((x, y) => x.stage - y.stage)[0] : undefined
+    const step: { serviceTypeId?: number; doctorId?: number; dueOn?: string } | undefined = !presetKey.next ? undefined
+      : nextWanted ? nextStep.data : (plan.data ?? []).filter((s) => !s.doneAt).sort((x, y) => x.stage - y.stage)[0]
     let doctor = doctorId
     if (!touched.doctor) {
       const pick = [step?.doctorId, presetKey.next ? presetKey.doctorId : treatingDoctorId(card.data)].find(bookable)
@@ -218,7 +251,9 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
         }
       }
     }
-    if (presetKey.next && !touched.time) setSnap({ slot: presetKey, doctorId: doctor, duration: length })
+    // Срок этапа раньше предложенного дня — ищем время к сроку (с него, не раньше сегодня)
+    const due = step?.dueOn && step.dueOn >= todayIn() && step.dueOn < presetKey.date ? step.dueOn : null
+    if (presetKey.next && !touched.time) setSnap({ slot: due ? { ...presetKey, date: due, minutes: null } : presetKey, doctorId: doctor, duration: length })
   }
   useEffect(() => {
     if (!snap) return
@@ -239,6 +274,16 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
     queryFn: () => unwrap(api.POST('/api/patients/search', { body: { query: search } })),
     enabled: search.length >= 2 && !patient,
   })
+
+  // Пустой поиск — недавние пациенты (тот же список, что в «Пациентах»): выбрать одним касанием, без ввода.
+  // Он же даёт «был 5 нояб» в строках найденных — различать тёзок
+  const recent = useQuery({
+    queryKey: ['patients', 'recent', null],
+    queryFn: () => unwrap(api.GET('/api/patients/recent')),
+    enabled: !patient && !adding,
+    staleTime: 60_000,
+  })
+  const lastVisitOf = (id: number) => recent.data?.find((r) => r.id === id)?.lastVisit
 
   const createPatient = useMutation<Patient, ApiError, { allowDuplicate: boolean }>({
     mutationFn: ({ allowDuplicate }) => unwrap(api.POST('/api/patients', {
@@ -292,7 +337,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
     onSuccess: (a) => {
       // Новая запись — и в «Пациентах» (недавние, карточка, «Позвать на профосмотр»)
       refreshAppointmentData(client, ['patients', 'recall', ...(wantsEarlier || fromWaitlist ? ['waitlist'] : [])])
-      onCreated(a)
+      onCreated(a, { walkIn })
     },
   })
 
@@ -391,14 +436,8 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
   const activeServices = servicesOfDoctor(services.data ?? [], me.doctorServices, doctorId)
   // Врач сменился (и нажатием в другую колонку), а выбранную услугу он не оказывает — снять выбор
   if (serviceId !== '' && services.data && !activeServices.some((sv) => sv.id === serviceId)) setServiceId('')
-  // Много услуг — кнопками только частые (и выбранная), остальные — списком с поиском и разделами
-  const many = activeServices.length > 8
-  const popularIds = usePopularServices(many)
-  const chipServices = many
-    ? activeServices.filter((sv) => popularIds.slice(0, 5).includes(sv.id) || sv.id === serviceId)
-    : activeServices
-  const pickService = (sv: Service | undefined) => {
-    const next = !sv || sv.id === serviceId ? '' : sv.id
+  // Услуга — одним полем с поиском (ServicePicker), а не рядом кнопок на полэкрана (2026-11-20, владелец)
+  const pickService = (next: number | '', sv?: Service) => {
     touch('service')
     setServiceId(next)
     if (sv && next !== '' && sv.durationMinutes) setDuration(sv.durationMinutes)
@@ -452,8 +491,10 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
           {patient ? (
             <>
               <div className="chosen">
-                <span><strong>{patient.fullName}</strong>{patient.phone && <span className="hint"> · <span className="nowrap">{formatPhone(patient.phone)}</span></span>}
-                  {waitlistId(patient) != null && <span className="hint small"> · из листа ожидания — после записи уберём из листа</span>}</span>
+                {/* Номер — своей строкой, без «·»: на телефоне он переносится, и точка висела в конце имени */}
+                <span className="chosen-who"><strong>{patient.fullName}</strong>
+                  {patient.phone && <span className="hint nowrap num">{formatPhone(patient.phone)}</span>}
+                  {waitlistId(patient) != null && <span className="hint small">из листа ожидания — после записи уберём из листа</span>}</span>
                 <button type="button" className="btn ghost small" onClick={() => setPatient(null)}>Другой</button>
               </div>
               {/* Уже записан (на этот день — предупреждение), долг, ⚠ аллергия, когда был */}
@@ -502,12 +543,27 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
                   e.preventDefault()
                   void applyContact(nameFromText(text), text)
                 }} />
-              {found.data && found.data.length > 0 && (
+              {found.data && found.data.length > 0 && search.length >= 2 && (
                 <ul className="found" aria-label="Найденные пациенты">
                   {found.data.map((p) => (
                     <li key={p.id}>
                       <button type="button" onClick={() => setPatient(p)}>
-                        <strong>{p.fullName}</strong>{p.phone && <span className="hint"> · {formatPhone(p.phone)}</span>}
+                        <strong>{p.fullName}</strong>
+                        {/* Тёзок различают возраст, последний визит и представитель ребёнка */}
+                        <span className="hint found-meta">{foundMeta(p, lastVisitOf(p.id))}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {/* Ничего не ввели — недавние: чаще всего записывают того, кто только что звонил или был */}
+              {search.length < 2 && (recent.data?.length ?? 0) > 0 && (
+                <ul className="found recent" aria-label="Недавние пациенты">
+                  {recent.data!.slice(0, RECENT).map((r) => (
+                    <li key={r.id}>
+                      <button type="button" onClick={() => setPatient({ id: r.id, fullName: r.fullName ?? '', phone: r.phone, telegram: r.telegram })}>
+                        <strong>{r.fullName}</strong>
+                        <span className="hint found-meta">{[r.phone ? formatPhone(r.phone) : null, r.lastVisit ? `был ${shortDate(r.lastVisit, true).replace(/,.*$/, '')}` : null].filter(Boolean).join(' · ')}</span>
                       </button>
                     </li>
                   ))}
@@ -520,30 +576,30 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
         </fieldset>
 
         {activeServices.length > 0 && (
-          <div className="field"><span>Услуга</span>
-            {chipServices.length > 0 && (
-              <div className="price-hints" role="group" aria-label={many ? 'Частые услуги' : 'Услуга'}>
-                {chipServices.map((sv) => (
-                  <button key={sv.id} type="button" className="chip" aria-pressed={sv.id === serviceId} onClick={() => pickService(sv)}>
-                    <span aria-hidden="true">{serviceEmoji(sv.name)} </span>{sv.name}<span className="hint"> · {sv.durationMinutes} мин</span></button>
-                ))}
-              </div>
-            )}
-            {many && (
-              <Select collapsible aria-label="Все услуги" value={serviceId} onChange={(e) => pickService(activeServices.find((sv) => String(sv.id) === e.target.value))}>
-                <option value="">{serviceId === '' ? 'Найти услугу…' : 'Без услуги'}</option>
-                {serviceOptions(activeServices, popularIds, (sv) => `${sv.name} · ${sv.durationMinutes} мин`)}
-              </Select>
-            )}
-          </div>
+          <label className="field"><span>Услуга</span>
+            <ServicePicker aria-label="Услуга" services={activeServices} value={serviceId} clearable prices={!isAssistant(me)}
+              placeholder="Выберите услугу…" onChange={pickService} />
+          </label>
         )}
         {/* Врач — до дня и времени: свободное время зависит от врача (UX-аудит 2026-11-20) */}
-        <label className="field">
-          <span>Врач</span>
-          <Select value={doctorId} onChange={(e) => pickDoctor(Number(e.target.value))}>
-            {doctors.map((d) => <option key={d.id} value={d.id}>{d.fullName}</option>)}
-          </Select>
-        </label>
+        {/* До шести врачей — чипами (одно касание на телефоне), больше — списком */}
+        {doctors.length <= DOCTOR_CHIPS ? (
+          <div className="field"><span>Врач</span>
+            <div className="price-hints doctor-pick" role="group" aria-label="Врач">
+              {doctors.map((d) => (
+                <button key={d.id} type="button" className="chip" aria-pressed={d.id === doctorId} title={d.fullName}
+                  onClick={() => pickDoctor(d.id)}>{shortName(d.fullName ?? '')}</button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <label className="field">
+            <span>Врач</span>
+            <Select value={doctorId} onChange={(e) => pickDoctor(Number(e.target.value))}>
+              {doctors.map((d) => <option key={d.id} value={d.id}>{d.fullName}</option>)}
+            </Select>
+          </label>
+        )}
         {/* Пришёл без записи — чипом «⚡ Сейчас» в строке «Когда»: сегодня, эта минута, врач по умолчанию */}
         <div className="field now-pick">
           <span>Когда</span>
@@ -585,20 +641,29 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
           <span>Комментарий (необязательно)</span>
           <textarea rows={2} maxLength={500} placeholder="Например: болит справа внизу, придёт с ребёнком" value={comment} onChange={(e) => setComment(e.target.value)} />
         </label>
-        {/* Пациент назвал промокод из рекламы по телефону: выбор из действующих кодов клиники */}
-        {offeredCodes.length > 0 && (
-          <label className="field"><span>Промокод (необязательно)</span>
-            <Select value={promoCode} onChange={(e) => setPromoCode(e.target.value)}>
-              <option value="">Без промокода</option>
-              {offeredCodes.map((p) => <option key={p.id} value={p.code}>{`🎟 ${p.code}${p.description ? ` · ${p.description}` : ''}`}</option>)}
-            </Select>
-          </label>
-        )}
-        {!walkIn && (
-          <label className="check">
-            <input type="checkbox" checked={wantsEarlier} onChange={(e) => setWantsEarlier(e.target.checked)} />
-            Хочет раньше — в лист ожидания: освободится время, предложим
-          </label>
+        {/* Редкое — свёрнуто в «Ещё»: промокод из рекламы и «Хочет раньше» (лист ожидания). Что выбрано — видно в заголовке */}
+        {(offeredCodes.length > 0 || !walkIn) && (
+          <Fold title="Ещё" label="Ещё: промокод, лист ожидания"
+            meta={[promoCode ? `🎟 ${promoCode}` : null, wantsEarlier && !walkIn ? 'хочет раньше' : null].filter(Boolean).join(' · ')
+              || [offeredCodes.length > 0 ? 'промокод' : null, !walkIn ? 'хочет раньше' : null].filter(Boolean).join(', ')}>
+            <div className="rare">
+              {/* Пациент назвал промокод из рекламы по телефону: выбор из действующих кодов клиники */}
+              {offeredCodes.length > 0 && (
+                <label className="field"><span>Промокод</span>
+                  <Select value={promoCode} onChange={(e) => setPromoCode(e.target.value)}>
+                    <option value="">Без промокода</option>
+                    {offeredCodes.map((p) => <option key={p.id} value={p.code}>{`🎟 ${p.code}${p.description ? ` · ${p.description}` : ''}`}</option>)}
+                  </Select>
+                </label>
+              )}
+              {!walkIn && (
+                <label className="check">
+                  <input type="checkbox" checked={wantsEarlier} onChange={(e) => setWantsEarlier(e.target.checked)} />
+                  Хочет раньше — в лист ожидания: освободится время, предложим
+                </label>
+              )}
+            </div>
+          </Fold>
         )}
         {/* Кнопка прилипает к низу панели (и на компьютере 1440×900, и на телефоне) и называет итог */}
         <div className="new-appt-bar">

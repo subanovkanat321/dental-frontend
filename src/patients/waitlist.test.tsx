@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
 import { todayIn } from '../lib/time'
-import { appointment, me, renderApp, findSub } from '../test/fixtures'
+import { appointment, me, renderApp, findSub, openBooked, openNewMore } from '../test/fixtures'
 import { server } from '../test/server'
 import { choose } from '../test/select'
 import { waitForSlow } from '../test/wait'
@@ -103,9 +103,10 @@ test('«Хочет раньше»: запись создана, а в лист �
   await userEvent.click(await within(panel).findByRole('button', { name: '23:00' }))
   await userEvent.type(within(panel).getByLabelText('Найти пациента'), 'Айг')
   await userEvent.click(await within(panel).findByRole('button', { name: /Айгуль Т\./ }))
+  await openNewMore(panel)
   await userEvent.click(within(panel).getByLabelText(/Хочет раньше/))
   await userEvent.click(within(panel).getByRole('button', { name: /^Записать( ·|$)/ }))
-  expect(await screen.findByRole('complementary', { name: 'Карточка приёма' })).toBeInTheDocument()
+  expect(await openBooked()).toBeInTheDocument()
   // Своё окно (lib/confirm notify), не системный alert
   const message = await screen.findByRole('alertdialog')
   expect(message).toHaveTextContent(/Запись создана, но в лист ожидания пациент не попал: Уже в листе ожидания/)
@@ -182,7 +183,7 @@ test('«Новая запись»: выбрали время в сетке — �
   expect(opened[0]).toContain('phone=996700333444')
   vi.restoreAllMocks()
   await userEvent.click(within(box).getByRole('button', { name: 'Перенести сюда' }))
-  expect(await screen.findByRole('complementary', { name: 'Карточка приёма' })).toHaveTextContent('Айгуль Т.')
+  expect(await openBooked()).toHaveTextContent('Айгуль Т.')
   expect(booked).toEqual({ doctorId: 1, startAt: nine })
 })
 

@@ -70,7 +70,7 @@ function renderNote(who: Schemas['BookingViewsMe'] = me) {
 test('«📄 Шаблон»: зубы → тот же экран «Проверьте», «Сохранить» — /dictation/apply с зубами, планом, заметкой и услугой', async () => {
   const calls = backend({ note: 'Анестезия без реакции', editable: true, sectionsOn: false })
   renderNote()
-  await userEvent.click(await screen.findByRole('button', { name: '📄 Шаблон' }))
+  await userEvent.click(await screen.findByRole('button', { name: 'Шаблон' }))
   const sheet = await screen.findByRole('dialog', { name: 'Шаблоны приёма' })
   expect(within(sheet).getByRole('group', { name: 'Общие клиники' })).toHaveTextContent('Профгигиена')
   await userEvent.click(within(sheet).getByRole('button', { name: /Кариес — пломба/ }))
@@ -112,7 +112,7 @@ test('шаблон с разделами — к своим разделам; д�
     parse: { teeth: [], plan: [], note: '', sections: { treatment: 'Пломба 36', recommendations: 'Не есть 2 часа' } },
   })
   renderNote()
-  await userEvent.click(await screen.findByRole('button', { name: '📄 Шаблон' }))
+  await userEvent.click(await screen.findByRole('button', { name: 'Шаблон' }))
   await userEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: /Профгигиена/ }))
   let review = await screen.findByRole('region', { name: 'Проверьте шаблон' })
   expect(within(review).getByRole('textbox', { name: 'Жалобы — из шаблона' })).toHaveValue('Болит')
@@ -120,7 +120,7 @@ test('шаблон с разделами — к своим разделам; д�
   await userEvent.click(within(review).getByRole('button', { name: 'Отмена' }))
 
   // Диктовка: без распознавания речи — поле текста, «Разобрать» → разделы от ИИ
-  await userEvent.click(await screen.findByRole('button', { name: '🎤 Надиктовать' }))
+  await userEvent.click(await screen.findByRole('button', { name: 'Надиктовать' }))
   await userEvent.type(screen.getByRole('textbox', { name: 'Текст диктовки' }), 'на 36 пломба не есть два часа')
   await userEvent.click(screen.getByRole('button', { name: 'Разобрать' }))
   review = await screen.findByRole('region', { name: 'Проверьте диктовку' })
@@ -134,7 +134,7 @@ test('шаблон с разделами — к своим разделам; д�
 test('«Из прошлого визита»: галочки по разделам, «Отметить все / Сбросить», «Вставить» — выбранное в заметку', async () => {
   backend({ editable: true, sectionsOn: true })
   renderNote()
-  await userEvent.click(await screen.findByRole('button', { name: '↩ Из прошлого визита' }))
+  await userEvent.click(await screen.findByRole('button', { name: 'Из прошлого визита' }))
   const sheet = await screen.findByRole('dialog', { name: 'Из прошлого визита' })
   expect(within(sheet).getAllByRole('checkbox')).toHaveLength(3)
   await userEvent.click(within(sheet).getByRole('button', { name: 'Отметить все' }))
@@ -154,8 +154,8 @@ test('«Прошлые визиты» — не под заметкой (они �
   backend({ note: 'Сегодня', editable: true, sectionsOn: false })
   renderNote()
   const form = await screen.findByRole('form', { name: 'Заметка о приёме' })
-  expect(within(form).getByRole('button', { name: '🎤 Надиктовать' })).toBeInTheDocument()
-  expect(within(form).getByRole('button', { name: '📄 Шаблон' })).toBeInTheDocument()
+  expect(within(form).getByRole('button', { name: 'Надиктовать' })).toBeInTheDocument()
+  expect(within(form).getByRole('button', { name: 'Шаблон' })).toBeInTheDocument()
   expect(screen.queryByRole('region', { name: 'Прошлые визиты' })).not.toBeInTheDocument()
 })
 

@@ -15433,6 +15433,33 @@
         }
       }
     },
+    "/api/patients/{patientId}/plan/next" : {
+      "get" : {
+        "tags" : [ "chart-controller" ],
+        "operationId" : "nextStep",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TreatmentPlanNextStep"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/patients/{patientId}/plan/message" : {
       "get" : {
         "tags" : [ "plan-message-controller" ],
@@ -30353,6 +30380,22 @@
           }
         },
         "required" : [ "manual", "nowSom", "wasSom" ]
+      },
+      "TreatmentPlanNextStep" : {
+        "properties" : {
+          "serviceTypeId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "doctorId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "dueOn" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }
       },
       "VisitNoteView" : {
         "properties" : {

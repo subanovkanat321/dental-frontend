@@ -130,6 +130,11 @@
 .visit-link:hover { color: var(--link); }
 .visit-note { display: block; font-size: .88rem; color: var(--hint); }
 .visits li.struck .num { text-decoration: line-through; }
+/* Строка визита со значком «📋 Памятка и квитанция» справа; раскрытые документы — под строкой во всю ширину */
+.visits li.with-docs { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; column-gap: 4px; }
+.visits li.with-docs > :not(.visit-link, .visit-docs-btn) { grid-column: 1 / -1; }
+.visit-docs-btn { min-width: 36px; min-height: 32px; padding: 2px 6px; }
+.visit-docs-btn[aria-expanded="true"] { background: var(--accent-soft); }
 .debt-line { justify-content: flex-start; text-align: left; }
 .patient-expenses { display: grid; gap: 6px; }
 .bars.months .bar { flex-direction: column; justify-content: flex-end; align-items: stretch; gap: 2px; text-align: center; }
@@ -157,6 +162,23 @@
 .found button { width: 100%; padding: 8px 10px; border: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
 .found li + li button { border-top: 1px solid var(--separator); }
 .found button:hover { background: var(--accent-soft); }
+.chosen-who { display: grid; gap: 2px; min-width: 0; }
+/* Найденный / недавний пациент: имя, ниже — возраст, «был …», представитель, номер (различать тёзок) */
+.found button { display: grid; gap: 1px; }
+.found-meta { font-size: .85rem; }
+.found.recent { max-height: none; }
+/* «Записано: пт 20 нояб, 13:00 · Бакыт Т. — Открыть» после новой записи */
+.booked-toast {
+  position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 40;
+  display: flex; align-items: center; gap: 10px; max-width: calc(100vw - 24px); padding: 6px 6px 6px 14px;
+  border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text);
+  box-shadow: 0 2px 6px rgba(15, 42, 48, .08), 0 6px 20px rgba(15, 42, 48, .14);
+}
+.booked-toast-text { font-weight: 600; min-width: 0; }
+.booked-toast .link { font-weight: 600; white-space: nowrap; }
+@media (max-width: 760px) {
+  .booked-toast { bottom: calc(76px + env(safe-area-inset-bottom) - var(--nav-drop, 0px)); width: calc(100vw - 24px); }
+}
 .duplicate { display: grid; gap: 6px; padding: 8px 10px; border-radius: 10px; background: color-mix(in srgb, var(--status-wait) 12%, var(--card)); }
 .grid-col { cursor: copy; }
 /* Прокрутка — внутри панели, а её низ всегда в окне: --panel-top — где верх панели сейчас (layout/fitPanels.ts).
@@ -542,7 +564,11 @@ p.hours-off { margin: 4px 0 0; font-size: .9rem; }
 .appt-when { display: grid; justify-items: start; min-width: 0; }
 .appt-when .med-alert { margin-top: 6px; }
 /* «пт, 20 нояб · Айгерим С.» — коротко: на телефоне одной строкой; врач не рвётся посередине имени */
-.appt-when .appt-day { max-width: 100%; }
+/* «пт, 20 нояб · Айгерим С.» — одной строкой и в панели 360px компьютера: шапка берёт всё место слева от кнопок,
+   не хватит — многоточие, а не перенос после «·» */
+.appt-when { flex: 1 1 auto; }
+.appt-card .panel-head-actions { flex: none; }
+.appt-when .appt-day { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .med-alert-open { justify-self: start; color: inherit; text-decoration: underline; font-weight: 500; }
 .anamnesis { display: grid; gap: 12px; }
 .anamnesis > .btn { justify-self: start; }
@@ -2151,6 +2177,8 @@ button.status-pill:focus-visible { outline: 2px solid var(--accent); outline-off
 .appt-visit > .dictation, .appt-visit > form { margin: 10px 0; }
 .appt-visit > .dictation + form { margin-top: 0; }
 .appt-card .danger-zone { border-top: 0; padding-top: 0; }
+/* Оплата в карточке приёма — без своей линии сверху: над ней уже черта «О записи» (две линии подряд, UX-аудит) */
+.appt-card .appt-pay > .payment { border-top: 0; padding-top: 0; }
 .rare { display: grid; gap: 10px; }
 .rare > .link, .rare > .btn { justify-self: start; }
 .panel .fold { gap: 0; }
@@ -2176,6 +2204,10 @@ button.status-pill:focus-visible { outline: 2px solid var(--accent); outline-off
 /* «📞 Связаться ▾» — в одном ряду с «＋ Записать» (2026-11-19): одна строка вместо двух */
 .patient-actions .action-menu-wrap { flex: 2 1 0; }
 .patient-actions .action-menu-wrap > .btn { width: 100%; justify-content: center; }
+/* Номер в шапке — «Связаться ▾»; кнопка рядом с «＋ Записать» — значком 📞 */
+.patient-actions .action-menu-wrap:has(> .contact-icon), .patient-actions > .contact-icon { flex: 0 0 auto; }
+.patient-actions .contact-icon { min-width: 48px; padding-inline: 12px; }
+.patient-phone { font: inherit; color: var(--link); }
 /* «＋ Задача   ＋ Заказ в лабораторию» — одной строкой ссылок под сводкой, как в карточке приёма */
 .patient-card .segments.tabs { justify-self: stretch; flex-wrap: nowrap; overflow: visible; }
 .patient-card .segments.tabs button { flex: 1 1 0; min-width: 0; padding-inline: 6px; }
@@ -3020,12 +3052,17 @@ button.cash-entry:hover, button.cash-entry.active { background: var(--sunken); }
 /* Заметка о приёме (шаг 2): подпись и инструменты одной строкой, разделы — только с текстом, пустые — чипами */
 .visit-note { gap: 8px; }
 .note-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 8px; }
+.note-tools .btn.small.note-mic { min-width: 36px; padding: 0 8px; }
+/* Подпись и инструменты — одной строкой и на 390px: инструменты не сжимаются, подпись — с многоточием, если тесно */
+.visit-note .note-head { flex-wrap: nowrap; }
+.visit-note .note-head-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.visit-note .note-tools { flex: none; flex-wrap: nowrap; gap: 2px; }
 .note-head-title { font-size: .85rem; color: var(--hint); }
 .note-tools { display: flex; flex-wrap: wrap; gap: 4px; }
 /* Поле заметки — на всю ширину сразу под подписью (было в пол-экрана: textarea без стиля поля) */
 .visit-note > textarea { width: 100%; font: inherit; padding: 7px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); resize: vertical; }
 .visit-note > textarea:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
-.note-tools .btn.small { min-height: 32px; padding: 0 10px; font-size: .85rem; }
+.note-tools .btn.small { min-height: 32px; padding: 0 8px; font-size: .85rem; }
 .note-sections { display: grid; gap: 8px; }
 .note-section > span { font-size: .8rem; font-weight: 600; color: var(--hint); }
 .note-add { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -3243,3 +3280,11 @@ button.cash-entry:hover, button.cash-entry.active { background: var(--sunken); }
 .pick-calendar { flex: none; width: 52px; border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--card); font-size: 1.25rem; cursor: pointer; }
 .pick-calendar:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .doctor-day-name.link { font: inherit; font-weight: inherit; color: inherit; text-decoration: underline dotted; text-underline-offset: 3px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.patient-waitlist { display: grid; gap: 6px; }
+.patient-waitlist h3, .patient-waitlist p { margin: 0; }
+/* ServicePicker (multiple): выбранные услуги — чипами с ✕ над полем «＋ Ещё услуга…» */
+.service-picker.multiple { display: grid; gap: 6px; }
+.service-picked { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.service-picked .chip { display: inline-flex; align-items: center; gap: 4px; padding-right: 2px; }
+.chip-x { min-width: 28px; min-height: 28px; border: 0; border-radius: var(--r-full, 9999px); background: none; color: var(--hint); font: inherit; cursor: pointer; }
+.chip-x:hover { background: var(--sunken); color: var(--text); }

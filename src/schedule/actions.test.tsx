@@ -4,9 +4,8 @@ import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
 import { todayIn } from '../lib/time'
-import { appointment, me, renderApp, expand, openPay, pickStatus, statusMenu } from '../test/fixtures'
+import { appointment, me, renderApp, expand, openPay, pickStatus, statusMenu, chosenDoctor, pickDoctorChip, openBooked, openNewMore, serviceField, pickService, serviceOptionsShown } from '../test/fixtures'
 import { server } from '../test/server'
-import { choose } from '../test/select'
 
 type Appointment = Schemas['AppointmentView']
 
@@ -125,17 +124,18 @@ test('нажать на пустое место у врача — «Новая �
   const panel = screen.getByRole('complementary', { name: 'Новая запись' })
   const grid = await within(panel).findByRole('group', { name: 'Свободное время' })
   expect(within(grid).getByRole('button', { name: '09:00' })).toHaveAttribute('aria-pressed', 'true')
-  expect(within(panel).getByLabelText('Врач')).toHaveAttribute('data-value', '2')
+  expect(chosenDoctor(panel)).toBe('Дастан Т.')
 
   await userEvent.type(within(panel).getByLabelText('Найти пациента'), 'Нур')
   await userEvent.click(await within(panel).findByRole('button', { name: /Нурлан К\./ }))
-  await userEvent.click(within(within(panel).getByRole('group', { name: 'Услуга' })).getByRole('button', { name: /Чистка/ }))
+  await pickService(panel, 'Чистка')
   expect(within(panel).getByLabelText('Длительность')).toHaveAttribute('data-value', '60')
+  await openNewMore(panel)
   await userEvent.click(within(panel).getByLabelText(/Хочет раньше/))
   await userEvent.click(within(panel).getByRole('button', { name: /^Записать( ·|$)/ }))
 
   // После записи справа — карточка нового приёма
-  expect(await screen.findByRole('complementary', { name: 'Карточка приёма' })).toHaveTextContent('Нурлан К.')
+  expect(await openBooked()).toHaveTextContent('Нурлан К.')
   expect(created).toEqual({
     doctorId: 2, patientId: 7, startAt: new Date(`${todayIn()}T09:00:00+06:00`).toISOString(), durationMinutes: 60, serviceTypeId: 5,
   })
@@ -175,7 +175,7 @@ test('новый пациент с номером, который уже ест�
   // Выбрали время — фокус на «Записать» (с телефона дальше сам прокрутит к ней)
   expect(within(panel).getByRole('button', { name: /^Записать( ·|$)/ })).toHaveFocus()
   // Услуга — до времени: от неё длительность, а от длительности — свободное время
-  const service = within(panel).queryByRole('group', { name: 'Услуга' })
+  const service = within(panel).queryByRole('combobox', { name: 'Услуга' })
   if (service) expect(service.compareDocumentPosition(within(panel).getByRole('button', { name: '23:00' })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   await userEvent.click(within(panel).getByRole('button', { name: /^Записать( ·|$)/ }))
 
@@ -183,7 +183,7 @@ test('новый пациент с номером, который уже ест�
   expect(phone).toBe('+996555000111')
   await userEvent.click(within(panel).getByRole('button', { name: 'Выбрать его' }))
   await userEvent.click(within(panel).getByRole('button', { name: /^Записать( ·|$)/ }))
-  expect(await screen.findByRole('complementary', { name: 'Карточка приёма' })).toHaveTextContent('Айжан Б.')
+  expect(await openBooked()).toHaveTextContent('Айжан Б.')
   expect(created.patientId).toBe(8)
 })
 
@@ -299,23 +299,21 @@ test('новая запись: у врача выбраны услуги — т�
   renderApp()
   await userEvent.click(await screen.findByRole('group', { name: 'Дастан Т.' }))
   const panel = screen.getByRole('complementary', { name: 'Новая запись' })
-  const chips = () => within(panel).getByRole('group', { name: 'Услуга' })
-  await within(panel).findByRole('group', { name: 'Услуга' })
-  expect(within(chips()).getAllByRole('button')).toHaveLength(1)
-  expect(within(chips()).getByRole('button', { name: /Удаление зуба/ })).toBeInTheDocument()
+  await within(panel).findByRole('combobox', { name: 'Услуга' })
+  expect(await serviceOptionsShown(panel)).toEqual([expect.stringContaining('Удаление зуба')])
 
   // У врача 1 услуги не выбраны — все услуги клиники
-  await choose(within(panel).getByLabelText('Врач'), '1')
-  await userEvent.click(within(chips()).getByRole('button', { name: /Чистка/ }))
-  expect(within(chips()).getByRole('button', { name: /Чистка/ })).toHaveAttribute('aria-pressed', 'true')
+  await pickDoctorChip(panel, 'Айгерим С.')
+  await pickService(panel, 'Чистка')
+  expect(serviceField(panel)).toHaveTextContent('Чистка · 60 мин')
 
   // Обратно к врачу 2: «Чистку» он не оказывает — её нет, выбор снят
-  await choose(within(panel).getByLabelText('Врач'), '2')
-  expect(within(chips()).queryByRole('button', { name: /Чистка/ })).not.toBeInTheDocument()
-  expect(within(chips()).getByRole('button', { name: /Удаление зуба/ })).toHaveAttribute('aria-pressed', 'false')
+  await pickDoctorChip(panel, 'Дастан Т.')
+  expect(serviceField(panel)).toHaveTextContent('Выберите услугу…')
+  expect((await serviceOptionsShown(panel)).join('|')).not.toContain('Чистка')
 })
 
-test('новая запись: услуги не из прайса (скрытые) не предлагаются — ни кнопкой, ни в «Все услуги…»', async () => {
+test('новая запись: услуги не из прайса (скрытые) не предлагаются — ни в «Частых», ни в разделах', async () => {
   backend([], me)
   const names = ['Консультация', 'Снимок зуба', 'Лечение кариеса', 'Лечение каналов', 'Удаление зуба', 'Профчистка', 'Отбеливание',
     'Коронка', 'Имплант']
@@ -331,18 +329,19 @@ test('новая запись: услуги не из прайса (скрыты
   renderApp()
   await userEvent.click(await screen.findByRole('group', { name: 'Дастан Т.' }))
   const panel = screen.getByRole('complementary', { name: 'Новая запись' })
-  // Частая, но скрытая — не кнопкой
-  const chips = await within(panel).findByRole('group', { name: 'Частые услуги' })
-  expect(within(chips).getAllByRole('button').map((b) => b.textContent)).toEqual([expect.stringContaining('Консультация')])
-  await userEvent.click(within(panel).getByRole('combobox', { name: 'Все услуги' }))
+  await within(panel).findByRole('combobox', { name: 'Услуга' })
+  // Частая, но скрытая — не в «Частых»
+  await userEvent.click(serviceField(panel))
+  const frequent = within(screen.getByRole('listbox')).getByRole('group', { name: 'Частые' })
+  expect(within(frequent).getAllByRole('option').map((o) => o.textContent)).toEqual([expect.stringContaining('Консультация')])
   await userEvent.type(within(document.body).getByRole('searchbox', { name: 'Поиск в списке' }), 'консультац')
   const options = within(screen.getByRole('listbox')).getAllByRole('option').map((o) => o.textContent)
-  // «Часто» и раздел — та же «Консультация»; «Повторной» (скрыта) нет
+  // «Частые» и раздел — та же «Консультация»; «Повторной» (скрыта) нет
   expect(options.length).toBeGreaterThan(0)
-  expect(options.every((o) => o?.startsWith('Консультация ·'))).toBe(true)
+  expect(options.every((o) => o?.includes('Консультация ·'))).toBe(true)
 })
 
-test('новая запись: услуг много — частые кнопками, остальные списком с поиском и разделами', async () => {
+test('новая запись: услуга одним полем — поиск сверху, «Частые», потом разделы прайса; выбрали — длительность подставилась', async () => {
   backend([], me)
   const names: [string, Schemas['ServiceTypeView']['group']][] = [
     ['Первичная консультация', 'EXAM'], ['Профессиональная чистка', 'HYGIENE'], ['Лечение кариеса', 'THERAPY'],
@@ -360,29 +359,21 @@ test('новая запись: услуг много — частые кнопк
   renderApp()
   await userEvent.click(await screen.findByRole('group', { name: 'Дастан Т.' }))
   const panel = screen.getByRole('complementary', { name: 'Новая запись' })
-  const chips = await within(panel).findByRole('group', { name: 'Частые услуги' })
-  expect(within(chips).getAllByRole('button').map((b) => b.textContent)).toEqual([
-    expect.stringContaining('Профессиональная чистка'), expect.stringContaining('Лечение кариеса'),
-  ])
-
-  const all = within(panel).getByRole('combobox', { name: 'Все услуги' })
-  await userEvent.click(all)
+  await userEvent.click(await within(panel).findByRole('combobox', { name: 'Услуга' }))
   const list = screen.getByRole('listbox')
-  // Сначала только разделы (свёрнуты, с числом услуг); нажали — раскрылся один
-  const folds = within(list).getAllByRole('button')
-  expect(folds.map((b) => b.textContent?.replace(/\s*\d+\s*[▸▾]$/, ''))).toEqual(['Часто', 'Осмотр и консультация',
-    'Профилактика и гигиена', 'Терапия', 'Хирургия', 'Ортопедия', 'Ортодонтия', 'Эстетика', 'Детская стоматология', 'Рентген и диагностика'])
-  expect(within(list).queryAllByRole('option')).toHaveLength(0)
-  await userEvent.click(within(list).getByRole('button', { name: /^Терапия/ }))
-  expect(within(screen.getByRole('listbox')).getAllByRole('option').map((o) => o.textContent)).toEqual([
-    expect.stringContaining('Лечение кариеса'), expect.stringContaining('Пломба'), expect.stringContaining('Лечение пульпита'),
+  // Поиск — сверху; «Частые» — первыми (топ клиники), дальше все услуги по разделам прайса
+  expect(within(document.body).getByRole('searchbox', { name: 'Поиск в списке' })).toBeInTheDocument()
+  expect(within(list).getAllByRole('group').map((g) => g.getAttribute('aria-label') ?? within(g).getAllByRole('presentation')[0]?.textContent)).toEqual([
+    'Частые', 'Осмотр и консультация', 'Профилактика и гигиена', 'Терапия', 'Хирургия', 'Ортопедия', 'Ортодонтия', 'Эстетика',
+    'Детская стоматология', 'Рентген и диагностика'])
+  const frequent = within(list).getAllByRole('group')[0]!
+  expect(within(frequent).getAllByRole('option').map((o) => o.textContent)).toEqual([
+    expect.stringContaining('Лечение кариеса'), expect.stringContaining('Профессиональная чистка'),
   ])
   // Поиск — по всем разделам сразу
   await userEvent.type(within(document.body).getByRole('searchbox', { name: 'Поиск в списке' }), 'ребенк')
   await userEvent.click(within(screen.getByRole('listbox')).getByRole('option', { name: /Осмотр ребёнка/ }))
-  // Выбрали из списка — длительность подставилась, кнопка выбранной услуги — среди частых
-  expect(within(panel).getByRole('combobox', { name: 'Все услуги' })).toHaveTextContent('Осмотр ребёнка')
-  expect(within(within(panel).getByRole('group', { name: 'Частые услуги' })).getByRole('button', { name: /Осмотр ребёнка/ }))
-    .toHaveAttribute('aria-pressed', 'true')
+  // Выбрали — в поле услуга и длительность (без цены), длительность записи подставилась
+  expect(serviceField(panel)).toHaveTextContent('Осмотр ребёнка · 80 мин')
   expect(within(panel).getByRole('spinbutton', { name: 'Длительность, мин' })).toHaveValue(80)
 })

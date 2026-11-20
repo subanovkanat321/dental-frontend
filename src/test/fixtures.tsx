@@ -133,3 +133,48 @@ export async function expand(region: HTMLElement) {
   if (head?.getAttribute('aria-expanded') === 'false') await userEvent.click(head)
   return region
 }
+
+/** Новая запись: какой врач выбран — нажатый чип в группе «Врач» (до шести врачей — чипы, а не список). */
+export function chosenDoctor(scope: HTMLElement): string | undefined {
+  const group = within(scope).getByRole('group', { name: 'Врач' })
+  return within(group).getAllByRole('button').find((b) => b.getAttribute('aria-pressed') === 'true')?.textContent ?? undefined
+}
+
+/** Новая запись: выбрать врача чипом («Айгерим С.», «Дастан Т.»). */
+export async function pickDoctorChip(scope: HTMLElement, name: string) {
+  await userEvent.click(within(within(scope).getByRole('group', { name: 'Врач' })).getByRole('button', { name }))
+}
+
+/** После «Записать» форма закрывается, внизу тост «Записано: … — Открыть»: открыть из него карточку записи. */
+export async function openBooked() {
+  const toast = (await screen.findByText(/^Записано: /)).closest('.booked-toast') as HTMLElement
+  await userEvent.click(within(toast).getByRole('button', { name: 'Открыть' }))
+  return screen.findByRole('complementary', { name: 'Карточка приёма' })
+}
+
+/** Новая запись: раскрыть «Ещё» (промокод, «Хочет раньше»). */
+export async function openNewMore(panel: HTMLElement) {
+  await userEvent.click(within(within(panel).getByRole('region', { name: /^Ещё: промокод/ })).getByRole('button', { name: /Ещё/ }))
+}
+
+/** Поле «Услуга» (ServicePicker): какая услуга выбрана — текст поля («🦷 Чистка · 60 мин»), пусто — подсказка. */
+export function serviceField(scope: HTMLElement): HTMLElement {
+  return within(scope).getByRole('combobox', { name: 'Услуга' })
+}
+
+/** Выбрать услугу в поле «Услуга»: открыть список и нажать строку (имя — начало строки, без эмодзи). */
+export async function pickService(scope: HTMLElement, name: string | RegExp) {
+  await userEvent.click(serviceField(scope))
+  const list = await screen.findByRole('listbox')
+  const re = typeof name === 'string' ? new RegExp(name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) : name
+  await userEvent.click(within(list).getAllByRole('option', { name: re })[0]!)
+}
+
+/** Строки списка услуг (открыть поле «Услуга»): тексты без эмодзи-префикса не трогаем — как на экране. */
+export async function serviceOptionsShown(scope: HTMLElement): Promise<string[]> {
+  await userEvent.click(serviceField(scope))
+  const list = await screen.findByRole('listbox')
+  const texts = within(list).getAllByRole('option').map((o) => o.textContent ?? '')
+  await userEvent.keyboard('{Escape}')
+  return texts
+}

@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import { slotInstant, todayIn } from '../lib/time'
-import { appointment, me, renderApp } from '../test/fixtures'
+import { appointment, me, renderApp, chosenDoctor } from '../test/fixtures'
 import { server } from '../test/server'
 import { waitForSlow } from '../test/wait'
 
@@ -72,7 +72,7 @@ test('телефон, «Все врачи» — список: приёмы об�
 
   await userEvent.click(screen.getByRole('button', { name: /Свободно с 09:00 до 12:00 у врача Дастан/ }))
   const panel = screen.getByRole('complementary', { name: 'Новая запись' })
-  expect(within(panel).getByLabelText('Врач')).toHaveAttribute('data-value', '2')
+  expect(chosenDoctor(panel)).toBe('Дастан Т.')
 })
 
 test('телефон, один врач — только его приёмы и окна', async () => {

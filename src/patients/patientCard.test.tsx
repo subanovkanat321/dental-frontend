@@ -108,3 +108,19 @@ test('«⋯» шапки: задача и лаборатория; регистр
   const menu = within(panel).getByRole('menu', { name: 'Ещё действия' })
   expect(within(menu).getAllByRole('menuitem').map((i) => i.textContent)).toEqual(['＋ Задача', '📄 Оформить договор'])
 })
+
+test('P2: номер в шапке — «Связаться ▾», рядом с «＋ Записать» — значок 📞; «Прочее»: лист ожидания с подписью', async () => {
+  backend({ patient: { id: 4, fullName: 'Нурлан К.', phone: '996777555666', telegram: false }, done: 0, noShow: 0, cancelled: 0, upcoming: [], past: [] },
+    me, [http.get('*/api/waitlist', () => HttpResponse.json([])), http.get('*/api/patients/:id/family', () => new HttpResponse(null, { status: 204 }))])
+  renderApp()
+  const panel = await openCard('Нурлан К.')
+  await userEvent.click(within(panel).getByRole('button', { name: 'Связаться: +996 777 555 666' }))
+  expect(await screen.findByRole('menuitem', { name: /Позвонить/ })).toBeInTheDocument()
+  await userEvent.keyboard('{Escape}')
+  // Кнопка рядом с «＋ Записать» — значок, но имя для скринридера то же
+  expect(within(panel).getByRole('button', { name: 'Связаться' })).toHaveTextContent('📞')
+  await userEvent.click(within(panel).getByRole('tab', { name: 'Прочее' }))
+  const waitlist = await within(panel).findByRole('region', { name: 'Лист ожидания' })
+  expect(within(waitlist).getByRole('heading', { name: 'Лист ожидания' })).toBeInTheDocument()
+  expect(waitlist).toHaveTextContent('освободится время')
+})

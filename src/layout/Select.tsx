@@ -73,7 +73,7 @@ const SEARCH_FROM = 9
  * Клавиатура: ↑ ↓ Enter Esc, как у системного. `<optgroup label>` — группы с заголовками (ARIA
  * role="group"); стрелки идут по пунктам, заголовки пропускают. Поиск — без регистра и «ё/е».
  */
-export function Select({ value, defaultValue, onChange, children, name, required, disabled, className, id, collapsible = false, ...aria }: {
+export function Select({ value, defaultValue, onChange, children, name, required, disabled, className, id, collapsible = false, searchFrom = SEARCH_FROM, valueLabel, ...aria }: {
   value?: string | number
   defaultValue?: string | number
   onChange?: (e: SelectChange) => void
@@ -88,6 +88,10 @@ export function Select({ value, defaultValue, onChange, children, name, required
    * Для длинных списков вроде услуг клиники. Поиск — по всем пунктам, найденное показано раскрытым.
    */
   collapsible?: boolean
+  /** С какого числа пунктов показывать поиск сверху (по умолчанию 9; выбор услуги — раньше). */
+  searchFrom?: number
+  /** Своё содержимое поля вместо текста выбранного пункта (выбор услуги: «🦷 Лечение кариеса · 45 мин» без цены). */
+  valueLabel?: ReactNode
   'aria-label'?: string
 }) {
   const items = itemsOf(children)
@@ -113,7 +117,7 @@ export function Select({ value, defaultValue, onChange, children, name, required
   const folding = collapsible && !query.trim() && choices.some((i) => i.group != null)
   const shown = folding ? found.filter((i) => i.group == null || i.group === expanded) : found
   const groupTitles = folding ? [...new Set(choices.map((i) => i.group).filter((g): g is string => g != null))] : []
-  const searchable = choices.length >= SEARCH_FROM
+  const searchable = choices.length >= searchFrom
 
   const close = (focus = true) => {
     setOpen(false)
@@ -292,7 +296,7 @@ export function Select({ value, defaultValue, onChange, children, name, required
         aria-label={aria['aria-label']} aria-haspopup="listbox" aria-expanded={open} aria-controls={open ? listId : undefined}
         aria-activedescendant={open && shown[active] ? `${auto}-${active}` : undefined} disabled={disabled} data-value={current}
         onClick={() => (open ? close() : show())} onKeyDown={onKey}>
-        <span className="ui-select-value">{main || '—'}{hint && <span className="hint"> · {hint}</span>}</span>
+        <span className="ui-select-value">{valueLabel != null && !placeholder ? valueLabel : <>{main || '—'}{hint && <span className="hint"> · {hint}</span>}</>}</span>
       </button>
       {(name || required) && (
         // Для форм: значение уходит в FormData, а required не даст отправить пустое — как у <select>

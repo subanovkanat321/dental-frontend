@@ -29,6 +29,7 @@ import { OffDaysHint } from './OffDaysHint'
 import './doctorChips.css'
 import { colorOf as doctorColor, initials, specialtyOf } from '../lib/avatars'
 import { NewAppointmentPanel, type Slot } from './NewAppointmentPanel'
+import { BookedToast } from './BookedToast'
 import { QuickMenu } from './QuickMenu'
 import { DoctorCalendar } from './DoctorCalendar'
 import { PaintSwitch } from './PaintSwitch'
@@ -161,6 +162,9 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
     if (bookPatient) onBookingShown?.()
   }, [bookPatient, onBookingShown])
   const close = useCallback(() => setSide(null), [])
+  // «Записано: … — Открыть» после новой записи (форма закрыта, сетка на виду)
+  const [booked, setBooked] = useState<Appointment | null>(null)
+  const hideBooked = useCallback(() => setBooked(null), [])
   // Ассистент видит только своих врачей (V68): чужие расписания ему не нужны
   const clinicDoctors = (me.doctors ?? []).filter((d) => d.active !== false && (!isAssistant(me) || me.assistantOf!.includes(d.id)))
   // Порядок колонок, чипов и выбора врача: свой на устройстве (окно «Порядок врачей»), а если его нет —
@@ -770,8 +774,17 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
       {/* «Записать на следующий визит» / «снова» из карточки приёма (next): этап плана и ближайшее свободное время */}
       {side?.kind === 'new' && (
         <NewAppointmentPanel slot={side.slot} me={me} initialPatient={side.patient} initialContact={side.contact} nowDoctorId={firstBookable()?.id} onClose={close}
-          onCreated={(a) => setSide({ kind: 'appointment', id: a.id, fallback: a })} onOpenAppointment={(a) => setSide({ kind: 'appointment', id: a.id, fallback: a })} />
+          onCreated={(a, how) => {
+            // «⚡ Сейчас» — приём начинается: карточку сразу; обычная запись — форма закрывается, внизу тост с «Открыть»
+            if (how?.walkIn) setSide({ kind: 'appointment', id: a.id, fallback: a })
+            else {
+              setSide(null)
+              setBooked(a)
+            }
+          }} onOpenAppointment={(a) => setSide({ kind: 'appointment', id: a.id, fallback: a })} />
       )}
+      {booked && <BookedToast appointment={booked} onClose={hideBooked}
+        onOpen={() => { setSide({ kind: 'appointment', id: booked.id, fallback: booked }); setBooked(null) }} />}
       {quick && (
         <QuickMenu key={quick.a.id} appointment={withCarried.find((x) => x.id === quick.a.id) ?? quick.a} me={me} at={quick.at} onClose={closeQuick}
           onOpen={(a, intent) => setSide({ kind: 'appointment', id: a.id, fallback: a, intent })}

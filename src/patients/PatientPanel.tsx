@@ -26,7 +26,6 @@ import { advanceText, useAdvance } from './advance'
 import { PatientTasks } from '../tasks/PatientTasks'
 import { PatientLab } from '../lab/PatientLab'
 import { GuardianBox } from './GuardianBox'
-import { VipBox } from './VipBox'
 import { KidInfo } from './KidInfo'
 import { PatientExpenses } from './PatientExpenses'
 import { ContractBox } from '../contract/ContractBox'
@@ -135,13 +134,15 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
         {note && <span className="visit-note">📝 {note}</span>}
       </>
     )
+    // «Памятка и квитанция» — значком справа в строке визита, а не отдельной строкой под каждым (UX-аудит: шум)
+    const docs = a.status === 'DONE' && canEditDoctor(me, a.doctorId)
+    const docsLabel = seesMoneyOf(me, a.doctorId) && (a.paidSom != null || a.chargeSom != null) ? 'Памятка и квитанция' : 'Памятка'
     return (
-      <li key={a.id} className={a.status === 'NO_SHOW' || a.status === 'CANCELLED' ? 'struck' : undefined}>
-        {onOpenAppointment ? <button type="button" className="visit-link" onClick={() => onOpenAppointment(a.id)}>{body}</button> : body}
-        {a.status === 'DONE' && canEditDoctor(me, a.doctorId) && (
-          <button type="button" className="link small" aria-expanded={docsOf === a.id}
-            onClick={() => setDocsOf(docsOf === a.id ? null : a.id)}>
-            {seesMoneyOf(me, a.doctorId) && (a.paidSom != null || a.chargeSom != null) ? '📋 Памятка и квитанция' : '📋 Памятка'}</button>
+      <li key={a.id} className={[a.status === 'NO_SHOW' || a.status === 'CANCELLED' ? 'struck' : '', docs ? 'with-docs' : ''].filter(Boolean).join(' ') || undefined}>
+        {onOpenAppointment ? <button type="button" className="visit-link" onClick={() => onOpenAppointment(a.id)}>{body}</button> : <span className="visit-link">{body}</span>}
+        {docs && (
+          <button type="button" className="btn ghost small visit-docs-btn" aria-expanded={docsOf === a.id} aria-label={docsLabel} title={docsLabel}
+            onClick={() => setDocsOf(docsOf === a.id ? null : a.id)}><span aria-hidden="true">📋</span></button>
         )}
         {docsOf === a.id && <VisitDocs appointment={a} me={me} />}
       </li>
@@ -211,11 +212,17 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
           {/* «+996 … · 38 лет · в боте»; без телефона — без «·» в начале; у ребёнка возраст — в бейдже «Ребёнок, 7 лет» */}
           <span className="hint">
             {[
-              patient?.phone ? <span key="phone" className="num">{formatPhone(patient.phone)}</span> : null,
+              // Номер — он же «Связаться ▾» (как в карточке приёма): позвонить, WhatsApp, напомнить о долге, пригласить в бот
+              patient?.phone ? (contacts.length
+                ? <ContactMenu key="phone" items={contacts} className="link patient-phone" label={`Связаться: ${formatPhone(patient.phone)}`}
+                    content={<span className="num">{formatPhone(patient.phone)}</span>} />
+                : <span key="phone" className="num">{formatPhone(patient.phone)}</span>) : null,
               patient?.birthDate && !child ? <span key="age" className="nowrap">{ageText(patient.birthDate)}</span> : null,
               patient?.telegram ? <span key="bot" className="tone-ok nowrap">в боте</span>
                 : <span key="bot">без бота — WhatsApp{patient?.botInvitedAt ? ` · ${invitedHint(patient.botInvitedAt)}` : ''}</span>,
-            ].filter(Boolean).flatMap((part, i) => (i ? [' · ', part] : [part]))}
+            ].filter(Boolean).flatMap((part, i) => (i
+              // «·» — в начале следующей части, а не в конце строки: перенос не оставляет висящую точку
+              ? [' ·\u00a0', part] : [part]))}
           </span>
           {/* Важное из анкеты — той же пилюлей, что в карточке приёма (один вид предупреждения во всём продукте) */}
           <MedAlertPill an={anamnesis.data} onOpen={patient ? () => onMedical(patient) : undefined} />
@@ -263,8 +270,9 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
       </header>
       <div className="patient-actions">
         <button type="button" className="btn primary" onClick={() => patient && onBook(patient)}>＋ Записать</button>
-        {/* Есть представитель — звоним и пишем ему */}
-        <ContactMenu items={contacts} />
+        {/* Есть представитель — звоним и пишем ему. Номер в шапке уже открывает «Связаться» — здесь значок, «＋ Записать» шире */}
+        <ContactMenu items={contacts} className={patient?.phone ? 'btn contact-icon' : 'btn'}
+          content={patient?.phone ? <span aria-hidden="true">📞</span> : undefined} />
       </div>
       {botInviteOf.sheet}
 
@@ -330,11 +338,17 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
               {mine && <button type="button" className="link" onClick={() => setEditing(true)}>Изменить данные пациента</button>}
             </>
           )}
-          {/* ⭐ ВИП — первым: отметку ставят при встрече пациента, искать её внизу неудобно */}
-          {patient && <VipBox patient={patient} canEdit={Boolean(me.admin || me.reception)} />}
+          {/* ⭐ ВИП — только меткой «ВИП» в шапке (одна дорога вместо двух, UX-аудит 2026-11-20); API /vip остаётся */}
           {/* «Откуда узнал» — всегда в «Прочем»: в шапке карточки занимал полэкрана */}
           {patient && <SourceLine patient={patient} canEdit={Boolean(mine)} admin={Boolean(mine && me.admin)} />}
-          {patient && mine && <WaitlistBox patient={patient} me={me} />}
+          {/* Лист ожидания — с подписью и пояснением: без заголовка «30 мин · к любому врачу» было непонятно, что это */}
+          {patient && mine && (
+            <section className="patient-waitlist" aria-label="Лист ожидания">
+              <h3>Лист ожидания</h3>
+              <p className="hint small">Хочет прийти раньше или ждёт места: освободится время — «Новая запись» предложит его.</p>
+              <WaitlistBox patient={patient} me={me} />
+            </section>
+          )}
           {patient && <GuardianBox patient={patient} canEdit={Boolean(mine)} />}
           {patient && mine && <FamilyBox patient={patient} me={me} onOpenPatient={onOpenPatient} />}
           {/* Договор и согласие на лечение: печать, подпись на экране, отметка и скан */}

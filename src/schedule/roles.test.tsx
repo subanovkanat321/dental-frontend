@@ -33,9 +33,8 @@ test('врач без прав админа: в «Новой записи» — 
   expect(screen.queryByRole('complementary', { name: 'Новая запись' })).not.toBeInTheDocument()
   await userEvent.click(screen.getByRole('button', { name: '＋ Новая запись' }))
   const panel = screen.getByRole('complementary', { name: 'Новая запись' })
-  const select = within(panel).getByLabelText('Врач')
-  await userEvent.click(select)
-  expect(within(screen.getByRole('listbox')).getAllByRole('option').map((o) => o.textContent)).toEqual(['Айгерим Садыкова'])
+  // Врачи — чипами (до шести): только он сам
+  expect(within(within(panel).getByRole('group', { name: 'Врач' })).getAllByRole('button').map((o) => o.textContent)).toEqual(['Айгерим С.'])
 })
 
 test('ассистент: без предоплаты и цен услуг, перенос — только к своему врачу, без пункта «Услуги»', async () => {
@@ -46,7 +45,8 @@ test('ассистент: без предоплаты и цен услуг, пе
   expect(within(panel).queryByRole('button', { name: 'Попросить предоплату' })).not.toBeInTheDocument()
   await userEvent.click(within(panel).getByRole('button', { name: 'изменить' }))
   await userEvent.click(await within(panel).findByLabelText('Услуга'))
-  expect(await screen.findByRole('option', { name: 'Чистка' })).toBeInTheDocument()
+  // Цен ассистенту нет: «Чистка · 60 мин», без сомов
+  expect(await screen.findByRole('option', { name: /Чистка/ })).not.toHaveTextContent('сом')
   await userEvent.keyboard('{Escape}')
   await userEvent.click(within(panel).getByRole('button', { name: 'Отмена' }))
   await userEvent.click(within(panel).getByRole('button', { name: 'Перенести' }))

@@ -38,7 +38,7 @@ function usePreviousNotes(a: Appointment, enabled: boolean) {
  *
  * Шаг 2 (опыт Dentist Plus): разделы заметки (Жалобы · Объективно · Диагноз · Лечение · Рекомендации) — если клиника
  * их включила или заметка уже с разделами; пустые разделы не занимают места — «＋ Жалобы» чипом. Рядом с подписью —
- * «🎤 Надиктовать», «📄 Шаблон» и «↩ Из прошлого визита», под полем — «Сохранить как шаблон». Прошлые визиты — в
+ * «🎤» (надиктовать), «📄 Шаблон» и «↩ Прошлый» (из прошлого визита), под полем — «Сохранить как шаблон». Прошлые визиты — в
  * «Продолжении лечения» (UX-аудит 2026-11-20: одно место вместо трёх); поле — на всю ширину сразу под подписью.
  */
 export function VisitNote({ appointment: a, me }: { appointment: Appointment; me?: Me }) {
@@ -125,10 +125,17 @@ export function VisitNote({ appointment: a, me }: { appointment: Appointment; me
         <span className="note-head-title" id={`note-${a.id}`}>Заметка о приёме</span>
         {canTemplate && (
           <span className="note-tools">
-            <button type="button" className="btn small ghost" title="Скажите по шагам: зуб → что сделали → следующий визит. Шпаргалка будет на экране."
-              onClick={() => dictation.current?.start()}>🎤 Надиктовать</button>
-            <button type="button" className="btn small ghost" onClick={() => setSheet('template')}>📄 Шаблон</button>
-            {previous.length > 0 && <button type="button" className="btn small ghost" onClick={() => setSheet('previous')}>↩ Из прошлого визита</button>}
+            {/* Одной строкой с подписью и на телефоне 390px: микрофон — значком, «из прошлого визита» — коротко; полные
+                названия — для скринридера (aria-label) и подсказкой при наведении */}
+            <button type="button" className="btn small ghost note-mic" aria-label="Надиктовать"
+              title="Надиктовать: скажите по шагам — зуб → что сделали → следующий визит. Шпаргалка будет на экране."
+              onClick={() => dictation.current?.start()}><span aria-hidden="true">🎤</span></button>
+            <button type="button" className="btn small ghost" aria-label="Шаблон" title="Вставить шаблон приёма" onClick={() => setSheet('template')}>
+              <span aria-hidden="true">📄 </span>Шаблон</button>
+            {previous.length > 0 && (
+              <button type="button" className="btn small ghost" aria-label="Из прошлого визита" title="Взять из прошлого визита" onClick={() => setSheet('previous')}>
+                <span aria-hidden="true">↩ </span>Прошлый</button>
+            )}
           </span>
         )}
       </div>

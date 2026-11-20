@@ -18,6 +18,7 @@ import { DateInput } from '../layout/DateInput'
 import { useFreeDays } from '../lib/freeDays'
 import { Fold } from '../layout/Fold'
 import { Select } from '../layout/Select'
+import { ServicePicker } from '../clinic/ServicePicker'
 import { expired, usePromoCodes } from '../lib/promo'
 
 type Me = Schemas['BookingViewsMe']
@@ -153,10 +154,9 @@ export function ServiceEdit({ appointment: a, me, onDone, prices = true }: { app
       action.mutate({ kind: 'service', body: { serviceTypeId: chosen === '' ? undefined : chosen } }, { onSuccess: onDone })
     }}>
       <label className="field"><span>Услуга</span>
-        <Select value={chosen} onChange={(e) => setServiceId(e.target.value === '' ? '' : Number(e.target.value))}>
-          <option value="">—</option>
-          {offered.map((s) => <option key={s.id} value={s.id}>{s.name}{prices && s.priceSom != null ? ` · ${somText(s.priceSom)}` : ''}{s.active === false ? ' · не в прайсе' : ''}</option>)}
-        </Select>
+        {/* Тот же выбор услуги, что в «Новой записи»: поиск, «Частые», разделы прайса */}
+        <ServicePicker aria-label="Услуга" services={offered} value={chosen} clearable prices={prices}
+          note={(s) => (s.active === false ? 'не в прайсе' : null)} onChange={(id) => setServiceId(id)} />
       </label>
       {action.error && <p className="error" role="alert">{errorText(action.error)}</p>}
       <div className="actions">
