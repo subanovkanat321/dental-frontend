@@ -8,6 +8,7 @@ import { asSections, cleanSections, hasText, joinText, mergeSections, renderSect
 import { reviewOf, type Review } from './review'
 import { PreviousSheet, SaveTemplateSheet, TemplateSheet } from './VisitNoteSheets'
 import { DiagnosisPicker } from './DiagnosisPicker'
+import { LOCKED_HINT, lockedForMe } from './lineLabel'
 
 type Appointment = Schemas['AppointmentView']
 type Me = Schemas['BookingViewsMe']
@@ -86,10 +87,11 @@ export function VisitNote({ appointment: a, me }: { appointment: Appointment; me
   if (note.isPending || note.error) return null
   if (note.data.editable === false) {
     // Чужой приём: только прочитать — менять заметку может врач приёма или админ (сервер ответит 403)
-    if (!note.data.note) return null
+    if (!note.data.note) return me && lockedForMe(a, me) ? <p className="hint small service-lock">Заметки нет · {LOCKED_HINT}</p> : null
     return (
       <section className="form" aria-label="Заметка о приёме">
-        <span className="hint">Заметка о приёме{note.data.doctorName ? ` · Врач: ${note.data.doctorName}` : ''}</span>
+        <span className="hint">Заметка о приёме{note.data.doctorName ? ` · Врач: ${note.data.doctorName}` : ''}
+          {me && lockedForMe(a, me) ? <span className="service-lock"> · {LOCKED_HINT}</span> : null}</span>
         <p className="continue-note">{note.data.note}</p>
       </section>
     )

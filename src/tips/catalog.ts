@@ -377,6 +377,13 @@ export const TIPS: Tip[] = [
     show: (me) => Boolean(me.admin || me.reception || me.doctorId != null || isAssistant(me)),
   },
   {
+    id: 'several-services',
+    title: '🦷 Несколько услуг в одном приёме',
+    text: 'Профгигиена и лечение кариеса за один визит? В «Новой записи» выберите обе услуги, в карточке — «＋ Услуга» и зубы у строки. В оплате сумма услуг подставится сама.',
+    action: { guide: 'raspisanie/uslugi-priema' },
+    show: (me) => Boolean(me.admin || me.reception || me.doctorId != null),
+  },
+  {
     id: 'waitlist-windows',
     title: '🔔 Освободилось окно — кому предложить',
     text: 'Укажите в листе ожидания, когда пациенту удобно. Освободится подходящее время — в «Расписании» появится «🔔 Окна»: «Предложить» в бот или WhatsApp.',

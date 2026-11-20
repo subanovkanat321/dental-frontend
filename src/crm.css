@@ -3348,6 +3348,30 @@ button.cash-entry:hover, button.cash-entry.active { background: var(--sunken); }
 .service-picked .chip { display: inline-flex; align-items: center; gap: 4px; padding-right: 2px; }
 .chip-x { min-width: 28px; min-height: 28px; border: 0; border-radius: var(--r-full, 9999px); background: none; color: var(--hint); font: inherit; cursor: pointer; }
 .chip-x:hover { background: var(--sunken); color: var(--text); }
+/* Услуги приёма строками (шаг 5А): «🦷 Лечение кариеса · 36, 37 · × 2 · 12 000 сом», «изменить», ✕, «＋ Услуга» */
+.service-lines { display: grid; gap: 4px; }
+.service-lines-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; margin: 0; }
+.service-lock { color: var(--wait-ink); }
+.service-line-list { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.service-line { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 32px; border-bottom: 1px solid var(--separator); }
+.service-line:last-child { border-bottom: 0; }
+.service-line > form { flex: 1; }
+.service-line-text { min-width: 0; overflow-wrap: anywhere; }
+.service-line-sum { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.service-line-actions { display: inline-flex; align-items: center; gap: 4px; flex: none; }
+.service-line-add { display: grid; grid-template-columns: 1fr auto; gap: 6px; align-items: center; }
+.service-line-plus { justify-self: start; }
+.service-line-name { margin: 0; font-weight: 600; }
+.qty-stepper { display: inline-flex; align-items: center; gap: 8px; }
+.qty-stepper output { min-width: 2ch; text-align: center; font-variant-numeric: tabular-nums; font-weight: 600; }
+/* Оплата: услуги приёма и их сумма над стоимостью */
+.pay-lines { display: grid; gap: 4px; padding: 8px 10px; border-radius: var(--r-md); background: var(--sunken); font-size: .9rem; }
+.pay-lines ul { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.pay-lines li, .pay-lines-total { display: flex; justify-content: space-between; gap: 8px; margin: 0; }
+.pay-lines li span:first-child { min-width: 0; overflow-wrap: anywhere; }
+.pay-lines-total { border-top: 1px solid var(--separator); padding-top: 4px; align-items: baseline; }
+.pay-lines-total span { flex: 1; }
+.pay-promo .error { display: block; }
 
 /* Меню действий — единый вид (2026-11-20, layout/ActionMenu): «⋯» карточки приёма и пациента, меню на записи,
    «Связаться», статус приёма, «Отправить ещё раз». Строка — колонка значка 24px (линейная иконка в оттенке по смыслу или

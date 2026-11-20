@@ -28,7 +28,7 @@ export function appointment(id: number, doctorId: number, time: string, name: st
   const start = new Date(`${todayIn()}T${time}:00+06:00`)
   return {
     id, doctorId, startAt: start.toISOString(), endAt: new Date(start.getTime() + 30 * 60000).toISOString(),
-    status: 'SCHEDULED', reply: 'NONE', version: 0, source: 'DOCTOR', debtSom: 0, firstVisit: false, chairManual: false, patient: { id, fullName: name, phone: '996555123456', telegram: false }, ...extra,
+    status: 'SCHEDULED', reply: 'NONE', version: 0, source: 'DOCTOR', debtSom: 0, firstVisit: false, chairManual: false, lockedForDoctors: false, patient: { id, fullName: name, phone: '996555123456', telegram: false }, ...extra,
   } satisfies Schemas['AppointmentView']
 }
 
@@ -163,6 +163,14 @@ export async function openNewMore(panel: HTMLElement) {
 /** Поле «Услуга» (ServicePicker): какая услуга выбрана — текст поля («🦷 Чистка · 60 мин»), пусто — подсказка. */
 export function serviceField(scope: HTMLElement): HTMLElement {
   return within(scope).getByRole('combobox', { name: 'Услуга' })
+}
+
+/**
+ * Что выбрано в «Услуге» «Новой записи» (несколько услуг, шаг 5А): чипы «Выбранные услуги»; ничего не выбрано — само поле
+ * с подсказкой «Выберите услугу…».
+ */
+export function servicesChosen(scope: HTMLElement): HTMLElement {
+  return within(scope).queryByRole('list', { name: 'Выбранные услуги' }) ?? serviceField(scope)
 }
 
 /** Выбрать услугу в поле «Услуга»: открыть список и нажать строку (имя — начало строки, без эмодзи). */

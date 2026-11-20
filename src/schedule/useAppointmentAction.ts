@@ -16,6 +16,9 @@ type Action =
   | { kind: 'transfer'; body: Schemas['AppointmentRequestsTransfer'] }
   | { kind: 'chair'; body: Schemas['AppointmentRequestsChair'] }
   | { kind: 'service'; body: Schemas['AppointmentRequestsService'] }
+  | { kind: 'addLine'; body: Schemas['AppointmentRequestsAddLine'] }
+  | { kind: 'updateLine'; lineId: number; body: Schemas['AppointmentRequestsUpdateLine'] }
+  | { kind: 'removeLine'; lineId: number }
   | { kind: 'comment'; body: Schemas['AppointmentRequestsComment'] }
   | { kind: 'promo'; body: Schemas['AppointmentRequestsPromoCode'] }
   | { kind: 'reply'; body: Schemas['AppointmentRequestsChangeReply'] }
@@ -52,6 +55,13 @@ export function sendAppointmentAction(id: number, action: Action): Promise<Appoi
         { ...path, body: { ...action.body, chairId: chairId ?? action.body.chairId, confirmChairTime: confirm || undefined } })))
     case 'service':
       return unwrap(api.PUT('/api/appointments/{id}/service', { ...path, body: action.body }))
+    // Услуги приёма строками (шаг 5А)
+    case 'addLine':
+      return unwrap(api.POST('/api/appointments/{id}/services', { ...path, body: action.body }))
+    case 'updateLine':
+      return unwrap(api.PUT('/api/appointments/{id}/services/{lineId}', { params: { path: { id, lineId: action.lineId } }, body: action.body }))
+    case 'removeLine':
+      return unwrap(api.DELETE('/api/appointments/{id}/services/{lineId}', { params: { path: { id, lineId: action.lineId } } }))
     case 'comment':
       return unwrap(api.PUT('/api/appointments/{id}/comment', { ...path, body: action.body }))
     case 'promo':

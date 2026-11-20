@@ -35,6 +35,7 @@ import { ActionMenu, type ActionItem } from '../layout/ActionMenu'
 import { CloseButton } from '../layout/SheetHead'
 import { PlanProgressLine } from '../medical/PlanProgress'
 import { PatientTagsLine } from '../tags/TagDots'
+import { serviceLabel } from '../schedule/lineLabel'
 
 type Me = Schemas['BookingViewsMe']
 type Patient = Schemas['PatientView']
@@ -130,7 +131,7 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
       <>
         <span className="nowrap num">{shortDate(a.startAt, true)}</span>
         {' '}<span className={`chip small s-${s.kind}`}><span className="ico" aria-hidden="true">{s.icon}</span>{s.label}</span>
-        {a.serviceName && <span className="hint"> · {a.serviceName}</span>}
+        {a.serviceName && <span className="hint"> · {serviceLabel(a)}</span>}
         {many && <span className="hint"> · {doctorName(a.doctorId)}</span>}
         {note && <span className="visit-note">📝 {note}</span>}
       </>

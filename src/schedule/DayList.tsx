@@ -21,6 +21,7 @@ import { useMedia } from '../lib/useMedia'
 import { canEditDoctor as canEdit, seesMoneyOf, seesAllMoney as seesAllMoneyOf } from '../lib/roles'
 import { Loading } from '../layout/Loading'
 import { EmptyState } from '../layout/EmptyState'
+import { serviceLabel } from './lineLabel'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
@@ -382,7 +383,7 @@ function Row({ a, me, color, paint, chair, next, active, canEdit, money, onOpen,
           {/* Имя обрезается многоточием, значки — нет: ❗ у длинного имени не должен пропасть */}
           <span className="name"><TagDots patient={a.patient} /><span className="name-text">{a.patient.fullName}</span> <ApptBadges appointment={a} money={money} /></span>
           <span className="end num hint">{timeOf(a.endAt)}</span>
-          <span className={`state tone-${s.tone}`}><span className="ico" aria-hidden="true">{s.icon}</span> {s.label}{a.serviceName ? <span className="hint"> · {serviceEmoji(a.serviceName)} {a.serviceName}</span> : null}</span>
+          <span className={`state tone-${s.tone}`}><span className="ico" aria-hidden="true">{s.icon}</span> {s.label}{a.serviceName ? <span className="hint"> · {serviceEmoji(a.serviceName)} {serviceLabel(a)}</span> : null}</span>
           {chair && (
             <span className="row-note chair-mark" title={colleagueMarkText(chair)}>
               <span aria-hidden="true">🪑 </span>время {shortName(chair.doctorName ?? 'коллеги')}

@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
 import { todayIn } from '../lib/time'
-import { appointment, expand, me, renderApp, pickService } from '../test/fixtures'
+import { appointment, expand, me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 import { choose } from '../test/select'
 import { waitForSlow } from '../test/wait'
@@ -28,6 +28,9 @@ function backend(start: Appointment) {
     http.post('*/api/appointments/:id/reschedule', ({ request }) => save('reschedule', request, (b) => ({ startAt: b.startAt as string }))),
     http.post('*/api/appointments/:id/transfer', ({ request }) => save('transfer', request, (b) => ({ doctorId: b.doctorId as number }))),
     http.put('*/api/appointments/:id/service', ({ request }) => save('service', request, () => ({ serviceName: 'Чистка' }))),
+    http.post('*/api/appointments/:id/services', ({ request }) => save('services', request, () => ({
+      serviceName: 'Чистка', services: [{ id: 1, serviceTypeId: 5, name: 'Чистка', priceSom: 3000, qty: 1, teeth: [], amountSom: 3000 }],
+    }))),
     http.put('*/api/appointments/:id/comment', ({ request }) => save('comment', request, (b) => ({ comment: (b.comment as string) || undefined }))),
     http.get('*/api/service-types', () => HttpResponse.json([{ id: 5, name: 'Чистка', durationMinutes: 60, active: true, priceSom: 3000 }])),
   )
@@ -90,25 +93,26 @@ test('передать другому врачу — /transfer с врачом',
   expect(sent[0]!.body).toMatchObject({ doctorId: 2, durationMinutes: 30 })
 })
 
-test('услуга и комментарий меняются прямо в карточке', async () => {
+test('услуга и комментарий меняются прямо в карточке: «＋ Услуга» — строкой (шаг 5А)', async () => {
   const sent = backend(appointment(10, 1, '15:00', 'Бакыт М.'))
   const panel = await openCard(/Бакыт М\./)
-  await userEvent.click(within(panel).getByRole('button', { name: 'Изменить услугу' }))
-  const service = within(panel).getByRole('form', { name: 'Услуга приёма' })
-  await pickService(service, /Чистка/)
-  await userEvent.click(within(service).getByRole('button', { name: 'Сохранить' }))
+  await userEvent.click(within(panel).getByRole('button', { name: '＋ Услуга' }))
+  await userEvent.click(await within(panel).findByRole('combobox', { name: 'Добавить услугу' }))
+  await userEvent.click(within(screen.getByRole('listbox')).getAllByRole('option', { name: /Чистка/ })[0]!)
   expect(await within(panel).findByText('Чистка')).toBeInTheDocument()
 
   await userEvent.click(within(panel).getByRole('button', { name: '＋ Комментарий' }))
   await userEvent.type(within(panel).getByLabelText('Комментарий'), 'Аллергия на лидокаин')
   await userEvent.click(within(within(panel).getByRole('form', { name: 'Комментарий к записи' })).getByRole('button', { name: 'Сохранить' }))
   expect(await within(panel).findByText('Аллергия на лидокаин')).toBeInTheDocument()
-  expect(sent.map((x) => x.path)).toEqual(['service', 'comment'])
+  expect(sent.map((x) => x.path)).toEqual(['services', 'comment'])
   expect(sent[0]!.body).toEqual({ serviceTypeId: 5 })
 })
 
-test('услуга приёма убрана из прайса — остаётся текущим значением, другие скрытые не предлагаются', async () => {
-  const sent = backend(appointment(10, 1, '15:00', 'Бакыт М.', { serviceName: 'Синус-лифтинг' }))
+test('услуга приёма убрана из прайса — строка остаётся, в «＋ Услуга» скрытые не предлагаются', async () => {
+  backend(appointment(10, 1, '15:00', 'Бакыт М.', {
+    serviceName: 'Синус-лифтинг', services: [{ id: 1, serviceTypeId: 7, name: 'Синус-лифтинг', priceSom: 30000, qty: 1, teeth: [], amountSom: 30000 }],
+  }))
   server.use(http.get('*/api/service-types', () => HttpResponse.json([
     { id: 5, name: 'Чистка', durationMinutes: 60, active: true, priceSom: 3000 },
     { id: 7, name: 'Синус-лифтинг', durationMinutes: 120, active: false, priceSom: 30000 },
@@ -116,18 +120,13 @@ test('услуга приёма убрана из прайса — остаёт�
   ] satisfies Schemas['ServiceTypeView'][])))
   const panel = await openCard(/Бакыт М\./)
   expect(within(panel).getByText('Синус-лифтинг')).toBeInTheDocument()
-  await userEvent.click(within(panel).getByRole('button', { name: 'Изменить услугу' }))
-  const service = within(panel).getByRole('form', { name: 'Услуга приёма' })
-  const select = await within(service).findByLabelText('Услуга')
-  await waitForSlow(() => expect(select).toHaveTextContent('Синус-лифтинг'))
+  await userEvent.click(within(panel).getByRole('button', { name: '＋ Услуга' }))
+  const select = await within(panel).findByRole('combobox', { name: 'Добавить услугу' })
+  await waitForSlow(() => expect(select).toBeEnabled())
   await userEvent.click(select)
   const options = within(screen.getByRole('listbox')).getAllByRole('option').map((o) => o.textContent?.replace(/\s/g, ' '))
-  expect(options).toEqual(['Без услуги', expect.stringMatching(/Чистка · \d+ мин · 3 000 сом$/), expect.stringMatching(/Синус-лифтинг · 120 мин · 30 000 сом · не в прайсе$/)])
-  await userEvent.keyboard('{Escape}')
-  // Сохранили, ничего не меняя, — уходит та же услуга, а не «без услуги»
-  await userEvent.click(within(service).getByRole('button', { name: 'Сохранить' }))
-  await waitForSlow(() => expect(sent).toHaveLength(1))
-  expect(sent[0]!.body).toEqual({ serviceTypeId: 7 })
+  expect(options.join('|')).toContain('Чистка')
+  expect(options.join('|')).not.toMatch(/Синус-лифтинг|Костная пластика/)
 })
 
 test('материалы на приёме: списать со склада, ещё −1, вернуть', async () => {

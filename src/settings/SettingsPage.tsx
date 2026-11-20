@@ -39,6 +39,7 @@ const SourcesPage = lazy(() => import('./SourcesPage').then((m) => ({ default: m
 const ContractTemplatePage = lazy(() => import('../contract/ContractTemplatePage').then((m) => ({ default: m.ContractTemplatePage })))
 const TagsPage = lazy(() => import('./TagsPage').then((m) => ({ default: m.TagsPage })))
 const DiscountsPage = lazy(() => import('./DiscountsPage').then((m) => ({ default: m.DiscountsPage })))
+const VisitEditPage = lazy(() => import('./VisitEditPage').then((m) => ({ default: m.VisitEditPage })))
 const ChairsPage = lazy(() => import('./ChairsPage').then((m) => ({ default: m.ChairsPage })))
 const SurveyPage = lazy(() => import('../survey/SurveyPage').then((m) => ({ default: m.SurveyPage })))
 
@@ -75,6 +76,7 @@ const RENDER: Record<string, (title: string) => Render> = {
   promo: () => (me, back) => <SourcesPage me={me} onBack={back} initial="promo" />,
   tags: () => (me, back) => <TagsPage me={me} onBack={back} />,
   discounts: () => (me, back) => <DiscountsPage me={me} onBack={back} />,
+  'visit-edit': () => (me, back) => <VisitEditPage me={me} onBack={back} />,
   plan: (t) => account('plan', t),
   agreement: (t) => account('agreement', t),
   data: (t) => account('data', t),

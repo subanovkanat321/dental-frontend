@@ -158,7 +158,7 @@ function ReceiptDocs({ appointment: a }: { appointment: Appointment }) {
   const [printing, setPrinting] = useState<PaperFormat | null>(null)
   const receipt = useQuery({
     // Ключ — по деньгам приёма: доплатили — квитанция перечитается
-    queryKey: ['receipt', id, a.paidSom, a.chargeSom, a.debtSom, a.discount?.som, a.paymentMethod],
+    queryKey: ['receipt', id, a.paidSom, a.chargeSom, a.debtSom, a.discount?.som, a.paymentMethod, a.servicesTotalSom, a.services?.length],
     queryFn: () => unwrap(api.GET('/api/appointments/{id}/receipt', { params: { path: { id } } })),
     retry: false,
   })
@@ -188,7 +188,18 @@ function ReceiptSheet({ r, narrow }: { r: Receipt; narrow: boolean }) {
         <dt>Пациент</dt><dd>{r.patient}</dd>
         <dt>Приём</dt><dd>{docDate(r.startAt!)}, {timeOf(r.startAt!)}</dd>
         <dt>Врач</dt><dd>{r.doctor}</dd>
-        {r.service && <><dt>Услуга</dt><dd>{r.service}</dd></>}
+        {/* Несколько услуг, зубы или количество (шаг 5А) — списком; одна простая — строкой, как раньше */}
+        {(r.lines?.length ?? 0) > 1 || (r.lines?.[0] && (r.lines[0].qty > 1 || (r.lines[0].teeth?.length ?? 0) > 0)) ? <>
+          <dt>Услуги</dt>
+          <dd>
+            <ul className="receipt-lines" aria-label="Услуги">
+              {r.lines!.map((l, i) => (
+                <li key={i}>{l.name}{l.teeth?.length ? ` (${l.teeth.join(', ')})` : ''}{l.qty > 1 ? ` × ${l.qty}` : ''}
+                  {l.amountSom != null ? ` — ${somText(l.amountSom)}` : ''}</li>
+              ))}
+            </ul>
+          </dd>
+        </> : r.service && <><dt>Услуга</dt><dd>{r.service}</dd></>}
         {r.discount ? <>
           {/* Скидка (шаг 3Б): цена, скидка и к оплате; причину пациенту не печатаем */}
           <dt>Стоимость</dt><dd>{somText(r.discount.priceSom)}</dd>

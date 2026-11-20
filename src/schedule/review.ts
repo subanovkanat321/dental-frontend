@@ -9,7 +9,7 @@ export type StepRow = { on: boolean; tooth: string; title: string }
 
 /**
  * Экран «Проверьте» — общий у диктовки и шаблона приёма: изменения зубов, шаги плана, заметка (простая или
- * разделами), услуга приёма (только шаблон). Ничего не пишется без «Сохранить»; сохраняет один запрос
+ * разделами), услуги приёма (только шаблон). Ничего не пишется без «Сохранить»; сохраняет один запрос
  * /dictation/apply — шаблон и диктовка ведут себя одинаково.
  */
 export type Review = {
@@ -19,7 +19,8 @@ export type Review = {
   note: string
   /** Заметка разделами (other — текст вне разделов); null — простая заметка */
   sections: Sections | null
-  service: { id: number; name: string; on: boolean } | null
+  /** Услуги шаблона (шаг 5А): добавятся в приём, если их там ещё нет; зубы — выбранные перед шаблоном */
+  services: { id: number; name: string; teeth: number[]; on: boolean }[]
   next: string | null
   ai: boolean
   problem?: string
@@ -46,7 +47,8 @@ export function reviewOf(p: Proposal, current: CurrentNote, ai: boolean, source?
     sections: current.sectionsMode
       ? mergeSections(asSections(current.note, current.sections), { ...(p.sections ?? {}), other: joinText(p.sections?.other, added) })
       : null,
-    service: p.service ? { id: p.service.id, name: p.service.name ?? '', on: true } : null,
+    services: (p.services?.length ? p.services : p.service ? [p.service] : [])
+      .map((x) => ({ id: x.id, name: x.name ?? '', teeth: x.teeth ?? [], on: true })),
     next: nextText(p.next),
     ai,
     source,

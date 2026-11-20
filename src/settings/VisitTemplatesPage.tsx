@@ -4,6 +4,7 @@ import { DiagnosisPicker } from '../schedule/DiagnosisPicker'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { Select } from '../layout/Select'
+import { ServicePicker } from '../clinic/ServicePicker'
 import { ask } from '../lib/confirm'
 import { TOOTH_STATES, type ToothState } from '../medical/toothStates'
 import { cleanSections, hasText, SECTIONS, type Sections } from '../schedule/noteSections'
@@ -115,7 +116,8 @@ function TemplateForm({ me, template: t, onDone }: { me: Me; template?: Template
   const [withSections, setWithSections] = useState(!!t?.sections)
   const [state, setState] = useState<ToothState | ''>(t?.toothState ?? '')
   const [plan, setPlan] = useState((t?.plan ?? []).join('\n'))
-  const [service, setService] = useState<number | ''>(t?.serviceTypeId ?? '')
+  // Несколько услуг (шаг 5А): шаблон добавит в приём те, которых там ещё нет
+  const [serviceIds, setServiceIds] = useState<number[]>(t?.serviceTypeIds?.length ? t.serviceTypeIds : t?.serviceTypeId != null ? [t.serviceTypeId] : [])
   const [shared, setShared] = useState(t ? t.shared : onlyShared)
   const save = useMutation<Template, ApiError>({
     mutationFn: () => {
@@ -125,7 +127,8 @@ function TemplateForm({ me, template: t, onDone }: { me: Me; template?: Template
         sections: withSections && hasText(cleanSections(sections)) ? cleanSections(sections) : undefined,
         toothState: state || undefined,
         plan: plan.split('\n').map((s) => s.trim()).filter(Boolean),
-        serviceTypeId: service === '' ? undefined : service,
+        serviceTypeId: serviceIds[0],
+        serviceTypeIds: serviceIds,
         shared: shared || onlyShared,
       }
       return t
@@ -137,7 +140,7 @@ function TemplateForm({ me, template: t, onDone }: { me: Me; template?: Template
       onDone()
     },
   })
-  const offered = (services.data ?? []).filter((s) => s.active !== false || s.id === t?.serviceTypeId)
+  const offered = (services.data ?? []).filter((s) => s.active !== false || serviceIds.includes(s.id))
   return (
     <form className="form sub-form" aria-label={t ? `Шаблон «${t.title}»` : 'Новый шаблон'} onSubmit={(e) => { e.preventDefault(); save.mutate() }}>
       <label className="field"><span>Название</span>
@@ -166,11 +169,9 @@ function TemplateForm({ me, template: t, onDone }: { me: Me; template?: Template
             {Object.entries(TOOTH_STATES).map(([k, [label, icon]]) => <option key={k} value={k}>{`${icon} ${label}`}</option>)}
           </Select>
         </label>
-        <label className="field"><span>Услуга приёма</span>
-          <Select value={service} onChange={(e) => setService(e.target.value === '' ? '' : Number(e.target.value))}>
-            <option value="">Не менять</option>
-            {offered.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </Select>
+        <label className="field"><span>Услуги приёма</span>
+          <ServicePicker multiple aria-label="Услуга приёма" services={offered} values={serviceIds} placeholder="Не добавлять"
+            onChange={setServiceIds} />
         </label>
       </div>
       <label className="field"><span>Шаги плана — по одному в строке</span>

@@ -74,7 +74,7 @@ test('аллергия — пилюлей в шапке (как в карточ�
   const start = new Date(`${addDays(todayIn(), -10)}T10:00:00+06:00`).toISOString()
   backend({
     patient: { id: 2, fullName: 'Айгуль Т.', phone: '996700333444', telegram: true }, done: 1, noShow: 0, cancelled: 0, upcoming: [],
-    past: [{ id: 50, doctorId: 1, startAt: start, endAt: start, status: 'DONE', version: 0, source: 'DOCTOR', debtSom: 0, firstVisit: false, chairManual: false,
+    past: [{ id: 50, doctorId: 1, startAt: start, endAt: start, status: 'DONE', version: 0, source: 'DOCTOR', debtSom: 0, firstVisit: false, chairManual: false, lockedForDoctors: false,
       patient: { id: 2, fullName: 'Айгуль Т.', telegram: true } }],
   }, me, [
     http.get('*/api/patients/2/anamnesis', () => HttpResponse.json(anamnesis)),

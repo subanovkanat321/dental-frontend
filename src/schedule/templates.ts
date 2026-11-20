@@ -11,7 +11,7 @@ export function templateSummary(t: Template): string {
     text.length > 60 ? `${text.slice(0, 60)}…` : text,
     t.toothState ? `зубы: ${TOOTH_STATES[t.toothState][0].toLowerCase()}` : '',
     t.plan?.length ? `план: ${t.plan.length}` : '',
-    t.serviceName ? `услуга: ${t.serviceName}` : '',
+    (t.serviceNames?.length ?? 0) > 1 ? `услуги: ${t.serviceNames!.join(', ')}` : t.serviceName ? `услуга: ${t.serviceName}` : '',
   ].filter(Boolean).join(' · ')
 }
 

@@ -10,6 +10,7 @@ import { EarningsSummary } from '../earnings/EarningsWidgets'
 import { OnDuty } from '../team/OnDuty'
 import { EmptyState } from '../layout/EmptyState'
 import { ReviewAsksChip } from './AskReview'
+import { serviceLabel } from './lineLabel'
 
 type Appointment = Schemas['AppointmentView']
 
@@ -89,14 +90,14 @@ export function DaySummary({ date, today, all, doctorName, requests, waiting, to
           <button key={a.id} type="button" className="ds-next now" onClick={() => onOpen(a)}>
             <span className="ds-next-time num">сейчас · до {timeOf(a.endAt)}</span>
             <span className="ds-next-name">{a.patient.fullName}</span>
-            <span className="hint small">{doctorName(a.doctorId)}{a.serviceName ? ` · ${a.serviceName}` : ''}</span>
+            <span className="hint small">{doctorName(a.doctorId)}{a.serviceName ? ` · ${serviceLabel(a)}` : ''}</span>
           </button>
         ))}
         {next ? (
           <button type="button" className={`ds-next s-${statusOf(next).kind}`} onClick={() => onOpen(next)}>
             <span className="ds-next-time num">{timeOf(next.startAt)}–{timeOf(next.endAt)}</span>
             <span className="ds-next-name">{next.patient.fullName}</span>
-            <span className="ds-next-meta">{doctorName(next.doctorId)}{next.serviceName ? ` · ${next.serviceName}` : ''}</span>
+            <span className="ds-next-meta">{doctorName(next.doctorId)}{next.serviceName ? ` · ${serviceLabel(next)}` : ''}</span>
             <span className="ds-next-state"><span aria-hidden="true">{statusOf(next).icon}</span> {statusOf(next).label}</span>
           </button>
         ) : (

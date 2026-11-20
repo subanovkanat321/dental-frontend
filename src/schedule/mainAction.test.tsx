@@ -180,14 +180,16 @@ describe('по моменту', () => {
     expect(screen.queryByRole('menuitemradio', { name: /^Нет ответа/ })).not.toBeInTheDocument()
   })
 
-  test('после визита промокод и «откуда узнал» — в свёрнутом «О записи»; до визита — строками', async () => {
+  test('после визита «откуда узнал» — в свёрнутом «О записи», промокод — в оплате (рядом со скидкой); до визита — строками', async () => {
     backend()
     const { panel } = renderPanel({ ...base, status: 'DONE', paidSom: 6000, chargeSom: 6000 }, reception)
     const about = within(panel).getByRole('region', { name: 'О записи' })
     expect(within(panel).getByText('Лечение кариеса')).toBeInTheDocument()
     expect(within(panel).queryByRole('button', { name: '＋ Промокод' })).not.toBeInTheDocument()
     await userEvent.click(within(about).getByRole('button', { name: /О записи/ }))
-    expect(within(about).getByRole('button', { name: '＋ Промокод' })).toBeInTheDocument()
+    // Промокод у состоявшегося приёма — в форме оплаты, рядом со скидкой (2026-11-20, владелец), не в «О записи»
+    expect(within(about).queryByRole('button', { name: '＋ Промокод' })).not.toBeInTheDocument()
+    expect(within(about).getByText(/Откуда узнал/)).toBeInTheDocument()
     cleanup()
     const ahead = renderPanel(tomorrow(), reception).panel
     expect(within(ahead).queryByRole('region', { name: 'О записи' })).not.toBeInTheDocument()

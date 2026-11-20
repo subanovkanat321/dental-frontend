@@ -12,12 +12,10 @@ import { isChairError } from './chairTime'
 import { useAppointmentAction } from './useAppointmentAction'
 import { canEditServices, editableDoctors } from '../lib/roles'
 import { openServiceLater } from '../lib/openService'
-import { servicesOfDoctor } from '../lib/doctorServices'
 import { DateInput } from '../layout/DateInput'
 import { useFreeDays } from '../lib/freeDays'
 import { Fold } from '../layout/Fold'
 import { Select } from '../layout/Select'
-import { ServicePicker } from '../clinic/ServicePicker'
 import { expired, usePromoCodes } from '../lib/promo'
 
 type Me = Schemas['BookingViewsMe']
@@ -123,40 +121,6 @@ export function ChairEdit({ appointment: a, onDone }: { appointment: Appointment
         <ChairTimeHint doctorId={a.doctorId} startAt={a.startAt} duration={duration} chairId={chair.chosen} appointmentId={a.id}
           action="Сохранить" multi onPickChair={chair.pick} hidden={isChairError(action.error)} />
       )}
-      {action.error && <p className="error" role="alert">{errorText(action.error)}</p>}
-      <div className="actions">
-        <button type="submit" className="btn primary" disabled={action.isPending}>Сохранить</button>
-        <button type="button" className="btn ghost" onClick={onDone}>Отмена</button>
-      </div>
-    </form>
-  )
-}
-
-/** Услуга приёма: выбрать из услуг врача приёма (выбраны — только они, иначе все услуги клиники); «—» — без услуги. */
-export function ServiceEdit({ appointment: a, me, onDone, prices = true }: { appointment: Appointment; me: Me; onDone: () => void; prices?: boolean }) {
-  const action = useAppointmentAction(a)
-  const services = useQuery({
-    queryKey: ['service-types'],
-    queryFn: () => unwrap(api.GET('/api/service-types')),
-    staleTime: 5 * 60_000,
-  })
-  // Текущая услуга приёма — и если её уже убрали из прайса: остаётся в списке текущим значением
-  const all = services.data ?? []
-  const current = (all.find((s) => s.name === a.serviceName && s.active !== false) ?? all.find((s) => s.name === a.serviceName))?.id ?? ''
-  const [serviceId, setServiceId] = useState<number | ''>('')
-  const chosen = serviceId === '' ? current : serviceId
-  // Выбрать — только из прайса (скрытые — «в справочнике клиники»)
-  const offered = servicesOfDoctor(all.filter((s) => s.active !== false || s.id === current), me.doctorServices, a.doctorId, current)
-  return (
-    <form className="form sub-form" aria-label="Услуга приёма" onSubmit={(e) => {
-      e.preventDefault()
-      action.mutate({ kind: 'service', body: { serviceTypeId: chosen === '' ? undefined : chosen } }, { onSuccess: onDone })
-    }}>
-      <label className="field"><span>Услуга</span>
-        {/* Тот же выбор услуги, что в «Новой записи»: поиск, «Частые», разделы прайса */}
-        <ServicePicker aria-label="Услуга" services={offered} value={chosen} clearable prices={prices}
-          note={(s) => (s.active === false ? 'не в прайсе' : null)} onChange={(id) => setServiceId(id)} />
-      </label>
       {action.error && <p className="error" role="alert">{errorText(action.error)}</p>}
       <div className="actions">
         <button type="submit" className="btn primary" disabled={action.isPending}>Сохранить</button>

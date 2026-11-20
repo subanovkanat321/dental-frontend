@@ -282,15 +282,18 @@ function usePeriodRows(period: Period, scope: { doctorId?: number }) {
   return { rows, pending: reports.some((q) => q.isPending), error: failed(reports) }
 }
 
-/** Услуги по оплатам за месяц: что приносит деньги. Топ-6, остальное — «Другое». */
+/** Услуги по оплатам за месяц: что приносит деньги. Топ-6, остальное — «Другое». Приём с несколькими услугами — долями. */
 function ServicesChart({ period, scope }: { period: Period; scope: { doctorId?: number } }) {
   const { rows, pending, error } = usePeriodRows(period, scope)
   const sums = new Map<string, { value: number; count: number }>()
   for (const r of rows) {
     if (!r.paidSom) continue
-    const name = r.service || 'Без услуги'
-    const s = sums.get(name) ?? { value: 0, count: 0 }
-    sums.set(name, { value: s.value + r.paidSom, count: s.count + 1 })
+    // Несколько услуг в приёме (шаг 5А): оплату между ними делит сервер — пропорционально их сумме (так ложится и скидка)
+    const parts = r.lines?.length ? r.lines.map((l) => ({ name: l.name, value: l.revenueSom })) : [{ name: r.service || 'Без услуги', value: r.paidSom }]
+    for (const part of parts) {
+      const s = sums.get(part.name) ?? { value: 0, count: 0 }
+      sums.set(part.name, { value: s.value + part.value, count: s.count + 1 })
+    }
   }
   const sorted = [...sums.entries()].map(([name, s]) => ({ name, value: s.value, note: `приёмов ${s.count}` })).sort((a, b) => b.value - a.value)
   const top = sorted.slice(0, 6)

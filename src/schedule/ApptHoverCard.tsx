@@ -38,7 +38,7 @@ export function ApptHoverCard({ id, a, rect, me, doctor }: { id: string; a: Appo
     ['Пациент', a.patient.fullName],
     ['Телефон', phone ? formatPhone(phone) : null],
     ['Врач', doctor],
-    ['Услуга', a.serviceName],
+    [(a.services?.length ?? 0) > 1 ? 'Услуги' : 'Услуга', (a.services?.length ?? 0) > 1 ? a.services!.map((l) => l.name).join(', ') : a.serviceName],
     ['Комментарий', a.comment?.trim()],
     ['Предоплата', deposit],
     ['Долг', money && a.debtSom > 0 ? somText(a.debtSom) : null],

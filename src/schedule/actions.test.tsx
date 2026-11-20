@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
 import { todayIn } from '../lib/time'
-import { appointment, me, renderApp, expand, openPay, pickStatus, statusMenu, chosenDoctor, pickDoctorChip, openBooked, openNewMore, serviceField, pickService, serviceOptionsShown } from '../test/fixtures'
+import { appointment, me, renderApp, expand, openPay, pickStatus, statusMenu, chosenDoctor, pickDoctorChip, openBooked, openNewMore, serviceField, servicesChosen, pickService, serviceOptionsShown } from '../test/fixtures'
 import { server } from '../test/server'
 
 type Appointment = Schemas['AppointmentView']
@@ -305,11 +305,11 @@ test('новая запись: у врача выбраны услуги — т�
   // У врача 1 услуги не выбраны — все услуги клиники
   await pickDoctorChip(panel, 'Айгерим С.')
   await pickService(panel, 'Чистка')
-  expect(serviceField(panel)).toHaveTextContent('Чистка · 60 мин')
+  expect(servicesChosen(panel)).toHaveTextContent('Чистка · 60 мин')
 
   // Обратно к врачу 2: «Чистку» он не оказывает — её нет, выбор снят
   await pickDoctorChip(panel, 'Дастан Т.')
-  expect(serviceField(panel)).toHaveTextContent('Выберите услугу…')
+  expect(servicesChosen(panel)).toHaveTextContent('Выберите услугу…')
   expect((await serviceOptionsShown(panel)).join('|')).not.toContain('Чистка')
 })
 
@@ -374,6 +374,6 @@ test('новая запись: услуга одним полем — поиск
   await userEvent.type(within(document.body).getByRole('searchbox', { name: 'Поиск в списке' }), 'ребенк')
   await userEvent.click(within(screen.getByRole('listbox')).getByRole('option', { name: /Осмотр ребёнка/ }))
   // Выбрали — в поле услуга и длительность (без цены), длительность записи подставилась
-  expect(serviceField(panel)).toHaveTextContent('Осмотр ребёнка · 80 мин')
+  expect(servicesChosen(panel)).toHaveTextContent('Осмотр ребёнка · 80 мин')
   expect(within(panel).getByRole('spinbutton', { name: 'Длительность, мин' })).toHaveValue(80)
 })

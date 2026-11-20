@@ -11,6 +11,7 @@ import { isShaky } from './paint'
 import { statusOf } from './status'
 import type { useApptHover } from './useApptHover'
 import { apptSpan, fromYesterday, untilTomorrow } from './workSpans'
+import { serviceLabel } from './lineLabel'
 
 type Appointment = Schemas['AppointmentView']
 
@@ -70,7 +71,7 @@ export const DayAppt = memo(function DayAppt({ a, date, from, limit, active, mon
         {/* Статус словом и у короткого приёма: цвет без слова не читается (FINDING-002) */}
         <span className={`appt-state${short || h > 56 ? '' : ' wide-only'}`}><span className="ico" aria-hidden="true">{s.icon}</span> {s.label}</span>
         <span className="appt-sub">
-          {a.serviceName && <span className={`appt-note${!short && h > 66 ? '' : ' wide-only'}`}>{a.serviceName}</span>}
+          {a.serviceName && <span className={`appt-note${!short && h > 66 ? '' : ' wide-only'}`}>{serviceLabel(a)}</span>}
           {a.comment && <span className={`appt-note${!short && h > 88 ? '' : ' wide-only'}`}>{a.comment}</span>}
           {a.depositStatus && money && ['REQUESTED', 'SCHEDULED'].includes(a.status) && (
             <span className={`appt-note${!short && h > 80 ? '' : ' wide-only'}`}>Предоплата {a.depositStatus === 'RECEIVED' ? 'получена' : a.depositStatus === 'REPORTED' ? '— проверьте' : '— ждём'}</span>

@@ -11,10 +11,11 @@ import { DateInput } from '../layout/DateInput'
 import { Select } from '../layout/Select'
 import { serviceOptions, usePopularServices } from '../clinic/serviceOptions'
 import { useEarnings } from '../earnings/earnings'
-import { seesAdvance, seesOwnEarnings } from '../lib/roles'
+import { canEditDoctor, seesAdvance, seesOwnEarnings } from '../lib/roles'
 import { useAdvance } from '../patients/advance'
 import { Loading } from '../layout/Loading'
 import { discountText, reasonText } from '../lib/discount'
+import { discountText as promoDiscountText, expired, usePromoCodes } from '../lib/promo'
 import { DiscountField } from './DiscountField'
 import { initialPayView, type PayView } from './payView'
 import { draftOf, draftProblem, draftSom, useDiscountPolicy, type DiscountDraft } from './discountDraft'
@@ -122,6 +123,7 @@ export function PaymentBox({ appointment: a, me, open, mainOutside = false, quie
           : fullyPaid ? `✅ Оплачено ${somText(a.paidSom ?? 0)}${split || !a.paymentMethod ? '' : ` · ${methodName(a.paymentMethod)}`}`
           : a.chargeSom != null && !(a.discount && (a.paidSom ?? 0) >= a.chargeSom) ? `${somText(a.paidSom ?? 0)} из ${somText(a.chargeSom)}`
           : split ? somText(a.paidSom ?? 0) : `${somText(a.paidSom ?? 0)} · ${methodName(a.paymentMethod)}`}</span>
+        {a.promoCode && <span className="hint payment-promo"> · {`🎟 ${a.promoCode}`}</span>}
         {!installments && <EditButton label="Изменить оплату" onClick={() => setView('edit')} />}
       </p>
       {a.paidSom === 0 && !allInDebt && a.freeComment && <p className="hint small payment-note">{a.freeComment}</p>}
@@ -222,6 +224,56 @@ function PriceChips({ onPick }: { onPick: (price: number, add: boolean) => void 
  * тоже 0 сом в кассу этого дня (деньги уже получены и учтены раньше, например на прошлом визите), но
  * приём показывается оплаченным; комментарий — по желанию («оплатил 12.10 вместе с лечением»).
  */
+/**
+ * Услуги приёма в форме оплаты (шаг 5А): «Профгигиена 3 000 · Лечение кариеса × 2 12 000 = 15 000» и «Подставить», если в
+ * поле другая сумма. Одна услуга без количества — строки нет (цена и так подставлена).
+ */
+function LinesSum({ a, cost, onUse }: { a: Appointment; cost: number | null; onUse: (sum: number) => void }) {
+  const lines = a.services ?? []
+  const total = a.servicesTotalSom
+  if (total == null || (lines.length < 2 && (lines[0]?.qty ?? 1) < 2)) return null
+  return (
+    <div className="pay-lines" aria-label="Услуги приёма">
+      <ul>
+        {lines.map((l) => (
+          <li key={l.id}><span>{serviceEmoji(l.name)} {l.name}{l.teeth.length ? ` · ${l.teeth.join(', ')}` : ''}{l.qty > 1 ? `\u00a0×\u00a0${l.qty}` : ''}</span>
+            <span className="num">{l.amountSom != null ? somText(l.amountSom) : '—'}</span></li>
+        ))}
+      </ul>
+      <p className="pay-lines-total"><span>По услугам</span> <b className="num">{somText(total)}</b>
+        {cost !== total && <button type="button" className="link" onClick={() => onUse(total)}>Подставить</button>}</p>
+    </div>
+  )
+}
+
+/**
+ * Промокод в оплате (2026-11-20, владелец): рядом со скидкой — код может давать её. Выбор сразу сохраняется
+ * (PUT …/promo-code, те же права, что раньше); у кода со скидкой в процентах — скидка подставляется в форму.
+ */
+function PromoField({ a, me, onDiscount }: { a: Appointment; me: Me; onDiscount: (percent: number) => void }) {
+  const action = useAppointmentAction(a)
+  const codes = usePromoCodes()
+  const offered = (codes.data ?? []).filter((p) => p.code === a.promoCode || (p.active !== false && !expired(p, todayIn())))
+  if (!canEditDoctor(me, a.doctorId) || (!a.promoCode && offered.length === 0)) return null
+  return (
+    <label className="field pay-promo"><span>Промокод</span>
+      <Select aria-label="Промокод" value={a.promoCode ?? ''} disabled={action.isPending} onChange={(e) => {
+        const code = e.target.value
+        action.mutate({ kind: 'promo', body: { promoCode: code } }, {
+          onSuccess: () => {
+            const percent = offered.find((p) => p.code === code)?.discountPercent
+            if (percent) onDiscount(percent)
+          },
+        })
+      }}>
+        <option value="">Без промокода</option>
+        {offered.map((p) => <option key={p.id} value={p.code}>{`🎟 ${p.code}${promoDiscountText(p) ? ` · ${promoDiscountText(p)}` : ''}`}</option>)}
+      </Select>
+      {action.error && <span className="error small" role="alert">{action.error.message}</span>}
+    </label>
+  )
+}
+
 function Unpaid({ a, onPay, primary }: { a: Appointment; onPay?: () => void; primary: boolean }) {
   const action = useAppointmentAction(a)
   const [prepaid, setPrepaid] = useState(false)
@@ -293,7 +345,8 @@ function PayForm({ a, me, billOnly, parts: initialParts, spentHere = 0, onCancel
   const how3: [How, string][] = advance > 0 ? [...METHODS, ['ADVANCE', `С аванса · ${somText(advance)}`], ['SPLIT', 'Разными способами']] : HOW
   const hadDebt = a.debtSom > 0
   // Со скидкой «стоимость» в форме — цена до скидки, к оплате — её посчитанный остаток
-  const [cost, setCost] = useState(String(a.discount?.priceSom ?? a.chargeSom ?? a.paidSom ?? a.servicePriceSom ?? ''))
+  // Услуги строками (шаг 5А): цена до скидки по умолчанию — сумма строк (цена × количество), её считает сервер
+  const [cost, setCost] = useState(String(a.discount?.priceSom ?? a.chargeSom ?? a.paidSom ?? a.servicesTotalSom ?? a.servicePriceSom ?? ''))
   const [discount, setDiscount] = useState<DiscountDraft | null>(() => draftOf(a.discount))
   const policy = useDiscountPolicy()
   const [whole, setWhole] = useState(!hadDebt)
@@ -432,9 +485,14 @@ function PayForm({ a, me, billOnly, parts: initialParts, spentHere = 0, onCancel
       <div className="pay-step">
         <span className="pay-step-n" aria-hidden="true">1</span>
         <div className="pay-step-body">
+          <LinesSum a={a} cost={priceNum} onUse={(sum) => setCost(String(sum))} />
           {costField(discount ? 'Цена приёма до скидки, сом' : 'Стоимость приёма, сом')}
           <PriceChips onPick={pick} />
           <DiscountField price={priceNum} value={discount} onChange={setDiscount} policy={policy.data} />
+          <PromoField a={a} me={me} onDiscount={(percent) => {
+            // Код со скидкой в процентах — подставим её, если скидку ещё не вписали (решает сотрудник: можно убрать)
+            if (!discount && policy.data?.canGive) setDiscount({ kind: 'percent', value: String(percent), reason: 'PROMO', comment: '' })
+          }} />
         </div>
       </div>
 
@@ -525,7 +583,7 @@ function ExtraForm({ a, me, onCancel }: { a: Appointment; me: Me; onCancel: () =
 /** После предоплаты: сколько стоил приём — остаток станет долгом, дальше «Принять доплату». */
 function RestForm({ a, onCancel }: { a: Appointment; onCancel: () => void }) {
   const action = useAppointmentAction(a)
-  const [cost, setCost] = useState(String(a.servicePriceSom ?? ''))
+  const [cost, setCost] = useState(String(a.servicesTotalSom ?? a.servicePriceSom ?? ''))
   return (
     <form className="pay-form" aria-label="Стоимость приёма" onSubmit={(e) => {
       e.preventDefault()

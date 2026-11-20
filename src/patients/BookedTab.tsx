@@ -15,6 +15,7 @@ import { statusOf } from '../schedule/status'
 import { Loading } from '../layout/Loading'
 import { HeadTools } from '../layout/PageHead'
 import { CalmRow } from './CalmList'
+import { serviceLabel } from '../schedule/lineLabel'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
@@ -157,7 +158,7 @@ function BookedRow({ a, doctor, canEdit, past, onOpen }: {
   return (
     <CalmRow open={onOpen ? () => onOpen(a.id) : null} lead={timeOf(a.startAt)} name={a.patient.fullName}
       flags={a.status === 'REQUESTED' && <span className="chip calm-flag s-request">Заявка</span>}
-      sub={[a.serviceName ?? 'Услуга не выбрана', doctor].filter(Boolean).join(' · ')}
+      sub={[serviceLabel(a) ?? 'Услуга не выбрана', doctor].filter(Boolean).join(' · ')}
       meta={a.status !== 'REQUESTED' && <span className={s.kind === 'ok' ? 'tone-ok' : undefined}>{s.label.toLowerCase()}</span>}
       action={canRemind && (
         <button type="button" className="btn" disabled={!text || opened.isPending} onClick={whatsapp}

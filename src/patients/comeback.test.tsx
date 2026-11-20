@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { me, renderApp, findSub, chosenDoctor, serviceField } from '../test/fixtures'
+import { me, renderApp, findSub, chosenDoctor, servicesChosen } from '../test/fixtures'
 import { server } from '../test/server'
 import { waitForSlow } from '../test/wait'
 
@@ -263,7 +263,7 @@ test('«Отменили»: «Записать» — «Новая запись»
   const form = await screen.findByRole('complementary', { name: 'Новая запись' })
   expect(form).toHaveTextContent('Динара Ж.')
   expect(chosenDoctor(form)).toBe('Дастан Т.')
-  await waitFor(() => expect(serviceField(form)).toHaveTextContent('Чистка'))
+  await waitFor(() => expect(servicesChosen(form)).toHaveTextContent('Чистка'))
 })
 
 test('«Позвать снова»: «звали 3 дня назад · всего 2 раза»; позвать снова в течение недели — сначала вопрос', async () => {

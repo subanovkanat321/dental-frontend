@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
 import { addDays, shortDate, shortDay, todayIn } from '../lib/time'
-import { appointment, me, renderApp, chosenDoctor, serviceField } from '../test/fixtures'
+import { appointment, me, renderApp, chosenDoctor, servicesChosen } from '../test/fixtures'
 import { server } from '../test/server'
 import { choose } from '../test/select'
 
@@ -125,7 +125,7 @@ test('«Записать на следующий визит»: услуга и �
   await user.click(await within(panel).findByRole('button', { name: 'Записать на следующий визит' }))
   const form = await screen.findByRole('complementary', { name: 'Новая запись' })
   // Этап «Коронка 46»: услуга (её длительность) и врач этапа
-  await waitFor(() => expect(serviceField(form)).toHaveTextContent('Коронка · 60 мин'))
+  await waitFor(() => expect(servicesChosen(form)).toHaveTextContent('Коронка · 60 мин'))
   expect(chosenDoctor(form)).toBe('Дастан Т.')
   expect(within(form).getByRole('combobox', { name: /Длительность/ })).toHaveAttribute('data-value', '60')
   // Ближайшее свободное у врача этапа — а не 10:00 вне окон с ручным полем
@@ -219,7 +219,7 @@ test('регистратура: «Записать на следующий ви�
   const panel = screen.getByRole('complementary', { name: 'Карточка приёма' })
   await user.click(await within(panel).findByRole('button', { name: 'Записать на следующий визит' }))
   const form = await screen.findByRole('complementary', { name: 'Новая запись' })
-  await waitFor(() => expect(serviceField(form)).toHaveTextContent('Коронка · 60 мин'))
+  await waitFor(() => expect(servicesChosen(form)).toHaveTextContent('Коронка · 60 мин'))
   expect(chosenDoctor(form)).toBe('Дастан Т.')
   expect(await within(form).findByRole('button', { name: `Записать · ${shortDay(due)}, 11:00` })).toBeInTheDocument()
   expect(planAsked).toBe(false)

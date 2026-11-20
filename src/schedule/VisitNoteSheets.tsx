@@ -106,7 +106,12 @@ export function SaveTemplateSheet({ appointment: a, me, note, sections, onSaved,
     staleTime: 5 * 60_000,
     enabled: !!a.serviceName,
   })
-  const service = services.data?.find((s) => s.name === a.serviceName && s.active !== false)
+  // Все услуги приёма (шаг 5А), что ещё в прайсе: шаблон запомнит их списком
+  const lineIds = (a.services ?? []).map((l) => l.serviceTypeId).filter((id): id is number => id != null)
+  const kept = lineIds.length
+    ? lineIds.map((id) => services.data?.find((s) => s.id === id && s.active !== false)).filter((s) => s != null)
+    : (services.data ?? []).filter((s) => s.name === a.serviceName && s.active !== false).slice(0, 1)
+  const service = kept[0]
   const onlyShared = !!me?.admin && me.doctorId == null
   const [title, setTitle] = useState(a.serviceName ?? '')
   const [withService, setWithService] = useState(true)
@@ -118,6 +123,7 @@ export function SaveTemplateSheet({ appointment: a, me, note, sections, onSaved,
         note: note?.trim() || undefined,
         sections: sections ?? undefined,
         serviceTypeId: withService && service ? service.id : undefined,
+        serviceTypeIds: withService && kept.length > 1 ? kept.map((s) => s.id) : undefined,
         shared: shared || onlyShared,
       },
     })),
@@ -135,7 +141,7 @@ export function SaveTemplateSheet({ appointment: a, me, note, sections, onSaved,
         <p className="hint small">В шаблон попадёт заметка{sections ? ' с разделами' : ''}. Номера зубов в тексте можно заменить на {'{зуб}'} — потом подставятся выбранные.</p>
         {service && (
           <label className="check"><input type="checkbox" checked={withService} onChange={(e) => setWithService(e.target.checked)} />
-            <span>С услугой приёма: {service.name}</span></label>
+            <span>{kept.length > 1 ? `С услугами приёма: ${kept.map((s) => s.name).join(', ')}` : `С услугой приёма: ${service.name}`}</span></label>
         )}
         {me?.admin && (
           <label className="check"><input type="checkbox" checked={shared || onlyShared} disabled={onlyShared} onChange={(e) => setShared(e.target.checked)} />

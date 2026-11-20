@@ -247,7 +247,7 @@ test('«Настройки» — вкладками, как другие раз�
   renderApp()
   let bar = await tabs('Настройки')
   expect(within(bar).getByRole('link', { name: 'Напоминание о приёме' })).toHaveAttribute('aria-current', 'page')
-  expect(within(bar).getAllByRole('link')).toHaveLength(18) // + «Отметки приёма» (V245), + «Дни рождения» (шаг 6Б)
+  expect(within(bar).getAllByRole('link')).toHaveLength(19) // + «Отметки приёма» (V245), «Дни рождения» (шаг 6Б), «Правка приёмов» (шаг 5А)
   expect(within(nav()).queryByRole('group', { name: 'Настройки' })).not.toBeInTheDocument()
   expect(within(nav()).getByRole('button', { name: 'Раскрыть подразделы: Настройки' })).toHaveAttribute('aria-expanded', 'false')
   await userEvent.click(within(bar).getByRole('link', { name: 'Памятки после процедур' }))

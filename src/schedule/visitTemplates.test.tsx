@@ -84,7 +84,7 @@ test('«📄 Шаблон»: зубы → тот же экран «Провер�
   await userEvent.click(within(review).getByRole('button', { name: 'Сохранить' }))
   expect(await screen.findByRole('status')).toHaveTextContent('Сохранено в медкарту · зубов: 1 · шагов плана: 1')
   expect(calls.apply[0]).toMatchObject({
-    teeth: [{ tooth: 36, state: 'FILLING' }], plan: [{ tooth: 36, title: 'Контроль 36' }], note: 'Анестезия без реакции\nКариес 36', serviceTypeId: 3,
+    teeth: [{ tooth: 36, state: 'FILLING' }], plan: [{ tooth: 36, title: 'Контроль 36' }], note: 'Анестезия без реакции\nКариес 36', services: [{ serviceTypeId: 3, teeth: [] }],
   })
   expect(calls.apply[0]!.sections).toBeUndefined()
 })

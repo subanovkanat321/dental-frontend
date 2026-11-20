@@ -3867,6 +3867,50 @@
         }
       }
     },
+    "/api/clinic/visit-edit" : {
+      "get" : {
+        "tags" : [ "visit-edit-controller" ],
+        "operationId" : "get_6",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/VisitEditControllerSetting"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "visit-edit-controller" ],
+        "operationId" : "set_7",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/VisitEditControllerSetting"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/VisitEditControllerSetting"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/clinic/review-timing" : {
       "get" : {
         "tags" : [ "review-settings-controller" ],
@@ -4086,7 +4130,7 @@
     "/api/clinic/discounts" : {
       "get" : {
         "tags" : [ "discount-controller" ],
-        "operationId" : "get_6",
+        "operationId" : "get_7",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -4102,7 +4146,7 @@
       },
       "put" : {
         "tags" : [ "discount-controller" ],
-        "operationId" : "set_7",
+        "operationId" : "set_8",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -4725,9 +4769,87 @@
         }
       }
     },
+    "/api/appointments/{id}/services/{lineId}" : {
+      "put" : {
+        "tags" : [ "appointment-lines-controller" ],
+        "operationId" : "update_24",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "lineId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AppointmentRequestsUpdateLine"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AppointmentView"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "appointment-lines-controller" ],
+        "operationId" : "remove_3",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "lineId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AppointmentView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/appointments/{id}/service" : {
       "put" : {
-        "tags" : [ "appointment-controller" ],
+        "tags" : [ "appointment-lines-controller" ],
         "operationId" : "service",
         "parameters" : [ {
           "name" : "id",
@@ -12257,7 +12379,7 @@
     "/api/calendar-feed" : {
       "get" : {
         "tags" : [ "calendar-feed-controller" ],
-        "operationId" : "get_7",
+        "operationId" : "get_8",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -12840,6 +12962,43 @@
             "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/AppointmentRequestsChangeStatus"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AppointmentView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appointments/{id}/services" : {
+      "post" : {
+        "tags" : [ "appointment-lines-controller" ],
+        "operationId" : "add_8",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AppointmentRequestsAddLine"
               }
             }
           },
@@ -14238,7 +14397,7 @@
     "/web/case" : {
       "get" : {
         "tags" : [ "join-case" ],
-        "operationId" : "get_8",
+        "operationId" : "get_9",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -14774,7 +14933,7 @@
     "/api/salaries/timesheet" : {
       "get" : {
         "tags" : [ "timesheet-controller" ],
-        "operationId" : "get_9",
+        "operationId" : "get_10",
         "parameters" : [ {
           "name" : "month",
           "in" : "query",
@@ -15007,7 +15166,7 @@
     "/api/support/tickets/{id}" : {
       "get" : {
         "tags" : [ "support-controller" ],
-        "operationId" : "get_10",
+        "operationId" : "get_11",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -15034,7 +15193,7 @@
     "/api/platform/support/tickets/{id}" : {
       "get" : {
         "tags" : [ "support-controller" ],
-        "operationId" : "get_11",
+        "operationId" : "get_12",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -15302,7 +15461,7 @@
     "/api/platform/health" : {
       "get" : {
         "tags" : [ "health-controller" ],
-        "operationId" : "get_12",
+        "operationId" : "get_13",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -15648,7 +15807,7 @@
     "/api/platform-info" : {
       "get" : {
         "tags" : [ "platform-info-controller" ],
-        "operationId" : "get_13",
+        "operationId" : "get_14",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -15937,7 +16096,7 @@
     "/api/patients/{patientId}/contract" : {
       "get" : {
         "tags" : [ "contract-controller" ],
-        "operationId" : "get_14",
+        "operationId" : "get_15",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "path",
@@ -16387,7 +16546,7 @@
     "/api/patient-questions/{id}" : {
       "get" : {
         "tags" : [ "question-controller" ],
-        "operationId" : "get_15",
+        "operationId" : "get_16",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -16540,7 +16699,7 @@
     "/api/me/earnings" : {
       "get" : {
         "tags" : [ "earnings-controller" ],
-        "operationId" : "get_16",
+        "operationId" : "get_17",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -17343,7 +17502,7 @@
     "/api/appointments/{id}" : {
       "get" : {
         "tags" : [ "appointment-controller" ],
-        "operationId" : "get_17",
+        "operationId" : "get_18",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -18604,7 +18763,7 @@
     "/api/members/{telegramId}" : {
       "delete" : {
         "tags" : [ "staff-members-controller" ],
-        "operationId" : "remove_3",
+        "operationId" : "remove_4",
         "parameters" : [ {
           "name" : "telegramId",
           "in" : "path",
@@ -18914,9 +19073,22 @@
           },
           "discount" : {
             "$ref" : "#/components/schemas/PaymentDiscount"
+          },
+          "services" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ServiceLine"
+            }
+          },
+          "servicesTotalSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "lockedForDoctors" : {
+            "type" : "boolean"
           }
         },
-        "required" : [ "chairManual", "debtSom", "doctorId", "endAt", "firstVisit", "id", "patient", "source", "startAt", "status", "version" ]
+        "required" : [ "chairManual", "debtSom", "doctorId", "endAt", "firstVisit", "id", "lockedForDoctors", "patient", "source", "startAt", "status", "version" ]
       },
       "FamiliesBooker" : {
         "properties" : {
@@ -19016,6 +19188,41 @@
           }
         },
         "required" : [ "priceSom", "som" ]
+      },
+      "ServiceLine" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "serviceTypeId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "priceSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "qty" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "teeth" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int32"
+            }
+          },
+          "amountSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "id", "name", "qty", "teeth" ]
       },
       "WaitlistView" : {
         "properties" : {
@@ -19121,6 +19328,13 @@
           },
           "shared" : {
             "type" : "boolean"
+          },
+          "serviceTypeIds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int64"
+            }
           }
         }
       },
@@ -19164,6 +19378,19 @@
           },
           "usesTeeth" : {
             "type" : "boolean"
+          },
+          "serviceTypeIds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int64"
+            }
+          },
+          "serviceNames" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
           }
         },
         "required" : [ "editable", "id", "shared", "title", "usesTeeth" ]
@@ -23029,6 +23256,14 @@
         },
         "required" : [ "available", "on" ]
       },
+      "VisitEditControllerSetting" : {
+        "properties" : {
+          "doctorWindow" : {
+            "type" : "string",
+            "enum" : [ "ALWAYS", "SAME_DAY" ]
+          }
+        }
+      },
       "ReviewSettingsControllerReviewTimingView" : {
         "properties" : {
           "timing" : {
@@ -23628,6 +23863,25 @@
           }
         },
         "required" : [ "number" ]
+      },
+      "AppointmentRequestsUpdateLine" : {
+        "properties" : {
+          "qty" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "teeth" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int32"
+            }
+          },
+          "priceSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
       },
       "AppointmentRequestsService" : {
         "properties" : {
@@ -26963,6 +27217,15 @@
           "chairId" : {
             "type" : "integer",
             "format" : "int64"
+          },
+          "serviceTypeIds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int64"
+            },
+            "maxItems" : 30,
+            "minItems" : 0
           }
         },
         "required" : [ "doctorId", "durationMinutes", "patientId", "startAt" ]
@@ -27025,6 +27288,12 @@
           },
           "service" : {
             "$ref" : "#/components/schemas/VisitDictationServiceRef"
+          },
+          "services" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/VisitDictationServiceRef"
+            }
           }
         }
       },
@@ -27036,9 +27305,16 @@
           },
           "name" : {
             "type" : "string"
+          },
+          "teeth" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int32"
+            }
           }
         },
-        "required" : [ "id" ]
+        "required" : [ "id", "name" ]
       },
       "VisitDictationToothChange" : {
         "properties" : {
@@ -27295,6 +27571,26 @@
         },
         "required" : [ "status", "version" ]
       },
+      "AppointmentRequestsAddLine" : {
+        "properties" : {
+          "serviceTypeId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "qty" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "teeth" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int32"
+            }
+          }
+        },
+        "required" : [ "serviceTypeId" ]
+      },
       "ReviewLinksSent" : {
         "properties" : {
           "text" : {
@@ -27499,8 +27795,30 @@
           "serviceTypeId" : {
             "type" : "integer",
             "format" : "int64"
+          },
+          "services" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/VisitDictationServicePick"
+            }
           }
         }
+      },
+      "VisitDictationServicePick" : {
+        "properties" : {
+          "serviceTypeId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "teeth" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int32"
+            }
+          }
+        },
+        "required" : [ "serviceTypeId" ]
       },
       "VisitDictationApplied" : {
         "properties" : {
@@ -32348,6 +32666,29 @@
         },
         "required" : [ "available" ]
       },
+      "ReceiptsLine" : {
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "qty" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "teeth" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int32"
+            }
+          },
+          "amountSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "qty" ]
+      },
       "ReceiptsPayment" : {
         "properties" : {
           "paidAt" : {
@@ -32421,6 +32762,12 @@
           "advanceLeftSom" : {
             "type" : "integer",
             "format" : "int32"
+          },
+          "lines" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ReceiptsLine"
+            }
           }
         },
         "required" : [ "appointmentId", "debtSom", "paidSom", "telegram" ]
@@ -32736,9 +33083,31 @@
           "discountPercent" : {
             "type" : "integer",
             "format" : "int32"
+          },
+          "lines" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ServiceRevenue"
+            }
           }
         },
         "required" : [ "id" ]
+      },
+      "ServiceRevenue" : {
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "qty" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "revenueSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "name", "qty", "revenueSom" ]
       },
       "RecallView" : {
         "properties" : {

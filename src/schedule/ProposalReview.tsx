@@ -41,7 +41,7 @@ export function ProposalReview({ appointment: a, initial, onSaved, onCancel }: {
           plan: r.plan.filter((s) => s.on).map((s) => ({ tooth: s.tooth.trim() ? Number(s.tooth) : undefined, title: s.title.trim() })),
           note: sections ? renderSections(sections) : r.note.trim(),
           sections: sections && hasText(sections) ? sections : undefined,
-          serviceTypeId: r.service?.on ? r.service.id : undefined,
+          services: r.services.some((x) => x.on) ? r.services.filter((x) => x.on).map((x) => ({ serviceTypeId: x.id, teeth: x.teeth })) : undefined,
         },
       }))
     },
@@ -58,7 +58,7 @@ export function ProposalReview({ appointment: a, initial, onSaved, onCancel }: {
       void client.invalidateQueries({ queryKey: ['visit-teeth', a.id] })
       void client.invalidateQueries({ queryKey: ['teeth-history'] })
       // Услуга приёма из шаблона — карточка и расписание покажут новую
-      if (r.service?.on) refreshAppointmentData(client, ['appointment'])
+      if (r.services.some((x) => x.on)) refreshAppointmentData(client, ['appointment'])
       const teeth = r.teeth.filter((t) => t.on).length
       const steps = r.plan.filter((s) => s.on).length
       onSaved(['Сохранено в медкарту', teeth ? `зубов: ${teeth}` : '', steps ? `шагов плана: ${steps}` : ''].filter(Boolean).join(' · '))
@@ -79,12 +79,14 @@ export function ProposalReview({ appointment: a, initial, onSaved, onCancel }: {
       {r.source ? <p className="hint small">Поправьте и снимите лишнее. Ничего не сохранится без «Сохранить».</p>
         : r.ai ? <p className="hint small">Разобрал ИИ — снимите лишнее и поправьте. Ничего не сохранится без «Сохранить».</p>
           : <p className="tone-wait small" role="status">{r.problem} Текст добавлен в заметку.</p>}
-      {r.service && (
-        <label className="check dictation-service">
-          <input type="checkbox" checked={r.service.on} onChange={(e) => setReview({ ...r, service: { ...r.service!, on: e.target.checked } })} />
-          <span>Услуга приёма: <b>{r.service.name}</b></span>
+      {/* Услуги шаблона — добавятся в приём (которых там ещё нет); снимите лишние */}
+      {r.services.map((x, i) => (
+        <label key={x.id} className="check dictation-service">
+          <input type="checkbox" checked={x.on}
+            onChange={(e) => setReview({ ...r, services: r.services.map((y, j) => (j === i ? { ...y, on: e.target.checked } : y)) })} />
+          <span>Услуга приёма: <b>{x.name}</b>{x.teeth.length ? <span className="hint"> · {x.teeth.join(', ')}{x.teeth.length > 1 ? ` · × ${x.teeth.length}` : ''}</span> : null}</span>
         </label>
-      )}
+      ))}
       {r.teeth.length > 0 && (
         <fieldset className="dictation-group">
           <legend>Карта зубов</legend>

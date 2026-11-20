@@ -8,7 +8,7 @@ import { useSettings, useWaitlist } from '../api/settings'
 import { useClose } from '../lib/useClose'
 import { freeSlotText, whatsappUrl } from '../lib/texts'
 import { openLink } from '../lib/telegram'
-import { addDays, dateOf as dateOfInstant, formatPhone, minutesOfTime, nowMinutes5, shortDate, shortDay, slotInstant, timeOf, todayIn } from '../lib/time'
+import { addDays, dateOf as dateOfInstant, formatPhone, minutesOfTime, nowMinutes5, shortDate, shortDay, slotInstant, somText, timeOf, todayIn } from '../lib/time'
 import { PhoneInput } from '../clinic/PhoneInput'
 import { phoneFromInput, phoneFromText } from '../clinic/phone'
 import { servicesOfDoctor } from '../lib/doctorServices'
@@ -53,6 +53,13 @@ type Service = Schemas['ServiceTypeView']
  * последнего состоявшегося приёма). next — «Записать на следующий визит» / «Записать снова» из карточки приёма: услуга и
  * врач следующего этапа плана лечения, время — ближайшее свободное у врача (день — тот же или следующие).
  */
+/** «1 ч 45 мин», «45 мин» — длительность нескольких услуг. */
+function durationText(minutes: number): string {
+  const h = Math.floor(minutes / 60)
+  const m = minutes % 60
+  return h ? `${h} ч${m ? ` ${m} мин` : ''}` : `${m} мин`
+}
+
 export type Slot = { doctorId: number; date: string; minutes: number | null; duration?: number; serviceId?: number; soft?: boolean; next?: boolean }
 
 const UNTOUCHED = { doctor: false, time: false, service: false }
@@ -153,7 +160,9 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
   // Месяц, открытый в календаре «День», — для зелёных дней врача (useFreeDays, кэш по месяцу)
   const [calMonth, setCalMonth] = useState(slot.date.slice(0, 7))
   const freeDays = useFreeDays(doctorId, calMonth, duration)
-  const [serviceId, setServiceId] = useState<number | ''>(slot.serviceId ?? '')
+  // Несколько услуг на запись (шаг 5А): первая — главная; serviceId — она (подстановки этапа плана, «Записать снова»)
+  const [serviceIds, setServiceIds] = useState<number[]>(slot.serviceId != null ? [slot.serviceId] : [])
+  const serviceId: number | '' = serviceIds[0] ?? ''
   const timeRef = useRef<HTMLDivElement>(null)
   const submitRef = useRef<HTMLButtonElement>(null)
   const [comment, setComment] = useState('')
@@ -244,7 +253,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
     if (step?.serviceTypeId != null && presetKey.serviceId == null && !touched.service) {
       const sv = servicesOfDoctor(services.data ?? [], me.doctorServices, doctor).find((x) => x.id === step.serviceTypeId)
       if (sv) {
-        setServiceId(sv.id)
+        setServiceIds([sv.id])
         if (sv.durationMinutes) {
           length = sv.durationMinutes
           setDuration(length)
@@ -317,6 +326,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
           startAt: startAt!,
           durationMinutes: duration,
           serviceTypeId: serviceId === '' ? undefined : serviceId,
+          serviceTypeIds: serviceIds.length > 1 ? serviceIds : undefined,
           comment: comment.trim() || undefined,
           promoCode: promoCode || undefined,
           confirmChairTime: confirm || undefined,
@@ -435,14 +445,22 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
   // Услуги выбранного врача (выбраны у него — только они, иначе все услуги клиники)
   const activeServices = servicesOfDoctor(services.data ?? [], me.doctorServices, doctorId)
   // Врач сменился (и нажатием в другую колонку), а выбранную услугу он не оказывает — снять выбор
-  if (serviceId !== '' && services.data && !activeServices.some((sv) => sv.id === serviceId)) setServiceId('')
-  // Услуга — одним полем с поиском (ServicePicker), а не рядом кнопок на полэкрана (2026-11-20, владелец)
-  const pickService = (next: number | '', sv?: Service) => {
+  if (services.data && serviceIds.some((id) => !activeServices.some((sv) => sv.id === id))) {
+    setServiceIds(serviceIds.filter((id) => activeServices.some((sv) => sv.id === id)))
+  }
+  const picked = serviceIds.map((id) => activeServices.find((sv) => sv.id === id)).filter((sv): sv is Service => sv != null)
+  // Подсказка суммы — сумма цен «от» выбранных услуг (итог считает сервер в «Оплате»)
+  const pricedTotal = picked.some((sv) => sv.priceSom) ? picked.reduce((sum, sv) => sum + (sv.priceSom ?? 0), 0) : null
+  // Услуги — одним полем с поиском (ServicePicker, 2026-11-20): несколько — чипами с ✕ и «＋ Ещё услуга…»
+  const pickServices = (next: number[]) => {
     touch('service')
-    setServiceId(next)
-    if (sv && next !== '' && sv.durationMinutes) setDuration(sv.durationMinutes)
-    // Выбрали услугу — дальше время (на телефоне сам прокрутим к нему)
-    if (next !== '') reveal(walkIn ? submitRef.current : timeRef.current, walkIn)
+    const added = next.length > serviceIds.length
+    setServiceIds(next)
+    // Длительность — сумма длительностей услуг (дальше её можно поправить), до 8 часов
+    const minutes = next.map((id) => activeServices.find((sv) => sv.id === id)?.durationMinutes ?? 0).reduce((a, b) => a + b, 0)
+    if (minutes > 0) setDuration(Math.min(minutes, 480))
+    // Первую услугу выбрали — дальше время (на телефоне сам прокрутим к нему)
+    if (added && next.length === 1) reveal(walkIn ? submitRef.current : timeRef.current, walkIn)
   }
 
   /** «⚡ Сейчас» — включить: сегодня, эта минута, врач по умолчанию; ещё раз — обратно к выбору времени. */
@@ -577,8 +595,14 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
 
         {activeServices.length > 0 && (
           <label className="field"><span>Услуга</span>
-            <ServicePicker aria-label="Услуга" services={activeServices} value={serviceId} clearable prices={!isAssistant(me)}
-              placeholder="Выберите услугу…" onChange={pickService} />
+            <ServicePicker multiple aria-label="Услуга" services={activeServices} values={serviceIds} prices={!isAssistant(me)}
+              placeholder="Выберите услугу…" onChange={pickServices} />
+            {picked.length > 1 && (
+              <span className="hint small" data-testid="services-sum">
+                {picked.length} услуги · {durationText(picked.reduce((m, sv) => m + (sv.durationMinutes ?? 0), 0))}
+                {pricedTotal != null && !isAssistant(me) ? ` · от ${somText(pricedTotal)}` : ''}
+              </span>
+            )}
           </label>
         )}
         {/* Врач — до дня и времени: свободное время зависит от врача (UX-аудит 2026-11-20) */}

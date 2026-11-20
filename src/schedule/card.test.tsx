@@ -209,12 +209,13 @@ test('до начала приёма — без заметки и материа
   expect(panel).not.toHaveClass('panel-full')
 })
 
-test('«＋ Промокод» — рядом с «＋ Комментарий»; «＋ Предоплата · ＋ В лист ожидания» — строкой ссылок, без свёрнутого «Ещё»', async () => {
+test('до приёма «＋ Промокод» — своей строкой под «＋ Комментарий»; «＋ Предоплата · ＋ В лист ожидания» — строкой ссылок, без свёрнутого «Ещё»', async () => {
   backend(appointment(11, 1, '23:59', 'Айгуль С.', { version: 1 }))
   server.use(http.get('*/api/waitlist', () => HttpResponse.json([])))
   renderApp()
   const panel = await open(/Айгуль С\./)
-  expect(within(panel).getByRole('button', { name: '＋ Промокод' }).parentElement).toContainElement(within(panel).getByRole('button', { name: '＋ Комментарий' }))
+  // Промокод (2026-11-20, владелец) — не в строке с комментарием: у состоявшегося приёма он в оплате, рядом со скидкой
+  expect(within(panel).getByRole('button', { name: '＋ Промокод' }).parentElement).not.toContainElement(within(panel).getByRole('button', { name: '＋ Комментарий' }))
   expect(within(panel).queryByRole('button', { name: /^Ещё ·|^Ещё$/ })).not.toBeInTheDocument()
   expect(within(panel).queryByRole('region', { name: 'Ещё' })).not.toBeInTheDocument()
   const deposit = within(panel).getByRole('button', { name: '＋ Предоплата' })

@@ -1380,6 +1380,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/clinic/visit-edit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_6"];
+        put: operations["set_7"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/clinic/review-timing": {
         parameters: {
             query?: never;
@@ -1483,8 +1499,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_6"];
-        put: operations["set_7"];
+        get: operations["get_7"];
+        put: operations["set_8"];
         post?: never;
         delete?: never;
         options?: never;
@@ -1711,6 +1727,22 @@ export interface paths {
         put: operations["mark_2"];
         post?: never;
         delete: operations["unmark_1"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/appointments/{id}/services/{lineId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["update_24"];
+        post?: never;
+        delete: operations["remove_3"];
         options?: never;
         head?: never;
         patch?: never;
@@ -4891,7 +4923,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_7"];
+        get: operations["get_8"];
         put?: never;
         post: operations["rotate"];
         delete: operations["delete_16"];
@@ -5102,6 +5134,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["changeStatus"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/appointments/{id}/services": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["add_8"];
         delete?: never;
         options?: never;
         head?: never;
@@ -5819,7 +5867,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_8"];
+        get: operations["get_9"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6107,7 +6155,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_9"];
+        get: operations["get_10"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6235,7 +6283,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_10"];
+        get: operations["get_11"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6251,7 +6299,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_11"];
+        get: operations["get_12"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6411,7 +6459,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_12"];
+        get: operations["get_13"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6603,7 +6651,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_13"];
+        get: operations["get_14"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6747,7 +6795,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_14"];
+        get: operations["get_15"];
         put?: never;
         post?: never;
         delete: operations["unsign"];
@@ -7003,7 +7051,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_15"];
+        get: operations["get_16"];
         put?: never;
         post?: never;
         delete?: never;
@@ -7115,7 +7163,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_16"];
+        get: operations["get_17"];
         put?: never;
         post?: never;
         delete?: never;
@@ -7595,7 +7643,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_17"];
+        get: operations["get_18"];
         put?: never;
         post?: never;
         delete: operations["delete_18"];
@@ -8174,7 +8222,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["remove_3"];
+        delete: operations["remove_4"];
         options?: never;
         head?: never;
         patch?: never;
@@ -8345,6 +8393,10 @@ export interface components {
             cancelReason?: "CHANGED_MIND" | "DUPLICATE" | "ILL" | "OTHER_TIME" | "CLINIC" | "OTHER" | "PATIENT";
             cancelNote?: string;
             discount?: components["schemas"]["PaymentDiscount"];
+            services?: components["schemas"]["ServiceLine"][];
+            /** Format: int32 */
+            servicesTotalSom?: number;
+            lockedForDoctors: boolean;
         };
         FamiliesBooker: {
             fullName?: string;
@@ -8387,6 +8439,20 @@ export interface components {
             /** Format: int32 */
             priceSom: number;
         };
+        ServiceLine: {
+            /** Format: int64 */
+            id: number;
+            /** Format: int64 */
+            serviceTypeId?: number;
+            name: string;
+            /** Format: int32 */
+            priceSom?: number;
+            /** Format: int32 */
+            qty: number;
+            teeth: number[];
+            /** Format: int32 */
+            amountSom?: number;
+        };
         WaitlistView: {
             /** Format: int64 */
             id: number;
@@ -8427,6 +8493,7 @@ export interface components {
             toothState?: "HEALTHY" | "CARIES" | "TREATING" | "FILLING" | "CROWN" | "IMPLANT" | "MISSING";
             plan?: string[];
             shared?: boolean;
+            serviceTypeIds?: number[];
         };
         VisitTemplatesView: {
             /** Format: int64 */
@@ -8443,6 +8510,8 @@ export interface components {
             toothState?: "HEALTHY" | "CARIES" | "TREATING" | "FILLING" | "CROWN" | "IMPLANT" | "MISSING";
             plan?: string[];
             usesTeeth: boolean;
+            serviceTypeIds?: number[];
+            serviceNames?: string[];
         };
         NewTask: {
             title: string;
@@ -9987,6 +10056,10 @@ export interface components {
             available: boolean;
             on: boolean;
         };
+        VisitEditControllerSetting: {
+            /** @enum {string} */
+            doctorWindow?: "ALWAYS" | "SAME_DAY";
+        };
         ReviewSettingsControllerReviewTimingView: {
             /** @enum {string} */
             timing?: "TWO_HOURS" | "EVENING" | "NEXT_DAY";
@@ -10227,6 +10300,13 @@ export interface components {
             /** Format: date-time */
             createdAt?: string;
             doctorName?: string;
+        };
+        AppointmentRequestsUpdateLine: {
+            /** Format: int32 */
+            qty?: number;
+            teeth?: number[];
+            /** Format: int32 */
+            priceSom?: number;
         };
         AppointmentRequestsService: {
             /** Format: int64 */
@@ -11599,6 +11679,7 @@ export interface components {
             fromWaitlistId?: number;
             /** Format: int64 */
             chairId?: number;
+            serviceTypeIds?: number[];
         };
         VisitTemplateControllerTeeth: {
             teeth?: number[];
@@ -11620,11 +11701,13 @@ export interface components {
             next?: components["schemas"]["VisitDictationNextVisit"];
             sections?: components["schemas"]["NoteSections"];
             service?: components["schemas"]["VisitDictationServiceRef"];
+            services?: components["schemas"]["VisitDictationServiceRef"][];
         };
         VisitDictationServiceRef: {
             /** Format: int64 */
             id: number;
-            name?: string;
+            name: string;
+            teeth?: number[];
         };
         VisitDictationToothChange: {
             /** Format: int32 */
@@ -11726,6 +11809,13 @@ export interface components {
             reason?: "CHANGED_MIND" | "DUPLICATE" | "ILL" | "OTHER_TIME" | "CLINIC" | "OTHER" | "PATIENT";
             reasonNote?: string;
         };
+        AppointmentRequestsAddLine: {
+            /** Format: int64 */
+            serviceTypeId: number;
+            /** Format: int32 */
+            qty?: number;
+            teeth?: number[];
+        };
         ReviewLinksSent: {
             text: string;
             url: string;
@@ -11810,6 +11900,12 @@ export interface components {
             sections?: components["schemas"]["NoteSections"];
             /** Format: int64 */
             serviceTypeId?: number;
+            services?: components["schemas"]["VisitDictationServicePick"][];
+        };
+        VisitDictationServicePick: {
+            /** Format: int64 */
+            serviceTypeId: number;
+            teeth?: number[];
         };
         VisitDictationApplied: {
             teeth?: components["schemas"]["ToothView"][];
@@ -13710,6 +13806,14 @@ export interface components {
             /** Format: date-time */
             nextAt?: string;
         };
+        ReceiptsLine: {
+            name?: string;
+            /** Format: int32 */
+            qty: number;
+            teeth?: number[];
+            /** Format: int32 */
+            amountSom?: number;
+        };
         ReceiptsPayment: {
             /** Format: date-time */
             paidAt?: string;
@@ -13741,6 +13845,7 @@ export interface components {
             advanceSom?: number;
             /** Format: int32 */
             advanceLeftSom?: number;
+            lines?: components["schemas"]["ReceiptsLine"][];
         };
         PaymentQueryEntry: {
             /** Format: int64 */
@@ -13879,6 +13984,14 @@ export interface components {
             discountSom?: number;
             /** Format: int32 */
             discountPercent?: number;
+            lines?: components["schemas"]["ServiceRevenue"][];
+        };
+        ServiceRevenue: {
+            name: string;
+            /** Format: int32 */
+            qty: number;
+            /** Format: int32 */
+            revenueSom: number;
         };
         RecallView: {
             patient?: components["schemas"]["PatientView"];
@@ -17273,6 +17386,50 @@ export interface operations {
             };
         };
     };
+    get_6: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VisitEditControllerSetting"];
+                };
+            };
+        };
+    };
+    set_7: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VisitEditControllerSetting"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VisitEditControllerSetting"];
+                };
+            };
+        };
+    };
     timing: {
         parameters: {
             query?: never;
@@ -17477,7 +17634,7 @@ export interface operations {
             };
         };
     };
-    get_6: {
+    get_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -17497,7 +17654,7 @@ export interface operations {
             };
         };
     };
-    set_7: {
+    set_8: {
         parameters: {
             query?: never;
             header?: never;
@@ -18027,6 +18184,56 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["VisitToothView"][];
+                };
+            };
+        };
+    };
+    update_24: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+                lineId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AppointmentRequestsUpdateLine"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppointmentView"];
+                };
+            };
+        };
+    };
+    remove_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+                lineId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppointmentView"];
                 };
             };
         };
@@ -24072,7 +24279,7 @@ export interface operations {
             };
         };
     };
-    get_7: {
+    get_8: {
         parameters: {
             query?: never;
             header?: never;
@@ -24497,6 +24704,32 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["AppointmentRequestsChangeStatus"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppointmentView"];
+                };
+            };
+        };
+    };
+    add_8: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AppointmentRequestsAddLine"];
             };
         };
         responses: {
@@ -25624,7 +25857,7 @@ export interface operations {
             };
         };
     };
-    get_8: {
+    get_9: {
         parameters: {
             query?: never;
             header?: never;
@@ -26018,7 +26251,7 @@ export interface operations {
             };
         };
     };
-    get_9: {
+    get_10: {
         parameters: {
             query: {
                 month: string;
@@ -26211,7 +26444,7 @@ export interface operations {
             };
         };
     };
-    get_10: {
+    get_11: {
         parameters: {
             query?: never;
             header?: never;
@@ -26233,7 +26466,7 @@ export interface operations {
             };
         };
     };
-    get_11: {
+    get_12: {
         parameters: {
             query?: never;
             header?: never;
@@ -26449,7 +26682,7 @@ export interface operations {
             };
         };
     };
-    get_12: {
+    get_13: {
         parameters: {
             query?: never;
             header?: never;
@@ -26735,7 +26968,7 @@ export interface operations {
             };
         };
     };
-    get_13: {
+    get_14: {
         parameters: {
             query?: never;
             header?: never;
@@ -26955,7 +27188,7 @@ export interface operations {
             };
         };
     };
-    get_14: {
+    get_15: {
         parameters: {
             query?: {
                 doctorId?: number;
@@ -27321,7 +27554,7 @@ export interface operations {
             };
         };
     };
-    get_15: {
+    get_16: {
         parameters: {
             query?: never;
             header?: never;
@@ -27465,7 +27698,7 @@ export interface operations {
             };
         };
     };
-    get_16: {
+    get_17: {
         parameters: {
             query?: never;
             header?: never;
@@ -28105,7 +28338,7 @@ export interface operations {
             };
         };
     };
-    get_17: {
+    get_18: {
         parameters: {
             query?: never;
             header?: never;
@@ -28941,7 +29174,7 @@ export interface operations {
             };
         };
     };
-    remove_3: {
+    remove_4: {
         parameters: {
             query?: never;
             header?: never;

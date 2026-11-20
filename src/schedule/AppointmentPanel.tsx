@@ -21,7 +21,9 @@ import { useClose } from '../lib/useClose'
 import { useFullView } from '../lib/fullView'
 import { useNowMinutes } from './gridScale'
 import { addDays, dateOf, formatPhone, shortDayTitle, minutesOf, slotInstant, somText, timeOf, todayIn } from '../lib/time'
-import { ChairEdit, CommentEdit, PromoEdit, Reschedule, ServiceEdit, Supplies, VisitNote } from './AppointmentExtras'
+import { ChairEdit, CommentEdit, PromoEdit, Reschedule, Supplies, VisitNote } from './AppointmentExtras'
+import { ServiceLines } from './ServiceLines'
+import { lockedForMe, serviceLabel } from './lineLabel'
 import { useChairs } from '../team/chairs'
 import { ActionMenu } from '../layout/ActionMenu'
 import { ContactMenu } from './ContactMenu'
@@ -347,25 +349,24 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
       {canEdit && <EditButton label="Изменить комментарий" onClick={() => setEditing('comment')} />}</p>
   ) : null
   // Что за приём: услуга и комментарий — на виду
+  const servicesBlock = <ServiceLines appointment={a} me={me} canEdit={canEdit} prices={!isAssistant(me)} />
   const serviceBlock = (
     <>
-      {editing === 'service' ? <ServiceEdit appointment={a} me={me} onDone={close} prices={!isAssistant(me)} /> : (
-        <p className="line-edit">
-          <span><span className="hint">Услуга:</span> {a.serviceName ?? '—'}</span>
-          {canEdit && a.status !== 'CANCELLED' && <EditButton label="Изменить услугу" onClick={() => setEditing('service')} />}
-        </p>
-      )}
+      {/* Услуги приёма строками (шаг 5А): зубы, количество, цена, ✕ и «＋ Услуга»; прошлый состоявшийся — 🔒.
+          Врачу на приёме — в «Приёме» (что делали — клиническое), остальным — здесь, на виду */}
+      {!doctorView && servicesBlock}
       {!doctorView && commentBlock}
     </>
   )
+  // Промокод ставят в оплате (рядом со скидкой: код может давать скидку) — у состоявшегося приёма тем, кто видит деньги
+  const promoInPayment = a.status === 'DONE' && seesMoney
   // Редкое о записи: «＋ Комментарий / ＋ Промокод», кресло, промокод, «откуда узнал» — после визита свёрнуто в «О записи»
   const aboutBlock = (
     <>
-        {/* «＋ Комментарий» и «＋ Промокод» — одной строкой ссылок (промокод раньше прятался под «Ещё») */}
-        {canEdit && a.status !== 'CANCELLED' && ((!a.comment && editing !== 'comment') || (!a.promoCode && editing !== 'promo' && canEditDoctor(me, a.doctorId))) && (
+        {/* «＋ Комментарий»; промокод (2026-11-20, владелец) — в оплате, рядом со скидкой: здесь — только пока оплаты не видно */}
+        {canEdit && a.status !== 'CANCELLED' && !a.comment && editing !== 'comment' && (
           <p className="appt-add-links">
-            {!a.comment && editing !== 'comment' && <button type="button" className="link" onClick={() => setEditing('comment')}>＋ Комментарий</button>}
-            {!a.promoCode && editing !== 'promo' && canEditDoctor(me, a.doctorId) && <button type="button" className="link" onClick={() => setEditing('promo')}>＋ Промокод</button>}
+            <button type="button" className="link" onClick={() => setEditing('comment')}>＋ Комментарий</button>
           </p>
         )}
         {/* Кресло приёма (V210) — только когда оно не кресло врача (chair_manual): у остальных и так кресло врача; сменить — у предстоящего */}
@@ -374,9 +375,11 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
             {canEdit && active && future && <EditButton label="Сменить кресло" onClick={() => setEditing('chair')} />}</p>
         )}
         {/* Промокод рекламы: пациент ввёл в боте или назвал по телефону; пустой — «＋ Промокод» рядом с «＋ Комментарий» */}
-        {editing === 'promo' ? <PromoEdit appointment={a} onDone={close} /> : a.promoCode && (
+        {editing === 'promo' ? <PromoEdit appointment={a} onDone={close} /> : a.promoCode ? (
           <p className="line-edit"><span><span className="hint">Промокод:</span> <b>{`🎟 ${a.promoCode}`}</b></span>
-            {canEdit && <EditButton label="Изменить промокод" onClick={() => setEditing('promo')} />}</p>
+            {canEdit && !promoInPayment && <EditButton label="Изменить промокод" onClick={() => setEditing('promo')} />}</p>
+        ) : canEdit && !promoInPayment && a.status !== 'CANCELLED' && canEditDoctor(me, a.doctorId) && (
+          <p className="appt-add-links"><button type="button" className="link" onClick={() => setEditing('promo')}>＋ Промокод</button></p>
         )}
         {/* Откуда узнал о клинике — строкой «Откуда узнал о клинике? выбрать» / «… Instagram изменить» (раньше — под «Ещё») */}
         {canEdit && a.patient.id != null && <SourceLine patient={a.patient} canEdit compact admin={Boolean(me.admin)} />}
@@ -463,11 +466,12 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
       {(clinical || (canEdit && (visitTools || a.status === 'NO_SHOW'))) && a.status !== 'CANCELLED' && (
         <section className="appt-visit" aria-label="Приём">
           {clinical && <ContinueTreatment appointment={a} open={visitTools && a.status === 'SCHEDULED'} onMedical={medical} />}
+          {doctorView && servicesBlock}
           {canEdit && (visitTools || a.status === 'NO_SHOW') && <VisitNote appointment={a} me={me} />}
           {/* Зубы этого приёма: врач приёма и админ отмечают, ассистент видит; «Карта зубов и план лечения ›» — вся медкарта */}
           {canEdit && visitTools && clinical && a.patient.id != null && (
             <VisitTeeth appointment={a} onMedical={medical}
-              readOnly={!(seesAllMoney(me) || (a.doctorId != null && a.doctorId === me.doctorId))} />
+              readOnly={lockedForMe(a, me) || !(seesAllMoney(me) || (a.doctorId != null && a.doctorId === me.doctorId))} />
           )}
           {/* План лечения — сразу после зубов: тот же редактор, что в медкарте — добавить этапы, отметить сделанное */}
           {visitTools && clinical && a.patient.id != null && <VisitPlan appointment={a} me={me} />}
@@ -641,7 +645,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
 
       {/* Врачу на приёме — запись и связь ниже клинического, свёрнуто: услуга, комментарий, промокод, откуда узнал, задачи */}
       {doctorView && (
-        <Fold title="О записи" label="О записи" meta={a.serviceName ?? undefined}>
+        <Fold title="О записи" label="О записи" meta={serviceLabel(a)}>
           <div className="appt-about">
             {whatSection}
             {beforeArrival && contacts.nowhere && <p className="hint small" role="note">{NOWHERE_TEXT}</p>}
