@@ -74,18 +74,23 @@ export function ExpenseOwner({ me, value, onChange }: { me: Me; value: string; o
  * по врачам с остатком. У обычного — «Чей расход» ({@link ExpenseOwner}): по умолчанию врач из фильтра кассы,
  * иначе клиника. Доли и права считает сервер.
  */
-export function ExpenseForm({ me, doctorId, patientPick, shared: sharedDefault = false, onDone }: {
+export function ExpenseForm({ me, doctorId, patientPick, shared: sharedDefault = false, fromCash: cashDefault = false, day, onDone }: {
   me: Me
   /** Админ смотрит кассу одного врача — «Чей расход» по умолчанию он */
   doctorId?: number | null
   /** Поле «Пациент — необязательно» (в «Расходах»), в окне «＋ Расход» не нужно */
   patientPick?: (value: { id: number; fullName: string } | null, onChange: (p: { id: number; fullName: string } | null) => void) => React.ReactNode
   shared?: boolean
+  /** «Из кассы наличными» сразу отмечено — «＋ Расход из кассы» в «Кассе дня» */
+  fromCash?: boolean
+  /** Дата расхода по умолчанию — день, открытый в «Кассе дня» */
+  day?: string
   onDone?: () => void
 }) {
   const client = useQueryClient()
   const canShare = canShareExpenses(me)
-  const [form, setForm] = useState({ spentOn: todayIn(), amount: '', category: '', other: '', comment: '' })
+  const [form, setForm] = useState({ spentOn: day ?? todayIn(), amount: '', category: '', other: '', comment: '' })
+  const [fromCash, setFromCash] = useState(cashDefault)
   const [patient, setPatient] = useState<{ id: number; fullName: string } | null>(null)
   const [owner, setOwner] = useExpenseOwner(doctorId)
   const [shared, setShared] = useState(canShare && sharedDefault)
@@ -100,7 +105,7 @@ export function ExpenseForm({ me, doctorId, patientPick, shared: sharedDefault =
     mutationFn: () => unwrap(api.POST('/api/expenses', {
       body: {
         spentOn: form.spentOn, amountSom: amount, category: form.category === '*' ? form.other.trim() : form.category,
-        comment: form.comment.trim() || undefined,
+        comment: form.comment.trim() || undefined, fromCash,
         ...(shared
           ? {
             splitKey, repeatMonthly: repeat,
@@ -117,6 +122,7 @@ export function ExpenseForm({ me, doctorId, patientPick, shared: sharedDefault =
       void client.invalidateQueries({ queryKey: ['expense-categories'] })
       void client.invalidateQueries({ queryKey: ['spending'] })
       void client.invalidateQueries({ queryKey: ['net-month'] })
+      void client.invalidateQueries({ queryKey: ['cash-day'] })
       onDone?.()
     },
   })
@@ -167,6 +173,11 @@ export function ExpenseForm({ me, doctorId, patientPick, shared: sharedDefault =
           </label>
         </fieldset>
       )}
+      {/* Касса дня (V240): наличные из ящика вычитаются из остатка; перевод и карта — нет */}
+      <label className="check">
+        <input type="checkbox" checked={fromCash} onChange={(e) => setFromCash(e.target.checked)} />
+        <span>Из кассы наличными <span className="hint small">— вычтется из остатка «Кассы дня»</span></span>
+      </label>
       <button type="submit" className="btn primary" disabled={add.isPending || (shared && splitKey === 'MANUAL' && manualSum !== amount)}>
         {shared ? 'Записать общий расход' : 'Добавить'}
       </button>

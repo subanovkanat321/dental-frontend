@@ -59,7 +59,7 @@ const P = {
 /** Рисунок каждого подраздела: раздел → ключ подраздела (как в `subsOf`). Новый подраздел — сюда же (тест `subIcons.test`). */
 export const SUB_ICONS: Partial<Record<Page, Record<string, ReactNode>>> = {
   patients: { all: P.list, booked: P.calendarCheck, waitlist: P.hourglass, comeback: P.comeback, dropped: P.dropped, recall: P.tooth, questions: P.chat, tasks: P.checkList, ratings: P.star },
-  cash: { money: P.banknote, earnings: P.wallet, analytics: P.trend, expenses: P.receipt, debtors: P.debtor, salary: P.envelope, stats: P.bars, report: P.doc },
+  cash: { money: P.banknote, day: P.coins, earnings: P.wallet, analytics: P.trend, expenses: P.receipt, debtors: P.debtor, salary: P.envelope, stats: P.bars, report: P.doc },
   stock: { materials: P.box, spending: P.cart, purchase: P.receipt, lab: P.tooth },
   platform: {
     clinics: P.buildings, analytics: P.trend, finance: P.coins, feedback: P.chat, mailing: P.send, marketing: P.megaphone,
@@ -68,7 +68,7 @@ export const SUB_ICONS: Partial<Record<Page, Record<string, ReactNode>>> = {
   clinic: { about: P.clinic, staff: P.people, services: P.tag, hours: P.clock, chairs: P.chair },
   settings: {
     reminder: P.bell, debt: P.debtor, reviews: P.star, questions: P.clipList, contract: P.signDoc, memos: P.note, 'patient-news': P.news, sources: P.megaphone,
-    tags: P.tag, plan: P.card, agreement: P.checkDoc, data: P.database, ai: P.sparkles, 'visit-templates': P.layers,
+    tags: P.tag, plan: P.card, agreement: P.checkDoc, data: P.database, ai: P.sparkles, 'visit-templates': P.layers, discounts: P.wallet,
   },
 }
 
@@ -81,7 +81,7 @@ export const SUB_ICONS: Partial<Record<Page, Record<string, ReactNode>>> = {
 export const SUB_TONES: Partial<Record<Page, Record<string, string>>> = {
   settings: {
     reminder: 'stock', debt: 'cash', reviews: 'instagram', questions: 'patients', contract: 'schedule', memos: 'memo', 'patient-news': 'platform', sources: 'instagram',
-    tags: 'patients', plan: 'cash', agreement: 'settings', data: 'data', ai: 'ai', 'visit-templates': 'schedule',
+    tags: 'patients', plan: 'cash', agreement: 'settings', data: 'data', ai: 'ai', 'visit-templates': 'schedule', discounts: 'cash',
   },
   clinic: { about: 'clinic', staff: 'patients', services: 'stock', hours: 'schedule', chairs: 'learn' },
   platform: {

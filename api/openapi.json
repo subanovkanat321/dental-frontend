@@ -3889,6 +3889,50 @@
         }
       }
     },
+    "/api/clinic/discounts" : {
+      "get" : {
+        "tags" : [ "discount-controller" ],
+        "operationId" : "get_6",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DiscountPoliciesPolicy"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "discount-controller" ],
+        "operationId" : "set_7",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DiscountControllerRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DiscountPoliciesPolicy"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/clinic/dictation-ai" : {
       "get" : {
         "tags" : [ "visit-dictation-controller" ],
@@ -4222,6 +4266,34 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ChairsChair"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cash-day/opening" : {
+      "put" : {
+        "tags" : [ "cash-day-controller" ],
+        "operationId" : "opening",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CashDayControllerOpening"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CashDaysView"
                 }
               }
             }
@@ -11385,6 +11457,90 @@
         }
       }
     },
+    "/api/cash-day/reopen" : {
+      "post" : {
+        "tags" : [ "cash-day-controller" ],
+        "operationId" : "reopen_1",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CashDayControllerDay"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CashDaysView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cash-day/movements" : {
+      "post" : {
+        "tags" : [ "cash-day-controller" ],
+        "operationId" : "add_7",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CashDayControllerNewMovement"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CashDaysView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cash-day/close" : {
+      "post" : {
+        "tags" : [ "cash-day-controller" ],
+        "operationId" : "close_3",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CashDayControllerDay"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CashDaysView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/care-memos" : {
       "get" : {
         "tags" : [ "care-memo-controller" ],
@@ -11500,7 +11656,7 @@
     "/api/calendar-feed" : {
       "get" : {
         "tags" : [ "calendar-feed-controller" ],
-        "operationId" : "get_6",
+        "operationId" : "get_7",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -13444,7 +13600,7 @@
     "/web/case" : {
       "get" : {
         "tags" : [ "join-case" ],
-        "operationId" : "get_7",
+        "operationId" : "get_8",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -13921,7 +14077,7 @@
     "/api/salaries/timesheet" : {
       "get" : {
         "tags" : [ "timesheet-controller" ],
-        "operationId" : "get_8",
+        "operationId" : "get_9",
         "parameters" : [ {
           "name" : "month",
           "in" : "query",
@@ -14154,7 +14310,7 @@
     "/api/support/tickets/{id}" : {
       "get" : {
         "tags" : [ "support-controller" ],
-        "operationId" : "get_9",
+        "operationId" : "get_10",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -14181,7 +14337,7 @@
     "/api/platform/support/tickets/{id}" : {
       "get" : {
         "tags" : [ "support-controller" ],
-        "operationId" : "get_10",
+        "operationId" : "get_11",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -14449,7 +14605,7 @@
     "/api/platform/health" : {
       "get" : {
         "tags" : [ "health-controller" ],
-        "operationId" : "get_11",
+        "operationId" : "get_12",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -14795,7 +14951,7 @@
     "/api/platform-info" : {
       "get" : {
         "tags" : [ "platform-info-controller" ],
-        "operationId" : "get_12",
+        "operationId" : "get_13",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -15057,7 +15213,7 @@
     "/api/patients/{patientId}/contract" : {
       "get" : {
         "tags" : [ "contract-controller" ],
-        "operationId" : "get_13",
+        "operationId" : "get_14",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "path",
@@ -15462,7 +15618,7 @@
     "/api/patient-questions/{id}" : {
       "get" : {
         "tags" : [ "question-controller" ],
-        "operationId" : "get_14",
+        "operationId" : "get_15",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -15615,7 +15771,7 @@
     "/api/me/earnings" : {
       "get" : {
         "tags" : [ "earnings-controller" ],
-        "operationId" : "get_15",
+        "operationId" : "get_16",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -15870,6 +16026,78 @@
                   "type" : "array",
                   "items" : {
                     "$ref" : "#/components/schemas/DoctorAdminView"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/diagnoses/suggest" : {
+      "get" : {
+        "tags" : [ "diagnosis-controller" ],
+        "operationId" : "suggest",
+        "parameters" : [ {
+          "name" : "q",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DiagnosesSuggestions"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/diagnoses/report" : {
+      "get" : {
+        "tags" : [ "diagnosis-controller" ],
+        "operationId" : "report_3",
+        "parameters" : [ {
+          "name" : "from",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }, {
+          "name" : "to",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }, {
+          "name" : "doctorId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/DiagnosesCodeCount"
                   }
                 }
               }
@@ -16277,6 +16505,33 @@
         }
       }
     },
+    "/api/cash-day" : {
+      "get" : {
+        "tags" : [ "cash-day-controller" ],
+        "operationId" : "day_2",
+        "parameters" : [ {
+          "name" : "day",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CashDaysView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/care-memos/links" : {
       "get" : {
         "tags" : [ "care-memo-controller" ],
@@ -16301,7 +16556,7 @@
     "/api/appointments/{id}" : {
       "get" : {
         "tags" : [ "appointment-controller" ],
-        "operationId" : "get_16",
+        "operationId" : "get_17",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -16919,7 +17174,7 @@
     "/api/appointments/promo-codes" : {
       "get" : {
         "tags" : [ "promo-report-controller" ],
-        "operationId" : "report_3",
+        "operationId" : "report_4",
         "parameters" : [ {
           "name" : "from",
           "in" : "query",
@@ -16962,7 +17217,7 @@
     "/api/appointments/from-tish" : {
       "get" : {
         "tags" : [ "tish-report-controller" ],
-        "operationId" : "report_4",
+        "operationId" : "report_5",
         "parameters" : [ {
           "name" : "month",
           "in" : "query",
@@ -17591,10 +17846,52 @@
           }
         }
       }
+    },
+    "/api/cash-day/movements/{id}" : {
+      "delete" : {
+        "tags" : [ "cash-day-controller" ],
+        "operationId" : "delete_22",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CashDaysView"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components" : {
     "schemas" : {
+      "DiagnosisCode" : {
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "tooth" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "code" ]
+      },
       "NoteSections" : {
         "properties" : {
           "complaints" : {
@@ -17614,6 +17911,12 @@
           },
           "other" : {
             "type" : "string"
+          },
+          "diagnosisCodes" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/DiagnosisCode"
+            }
           }
         }
       },
@@ -20987,6 +21290,9 @@
             "items" : {
               "$ref" : "#/components/schemas/ExpensesShareDraft"
             }
+          },
+          "fromCash" : {
+            "type" : "boolean"
           }
         }
       },
@@ -21047,9 +21353,12 @@
             "items" : {
               "$ref" : "#/components/schemas/ExpensesShare"
             }
+          },
+          "fromCash" : {
+            "type" : "boolean"
           }
         },
-        "required" : [ "amountSom", "id", "repeatMonthly" ]
+        "required" : [ "amountSom", "fromCash", "id", "repeatMonthly" ]
       },
       "ExpensesShare" : {
         "properties" : {
@@ -21528,6 +21837,38 @@
         },
         "required" : [ "on" ]
       },
+      "DiscountControllerRequest" : {
+        "properties" : {
+          "who" : {
+            "type" : "string",
+            "enum" : [ "ADMIN", "RECEPTION", "ALL" ]
+          },
+          "maxPercent" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "DiscountPoliciesPolicy" : {
+        "properties" : {
+          "who" : {
+            "type" : "string",
+            "enum" : [ "ADMIN", "RECEPTION", "ALL" ]
+          },
+          "maxPercent" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "canGive" : {
+            "type" : "boolean"
+          },
+          "myMaxPercent" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "canGive", "maxPercent" ]
+      },
       "DepositControllerSettingsRequest" : {
         "properties" : {
           "mode" : {
@@ -21690,6 +22031,142 @@
             "enum" : [ "WARN", "STRICT" ]
           }
         }
+      },
+      "CashDayControllerOpening" : {
+        "properties" : {
+          "day" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "amountSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "CashDaysCashExpense" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "category" : {
+            "type" : "string"
+          },
+          "comment" : {
+            "type" : "string"
+          },
+          "amountSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "amountSom", "id" ]
+      },
+      "CashDaysMovement" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "kind" : {
+            "type" : "string",
+            "enum" : [ "IN", "OUT" ]
+          },
+          "amountSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "reason" : {
+            "type" : "string"
+          },
+          "by" : {
+            "type" : "string"
+          },
+          "at" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "amountSom", "id" ]
+      },
+      "CashDaysView" : {
+        "properties" : {
+          "day" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "openingSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "openingSource" : {
+            "type" : "string",
+            "enum" : [ "MANUAL", "PREVIOUS", "NONE" ]
+          },
+          "openingFrom" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "inByMethod" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "integer",
+              "format" : "int64"
+            }
+          },
+          "inSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "cashInSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "expenses" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CashDaysCashExpense"
+            }
+          },
+          "expensesSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "movements" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CashDaysMovement"
+            }
+          },
+          "depositsSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "withdrawalsSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "closingSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "closed" : {
+            "type" : "boolean"
+          },
+          "closedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "closedBy" : {
+            "type" : "string"
+          },
+          "closedSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "cashInSom", "closed", "closingSom", "depositsSom", "expensesSom", "inSom", "withdrawalsSom" ]
       },
       "CareMemoControllerMemo" : {
         "properties" : {
@@ -21984,6 +22461,9 @@
           },
           "cancelNote" : {
             "type" : "string"
+          },
+          "discount" : {
+            "$ref" : "#/components/schemas/PaymentDiscount"
           }
         },
         "required" : [ "chairManual", "debtSom", "doctorId", "endAt", "firstVisit", "id", "patient", "source", "startAt", "status", "version" ]
@@ -21998,6 +22478,30 @@
             "enum" : [ "CHILD", "SPOUSE", "PARENT", "SIBLING", "OTHER" ]
           }
         }
+      },
+      "PaymentDiscount" : {
+        "properties" : {
+          "som" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "percent" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "reason" : {
+            "type" : "string",
+            "enum" : [ "PROMO", "FAMILY", "VIP", "REGULAR", "OTHER" ]
+          },
+          "comment" : {
+            "type" : "string"
+          },
+          "priceSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "priceSom", "som" ]
       },
       "AppointmentRequestsPromoCode" : {
         "properties" : {
@@ -24990,6 +25494,33 @@
           }
         }
       },
+      "CashDayControllerDay" : {
+        "properties" : {
+          "day" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }
+      },
+      "CashDayControllerNewMovement" : {
+        "properties" : {
+          "day" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "kind" : {
+            "type" : "string",
+            "enum" : [ "IN", "OUT" ]
+          },
+          "amountSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "reason" : {
+            "type" : "string"
+          }
+        }
+      },
       "CareMemoControllerTranslateRequest" : {
         "properties" : {
           "title" : {
@@ -25544,6 +26075,32 @@
             "type" : "string",
             "maxLength" : 200,
             "minLength" : 0
+          },
+          "priceSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "discount" : {
+            "$ref" : "#/components/schemas/AppointmentPaymentsDiscountDraft"
+          }
+        }
+      },
+      "AppointmentPaymentsDiscountDraft" : {
+        "properties" : {
+          "percent" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "som" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "reason" : {
+            "type" : "string",
+            "enum" : [ "PROMO", "FAMILY", "VIP", "REGULAR", "OTHER" ]
+          },
+          "comment" : {
+            "type" : "string"
           }
         }
       },
@@ -29721,6 +30278,71 @@
         },
         "required" : [ "done", "leftSom", "patientId", "telegram", "total" ]
       },
+      "DiagnosesFormulation" : {
+        "properties" : {
+          "text" : {
+            "type" : "string"
+          },
+          "code" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "uses" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "text", "uses" ]
+      },
+      "DiagnosesSuggestions" : {
+        "properties" : {
+          "codes" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Icd10Code"
+            }
+          },
+          "own" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/DiagnosesFormulation"
+            }
+          }
+        },
+        "required" : [ "codes", "own" ]
+      },
+      "Icd10Code" : {
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "code", "title" ]
+      },
+      "DiagnosesCodeCount" : {
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "count" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "patients" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "code", "count", "patients", "title" ]
+      },
       "ComebacksBoard" : {
         "properties" : {
           "patients" : {
@@ -30238,6 +30860,9 @@
           },
           "telegram" : {
             "type" : "boolean"
+          },
+          "discount" : {
+            "$ref" : "#/components/schemas/PaymentDiscount"
           }
         },
         "required" : [ "appointmentId", "debtSom", "paidSom", "telegram" ]
@@ -30450,9 +31075,17 @@
           "partialDebtSom" : {
             "type" : "integer",
             "format" : "int64"
+          },
+          "discountCount" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "discountSom" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         },
-        "required" : [ "debtCount", "debtSom", "freeCount", "paidCount", "partialCount", "partialDebtSom", "prepaidCount", "totalSom", "unpaidCount" ]
+        "required" : [ "debtCount", "debtSom", "discountCount", "discountSom", "freeCount", "paidCount", "partialCount", "partialDebtSom", "prepaidCount", "totalSom", "unpaidCount" ]
       },
       "RevenueViewCash" : {
         "properties" : {
@@ -30531,6 +31164,14 @@
             "type" : "string"
           },
           "debtSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "discountSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "discountPercent" : {
             "type" : "integer",
             "format" : "int32"
           }
@@ -30946,6 +31587,10 @@
           },
           "viaBot" : {
             "type" : "boolean"
+          },
+          "discountSom" : {
+            "type" : "integer",
+            "format" : "int32"
           }
         },
         "required" : [ "amountSom", "viaBot" ]

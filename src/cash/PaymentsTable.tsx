@@ -115,6 +115,11 @@ export function PaymentsTable({ rows, label, onOpen, active, withStatus = false,
         <label className="check"><input type="checkbox" checked={debtOnly} onChange={(e) => setDebtOnly(e.target.checked)} /> Только с долгом</label>
       </div>
       <p className="hint">Оплачено: <b className="num">{somText(paid)}</b>{debt ? <> · долги: <b className="num">{somText(debt)}</b></> : null} · приёмов: {filtered.length}
+        {/* Скидки (шаг 3Б): оплачено — уже со скидкой; сколько и на какую сумму дали */}
+        {(() => {
+          const off = filtered.filter((r) => r.discountSom)
+          return off.length ? ` · со скидкой: ${off.length} (${somText(off.reduce((s, r) => s + (r.discountSom ?? 0), 0))})` : ''
+        })()}
         {withStatus && <> · состоялось: {filtered.filter((r) => r.status === 'DONE').length}
           {filtered.some((r) => r.status === 'NO_SHOW') && <span className="tone-bad"> · неявок: {filtered.filter((r) => r.status === 'NO_SHOW').length}</span>}</>}
         {Object.entries(filtered.reduce<Record<string, number>>((acc, r) => (r.method && r.paidSom ? { ...acc, [r.method]: (acc[r.method] ?? 0) + r.paidSom } : acc), {}))
@@ -140,7 +145,8 @@ export function PaymentsTable({ rows, label, onOpen, active, withStatus = false,
                 <td>{r.doctor}</td>
                 <td className="hint">{r.service ?? '—'}</td>
                 {withStatus && <td><span className={`chip small ${STATUS_TEXT[r.status ?? '']?.[1] ?? 's-quiet'}`}>{STATUS_TEXT[r.status ?? '']?.[0] ?? r.status}</span></td>}
-                <td className="r num nowrap">{r.paidSom != null ? somText(r.paidSom) : '—'}{r.method && <span className="hint"> · {(METHOD_TEXT[r.method] ?? r.method).toLowerCase()}</span>}</td>
+                <td className="r num nowrap">{r.paidSom != null ? somText(r.paidSom) : '—'}{r.method && <span className="hint"> · {(METHOD_TEXT[r.method] ?? r.method).toLowerCase()}</span>}
+                  {r.discountSom ? <span className="discount-mark" title={`Скидка ${somText(r.discountSom)}`}> 🏷 −{r.discountPercent != null ? `${r.discountPercent} %` : somText(r.discountSom)}</span> : null}</td>
                 <td className={`r num nowrap${r.debtSom ? ' tone-bad' : ''}`}>{r.debtSom ? somText(r.debtSom) : ''}</td>
               </tr>
             ))}

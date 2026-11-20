@@ -22,10 +22,13 @@ const NGINX_503 = () => HttpResponse.json(
 
 beforeEach(() => setUpdating(false))
 
-afterEach(() => {
+afterEach(async () => {
   vi.useRealTimers()
   vi.restoreAllMocks()
   act(() => onlineManager.setOnline(true))
+  // Сеть вернулась — отложенные запросы (например, «Совет дня» читает /api/platform-info) уходят сразу; дождаться их
+  // здесь, иначе ответ придёт в следующем тесте и снимет флаг «обновляется» посреди его проверки
+  await act(() => new Promise((resolve) => setTimeout(resolve, 50)))
 })
 
 /** Сервер работал, потом «упал» (down — все /api отвечают fail), сотрудник вернулся во вкладку — запросы перечитываются. */

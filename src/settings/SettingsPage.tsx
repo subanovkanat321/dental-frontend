@@ -34,6 +34,7 @@ const AiPage = lazy(() => import('./AiPage').then((m) => ({ default: m.AiPage })
 const SourcesPage = lazy(() => import('./SourcesPage').then((m) => ({ default: m.SourcesPage })))
 const ContractTemplatePage = lazy(() => import('../contract/ContractTemplatePage').then((m) => ({ default: m.ContractTemplatePage })))
 const TagsPage = lazy(() => import('./TagsPage').then((m) => ({ default: m.TagsPage })))
+const DiscountsPage = lazy(() => import('./DiscountsPage').then((m) => ({ default: m.DiscountsPage })))
 const ChairsPage = lazy(() => import('./ChairsPage').then((m) => ({ default: m.ChairsPage })))
 const SurveyPage = lazy(() => import('../survey/SurveyPage').then((m) => ({ default: m.SurveyPage })))
 
@@ -68,6 +69,7 @@ const RENDER: Record<string, (title: string) => Render> = {
   sources: () => (me, back) => <SourcesPage me={me} onBack={back} initial="sources" />,
   promo: () => (me, back) => <SourcesPage me={me} onBack={back} initial="promo" />,
   tags: () => (me, back) => <TagsPage me={me} onBack={back} />,
+  discounts: () => (me, back) => <DiscountsPage me={me} onBack={back} />,
   plan: (t) => account('plan', t),
   agreement: (t) => account('agreement', t),
   data: (t) => account('data', t),

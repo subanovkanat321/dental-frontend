@@ -1412,6 +1412,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/clinic/discounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_6"];
+        put: operations["set_7"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/clinic/dictation-ai": {
         parameters: {
             query?: never;
@@ -1533,6 +1549,22 @@ export interface paths {
         };
         get?: never;
         put: operations["mode"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cash-day/opening": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["opening"];
         post?: never;
         delete?: never;
         options?: never;
@@ -4532,6 +4564,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/cash-day/reopen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["reopen_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cash-day/movements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["add_7"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cash-day/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["close_3"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/care-memos": {
         parameters: {
             query?: never;
@@ -4587,7 +4667,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_6"];
+        get: operations["get_7"];
         put?: never;
         post: operations["rotate"];
         delete: operations["delete_15"];
@@ -5499,7 +5579,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_7"];
+        get: operations["get_8"];
         put?: never;
         post?: never;
         delete?: never;
@@ -5755,7 +5835,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_8"];
+        get: operations["get_9"];
         put?: never;
         post?: never;
         delete?: never;
@@ -5883,7 +5963,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_9"];
+        get: operations["get_10"];
         put?: never;
         post?: never;
         delete?: never;
@@ -5899,7 +5979,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_10"];
+        get: operations["get_11"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6059,7 +6139,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_11"];
+        get: operations["get_12"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6251,7 +6331,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_12"];
+        get: operations["get_13"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6379,7 +6459,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_13"];
+        get: operations["get_14"];
         put?: never;
         post?: never;
         delete: operations["unsign"];
@@ -6603,7 +6683,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_14"];
+        get: operations["get_15"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6715,7 +6795,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_15"];
+        get: operations["get_16"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6860,6 +6940,38 @@ export interface paths {
             cookie?: never;
         };
         get: operations["adminList"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/diagnoses/suggest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["suggest"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/diagnoses/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["report_3"];
         put?: never;
         post?: never;
         delete?: never;
@@ -7108,6 +7220,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/cash-day": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["day_2"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/care-memos/links": {
         parameters: {
             query?: never;
@@ -7131,7 +7259,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_16"];
+        get: operations["get_17"];
         put?: never;
         post?: never;
         delete: operations["delete_17"];
@@ -7403,7 +7531,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["report_3"];
+        get: operations["report_4"];
         put?: never;
         post?: never;
         delete?: never;
@@ -7419,7 +7547,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["report_4"];
+        get: operations["report_5"];
         put?: never;
         post?: never;
         delete?: never;
@@ -7764,10 +7892,32 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/cash-day/movements/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["delete_22"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        DiagnosisCode: {
+            code: string;
+            title?: string;
+            /** Format: int32 */
+            tooth?: number;
+        };
         NoteSections: {
             complaints?: string;
             objective?: string;
@@ -7775,6 +7925,7 @@ export interface components {
             treatment?: string;
             recommendations?: string;
             other?: string;
+            diagnosisCodes?: components["schemas"]["DiagnosisCode"][];
         };
         VisitTemplatesFields: {
             title?: string;
@@ -9136,6 +9287,7 @@ export interface components {
             splitKey?: string;
             repeatMonthly?: boolean;
             shares?: components["schemas"]["ExpensesShareDraft"][];
+            fromCash?: boolean;
         };
         ExpensesShareDraft: {
             /** Format: int64 */
@@ -9161,6 +9313,7 @@ export interface components {
             splitKey?: string;
             repeatMonthly: boolean;
             shares?: components["schemas"]["ExpensesShare"][];
+            fromCash: boolean;
         };
         ExpensesShare: {
             /** Format: int64 */
@@ -9339,6 +9492,21 @@ export interface components {
         ChartControllerSectionsSetting: {
             on: boolean;
         };
+        DiscountControllerRequest: {
+            /** @enum {string} */
+            who?: "ADMIN" | "RECEPTION" | "ALL";
+            /** Format: int32 */
+            maxPercent?: number;
+        };
+        DiscountPoliciesPolicy: {
+            /** @enum {string} */
+            who?: "ADMIN" | "RECEPTION" | "ALL";
+            /** Format: int32 */
+            maxPercent: number;
+            canGive: boolean;
+            /** Format: int32 */
+            myMaxPercent?: number;
+        };
         DepositControllerSettingsRequest: {
             /** @enum {string} */
             mode?: "OFF" | "NEW" | "ALL";
@@ -9399,6 +9567,65 @@ export interface components {
         ChairControllerModeRequest: {
             /** @enum {string} */
             mode?: "WARN" | "STRICT";
+        };
+        CashDayControllerOpening: {
+            /** Format: date */
+            day?: string;
+            /** Format: int32 */
+            amountSom?: number;
+        };
+        CashDaysCashExpense: {
+            /** Format: int64 */
+            id: number;
+            category?: string;
+            comment?: string;
+            /** Format: int64 */
+            amountSom: number;
+        };
+        CashDaysMovement: {
+            /** Format: int64 */
+            id: number;
+            /** @enum {string} */
+            kind?: "IN" | "OUT";
+            /** Format: int32 */
+            amountSom: number;
+            reason?: string;
+            by?: string;
+            /** Format: date-time */
+            at?: string;
+        };
+        CashDaysView: {
+            /** Format: date */
+            day?: string;
+            /** Format: int64 */
+            openingSom?: number;
+            /** @enum {string} */
+            openingSource?: "MANUAL" | "PREVIOUS" | "NONE";
+            /** Format: date */
+            openingFrom?: string;
+            inByMethod?: {
+                [key: string]: number;
+            };
+            /** Format: int64 */
+            inSom: number;
+            /** Format: int64 */
+            cashInSom: number;
+            expenses?: components["schemas"]["CashDaysCashExpense"][];
+            /** Format: int64 */
+            expensesSom: number;
+            movements?: components["schemas"]["CashDaysMovement"][];
+            /** Format: int64 */
+            depositsSom: number;
+            /** Format: int64 */
+            withdrawalsSom: number;
+            /** Format: int64 */
+            closingSom: number;
+            closed: boolean;
+            /** Format: date-time */
+            closedAt?: string;
+            closedBy?: string;
+            /** Format: int64 */
+            closedSom?: number;
         };
         CareMemoControllerMemo: {
             title?: string;
@@ -9521,11 +9748,23 @@ export interface components {
             /** @enum {string} */
             cancelReason?: "CHANGED_MIND" | "DUPLICATE" | "ILL" | "OTHER_TIME" | "CLINIC" | "OTHER" | "PATIENT";
             cancelNote?: string;
+            discount?: components["schemas"]["PaymentDiscount"];
         };
         FamiliesBooker: {
             fullName?: string;
             /** @enum {string} */
             relation?: "CHILD" | "SPOUSE" | "PARENT" | "SIBLING" | "OTHER";
+        };
+        PaymentDiscount: {
+            /** Format: int32 */
+            som: number;
+            /** Format: int32 */
+            percent?: number;
+            /** @enum {string} */
+            reason?: "PROMO" | "FAMILY" | "VIP" | "REGULAR" | "OTHER";
+            comment?: string;
+            /** Format: int32 */
+            priceSom: number;
         };
         AppointmentRequestsPromoCode: {
             promoCode?: string;
@@ -10751,6 +10990,19 @@ export interface components {
             signerBasis?: string;
             confirm?: boolean;
         };
+        CashDayControllerDay: {
+            /** Format: date */
+            day?: string;
+        };
+        CashDayControllerNewMovement: {
+            /** Format: date */
+            day?: string;
+            /** @enum {string} */
+            kind?: "IN" | "OUT";
+            /** Format: int32 */
+            amountSom?: number;
+            reason?: string;
+        };
         CareMemoControllerTranslateRequest: {
             title?: string;
             body?: string;
@@ -10969,6 +11221,18 @@ export interface components {
             /** @enum {string} */
             freeReason?: "FREE" | "PREPAID";
             freeComment?: string;
+            /** Format: int32 */
+            priceSom?: number;
+            discount?: components["schemas"]["AppointmentPaymentsDiscountDraft"];
+        };
+        AppointmentPaymentsDiscountDraft: {
+            /** Format: int32 */
+            percent?: number;
+            /** Format: int32 */
+            som?: number;
+            /** @enum {string} */
+            reason?: "PROMO" | "FAMILY" | "VIP" | "REGULAR" | "OTHER";
+            comment?: string;
         };
         PaymentQueryPart: {
             /** Format: int32 */
@@ -12591,6 +12855,29 @@ export interface components {
             /** Format: date-time */
             invitedAt?: string;
         };
+        DiagnosesFormulation: {
+            text: string;
+            code?: string;
+            title?: string;
+            /** Format: int32 */
+            uses: number;
+        };
+        DiagnosesSuggestions: {
+            codes: components["schemas"]["Icd10Code"][];
+            own: components["schemas"]["DiagnosesFormulation"][];
+        };
+        Icd10Code: {
+            code: string;
+            title: string;
+        };
+        DiagnosesCodeCount: {
+            code: string;
+            title: string;
+            /** Format: int32 */
+            count: number;
+            /** Format: int32 */
+            patients: number;
+        };
         ComebacksBoard: {
             patients?: components["schemas"]["ComebacksCandidate"][];
             /** Format: int32 */
@@ -12807,6 +13094,7 @@ export interface components {
             payments?: components["schemas"]["ReceiptsPayment"][];
             text?: string;
             telegram: boolean;
+            discount?: components["schemas"]["PaymentDiscount"];
         };
         PaymentQueryEntry: {
             /** Format: int64 */
@@ -12900,6 +13188,10 @@ export interface components {
             partialCount: number;
             /** Format: int64 */
             partialDebtSom: number;
+            /** Format: int64 */
+            discountCount: number;
+            /** Format: int64 */
+            discountSom: number;
         };
         RevenueViewCash: {
             /** Format: int64 */
@@ -12935,6 +13227,10 @@ export interface components {
             method?: string;
             /** Format: int32 */
             debtSom?: number;
+            /** Format: int32 */
+            discountSom?: number;
+            /** Format: int32 */
+            discountPercent?: number;
         };
         RecallView: {
             patient?: components["schemas"]["PatientView"];
@@ -13102,6 +13398,8 @@ export interface components {
             patient?: string;
             takenBy?: string;
             viaBot: boolean;
+            /** Format: int32 */
+            discountSom?: number;
         };
         CancelReasonsControllerReasonCount: {
             /** @enum {string} */
@@ -16296,6 +16594,50 @@ export interface operations {
             };
         };
     };
+    get_6: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DiscountPoliciesPolicy"];
+                };
+            };
+        };
+    };
+    set_7: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DiscountControllerRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DiscountPoliciesPolicy"];
+                };
+            };
+        };
+    };
     dictationAi: {
         parameters: {
             query?: never;
@@ -16608,6 +16950,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ChairsChair"];
+                };
+            };
+        };
+    };
+    opening: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CashDayControllerOpening"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CashDaysView"];
                 };
             };
         };
@@ -22318,6 +22684,78 @@ export interface operations {
             };
         };
     };
+    reopen_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CashDayControllerDay"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CashDaysView"];
+                };
+            };
+        };
+    };
+    add_7: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CashDayControllerNewMovement"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CashDaysView"];
+                };
+            };
+        };
+    };
+    close_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CashDayControllerDay"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CashDaysView"];
+                };
+            };
+        };
+    };
     list_12: {
         parameters: {
             query?: never;
@@ -22426,7 +22864,7 @@ export interface operations {
             };
         };
     };
-    get_6: {
+    get_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -23952,7 +24390,7 @@ export interface operations {
             };
         };
     };
-    get_7: {
+    get_8: {
         parameters: {
             query?: never;
             header?: never;
@@ -24303,7 +24741,7 @@ export interface operations {
             };
         };
     };
-    get_8: {
+    get_9: {
         parameters: {
             query: {
                 month: string;
@@ -24496,7 +24934,7 @@ export interface operations {
             };
         };
     };
-    get_9: {
+    get_10: {
         parameters: {
             query?: never;
             header?: never;
@@ -24518,7 +24956,7 @@ export interface operations {
             };
         };
     };
-    get_10: {
+    get_11: {
         parameters: {
             query?: never;
             header?: never;
@@ -24734,7 +25172,7 @@ export interface operations {
             };
         };
     };
-    get_11: {
+    get_12: {
         parameters: {
             query?: never;
             header?: never;
@@ -25020,7 +25458,7 @@ export interface operations {
             };
         };
     };
-    get_12: {
+    get_13: {
         parameters: {
             query?: never;
             header?: never;
@@ -25218,7 +25656,7 @@ export interface operations {
             };
         };
     };
-    get_13: {
+    get_14: {
         parameters: {
             query?: {
                 doctorId?: number;
@@ -25542,7 +25980,7 @@ export interface operations {
             };
         };
     };
-    get_14: {
+    get_15: {
         parameters: {
             query?: never;
             header?: never;
@@ -25686,7 +26124,7 @@ export interface operations {
             };
         };
     };
-    get_15: {
+    get_16: {
         parameters: {
             query?: never;
             header?: never;
@@ -25895,6 +26333,52 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DoctorAdminView"][];
+                };
+            };
+        };
+    };
+    suggest: {
+        parameters: {
+            query?: {
+                q?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DiagnosesSuggestions"];
+                };
+            };
+        };
+    };
+    report_3: {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+                doctorId?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DiagnosesCodeCount"][];
                 };
             };
         };
@@ -26218,6 +26702,28 @@ export interface operations {
             };
         };
     };
+    day_2: {
+        parameters: {
+            query: {
+                day: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CashDaysView"];
+                };
+            };
+        };
+    };
     links: {
         parameters: {
             query?: never;
@@ -26238,7 +26744,7 @@ export interface operations {
             };
         };
     };
-    get_16: {
+    get_17: {
         parameters: {
             query?: never;
             header?: never;
@@ -26646,7 +27152,7 @@ export interface operations {
             };
         };
     };
-    report_3: {
+    report_4: {
         parameters: {
             query: {
                 from: string;
@@ -26670,7 +27176,7 @@ export interface operations {
             };
         };
     };
-    report_4: {
+    report_5: {
         parameters: {
             query?: {
                 month?: string;
@@ -27143,6 +27649,28 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    delete_22: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CashDaysView"];
+                };
             };
         };
     };
