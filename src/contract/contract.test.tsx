@@ -229,7 +229,7 @@ test('выключено: строки «не подписан» нет, «⋯ �
   const more = screen.getByRole('button', { name: 'Ещё действия' })
   await user.click(more)
   expect(more).toHaveAttribute('aria-expanded', 'true')
-  await user.click(screen.getByRole('menuitem', { name: '📄 Оформить договор' }))
+  await user.click(screen.getByRole('menuitem', { name: /^Оформить договор/ }))
   expect(screen.queryByRole('menu')).not.toBeInTheDocument()
   expect(screen.getByRole('tab', { name: 'Прочее' })).toHaveAttribute('aria-selected', 'true')
   const box = await screen.findByRole('region', { name: 'Договор' })
@@ -273,8 +273,8 @@ test('ассистенту «⋯ → Оформить договор» нет: �
   await screen.findByRole('button', { name: '＋ Записать' })
   // В «⋯» у ассистента — задача и лаборатория, а договора нет
   await user.click(screen.getByRole('button', { name: 'Ещё действия' }))
-  expect(screen.getByRole('menuitem', { name: '＋ Задача' })).toBeInTheDocument()
-  expect(screen.queryByRole('menuitem', { name: '📄 Оформить договор' })).not.toBeInTheDocument()
+  expect(screen.getByRole('menuitem', { name: /^Новая задача/ })).toBeInTheDocument()
+  expect(screen.queryByRole('menuitem', { name: /^Оформить договор/ })).not.toBeInTheDocument()
 })
 
 test('«Настройки → Договор с пациентом»: «Предлагать договор всем пациентам» — сохраняется сразу', async () => {

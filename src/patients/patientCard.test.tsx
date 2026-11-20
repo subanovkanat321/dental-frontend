@@ -106,7 +106,10 @@ test('«⋯» шапки: задача и лаборатория; регистр
   expect(within(panel).queryByRole('button', { name: '＋ Задача' })).toBeNull()
   await user.click(within(panel).getByRole('button', { name: 'Ещё действия' }))
   const menu = within(panel).getByRole('menu', { name: 'Ещё действия' })
-  expect(within(menu).getAllByRole('menuitem').map((i) => i.textContent)).toEqual(['＋ Задача', '📄 Оформить договор'])
+  // Сверху — чьё меню; пункты — значок, подпись и подсказка (единый вид меню действий)
+  expect(within(menu).getByText('Нурлан К.')).toHaveClass('menu-title')
+  expect(within(menu).getAllByRole('menuitem').map((i) => i.querySelector('.menu-label')?.textContent)).toEqual(['Новая задача', 'Оформить договор'])
+  for (const i of within(menu).getAllByRole('menuitem')) expect(i.querySelector('svg.menu-ico')).toHaveAttribute('aria-hidden', 'true')
 })
 
 test('P2: номер в шапке — «Связаться ▾», рядом с «＋ Записать» — значок 📞; «Прочее»: лист ожидания с подписью', async () => {

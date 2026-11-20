@@ -1,7 +1,8 @@
-import { Fragment, useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react'
+import { Fragment, useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 
 import { useBack } from '../lib/back'
+import { MENU_ICONS, type MenuIconName } from './menuIconPaths'
 import { useSwipeDown } from './useSwipeDown'
 
 export type ActionItem = {
@@ -15,12 +16,24 @@ export type ActionItem = {
   disabled?: boolean
   /** Почему пункт недоступен или что он сделает — мелко под подписью («с дня приёма») */
   hint?: string
-  /** Эмодзи перед подписью (статусы приёма: 🟢 Пришёл) */
-  icon?: string
+  /**
+   * Значок в колонке слева: ключ линейной иконки (`MenuIconName`: task, lab, show, move, repeat, phone, whatsapp, trash,
+   * print, copy…, layout/menuIconPaths.tsx) — или эмодзи там, где он — смысл (цвет статуса приёма: 🟢 Пришёл, метки)
+   */
+  icon?: MenuIconName | (string & {})
   /** Выбор одного из (статус приёма): true — текущий, с ✓ (role=menuitemradio); undefined — обычный пункт */
   checked?: boolean
   /** Подзаголовок группы («Связаться», «Отправить в WhatsApp») — ставится перед первым пунктом группы */
   group?: string
+}
+
+/** Оттенок иконки пункта меню (`--ico-*`); нет — приглушённый `hint`. */
+const MENU_TONES: Partial<Record<MenuIconName, string>> = {
+  phone: 'cash', whatsapp: 'cash', sms: 'support', telegram: 'support', send: 'support',
+  move: 'schedule', repeat: 'schedule', record: 'schedule', clock: 'schedule', chair: 'platform',
+  user: 'patients', task: 'patients', tag: 'patients',
+  lab: 'stock', pay: 'cash', show: 'learn', contract: 'learn', doc: 'learn', memo: 'memo',
+  print: 'settings', copy: 'settings', edit: 'settings', ai: 'ai', bell: 'stock', star: 'stock', debt: 'cash',
 }
 
 const PHONE = '(max-width: 640px)'
@@ -35,19 +48,40 @@ function moveFocus(e: KeyboardEvent, menu: HTMLElement | null) {
   list[(at + (e.key === 'ArrowDown' ? 1 : list.length - 1)) % list.length]?.focus()
 }
 
-/** Пункты меню с подзаголовками групп: общие у кнопки-меню (ActionMenu) и меню по месту (ActionPopup). onPick — закрыть меню. */
-function MenuItems({ items, onPick }: { items: ActionItem[]; onPick: () => void }) {
+/** Значок пункта в колонке фиксированной ширины: линейная иконка по ключу (с оттенком по смыслу) или эмодзи. */
+function MenuIcon({ icon }: { icon: string }) {
+  const paths = MENU_ICONS[icon as MenuIconName]
+  if (!paths) return <span className="menu-ico menu-emoji" aria-hidden="true">{icon}</span>
+  const tone = MENU_TONES[icon as MenuIconName]
+  return (
+    <svg className="menu-ico icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round"
+      strokeLinejoin="round" style={tone ? { '--menu-ico': `var(--ico-${tone})` } as CSSProperties : undefined}>{paths}</svg>
+  )
+}
+
+/**
+ * Пункты меню (2026-11-20, единый вид всех «⋯» и меню действий): колонка значков одной ширины, подпись и мелкая
+ * подсказка под ней, подзаголовки групп обычным регистром с линией между группами, опасные пункты (удалить, отменить,
+ * неявка) — красным в самом низу, за линией. Общие у кнопки-меню (ActionMenu) и меню по месту (ActionPopup).
+ * onPick — закрыть меню.
+ */
+function MenuItems({ items: given, onPick }: { items: ActionItem[]; onPick: () => void }) {
+  // Опасное — в конец (у «Связаться» и статусов опасных нет — порядок как был)
+  const items = [...given.filter((i) => !i.danger), ...given.filter((i) => i.danger)]
+  const hasIcons = items.some((i) => i.icon)
   return (
     <>
       {items.map((i, at) => (
         <Fragment key={`${i.group ?? ''}-${i.label}`}>
-          {i.group && i.group !== items[at - 1]?.group && <div className="menu-group" role="presentation">{i.group}</div>}
+          {i.danger && !items[at - 1]?.danger && at > 0
+            ? <div className="menu-sep" role="separator" />
+            : i.group && i.group !== items[at - 1]?.group && <div className={at > 0 ? 'menu-group sep' : 'menu-group'} role="presentation">{i.group}</div>}
           {(() => {
             const className = ['menu-item', i.danger && 'danger', i.checked && 'checked'].filter(Boolean).join(' ')
             const inner = (
               <>
-                {i.icon && <span className="menu-emoji" aria-hidden="true">{i.icon}</span>}
-                {i.hint ? <span className="menu-text"><span>{i.label}</span>{' '}<span className="menu-hint">{i.hint}</span></span> : <span className="menu-text">{i.label}</span>}
+                {i.icon ? <MenuIcon icon={i.icon} /> : hasIcons && <span className="menu-ico" aria-hidden="true" />}
+                {i.hint ? <span className="menu-text"><span className="menu-label">{i.label}</span>{' '}<span className="menu-hint">{i.hint}</span></span> : <span className="menu-text"><span className="menu-label">{i.label}</span></span>}
                 {i.checked && <span className="menu-check" aria-hidden="true">✓</span>}
               </>
             )
@@ -127,9 +161,11 @@ export function ActionPopup({ label, title, items, at, onClose }: {
  * Доступность: aria-haspopup=menu и aria-expanded у кнопки, role=menu/menuitem у списка; открыли — фокус на
  * первый пункт, ↑/↓ — по пунктам, Esc закрывает только меню (не карточку под ним) и возвращает фокус на кнопку.
  */
-export function ActionMenu({ label, items, className = 'btn', disabled, content, buttonLabel, caret = true, align = 'left' }: {
+export function ActionMenu({ label, title, items, className = 'btn', disabled, content, buttonLabel, caret = true, align = 'left' }: {
   /** Подпись кнопки и имя меню для скринридера */
   label: string
+  /** Строка-заголовок над пунктами (о чём меню: «10:30 · Бакыт Тестов») — у «⋯» карточек */
+  title?: string
   items: ActionItem[]
   className?: string
   disabled?: boolean
@@ -186,6 +222,7 @@ export function ActionMenu({ label, items, className = 'btn', disabled, content,
 
   const list = (
     <div ref={menu} id={id} role="menu" aria-label={label} className={['pop-menu action-menu', sheet && 'sheet', !sheet && up && 'up', !sheet && align === 'right' && 'right'].filter(Boolean).join(' ')} onKeyDown={onMenuKey}>
+      {title && <div className="menu-title" role="presentation">{title}</div>}
       <MenuItems items={items} onPick={() => close(false)} />
     </div>
   )

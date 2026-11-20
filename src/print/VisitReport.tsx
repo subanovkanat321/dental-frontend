@@ -200,14 +200,14 @@ function AfterVisitMessage({ appointment: a, me, last }: { appointment: Appointm
   if (!draft) {
     const memoTo = !m?.telegram && !phone ? 'пациент не в Telegram и без телефона' : null
     const items: ActionItem[] = [
-      { label: 'Написать самому', hint: 'без ИИ: приветствие и план уже вставлены', onSelect: () => make.mutate('SELF'),
+      { label: 'Написать самому', icon: 'edit', hint: 'без ИИ: приветствие и план уже вставлены', onSelect: () => make.mutate('SELF'),
         group: m?.memoId != null ? `Сообщение + памятка «${m.title}»` : 'Сообщение: что сделали и что дальше' },
-      ...(saved ? [{ label: 'Прежний вариант ИИ', hint: 'тот, что ИИ уже написал', onSelect: () => open(saved.current, 'AI') }] : []),
-      { label: aiOn ? (saved ? 'С ИИ ✨ заново' : 'С ИИ ✨') : 'По шаблону',
+      ...(saved ? [{ label: 'Прежний вариант ИИ', icon: 'ai' as const, hint: 'тот, что ИИ уже написал', onSelect: () => open(saved.current, 'AI') }] : []),
+      { label: aiOn ? (saved ? 'С ИИ ✨ заново' : 'С ИИ ✨') : 'По шаблону', icon: aiOn ? 'ai' : 'doc',
         hint: aiOn ? 'без имени и телефона пациента — вы проверите' : 'из данных приёма — вы дополните', onSelect: () => make.mutate(write) },
-      ...(m?.memoId != null ? [{ label: 'Только памятка', hint: memoTo ?? 'без сообщения', disabled: memoTo != null,
+      ...(m?.memoId != null ? [{ label: 'Только памятка', icon: 'memo' as const, hint: memoTo ?? 'без сообщения', disabled: memoTo != null,
         group: 'Памятка', onSelect: () => { setMemoNotice(''); setMemoSending(true) } }] : []),
-      ...(m?.memoId != null && canPrint() ? [{ label: 'Распечатать памятку', onSelect: () => setMemoPrinting(true) }] : []),
+      ...(m?.memoId != null && canPrint() ? [{ label: 'Распечатать памятку', icon: 'print' as const, onSelect: () => setMemoPrinting(true) }] : []),
     ]
     return (
       <section className="visit-report visit-report-sent" aria-label="Сообщение после приёма">

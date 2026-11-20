@@ -70,7 +70,7 @@ export function DroppedTab({ me, onOpen, onBook }: { me: Me; onOpen: (patientId:
     const talk = talkItems({ phone: r.contactPhone }, { whatsapp: false })
     const phone = r.contactPhone
     return [...talk, ...(phone ? [{
-      label: 'WhatsApp: продолжить лечение', group: 'contact' as const, icon: '💬', hint: 'готовый вежливый текст',
+      label: 'WhatsApp: продолжить лечение', group: 'contact' as const, icon: 'whatsapp', hint: 'готовый вежливый текст',
       onSelect: () => openLink(whatsappUrl(phone, continueText(r, clinic))),
     }] : [])]
   }

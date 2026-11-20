@@ -497,12 +497,12 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
   const barMenu = [
     // В кресле — не переносят
     canEdit && (a.status === 'REQUESTED' || a.status === 'SCHEDULED') && !a.inChairAt
-      ? { label: editableDoctors(me, doctors).length > 1 ? 'Перенести или передать врачу' : 'Перенести',
+      ? { label: editableDoctors(me, doctors).length > 1 ? 'Перенести или передать врачу' : 'Перенести', icon: 'move' as const,
           onSelect: () => { setMoved(''); setEditing('move'); requestAnimationFrame(() => scrollTo('.appt-move')) } } : null,
-    a.patient.id ? { label: '＋ Задача', onSelect: () => setTaskOpen(true) } : null,
-    a.patient.id && canEdit ? { label: '＋ В лабораторию', onSelect: () => setLabOpen(true) } : null,
-    a.patient && a.status !== 'CANCELLED' ? { label: '📖 Показать пациенту', onSelect: () => setLesson(true) } : null,
-    me.owner ? { label: 'Удалить запись', danger: true, onSelect: () => void removeAppointment() } : null,
+    a.patient.id ? { label: 'Новая задача', hint: 'позвонить, напомнить', icon: 'task' as const, onSelect: () => setTaskOpen(true) } : null,
+    a.patient.id && canEdit ? { label: 'Заказ в лабораторию', hint: 'работа технику', icon: 'lab' as const, onSelect: () => setLabOpen(true) } : null,
+    a.patient && a.status !== 'CANCELLED' ? { label: 'Показать пациенту', hint: 'презентация по услуге', icon: 'show' as const, onSelect: () => setLesson(true) } : null,
+    me.owner ? { label: 'Удалить запись', icon: 'trash' as const, danger: true, onSelect: () => void removeAppointment() } : null,
   ].filter((x): x is NonNullable<typeof x> => x != null)
 
   return (
@@ -525,7 +525,8 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
           {/* «⋯» — редкое и опасное: удалить запись насовсем (только владелец Tish; клиники отменяют) */}
           {me.owner && !phone && (
             <ActionMenu label="Ещё действия" buttonLabel="Ещё действия" className="btn ghost" content="⋯" caret={false} align="right"
-              disabled={remove.isPending} items={[{ label: 'Удалить запись', danger: true, onSelect: () => void removeAppointment() }]} />
+              title={`${timeOf(a.startAt)} · ${a.patient.fullName}`}
+              disabled={remove.isPending} items={[{ label: 'Удалить запись', icon: 'trash', danger: true, onSelect: () => void removeAppointment() }]} />
           )}
           <button type="button" className="btn ghost panel-expand" aria-pressed={full} onClick={toggleFull}
             aria-label={full ? 'Свернуть карточку' : 'Карточка на весь экран'} title={full ? 'Свернуть' : 'На весь экран'}>{full ? '⤡' : '⤢'}</button>
@@ -661,7 +662,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
           {barMain && <button type="button" className="btn primary appt-bar-main" disabled={action.isPending || barMain.disabled} onClick={barMain.run}>{barMain.label}</button>}
           {barMenu.length > 0 && (
             <ActionMenu label="Ещё действия" buttonLabel="Ещё действия" className="btn appt-bar-more" content="⋯" caret={false} align="right"
-              disabled={remove.isPending} items={barMenu} />
+              title={`${timeOf(a.startAt)} · ${a.patient.fullName}`} disabled={remove.isPending} items={barMenu} />
           )}
         </div>
       )}

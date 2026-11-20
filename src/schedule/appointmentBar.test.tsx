@@ -66,8 +66,8 @@ test('телефон: «⋯» внизу — перенести, задача, �
   // Кнопки «Перенести» внизу ленты на телефоне нет — она в «⋯»
   expect(within(panel).queryByRole('button', { name: /^Перенести/ })).not.toBeInTheDocument()
   await userEvent.click(within(bar).getByRole('button', { name: 'Ещё действия' }))
-  expect(screen.getAllByRole('menuitem').map((i) => i.textContent)).toEqual(
-    expect.arrayContaining(['Перенести или передать врачу', '＋ Задача', '＋ В лабораторию', '📖 Показать пациенту']))
+  expect(screen.getAllByRole('menuitem').map((i) => i.querySelector('.menu-label')?.textContent)).toEqual(
+    expect.arrayContaining(['Перенести или передать врачу', 'Новая задача', 'Заказ в лабораторию', 'Показать пациенту']))
   await userEvent.click(screen.getByRole('menuitem', { name: 'Перенести или передать врачу' }))
   expect(panel.querySelector('.appt-move')).not.toBeNull()
 })

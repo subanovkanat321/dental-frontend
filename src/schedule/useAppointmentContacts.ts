@@ -55,17 +55,17 @@ export function useAppointmentContacts(a: Appointment, { canEdit, debtSom, onDeb
   }
   const items: ContactItem[] = [...talkItems(a.patient, { whatsapp: canEdit && a.status !== 'REQUESTED' })]
   if (canRemind && a.patient.telegram) {
-    items.push({ label: 'Напомнить о приёме в Telegram', group: 'send', icon: '✈️', hint: reminded, disabled: remind.action.isPending,
+    items.push({ label: 'Напомнить о приёме в Telegram', group: 'send', icon: 'telegram', hint: reminded, disabled: remind.action.isPending,
       onSelect: () => void confirmRemind(a).then((ok) => ok && remind.telegram()) })
   }
   if (canRemind && phone) {
-    items.push({ label: 'Напомнить о приёме в WhatsApp', group: 'send', icon: '💬', hint: reminded, disabled: remind.text == null || remind.opened.isPending,
+    items.push({ label: 'Напомнить о приёме в WhatsApp', group: 'send', icon: 'whatsapp', hint: reminded, disabled: remind.text == null || remind.opened.isPending,
       // Первое напоминание — сразу, чтобы WhatsApp открылся по нажатию; повтор — после вопроса
       onSelect: () => { if (asks) void confirmRemind(a).then((ok) => ok && remind.whatsapp()); else remind.whatsapp() } })
     // На компьютере SMS не отправить
     // Ссылкой sms:, а не из скрипта: так «Сообщения» открываются надёжнее
     if (isMobile() && remind.text != null) {
-      items.push({ label: 'Напомнить о приёме по SMS', group: 'send', icon: '📱', hint: reminded, href: smsUrl(phone, remind.text),
+      items.push({ label: 'Напомнить о приёме по SMS', group: 'send', icon: 'sms', hint: reminded, href: smsUrl(phone, remind.text),
         onSelect: (e) => {
           if (asks) {
             // Повтор: сначала вопрос, потом «Сообщения» сами
@@ -82,14 +82,14 @@ export function useAppointmentContacts(a: Appointment, { canEdit, debtSom, onDeb
   }
   const d = review.data
   if (wantsReview && d?.available) {
-    items.push({ label: d.askedAt ? 'Попросить оценку ещё раз' : 'Попросить оценку', group: 'send', icon: '⭐', disabled: sendReview.isPending,
+    items.push({ label: d.askedAt ? 'Попросить оценку ещё раз' : 'Попросить оценку', group: 'send', icon: 'star', disabled: sendReview.isPending,
       hint: d.askedAt ? `попросили ${agoText(d.askedAt)}, в ${timeOf(d.askedAt)}` : 'ссылка на оценку в WhatsApp',
       onSelect: () => sendReview.mutate(a.id) })
   } else if (wantsReview && d?.reason === 'recent') {
-    items.push({ label: 'Попросить оценку', group: 'send', icon: '⭐', disabled: true, hint: d.message, onSelect: () => {} })
+    items.push({ label: 'Попросить оценку', group: 'send', icon: 'star', disabled: true, hint: d.message, onSelect: () => {} })
   }
   if (onDebt && debtSom > 0) {
-    items.push({ label: 'Напомнить о долге', group: 'send', icon: '🧾', hint: `долг ${somText(debtSom)}`, onSelect: onDebt })
+    items.push({ label: 'Напомнить о долге', group: 'send', icon: 'debt', hint: `долг ${somText(debtSom)}`, onSelect: onDebt })
   }
   if (botInvite.item) items.push(botInvite.item)
   // «Напомнить» — главной кнопкой карточки у записи на будущий день (бот, иначе WhatsApp); те же действия, что в меню

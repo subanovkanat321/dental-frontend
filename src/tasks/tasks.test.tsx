@@ -124,7 +124,7 @@ test('карточка пациента: «＋ Задача» с этим пац
   const panel = await screen.findByRole('complementary', { name: 'Карточка пациента' })
   // «＋ Задача» — в «⋯» шапки; блока «Задачи», пока их нет, тоже нет (пустых строк нет)
   await userEvent.click(await within(panel).findByRole('button', { name: 'Ещё действия' }))
-  await userEvent.click(within(panel).getByRole('menuitem', { name: '＋ Задача' }))
+  await userEvent.click(within(panel).getByRole('menuitem', { name: /^Новая задача/ }))
   expect(within(panel).queryByRole('region', { name: 'Задачи пациента' })).toBeNull()
   const dialog = await screen.findByRole('dialog', { name: 'Новая задача' })
   expect(dialog).toHaveTextContent('Пациент: Айгуль Т.')

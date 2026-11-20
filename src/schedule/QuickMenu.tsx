@@ -42,25 +42,25 @@ function useQuickItems(a: Appointment, me: Me, h: QuickHandlers, act: {
   const items: ActionItem[] = []
   if (step) items.push({ label: step.label, icon: step.icon, onSelect: act.step })
   if (a.status === 'DONE' && seesMoneyOf(me, a.doctorId) && a.paidSom == null) {
-    items.push({ label: 'Принять оплату', icon: '💳', onSelect: () => h.onOpen(a, 'pay') })
+    items.push({ label: 'Принять оплату', icon: 'pay', onSelect: () => h.onOpen(a, 'pay') })
   }
   items.push(...contactActionItems(contacts.items))
-  if (canEdit && active) items.push({ label: 'Перенести', icon: '🔁', group: 'Запись', onSelect: () => h.onOpen(a, 'move') })
+  if (canEdit && active) items.push({ label: 'Перенести', icon: 'move', group: 'Запись', onSelect: () => h.onOpen(a, 'move') })
   if (h.onBook && a.patient && editableDoctors(me, me.doctors ?? []).length > 0) {
     // Тот же врач, если к нему можно записать; день — сегодня или день этой записи, если он впереди; время — в форме
     const doctorId = canEdit ? a.doctorId : editableDoctors(me, (me.doctors ?? []).filter((d) => d.active !== false))[0]?.id
     const length = a.startAt && a.endAt ? (Date.parse(a.endAt) - Date.parse(a.startAt)) / 60_000 : 30
     if (doctorId != null) {
-      items.push({ label: 'Записать повторно', icon: '＋', group: 'Запись',
+      items.push({ label: 'Записать повторно', icon: 'repeat', group: 'Запись',
         onSelect: () => h.onBook!({ doctorId, date: date > todayIn() ? date : todayIn(), minutes: null, duration: length }, a.patient) })
     }
   }
-  if (h.onOpenPatient && a.patient?.id) items.push({ label: 'Открыть карточку пациента', icon: '👤', group: 'Запись', onSelect: () => h.onOpenPatient!(a.patient.id) })
-  items.push({ label: 'Открыть запись', icon: '📋', group: 'Запись', onSelect: () => h.onOpen(a) })
+  if (h.onOpenPatient && a.patient?.id) items.push({ label: 'Открыть карточку пациента', icon: 'user', group: 'Запись', onSelect: () => h.onOpenPatient!(a.patient.id) })
+  items.push({ label: 'Открыть запись', icon: 'record', group: 'Запись', onSelect: () => h.onOpen(a) })
   if (canEdit && active) {
     const planned = a.status === 'SCHEDULED'
-    if (planned && started) items.push({ label: 'Неявка', icon: '🚷', danger: true, group: 'Запись', onSelect: () => act.reason('NO_SHOW') })
-    items.push({ label: a.status === 'REQUESTED' ? 'Отклонить заявку' : 'Отменить запись', icon: '❌', danger: true, group: 'Запись', onSelect: () => act.reason('CANCELLED') })
+    if (planned && started) items.push({ label: 'Неявка', icon: 'noshow', danger: true, group: 'Запись', onSelect: () => act.reason('NO_SHOW') })
+    items.push({ label: a.status === 'REQUESTED' ? 'Отклонить заявку' : 'Отменить запись', icon: 'cancel', danger: true, group: 'Запись', onSelect: () => act.reason('CANCELLED') })
   }
   return items
 }

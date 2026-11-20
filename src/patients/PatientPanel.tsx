@@ -1,11 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 
 import { api, unwrap, type Schemas } from '../api/client'
 import { useAnamnesis } from '../api/anamnesis'
 import { MedAlertPill } from '../medical/Anamnesis'
 import { useClose } from '../lib/useClose'
-import { useBack } from '../lib/back'
 import { canEditDoctor, isAssistant, seesAdvance, seesMoneyOf, seesAllMoney } from '../lib/roles'
 import { debtLine, remindedText, seesDebts } from '../lib/debt'
 import { DebtPromiseForm, DebtRemindForm } from '../cash/DebtRemind'
@@ -32,6 +31,8 @@ import { ContractBox } from '../contract/ContractBox'
 import { Loading } from '../layout/Loading'
 import { OpeningDebtsBox } from '../cash/OpeningDebts'
 import { EmptyState } from '../layout/EmptyState'
+import { ActionMenu, type ActionItem } from '../layout/ActionMenu'
+import { CloseButton } from '../layout/SheetHead'
 import { PlanProgressLine } from '../medical/PlanProgress'
 import { PatientTagsLine } from '../tags/TagDots'
 
@@ -155,8 +156,8 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
   if (card.error) {
     return (
       <aside className="panel" aria-label="Карточка пациента">
+        <div className="panel-head-actions panel-x-only"><CloseButton onClick={onClose} /></div>
         <p className="error">{card.error.message}</p>
-        <button type="button" className="btn" onClick={onClose}>Закрыть</button>
       </aside>
     )
   }
@@ -184,7 +185,7 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
   const remindsDebt = debtRows.length > 0 && patient?.id != null && seesDebts(me)
   const contacts: ContactItem[] = [
     ...talkItems(patient),
-    ...(remindsDebt ? [{ label: 'Напомнить о долге', group: 'send' as const, icon: '🧾', hint: `долг ${somText(debtTotal)}`,
+    ...(remindsDebt ? [{ label: 'Напомнить о долге', group: 'send' as const, icon: 'debt', hint: `долг ${somText(debtTotal)}`,
       onSelect: () => { setTab('money'); setDebtForm('remind') } }] : []),
     ...(botInviteOf.item ? [botInviteOf.item] : []),
   ]
@@ -259,7 +260,7 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
         <div className="panel-head-actions">
           {/* Редкие действия — в «⋯»: договор с пациентом (по желанию клиники, V209) */}
           {patient && (
-            <MoreActions onTask={() => setAdding('task')} onLab={labs ? () => setAdding('lab') : undefined}
+            <MoreActions title={patient.fullName ?? 'Пациент'} onTask={() => setAdding('task')} onLab={labs ? () => setAdding('lab') : undefined}
               onContract={mine && !isAssistant(me) ? () => {
                 setTab('more')
                 setContractAsked((a) => ({ id: patient.id, n: a?.id === patient.id ? a.n + 1 : 1 }))
@@ -361,50 +362,20 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
 }
 
 /**
- * «⋯» в шапке карточки, рядом с ✕: редкие действия с пациентом — «＋ Задача», «＋ Заказ в лабораторию» (не регистратуре)
- * и «📄 Оформить договор» (договор по желанию: строки договора у каждого пациента нет; не ассистенту). Карточка под кнопкой; закрывается
- * нажатием мимо, Esc и «назад» телефона — карточка пациента при этом остаётся.
+ * «⋯» в шапке карточки, рядом с ✕: редкие действия с пациентом — «Новая задача», «Заказ в лабораторию» (не регистратуре)
+ * и «Оформить договор» (договор по желанию: строки договора у каждого пациента нет; не ассистенту). Сверху — имя пациента.
+ * Закрывается нажатием мимо, Esc и «назад» телефона — карточка пациента при этом остаётся.
  */
-function MoreActions({ onTask, onLab, onContract }: { onTask: () => void; onLab?: () => void; onContract?: () => void }) {
-  const [open, setOpen] = useState(false)
-  const wrap = useRef<HTMLDivElement>(null)
-  useBack(open ? () => setOpen(false) : null)
-  useEffect(() => {
-    if (!open) return
-    const onDown = (e: PointerEvent) => {
-      if (e.target instanceof Node && wrap.current?.contains(e.target)) return
-      setOpen(false)
-    }
-    // Esc закрывает меню, а не карточку пациента (useClose слушает window — сюда раньше)
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return
-      e.stopPropagation()
-      setOpen(false)
-    }
-    document.addEventListener('pointerdown', onDown)
-    document.addEventListener('keydown', onKey, true)
-    wrap.current?.querySelector<HTMLElement>('.menu-item')?.focus({ preventScroll: true })
-    return () => {
-      document.removeEventListener('pointerdown', onDown)
-      document.removeEventListener('keydown', onKey, true)
-    }
-  }, [open])
+function MoreActions({ title, onTask, onLab, onContract }: { title: string; onTask: () => void; onLab?: () => void; onContract?: () => void }) {
+  // Общее меню действий (layout/ActionMenu): компьютер — карточка у кнопки, телефон — лист; Esc закрывает только меню
+  const items: ActionItem[] = [
+    { label: 'Новая задача', hint: 'позвонить, напомнить', icon: 'task', onSelect: onTask },
+    ...(onLab ? [{ label: 'Заказ в лабораторию', hint: 'работа технику', icon: 'lab' as const, onSelect: onLab }] : []),
+    ...(onContract ? [{ label: 'Оформить договор', hint: 'на подпись пациенту', icon: 'contract' as const, onSelect: onContract }] : []),
+  ]
   return (
-    <div ref={wrap} className="more-actions">
-      <button type="button" className="btn ghost more-actions-btn" aria-label="Ещё действия" aria-haspopup="menu" aria-expanded={open}
-        onClick={() => setOpen(!open)}>⋯</button>
-      {open && (
-        <div className="pop-menu more-actions-menu" role="menu" aria-label="Ещё действия">
-          <button type="button" role="menuitem" className="menu-item" onClick={() => { setOpen(false); onTask() }}>＋ Задача</button>
-          {onLab && <button type="button" role="menuitem" className="menu-item" onClick={() => { setOpen(false); onLab() }}>＋ Заказ в лабораторию</button>}
-          {onContract && (
-            <button type="button" role="menuitem" className="menu-item" onClick={() => { setOpen(false); onContract() }}>
-              📄 Оформить договор
-            </button>
-          )}
-        </div>
-      )}
-    </div>
+    <ActionMenu label="Ещё действия" buttonLabel="Ещё действия" className="btn ghost more-actions-btn" content="⋯" caret={false} align="right"
+      title={title} items={items} />
   )
 }
 

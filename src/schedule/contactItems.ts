@@ -28,10 +28,10 @@ export function talkItems(patient: Parameters<typeof contactPhone>[0], { whatsap
   const tel = `tel:+${phone}`
   return [
     {
-      label: 'Позвонить', group: 'contact', icon: '📞', href: tel, ariaLabel: `Позвонить: ${formatPhone(phone)}`, hint: formatPhone(phone),
+      label: 'Позвонить', group: 'contact', icon: 'phone', href: tel, ariaLabel: `Позвонить: ${formatPhone(phone)}`, hint: formatPhone(phone),
       onSelect: (e) => { if (e) inTelegram(tel)(e) },
     },
-    ...(whatsapp ? [{ label: 'Написать в WhatsApp', group: 'contact' as const, icon: '💬', onSelect: () => openLink(`https://wa.me/${phone}`) }] : []),
+    ...(whatsapp ? [{ label: 'Написать в WhatsApp', group: 'contact' as const, icon: 'whatsapp', onSelect: () => openLink(`https://wa.me/${phone}`) }] : []),
   ]
 }
 

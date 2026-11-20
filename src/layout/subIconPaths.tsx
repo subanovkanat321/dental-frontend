@@ -8,7 +8,7 @@ import type { Page } from '../lib/route'
  * меню компьютера, «⌄» у вкладок); в самой полосе вкладок — только текст, там тесно. Цвет — оттенок своего
  * раздела (`--ico-<раздел>`), у выбранного — `--accent-ink` (crm.css, DESIGN.md → Colors).
  */
-const P = {
+export const P = {
   list: <><path d="M9 6h11M9 12h11M9 18h11" /><circle cx="4.5" cy="6" r="1" /><circle cx="4.5" cy="12" r="1" /><circle cx="4.5" cy="18" r="1" /></>,
   calendarCheck: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4M9 15.5l2 2 4-4" /></>,
   hourglass: <path d="M6 3h12M6 21h12M8 3v2.5c0 2 4 4.5 4 6.5s-4 4.5-4 6.5V21M16 3v2.5c0 2-4 4.5-4 6.5s4 4.5 4 6.5V21" />,
@@ -94,3 +94,4 @@ export const SUB_TONES: Partial<Record<Page, Record<string, string>>> = {
     ai: 'ai', health: 'logout', settings: 'settings',
   },
 }
+

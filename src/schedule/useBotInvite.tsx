@@ -13,7 +13,7 @@ export function useBotInvite(patient?: InvitePatient | null): { item: ContactIte
   const [open, setOpen] = useState(false)
   if (!patient?.id || patient.telegram) return { item: null, sheet: null }
   return {
-    item: { label: 'Пригласить в Telegram-бот', group: 'send', icon: '📲', hint: invitedHint(patient.botInvitedAt) ?? 'напоминания — бесплатно', onSelect: () => setOpen(true) },
+    item: { label: 'Пригласить в Telegram-бот', group: 'send', icon: 'telegram', hint: invitedHint(patient.botInvitedAt) ?? 'напоминания — бесплатно', onSelect: () => setOpen(true) },
     sheet: open ? <BotInviteSheet patient={patient} onClose={() => setOpen(false)} /> : null,
   }
 }
