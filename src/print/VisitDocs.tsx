@@ -6,7 +6,7 @@ import { api, unwrap, type Schemas } from '../api/client'
 import { discountText } from '../lib/discount'
 import { seesMoneyOf } from '../lib/roles'
 import { somText, timeOf } from '../lib/time'
-import { docDate } from './paper'
+import { docDate, type PaperFormat } from './paper'
 import { PrintSheet } from './PrintSheet'
 import { DocActions } from './SendToPatient'
 import { Select } from '../layout/Select'
@@ -89,7 +89,7 @@ export function MemoDocs({ appointment: a }: { appointment: Appointment }) {
       {m.ky && <MemoLangSwitch value={m.lang ?? 'RU'} patientLang={m.patientLang} onChange={setLang} />}
       <DocActions label={`памятка «${m.title}»`} phone={contactPhone(a.patient)} message={m}
         send={() => unwrap(api.POST('/api/appointments/{id}/care-memo/send', { params: { path: { id } }, body: { memoId: m.memoId, lang: m.lang } }))}
-        onPrint={() => setPrinting(true)} />
+        paper={{ render: () => <MemoPaper appointment={a} memo={m} /> }} onPrint={() => setPrinting(true)} />
       {printing && <MemoSheet appointment={a} memo={m} onClose={() => setPrinting(false)} />}
     </div>
   )
@@ -130,27 +130,32 @@ export function MemoSheet({ appointment: a, memo, onClose }: { appointment: Appo
     retry: false,
   })
   const m = lang === first ? memo : sheet.data ?? memo
-  const words = SHEET[m.lang ?? 'RU']
   return (
     <PrintSheet title="Памятка пациенту" onClose={onClose}
       tools={memo.ky ? <MemoLangSwitch value={lang} patientLang={memo.patientLang} onChange={setLang} /> : undefined}>
-      {() => (
-        <>
-          <h1>{m.title}</h1>
-          <dl>
-            <dt>{words.patient}</dt><dd>{a.patient.fullName}</dd>
-            <dt>{words.visit}</dt><dd>{docDate(a.startAt)}</dd>
-          </dl>
-          <div className="memo-body">{m.body}</div>
-        </>
-      )}
+      {() => <MemoPaper appointment={a} memo={m} />}
     </PrintSheet>
+  )
+}
+
+/** Содержимое листа памятки — в окне печати и в «👁 Просмотре» одно и то же. */
+export function MemoPaper({ appointment: a, memo: m }: { appointment: Appointment; memo: CareMemo }) {
+  const words = SHEET[m.lang ?? 'RU']
+  return (
+    <>
+      <h1>{m.title}</h1>
+      <dl>
+        <dt>{words.patient}</dt><dd>{a.patient.fullName}</dd>
+        <dt>{words.visit}</dt><dd>{docDate(a.startAt)}</dd>
+      </dl>
+      <div className="memo-body">{m.body}</div>
+    </>
   )
 }
 
 function ReceiptDocs({ appointment: a }: { appointment: Appointment }) {
   const id = a.id
-  const [printing, setPrinting] = useState(false)
+  const [printing, setPrinting] = useState<PaperFormat | null>(null)
   const receipt = useQuery({
     // Ключ — по деньгам приёма: доплатили — квитанция перечитается
     queryKey: ['receipt', id, a.paidSom, a.chargeSom, a.debtSom, a.discount?.som, a.paymentMethod],
@@ -164,9 +169,10 @@ function ReceiptDocs({ appointment: a }: { appointment: Appointment }) {
       <p>🧾 Квитанция об оплате</p>
       <DocActions label="квитанция" phone={contactPhone(a.patient)} message={r}
         send={() => unwrap(api.POST('/api/appointments/{id}/receipt/send', { params: { path: { id } } }))}
-        onPrint={() => setPrinting(true)} />
+        paper={{ formats: true, render: (format) => <ReceiptSheet r={r} narrow={format === 'receipt'} /> }}
+        onPrint={(format) => setPrinting(format)} />
       {printing && (
-        <PrintSheet title="Квитанция об оплате" formats onClose={() => setPrinting(false)}>
+        <PrintSheet title="Квитанция об оплате" formats initialFormat={printing} onClose={() => setPrinting(null)}>
           {(format) => <ReceiptSheet r={r} narrow={format === 'receipt'} />}
         </PrintSheet>
       )}

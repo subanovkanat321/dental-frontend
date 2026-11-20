@@ -74,6 +74,11 @@ function backend(options: { templates?: Template[] } = {}) {
       return HttpResponse.json(plan)
     }),
     http.get('*/api/plan-templates', () => HttpResponse.json(templates)),
+    http.post('*/api/plan-templates/defaults', () => {
+      sent.push({ defaults: true })
+      templates = [...templates, IMPLANT]
+      return HttpResponse.json(templates)
+    }),
     http.post('*/api/plan-templates', async ({ request }) => {
       const body = (await request.json()) as Schemas['PlanTemplatesFields']
       sent.push({ template: body })
@@ -151,20 +156,16 @@ test('«📄 Из шаблона»: шаблону нужны зубы — бе�
   expect(screen.queryByRole('dialog', { name: 'Шаблон плана' })).not.toBeInTheDocument()
 })
 
-test('шаблонов нет — «Добавить готовые»: три шаблона, услуги подобраны из прайса по названию', async () => {
+test('шаблонов нет — «Добавить готовые»: готовые шаблоны ставит и подбирает услуги сервер (V246)', async () => {
   const sent = backend({ templates: [] })
   await openPlan()
   await userEvent.click(screen.getByRole('button', { name: '📄 Из шаблона' }))
   const sheet = await screen.findByRole('dialog', { name: 'Шаблон плана' })
   await userEvent.click(await within(sheet).findByRole('button', { name: /Добавить готовые/ }))
-  await within(sheet).findByRole('button', { name: /Ортодонтия — брекеты/ })
-  const created = sent.filter((x) => 'template' in x).map((x) => x.template as Schemas['PlanTemplatesFields'])
-  expect(created.map((t) => t.title)).toEqual(['Имплант под ключ', 'Санация', 'Ортодонтия — брекеты'])
-  // Руководитель (me.admin) — общие клиники; «Установка импланта» → услуга «Имплант», гигиена → «Профгигиена»
-  expect(created[0]!.shared).toBe(true)
-  expect(created[0]!.steps?.find((s) => s.title === 'Установка импланта')?.serviceTypeId).toBe(3)
-  expect(created[0]!.steps?.find((s) => s.title === 'Коронка на имплант')?.serviceTypeId).toBe(4)
-  expect(created[1]!.steps?.find((s) => s.title === 'Профессиональная гигиена')?.serviceTypeId).toBe(5)
+  expect(await within(sheet).findByRole('button', { name: /Имплант под ключ/ })).toBeInTheDocument()
+  // Один запрос — без подбора услуг в браузере и без шаблонов по одному
+  expect(sent).toContainEqual({ defaults: true })
+  expect(sent.filter((x) => 'template' in x)).toHaveLength(0)
 })
 
 test('«💲 Обновить цены»: было → стало, итог, этапы без услуги не меняются; подтвердили — сервер пересчитал', async () => {

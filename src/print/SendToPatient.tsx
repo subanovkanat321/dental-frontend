@@ -4,60 +4,66 @@ import { useState } from 'react'
 import { ApiError, type Schemas } from '../api/client'
 import { haptic, openLink } from '../lib/telegram'
 import { whatsappUrl } from '../lib/texts'
-import { canPrint } from './paper'
+import { DocPreview, type Paper } from './DocPreview'
+import type { PaperFormat } from './paper'
 
 type Message = Pick<Schemas['PatientMessage'], 'text' | 'telegram'>
 
 /**
- * Две кнопки у каждого документа: «🖨 Печать» (в Telegram — подсказка «печать — с компьютера») и
- * «📤 Отправить пациенту». Пациент в Telegram — сообщение шлёт бот (сервер), иначе — WhatsApp с
- * готовым текстом: ссылку wa.me собирает браузер, на сервер телефон не уходит. Бот не доставил —
- * та же кнопка WhatsApp. Само ничего не отправляется — только по нажатию.
+ * Документ пациенту (памятка, квитанция, план без цен): одна кнопка «👁 Просмотр» — под ней ровно то, что он получит
+ * (сообщение с сервера и лист печати, DocPreview), и уже оттуда «Отправить в Telegram / WhatsApp» или «🖨 Печать».
+ * Пациент в Telegram — сообщение шлёт бот (сервер), иначе — WhatsApp с готовым текстом: ссылку wa.me собирает браузер,
+ * на сервер телефон не уходит. Бот не доставил — кнопка WhatsApp. Само ничего не отправляется — только по нажатию.
  *
- * @param message текст документа с сервера (для WhatsApp) и можно ли писать в бот; нет — ещё грузится
+ * @param message текст документа с сервера (для WhatsApp и просмотра) и можно ли писать в бот; нет — ещё грузится
  * @param send отправить в бот (POST …/send)
+ * @param paper лист печати для вкладки «📄 Лист»; нет — «🖨 Печать» сразу открывает окно печати
+ * @param onPrint открыть окно печати (в выбранном в просмотре формате)
  */
-export function DocActions({ label, phone, message, send, onPrint }: {
+export function DocActions({ label, phone, message, send, onPrint, paper }: {
   label: string
   phone?: string | null
   message?: Message
   send: () => Promise<unknown>
-  onPrint: () => void
+  onPrint: (format: PaperFormat) => void
+  paper?: Paper
 }) {
-  const [sent, setSent] = useState(false)
+  const [open, setOpen] = useState(false)
+  const [sent, setSent] = useState('')
   const bot = useMutation<unknown, ApiError>({
     mutationFn: send,
     onSuccess: () => {
-      setSent(true)
+      setSent('Отправлено в Telegram')
       haptic('success')
     },
     onError: () => haptic('error'),
   })
   const whatsapp = () => {
-    if (phone && message?.text) openLink(whatsappUrl(phone, message.text))
+    if (phone && message?.text) {
+      openLink(whatsappUrl(phone, message.text))
+      setSent('Открыли WhatsApp с этим текстом — нажмите там «Отправить»')
+    }
   }
   // Бот не смог (пациент удалил чат, бот выключен) — предложить WhatsApp
   const fallback = bot.error?.code === 'not-delivered' && phone && message?.text
-  const ready = message != null
-  const nowhere = ready && !message.telegram && !phone
   return (
     <div className="doc-actions">
-      <div className="actions">
-        {canPrint()
-          ? <button type="button" className="btn" onClick={onPrint} aria-label={`Печать: ${label}`}>🖨 Печать</button>
-          : <span className="hint small">🖨 Печать — с компьютера</span>}
-        {message?.telegram ? (
-          <button type="button" className="btn" disabled={bot.isPending} aria-label={`Отправить пациенту в Telegram: ${label}`}
-            onClick={() => { setSent(false); bot.mutate() }}>📤 Отправить пациенту</button>
-        ) : (
-          <button type="button" className="btn" disabled={!ready || !phone} aria-label={`Отправить пациенту в WhatsApp: ${label}`}
-            onClick={whatsapp}>📤 Отправить пациенту</button>
-        )}
-      </div>
-      {nowhere && <p className="hint small">Пациент не в Telegram и без телефона — отправить некуда, распечатайте.</p>}
-      {sent && <p className="tone-ok small" role="status">Отправлено в Telegram</p>}
-      {bot.error && <p className="error small" role="alert">{bot.error.message}</p>}
-      {fallback && <button type="button" className="btn small" onClick={whatsapp}>Отправить в WhatsApp</button>}
+      {!open && (
+        <div className="actions">
+          <button type="button" className="btn" disabled={message == null} aria-label={`Просмотр: ${label}`}
+            onClick={() => { setSent(''); bot.reset(); setOpen(true) }}>👁 Просмотр</button>
+        </div>
+      )}
+      {open && message && (
+        <DocPreview label={label} text={message.text ?? ''} telegram={Boolean(message.telegram)} phone={phone} paper={paper}
+          busy={bot.isPending} onClose={() => setOpen(false)} onPrint={onPrint}
+          sendLabel={(c) => `Отправить пациенту в ${c === 'TELEGRAM' ? 'Telegram' : 'WhatsApp'}: ${label}`}
+          onTelegram={() => { setSent(''); bot.mutate() }} onWhatsapp={whatsapp}>
+          {sent && <p className="tone-ok small" role="status">{sent}</p>}
+          {bot.error && <p className="error small" role="alert">{bot.error.message}</p>}
+          {fallback && <button type="button" className="btn small" onClick={whatsapp}>Отправить в WhatsApp</button>}
+        </DocPreview>
+      )}
     </div>
   )
 }

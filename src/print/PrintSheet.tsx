@@ -13,17 +13,18 @@ import './print.css'
  * Шапка — клиника из «О клинике» (название, юрлицо, адрес, телефон), внизу — дата.
  *
  * @param formats есть — переключатель «A4 / Чек 80 мм» (квитанция)
+ * @param initialFormat формат при открытии — тот, что выбрали в «👁 Просмотре»
  * @param tools поля над листом, которые не печатаются (например, «Примечание»)
  */
-export function PrintSheet({ title, onClose, formats = false, tools, children }: {
+export function PrintSheet({ title, onClose, formats = false, initialFormat = 'a4', tools, children }: {
   title: string
   onClose: () => void
   formats?: boolean
+  initialFormat?: PaperFormat
   tools?: ReactNode
   children: (format: PaperFormat) => ReactNode
 }) {
-  const me = useMe()
-  const [format, setFormat] = useState<PaperFormat>('a4')
+  const [format, setFormat] = useState<PaperFormat>(initialFormat)
   const close = useRef(onClose)
   useEffect(() => {
     close.current = onClose
@@ -46,9 +47,6 @@ export function PrintSheet({ title, onClose, formats = false, tools, children }:
     }
   }, [])
 
-  const clinic = me.data?.clinic
-  const name = clinic?.brandName || clinic?.name || ''
-  const now = new Date().toISOString()
   const narrow = format === 'receipt'
   return createPortal(
     <div className="print-root" role="dialog" aria-label={`Печать: ${title}`}>
@@ -66,21 +64,35 @@ export function PrintSheet({ title, onClose, formats = false, tools, children }:
         <button type="button" className="btn" onClick={onClose}>Закрыть</button>
         {tools}
       </div>
-      <article className={narrow ? 'print-sheet narrow' : 'print-sheet'}>
-        <header className="doc-head">
-          <div>
-            {name && <b>{name}</b>}
-            {clinic?.legalName && clinic.legalName !== name && <span>{clinic.legalName}</span>}
-          </div>
-          <div>
-            {clinic?.address && <div>{clinic.address}</div>}
-            {(clinic?.phones?.[0] ?? clinic?.whatsappPhone) && <div>{formatPhone(clinic.phones?.[0] ?? clinic.whatsappPhone!)}</div>}
-          </div>
-        </header>
-        {children(format)}
-        <footer className="doc-foot">{name ? `${name} · ` : ''}Распечатано {docDate(now)} в {timeOf(now)}</footer>
-      </article>
+      <PaperSheet format={format}>{children(format)}</PaperSheet>
     </div>,
     document.body,
+  )
+}
+
+/**
+ * Сам лист: шапка клиники из «О клинике» (название, юрлицо, адрес, телефон), содержимое и внизу — дата. Один и тот же
+ * в окне печати (PrintSheet) и в «👁 Просмотре» (DocPreview) — что видно в просмотре, то и выйдет на бумаге.
+ */
+export function PaperSheet({ format, children }: { format: PaperFormat; children: ReactNode }) {
+  const me = useMe()
+  const clinic = me.data?.clinic
+  const name = clinic?.brandName || clinic?.name || ''
+  const now = new Date().toISOString()
+  return (
+    <article className={format === 'receipt' ? 'print-sheet narrow' : 'print-sheet'}>
+      <header className="doc-head">
+        <div>
+          {name && <b>{name}</b>}
+          {clinic?.legalName && clinic.legalName !== name && <span>{clinic.legalName}</span>}
+        </div>
+        <div>
+          {clinic?.address && <div>{clinic.address}</div>}
+          {(clinic?.phones?.[0] ?? clinic?.whatsappPhone) && <div>{formatPhone(clinic.phones?.[0] ?? clinic.whatsappPhone!)}</div>}
+        </div>
+      </header>
+      {children}
+      <footer className="doc-foot">{name ? `${name} · ` : ''}Распечатано {docDate(now)} в {timeOf(now)}</footer>
+    </article>
   )
 }

@@ -118,7 +118,7 @@ test('два входа: «Написать самому» — без ИИ, ср
 
   // Сразу отправить нельзя — сначала «Так увидит пациент»
   expect(within(b).queryByRole('button', { name: /Отправить/ })).not.toBeInTheDocument()
-  await userEvent.click(within(b).getByRole('button', { name: 'Проверить и отправить' }))
+  await userEvent.click(within(b).getByRole('button', { name: '👁 Просмотр' }))
   const preview = await within(b).findByRole('document', { name: 'Предпросмотр сообщения' })
   expect(preview.textContent).toBe(PREVIEW)
   expect(b).toHaveTextContent('Так увидит пациент')
@@ -194,7 +194,7 @@ test('черновик ИИ не теряется: отмена и повтор�
   expect(localStorage.length).toBe(0)
 })
 
-test('уход можно поправить и вернуть; печать — второстепенно, из предпросмотра', async () => {
+test('уход можно поправить и вернуть; просмотр: сообщение и лист, печать — из просмотра', async () => {
   const calls = backend({ ...DRAFT, ai: true }, { ai: true })
   renderApp()
   const b = await box()
@@ -208,12 +208,16 @@ test('уход можно поправить и вернуть; печать —
   await userEvent.clear(care)
   await userEvent.type(care, 'Только мягкая пища.')
 
-  await userEvent.click(within(b).getByRole('button', { name: 'Проверить и отправить' }))
+  await userEvent.click(within(b).getByRole('button', { name: '👁 Просмотр' }))
   await within(b).findByRole('document', { name: 'Предпросмотр сообщения' })
-  // Главное — отправить; печать — ссылкой «Ещё: распечатать»
+  // Просмотр → (Отправить | Печать): на вкладке сообщения главное — отправить; «📄 Лист» — как выйдет на бумаге
   expect(within(b).getByRole('button', { name: 'Отправить в WhatsApp' })).toHaveClass('primary')
-  expect(within(b).queryByRole('button', { name: /Печать/ })).not.toBeInTheDocument()
-  await userEvent.click(within(b).getByRole('button', { name: 'распечатать' }))
+  await userEvent.click(within(b).getByRole('button', { name: '📄 Лист' }))
+  const paper = within(b).getByRole('document', { name: 'Лист: сообщение после приёма' })
+  expect(within(paper).getByRole('heading', { name: 'Уход дома' })).toBeInTheDocument()
+  expect(paper).toHaveTextContent('Только мягкая пища.')
+  expect(calls).not.toContainEqual(expect.objectContaining({ via: 'PRINT' }))
+  await userEvent.click(within(b).getByRole('button', { name: 'Печать: сообщение после приёма' }))
   const sheet = await screen.findByRole('dialog', { name: 'Печать: После приёма' })
   expect(within(sheet).getByRole('heading', { name: 'Уход дома' })).toBeInTheDocument()
   expect(sheet).toHaveTextContent('Только мягкая пища.')
@@ -228,7 +232,7 @@ test('кыргызский пациент в Telegram: предпросмотр,
   await pick(b, 'С ИИ ✨')
   expect(await within(b).findByText(/Написал ИИ/)).toHaveTextContent('на кыргызском')
   expect(b).toHaveTextContent('Үйдө кам көрүү')
-  await userEvent.click(within(b).getByRole('button', { name: 'Проверить и отправить' }))
+  await userEvent.click(within(b).getByRole('button', { name: '👁 Просмотр' }))
   await within(b).findByRole('document', { name: 'Предпросмотр сообщения' })
   expect(b).toHaveTextContent('придёт 2 сообщениями')
   const switcher = within(b).getByRole('group', { name: 'Куда отправить' })
@@ -250,13 +254,13 @@ test('номер врача в подписи: галочка «Указать �
   expect(box2).toBeChecked()
   expect(b).toHaveTextContent('+996 700 123 456')
   await userEvent.click(box2)
-  await userEvent.click(within(b).getByRole('button', { name: 'Проверить и отправить' }))
+  await userEvent.click(within(b).getByRole('button', { name: '👁 Просмотр' }))
   await waitForSlow(() => expect(calls).toContainEqual({ preview: expect.objectContaining({ doctorPhone: false }) }))
   expect(localStorage.getItem('visit-report-doctor-phone')).toBe('0')
   expect(JSON.stringify({ ...localStorage })).not.toContain('700')
 })
 
-test('только памятка: пункт «Только памятка» — предпросмотр и отправка; «Распечатать памятку» — отдельным пунктом', async () => {
+test('только памятка: пункт «Только памятка» — предпросмотр и отправка; «Распечатать памятку» — просмотр листа, потом печать', async () => {
   const calls = backend(DRAFT)
   renderApp()
   const b = await box()
@@ -268,7 +272,12 @@ test('только памятка: пункт «Только памятка» �
   expect(decodeURIComponent(String(vi.mocked(window.open).mock.calls[0]?.[0]))).toContain('После пломбы')
   expect(await within(b).findByRole('status')).toHaveTextContent('Памятка открыта в WhatsApp')
 
+  // «Распечатать памятку» — сначала просмотр листа, печать — оттуда
   await pick(b, 'Распечатать памятку')
+  const paper = await within(b).findByRole('document', { name: 'Лист: памятка «После пломбы»' })
+  expect(paper).toHaveTextContent('Не ешьте 2 часа.')
+  expect(screen.queryByRole('dialog', { name: 'Печать: Памятка пациенту' })).not.toBeInTheDocument()
+  await userEvent.click(within(b).getByRole('button', { name: 'Печать: памятка «После пломбы»' }))
   const sheet = await screen.findByRole('dialog', { name: 'Печать: Памятка пациенту' })
   expect(within(sheet).getByRole('heading', { name: 'После пломбы' })).toBeInTheDocument()
   expect(sheet).toHaveTextContent('Не ешьте 2 часа.')
@@ -299,7 +308,7 @@ test('у услуги нет памятки — блока ухода нет, п
   expect(within(b).queryByRole('textbox', { name: 'Уход дома' })).not.toBeInTheDocument()
   await choose(within(b).getByRole('combobox', { name: 'Уход дома из памятки' }), 'После чистки')
   expect(await within(b).findByRole('textbox', { name: 'Уход дома' })).toHaveValue('Не пейте кофе.')
-  await userEvent.click(within(b).getByRole('button', { name: 'Проверить и отправить' }))
+  await userEvent.click(within(b).getByRole('button', { name: '👁 Просмотр' }))
   await waitForSlow(() => expect(calls).toContainEqual({ preview: { text: 'Здравствуйте!', care: 'Не пейте кофе.', doctorPhone: false } }))
 })
 
@@ -308,7 +317,7 @@ test('предпросмотр говорит, что в конце спроси
   renderApp()
   const b = await box()
   await pick(b, 'По шаблону')
-  await userEvent.click(await within(b).findByRole('button', { name: 'Проверить и отправить' }))
+  await userEvent.click(await within(b).findByRole('button', { name: '👁 Просмотр' }))
   const note = await within(b).findByRole('note', { name: 'Оценка приёма' })
   expect(note).toHaveTextContent('кнопки ⭐1–5 под сообщением')
   expect(note).toHaveTextContent('Отдельно бот спрашивать уже не будет')
@@ -319,7 +328,7 @@ test('оценку уже спрашивали — о ней в предпрос
   renderApp()
   const b = await box()
   await pick(b, 'По шаблону')
-  await userEvent.click(await within(b).findByRole('button', { name: 'Проверить и отправить' }))
+  await userEvent.click(await within(b).findByRole('button', { name: '👁 Просмотр' }))
   await within(b).findByRole('document', { name: 'Предпросмотр сообщения' })
   expect(within(b).queryByRole('note', { name: 'Оценка приёма' })).not.toBeInTheDocument()
 })
