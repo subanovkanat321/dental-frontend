@@ -15987,6 +15987,78 @@
         }
       }
     },
+    "/api/diagnoses/suggest" : {
+      "get" : {
+        "tags" : [ "diagnosis-controller" ],
+        "operationId" : "suggest",
+        "parameters" : [ {
+          "name" : "q",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DiagnosesSuggestions"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/diagnoses/report" : {
+      "get" : {
+        "tags" : [ "diagnosis-controller" ],
+        "operationId" : "report_3",
+        "parameters" : [ {
+          "name" : "from",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }, {
+          "name" : "to",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }, {
+          "name" : "doctorId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/DiagnosesCodeCount"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/comebacks" : {
       "get" : {
         "tags" : [ "comeback-controller" ],
@@ -17028,7 +17100,7 @@
     "/api/appointments/promo-codes" : {
       "get" : {
         "tags" : [ "promo-report-controller" ],
-        "operationId" : "report_3",
+        "operationId" : "report_4",
         "parameters" : [ {
           "name" : "from",
           "in" : "query",
@@ -17071,7 +17143,7 @@
     "/api/appointments/from-tish" : {
       "get" : {
         "tags" : [ "tish-report-controller" ],
-        "operationId" : "report_4",
+        "operationId" : "report_5",
         "parameters" : [ {
           "name" : "month",
           "in" : "query",
@@ -17704,6 +17776,21 @@
   },
   "components" : {
     "schemas" : {
+      "DiagnosisCode" : {
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "tooth" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "code" ]
+      },
       "NoteSections" : {
         "properties" : {
           "complaints" : {
@@ -17723,6 +17810,12 @@
           },
           "other" : {
             "type" : "string"
+          },
+          "diagnosisCodes" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/DiagnosisCode"
+            }
           }
         }
       },
@@ -29936,6 +30029,71 @@
           }
         },
         "required" : [ "done", "leftSom", "patientId", "telegram", "total" ]
+      },
+      "DiagnosesFormulation" : {
+        "properties" : {
+          "text" : {
+            "type" : "string"
+          },
+          "code" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "uses" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "text", "uses" ]
+      },
+      "DiagnosesSuggestions" : {
+        "properties" : {
+          "codes" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Icd10Code"
+            }
+          },
+          "own" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/DiagnosesFormulation"
+            }
+          }
+        },
+        "required" : [ "codes", "own" ]
+      },
+      "Icd10Code" : {
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "code", "title" ]
+      },
+      "DiagnosesCodeCount" : {
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "count" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "patients" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "code", "count", "patients", "title" ]
       },
       "ComebacksBoard" : {
         "properties" : {
