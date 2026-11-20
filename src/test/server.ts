@@ -31,6 +31,9 @@ export const server = setupServer(
   http.get('*/api/appointments/debts', () => HttpResponse.json([] satisfies Schemas['PaymentQueryDebt'][])),
   // Долги из прежней программы (шаблон переезда): по умолчанию нет — блока в «Должниках» и карточке пациента нет
   http.get('*/api/opening-debts', () => HttpResponse.json([] satisfies Schemas['OpeningDebtsView'][])),
+  // Аванс пациента (V243, шапка карточки, «Деньги», форма оплаты): по умолчанию пуст — строки «аванс …» и «С аванса» нет
+  http.get('*/api/patients/:patientId/advance', ({ params }) => HttpResponse.json(
+    { patientId: Number(params.patientId), balanceSom: 0, members: [], entries: [] } satisfies Schemas['AdvancesView'])),
   // Подсказка «🪑 время коллеги по креслу» в «Новой записи» и переносе: по умолчанию коллеги в это время нет
   http.get('*/api/appointments/chair-check', () => HttpResponse.json({ strict: false, freeChairs: [], notified: [] } satisfies Schemas['ChairCheckView'])),
   http.get('*/api/appointments/chair-options', () => HttpResponse.json([] satisfies Schemas['ChairOptionView'][])),

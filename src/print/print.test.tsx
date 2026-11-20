@@ -209,3 +209,23 @@ test('памятка по-кыргызски: язык пациента по у�
   await userEvent.click(within(panel).getByRole('button', { name: 'Отправить пациенту в WhatsApp: памятка «После удаления зуба»' }))
   expect(open).toHaveBeenCalledWith(`https://api.whatsapp.com/send/?phone=996555123456&text=${encodeURIComponent(MEMO.text)}`, '_blank', 'noopener')
 })
+
+test('квитанция с аванса: строка «с аванса», «Оплачено с аванса» и остаток аванса', async () => {
+  backend(done({ paidSom: 5000, chargeSom: 5000, debtSom: 0, paymentMethod: 'ADVANCE' }))
+  server.use(http.get('*/api/appointments/:id/receipt', () => HttpResponse.json({
+    ...RECEIPT, chargeSom: 5000, paidSom: 5000, debtSom: 0, advanceSom: 3000, advanceLeftSom: 17000,
+    payments: [
+      { paidAt: '2026-10-20T04:30:00Z', amountSom: 3000, method: 'ADVANCE', takenBy: 'Жылдыз' },
+      { paidAt: '2026-10-20T04:30:00Z', amountSom: 2000, method: 'CASH', takenBy: 'Жылдыз' },
+    ],
+  } satisfies Schemas['ReceiptsReceiptView'])))
+  renderApp()
+  const panel = await card(/Бакыт М\./)
+  await userEvent.click(await within(panel).findByRole('button', { name: 'Печать: квитанция' }))
+  const sheet = await screen.findByRole('dialog', { name: 'Печать: Квитанция об оплате' })
+  const rows = within(within(sheet).getByRole('table', { name: 'Платежи' })).getAllByRole('row')
+  expect(rows[1]).toHaveTextContent(/с аванса/)
+  expect(sheet).toHaveTextContent(/Оплачено с аванса: 3\s000 сом/)
+  expect(sheet).toHaveTextContent(/Остаток аванса: 17\s000 сом/)
+  expect(sheet).toHaveTextContent('Оплачено полностью')
+})

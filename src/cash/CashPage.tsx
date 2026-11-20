@@ -43,7 +43,7 @@ function monthsOf(from: string, to: string): string[] {
   return out
 }
 
-const METHODS: Record<string, string> = { CASH: 'Наличные', TRANSFER: 'Перевод', CARD: 'Карта' }
+const METHODS: Record<string, string> = { CASH: 'Наличные', TRANSFER: 'Перевод', CARD: 'Карта', ADVANCE: 'С аванса' }
 
 type Period = 'day' | 'week' | 'month' | 'custom'
 type Tab = 'money' | 'day' | 'earnings' | 'analytics' | 'expenses' | 'debtors' | 'salary' | 'stats' | 'report'
@@ -220,6 +220,7 @@ export function CashPage({ me, onOpenPatient }: { me: Me; onOpenPatient?: (patie
                       Поступлений: {r.cash?.paymentsCount ?? 0}
                       {Object.entries(r.cash?.byMethod ?? {}).filter(([, v]) => v).map(([k, v]) => ` · ${METHODS[k] ?? k}: ${somText(v)}`).join('')}
                       {r.cash?.depositsSom ? ` · из них предоплаты: ${somText(r.cash.depositsSom)}` : ''}
+                      {r.cash?.advancesSom ? ` · из них авансы: ${somText(r.cash.advancesSom)}` : ''}
                     </p>
                     <CashEntries from={range.from} to={range.to} doctorId={doctorId} count={r.cash?.paymentsCount ?? 0}
                       onOpen={setOpened} onOpenPatient={onOpenPatient} active={opened} />

@@ -30,7 +30,7 @@ function backend(posted: unknown[]) {
     http.get('*/api/patient/me', () => HttpResponse.json(dastan)),
     http.get('*/api/appointments/revenue', () => HttpResponse.json({
       totalSom: 25000, paidCount: 5, unpaidCount: 0, freeCount: 0, prepaidCount: 0, debtCount: 0, debtSom: 0, partialCount: 0, partialDebtSom: 0, discountCount: 0, discountSom: 0, byMethod: { CASH: 25000 }, days: [],
-      cash: { totalSom: 31000, paymentsCount: 6, depositsSom: 0, byMethod: { CASH: 31000 }, days: [], openingDebtsSom: 0 },
+      cash: { totalSom: 31000, paymentsCount: 6, depositsSom: 0, byMethod: { CASH: 31000 }, days: [], openingDebtsSom: 0, advancesSom: 0 },
     } satisfies Schemas['RevenueView'])),
     http.get('*/api/expenses', () => HttpResponse.json([
       { id: 3, spentOn: todayIn(), amountSom: 2000, category: 'Зуботехническая лаборатория', doctorId: 2, repeatMonthly: false, fromCash: false },

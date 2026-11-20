@@ -27,9 +27,9 @@ function view(extra: Partial<Day> = {}): Day {
     day: todayIn(), openingSom: 2000, openingSource: 'PREVIOUS', openingFrom: '2026-11-19',
     inByMethod: { CASH: 4000, TRANSFER: 1500, CARD: 700 }, inSom: 6200, cashInSom: 4000,
     expenses: [{ id: 1, category: 'Материалы', comment: 'Перчатки', amountSom: 400 }], expensesSom: 400,
-    movements: [], depositsSom: 0, withdrawalsSom: 0, closingSom: 5600, closed: false, ...extra,
+    movements: [], depositsSom: 0, withdrawalsSom: 0, closingSom: 5600, closed: false, refunds: [], cashRefundsSom: 0, ...extra,
   }
-  return { ...v, closingSom: (v.openingSom ?? 0) + v.cashInSom - v.expensesSom + v.depositsSom - v.withdrawalsSom }
+  return { ...v, closingSom: (v.openingSom ?? 0) + v.cashInSom - v.expensesSom - v.cashRefundsSom + v.depositsSom - v.withdrawalsSom }
 }
 
 test('касса дня: итог столбиком, приход по способам, изъятие с причиной и закрытие дня', async () => {
