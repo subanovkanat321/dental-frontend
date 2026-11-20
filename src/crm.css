@@ -683,6 +683,7 @@ details.agreement-box { max-height: none; }
 .date-sub { font-size: .9rem; color: var(--hint); }
 .btn.date-today { flex: none; min-height: 52px; padding: 0 12px; border-radius: 12px; font-size: .95rem; }
 .date-caret { font-size: .8em; color: var(--link); }
+.date-step:disabled { opacity: .35; cursor: default; }
 /* «📅 другой день»: прозрачное поле даты поверх — нажатие открывает календарь */
 .day-actions { display: flex; gap: 8px; }
 .day-actions .btn { flex: 1 1 0; min-height: 44px; justify-content: center; }
