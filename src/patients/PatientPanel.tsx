@@ -13,6 +13,8 @@ import { formatPhone, shortDate, somText } from '../lib/time'
 import { ageYears, yearsText } from '../lib/age'
 import { ContactMenu } from '../schedule/ContactMenu'
 import { talkItems, type ContactItem } from '../schedule/contactItems'
+import { invitedHint } from '../schedule/botInvite'
+import { useBotInvite } from '../schedule/useBotInvite'
 import { statusOf } from '../schedule/status'
 import { PatientForm } from './PatientForm'
 import { VisitDocs } from '../print/VisitDocs'
@@ -86,6 +88,8 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
     queryKey: ['patient-card', patientId],
     queryFn: () => unwrap(api.GET('/api/appointments/by-patient/{patientId}', { params: { path: { patientId } } })),
   })
+  // «📲 Пригласить в Telegram-бот» в «Связаться» — пациенту без бота (хук — до ранних return)
+  const botInviteOf = useBotInvite(card.data?.patient)
   const debts = useQuery({
     queryKey: ['debts', 'patient', patientId],
     queryFn: () => unwrap(api.GET('/api/appointments/debts', { params: { query: { patientId } } })),
@@ -166,6 +170,7 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
     ...talkItems(patient),
     ...(remindsDebt ? [{ label: 'Напомнить о долге', group: 'send' as const, icon: '🧾', hint: `долг ${somText(debtTotal)}`,
       onSelect: () => { setTab('money'); setDebtForm('remind') } }] : []),
+    ...(botInviteOf.item ? [botInviteOf.item] : []),
   ]
   const tabs: [Tab, string][] = [
     ['visits', 'Визиты'],
@@ -188,7 +193,7 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
           <span className="hint">
             {patient?.phone && <span className="num">{formatPhone(patient.phone)}</span>}
             {patient?.birthDate && ` · ${ageText(patient.birthDate)}`}
-            {` · ${patient?.telegram ? 'пишет боту' : 'без бота — WhatsApp'}`}
+            {patient?.telegram ? <> · <span className="tone-ok">в боте</span></> : ` · без бота — WhatsApp${patient?.botInvitedAt ? ` · ${invitedHint(patient.botInvitedAt)}` : ''}`}
           </span>
           <KidInfo patient={patient} />
           {/* Свои метки клиники (V239): чипы; руководитель и регистратура нажимают — список с ✓ */}
@@ -226,6 +231,7 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
         {/* Есть представитель — звоним и пишем ему */}
         <ContactMenu items={contacts} />
       </div>
+      {botInviteOf.sheet}
 
       {/* Сводка: визиты (и неявки), ближайшая запись; долг — строкой денег в шапке */}
       <dl className="patient-summary">

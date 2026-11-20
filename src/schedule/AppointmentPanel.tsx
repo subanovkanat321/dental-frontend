@@ -245,7 +245,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
   const patientDebt = (debts.data ?? []).reduce((sum, d) => sum + d.debtSom, 0)
   // «Связаться ▾»: позвонить, написать, напомнить о приёме, попросить оценку, напомнить о долге (форма — под статусом)
   const [debtForm, setDebtForm] = useState(false)
-  const contacts = useAppointmentContacts(a, { canEdit, debtSom: patientDebt, onDebt: seesDebts(me) && a.patient.id ? () => setDebtForm(true) : undefined })
+  const contacts = useAppointmentContacts(a, { canEdit, debtSom: patientDebt, onDebt: seesDebts(me) && a.patient.id ? () => setDebtForm(true) : undefined, invite: true })
   const earlierDebt = (debts.data ?? []).filter((d) => d.appointmentId !== a.id).reduce((sum, d) => sum + d.debtSom, 0)
   // Приём в рабочих часах коллеги по креслу (V187): слоты дня врача (те же, что у сетки и списка — обычно из кэша)
   const daySlots = useQuery({
@@ -303,6 +303,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
             void setStatus(reasonFor, { undo: reasonSheet.undo, reason, note })
           }} />
       )}
+      {contacts.inviteSheet}
       {contacts.error && <p className="error" role="alert">{Object.values(contacts.error.fieldErrors)[0] ?? contacts.error.message}</p>}
       {debtForm && a.patient.id && <DebtRemindForm patientId={a.patient.id} name={a.patient.fullName} onDone={() => setDebtForm(false)} />}
       {/* Метки пациента одной строкой, по важности, как на записи в сетке: ❗ важно для врача (тем, кому анкета закрыта —

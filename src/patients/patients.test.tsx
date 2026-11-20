@@ -124,7 +124,7 @@ test('карточка пациента: визиты, неявки, долг; �
   // «📞 Связаться ▾»: позвонить, WhatsApp и — есть долг — «Напомнить о долге» (откроет форму в «Деньгах»)
   await userEvent.click(contactMenu(panel)!)
   expect(screen.getAllByRole('menuitem').map((i) => i.querySelector('.menu-text')?.firstChild?.textContent))
-    .toEqual(['Позвонить', 'Написать в WhatsApp', 'Напомнить о долге'])
+    .toEqual(['Позвонить', 'Написать в WhatsApp', 'Напомнить о долге', 'Пригласить в Telegram-бот'])
   await userEvent.click(screen.getByRole('menuitem', { name: /^Напомнить о долге/ }))
   expect(within(panel).getByRole('tab', { name: 'Деньги' })).toHaveAttribute('aria-selected', 'true')
   // «Деньги»: долг по приёму и расходы по пациенту

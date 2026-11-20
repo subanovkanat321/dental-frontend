@@ -296,6 +296,19 @@ input[type=date], input[type=month] { min-width: 0; max-width: 100%; }
 @media (max-width: 380px) {
   html .segments.segments > button { padding-inline: 4px; font-size: .875rem; }
 }
+/*
+ * Короткие вкладки (`.segments.tabs` до 4 пунктов: карточка пациента «Визиты · Медкарта · Деньги · Прочее», медкарта,
+ * аккаунт) на телефоне — слово не рвётся посередине («Медкарт / а» на 390px, 2026-11-20): пункт шириной по своему тексту
+ * (свободное место — поровну), одной строкой, чуть мельче; не влезло совсем — многоточие. Вкладок больше (клиника,
+ * настройки) и переключатели-фильтры — как выше: там длинные названия, им нужен перенос.
+ */
+@media (max-width: 760px) {
+  html .segments.tabs.tabs:not(:has(> button:nth-child(5))) > button { flex: 1 1 auto; min-width: 0; padding-inline: 6px; white-space: nowrap; overflow: hidden;
+    text-overflow: ellipsis; overflow-wrap: normal; hyphens: manual; font-size: .9rem; }
+}
+@media (max-width: 400px) {
+  html .segments.tabs.tabs:not(:has(> button:nth-child(5))) > button { padding-inline: 4px; font-size: .84rem; }
+}
 .source-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .source-chip { min-height: 34px; padding: 4px 10px; border: 1px solid var(--line-strong); border-radius: 999px; background: var(--card); color: var(--text); font: inherit; font-size: .85rem; cursor: pointer; }
 .source-chip:hover:not(:disabled) { border-color: var(--accent); }

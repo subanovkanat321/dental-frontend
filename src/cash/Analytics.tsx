@@ -11,6 +11,7 @@ import { percents } from '../lib/parts'
 import { HBars } from './HBars'
 import { TishChart } from './TishChart'
 import { DroppedTile } from './DroppedTile'
+import { BotTile } from './BotTile'
 import { Loading } from '../layout/Loading'
 import { EmptyState } from '../layout/EmptyState'
 import { HeadTools } from '../layout/PageHead'
@@ -78,6 +79,8 @@ export function AnalyticsTab({ me, doctorId, seesAll }: { me: Me; doctorId: numb
       {seesAll && doctorId == null && <TishChart month={month} />}
       {/* «Бросили лечение» — свои пациенты врача или вся клиника (сервер); выбран другой врач — не показываем */}
       {(doctorId == null || doctorId === me.doctorId) && <DroppedTile />}
+      {/* Сколько пациентов в боте — вся клиника (ассистенту сервер считает только его врачей); выбран врач — не показываем */}
+      {doctorId == null && <BotTile />}
       <MonthsChart month={month ?? todayIn().slice(0, 7)} scope={scope} />
       <DaysChart key={`${period.from}-${period.to}`} period={period} scope={scope} />
       {seesAll && doctorId == null && (me.doctors ?? []).filter((d) => d.active !== false).length > 1 && <DoctorsChart me={me} period={period} />}
