@@ -4804,6 +4804,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/appointments/{id}/in-chair": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["inChair"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/appointments/{id}/dictation/parse": {
         parameters: {
             query?: never;
@@ -7316,6 +7332,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/appointments/cancel-reasons": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["reasons"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/appointments/by-patient/{patientId}": {
         parameters: {
             query?: never;
@@ -9230,6 +9262,11 @@ export interface components {
             ratingVia?: string;
             /** Format: date-time */
             arrivedAt?: string;
+            /** Format: date-time */
+            inChairAt?: string;
+            /** @enum {string} */
+            cancelReason?: "CHANGED_MIND" | "DUPLICATE" | "ILL" | "OTHER_TIME" | "CLINIC" | "OTHER" | "PATIENT";
+            cancelNote?: string;
         };
         FamiliesBooker: {
             fullName?: string;
@@ -10594,6 +10631,9 @@ export interface components {
             version: number;
             /** @enum {string} */
             status: "REQUESTED" | "SCHEDULED" | "CANCELLED" | "DONE" | "NO_SHOW";
+            /** @enum {string} */
+            reason?: "CHANGED_MIND" | "DUPLICATE" | "ILL" | "OTHER_TIME" | "CLINIC" | "OTHER" | "PATIENT";
+            reasonNote?: string;
         };
         ReviewLinksSent: {
             text: string;
@@ -10651,6 +10691,11 @@ export interface components {
         AppointmentControllerBill: {
             /** Format: int32 */
             chargeSom?: number;
+        };
+        AppointmentRequestsInChair: {
+            /** Format: int64 */
+            version: number;
+            inChair: boolean;
         };
         VisitDictationControllerText: {
             text?: string;
@@ -12745,6 +12790,14 @@ export interface components {
             patient?: string;
             takenBy?: string;
             viaBot: boolean;
+        };
+        CancelReasonsControllerReasonCount: {
+            /** @enum {string} */
+            reason?: "CHANGED_MIND" | "DUPLICATE" | "ILL" | "OTHER_TIME" | "CLINIC" | "OTHER" | "PATIENT";
+            /** Format: int32 */
+            cancelled: number;
+            /** Format: int32 */
+            noShow: number;
         };
         PatientCard: {
             patient?: components["schemas"]["PatientView"];
@@ -22412,6 +22465,32 @@ export interface operations {
             };
         };
     };
+    inChair: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AppointmentRequestsInChair"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppointmentView"];
+                };
+            };
+        };
+    };
     parse: {
         parameters: {
             query?: never;
@@ -26025,6 +26104,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PaymentQueryCashEntry"][];
+                };
+            };
+        };
+    };
+    reasons: {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+                doctorId?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CancelReasonsControllerReasonCount"][];
                 };
             };
         };

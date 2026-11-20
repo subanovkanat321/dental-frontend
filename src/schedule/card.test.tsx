@@ -24,9 +24,9 @@ function backend(a: Appointment, who: Schemas['BookingViewsMe'] = me) {
     http.get('*/api/patient/me', () => HttpResponse.json(who)),
     http.get('*/api/appointments', ({ request }) => HttpResponse.json(new URL(request.url).searchParams.get('doctorId') === String(a.doctorId) ? [current] : [])),
     http.post('*/api/appointments/:id/status', async ({ request }) => {
-      const body = await request.json() as { status: Appointment['status'] }
-      sent.push({ status: body.status })
-      current = { ...current, status: body.status, version: current.version + 1 }
+      const body = await request.json() as { status: Appointment['status']; reason?: Appointment['cancelReason']; reasonNote?: string }
+      sent.push({ status: body.status, ...(body.reason ? { reason: body.reason } : {}), ...(body.reasonNote ? { note: body.reasonNote } : {}) })
+      current = { ...current, status: body.status, cancelReason: body.reason, cancelNote: body.reasonNote, version: current.version + 1 }
       return HttpResponse.json(current)
     }),
     http.post('*/api/appointments/:id/undo', async ({ request }) => {
@@ -39,6 +39,14 @@ function backend(a: Appointment, who: Schemas['BookingViewsMe'] = me) {
       const body = await request.json() as { arrived: boolean }
       sent.push({ arrived: body.arrived })
       current = { ...current, arrivedAt: body.arrived ? new Date().toISOString() : undefined, version: current.version + 1 }
+      return HttpResponse.json(current)
+    }),
+    // «В кресле» (V235): как сервер — «Пришёл» ставится вместе, если не было
+    http.post('*/api/appointments/:id/in-chair', async ({ request }) => {
+      const body = await request.json() as { inChair: boolean }
+      sent.push({ inChair: body.inChair })
+      const now = new Date().toISOString()
+      current = { ...current, inChairAt: body.inChair ? now : undefined, arrivedAt: body.inChair ? current.arrivedAt ?? now : current.arrivedAt, version: current.version + 1 }
       return HttpResponse.json(current)
     }),
     http.post('*/api/appointments/:id/reply', async ({ request }) => {
@@ -60,14 +68,20 @@ const open = async (name: RegExp) => {
   return screen.getByRole('complementary', { name: 'Карточка приёма' })
 }
 
-test('неявка — после вопроса; «Вернуть» возвращает как было', async () => {
-  const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true)
+test('неявка — окно с причиной; причина в карточке; «Вернуть» возвращает как было', async () => {
   const sent = backend(appointment(10, 1, '00:05', 'Бакыт М.', { version: 1 }))
   renderApp()
   const panel = await open(/Бакыт М\./)
   await pickStatus(panel, 'Неявка')
-  expect(confirm).toHaveBeenCalledWith(expect.stringContaining('Отметить неявку'))
+  const sheet = screen.getByRole('dialog', { name: 'Причина неявки' })
+  expect(sheet).toHaveTextContent('Отметить неявку: Бакыт М. не пришёл(ла) на приём?')
+  // У неявки «Клиника отменила» не предлагаем
+  expect(within(sheet).getAllByRole('radio').map((r) => r.textContent)).toEqual(['Передумал', 'Заболел', 'Перенёс на другое время', 'Дубль записи', 'Другое'])
+  await userEvent.click(within(sheet).getByRole('radio', { name: 'Заболел' }))
+  expect(within(sheet).getByRole('radio', { name: 'Заболел' })).toHaveAttribute('aria-checked', 'true')
+  await userEvent.click(within(sheet).getByRole('button', { name: 'Отметить неявку' }))
   expect(await within(panel).findByText('Отмечено: неявка')).toBeInTheDocument()
+  expect(within(panel).getByText('Неявка · заболел')).toBeInTheDocument()
   expect(statusMenu(panel)).toHaveAccessibleName('Статус: Неявка')
   // Исправить — тем же списком статусов: из неявки можно «Приём состоялся» и «Записан»
   await userEvent.click(statusMenu(panel)!)
@@ -75,7 +89,7 @@ test('неявка — после вопроса; «Вернуть» возвр�
   await userEvent.keyboard('{Escape}')
   await userEvent.click(within(panel).getByRole('button', { name: 'Вернуть' }))
   expect(await within(panel).findByRole('button', { name: 'Приём состоялся' })).toBeInTheDocument()
-  expect(sent).toEqual([{ status: 'NO_SHOW' }, { undo: 'SCHEDULED' }])
+  expect(sent).toEqual([{ status: 'NO_SHOW', reason: 'ILL' }, { undo: 'SCHEDULED' }])
 })
 
 test('отменённую запись — «Записан» в списке (восстановить); удалить запись может только владелец Tish', async () => {
@@ -242,7 +256,7 @@ test('пилюля статуса: текущий с ✓, допустимые �
   const menu = screen.getByRole('menu', { name: 'Статус приёма' })
   // Заявкой приём снова не станет — пункта нет
   expect(within(menu).getAllByRole('menuitemradio').map((i) => i.querySelector('.menu-text')?.firstChild?.textContent))
-    .toEqual(['Записан', 'Подтвердил (придёт)', 'Пришёл', 'Приём состоялся', 'Неявка', 'Отменён'])
+    .toEqual(['Записан', 'Подтвердил (придёт)', 'Пришёл', 'В кресле', 'Приём состоялся', 'Неявка', 'Отменён'])
   expect(within(menu).getByRole('menuitemradio', { name: /^Записан/ })).toHaveAttribute('aria-checked', 'true')
   expect(within(menu).getByRole('menuitemradio', { name: /^Подтвердил/ })).toHaveFocus()
   await userEvent.keyboard('{Escape}')
@@ -251,8 +265,7 @@ test('пилюля статуса: текущий с ✓, допустимые �
   expect(pill).toHaveFocus()
 })
 
-test('приём на завтра — «Пришёл», «Состоялся» и «Неявка» серые «с дня приёма»; отмена — с вопросом', async () => {
-  const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true)
+test('приём на завтра — «Пришёл», «В кресле», «Состоялся» и «Неявка» серые «с дня приёма»; отмена — с причиной', async () => {
   const today = appointment(10, 1, '10:00', 'Бакыт М.', { version: 1 })
   const day = 24 * 3600_000
   const tomorrow = { ...today, startAt: new Date(Date.parse(today.startAt) + day).toISOString(), endAt: new Date(Date.parse(today.endAt) + day).toISOString() }
@@ -265,19 +278,24 @@ test('приём на завтра — «Пришёл», «Состоялся» 
   // Следующего шага до дня приёма нет
   expect(within(panel).queryByRole('button', { name: 'Пришёл' })).toBeNull()
   await userEvent.click(await waitForSlow(() => statusMenu(panel)!))
-  for (const name of ['Пришёл', 'Приём состоялся', 'Неявка']) {
+  for (const name of ['Пришёл', 'В кресле', 'Приём состоялся', 'Неявка']) {
     const item = screen.getByRole('menuitemradio', { name: new RegExp(`^${name}`) })
     expect(item).toBeDisabled()
     expect(item).toHaveTextContent('с дня приёма')
   }
   await userEvent.click(screen.getByRole('menuitemradio', { name: /^Отменён/ }))
-  expect(confirm).toHaveBeenCalledWith(expect.stringContaining('Отменить запись Бакыт М.? Время освободится.'))
+  const sheet = screen.getByRole('dialog', { name: 'Причина отмены' })
+  expect(sheet).toHaveTextContent('Отменить запись Бакыт М.? Время освободится.')
+  expect(within(sheet).getAllByRole('radio')).toHaveLength(6)
+  await userEvent.click(within(sheet).getByRole('radio', { name: 'Дубль записи' }))
+  await userEvent.click(within(sheet).getByRole('button', { name: 'Отменить запись' }))
   expect(await within(panel).findByText('Запись отменена')).toBeInTheDocument()
-  expect(sent).toEqual([{ status: 'CANCELLED' }])
+  expect(within(panel).getByText('Отменён · дубль записи')).toBeInTheDocument()
+  expect(sent).toEqual([{ status: 'CANCELLED', reason: 'DUPLICATE' }])
   window.history.replaceState(null, '', '/')
 })
 
-test('следующий шаг одним касанием: «Пришёл» → «Приём состоялся» → «Что сделали сегодня?» и оплата', async () => {
+test('следующий шаг одним касанием: «Пришёл» → «Начать приём» (В кресле) → «Приём состоялся» → оплата', async () => {
   // 10:10 по Бишкеку: приём 10:00–10:30 идёт
   fixNow(`${todayIn()}T10:10:00+06:00`, { frozen: true })
   const sent = backend(appointment(10, 1, '10:00', 'Бакыт М.', { version: 1 }))
@@ -285,11 +303,46 @@ test('следующий шаг одним касанием: «Пришёл» �
   const panel = await open(/Бакыт М\./)
   await userEvent.click(within(panel).getByRole('button', { name: 'Пришёл' }))
   await waitForSlow(() => expect(statusMenu(panel)).toHaveAccessibleName('Статус: Пришёл'))
+  await userEvent.click(within(panel).getByRole('button', { name: 'Начать приём' }))
+  await waitForSlow(() => expect(statusMenu(panel)).toHaveAccessibleName('Статус: В кресле'))
+  expect(statusMenu(panel)).toHaveClass('s-chair')
   await userEvent.click(within(panel).getByRole('button', { name: 'Приём состоялся' }))
   await waitForSlow(() => expect(statusMenu(panel)).toHaveAccessibleName('Статус: Приём состоялся'))
-  expect(sent).toEqual([{ arrived: true }, { status: 'DONE' }])
+  expect(sent).toEqual([{ arrived: true }, { inChair: true }, { status: 'DONE' }])
   // После приёма главная — оплата
   expect(within(panel).getByRole('button', { name: 'Принять оплату' })).toBeInTheDocument()
+})
+
+test('«В кресле» в списке статусов: «Пришёл» снимает только кресло, «Записан» — обе отметки', async () => {
+  const sent = backend(appointment(10, 1, '00:05', 'Бакыт М.', { version: 1 }))
+  renderApp()
+  const panel = await open(/Бакыт М\./)
+  await pickStatus(panel, 'В кресле')
+  await waitForSlow(() => expect(statusMenu(panel)).toHaveAccessibleName('Статус: В кресле'))
+  await userEvent.click(statusMenu(panel)!)
+  expect(screen.getByRole('menuitemradio', { name: /^В кресле/ })).toHaveAttribute('aria-checked', 'true')
+  expect(screen.getByRole('menuitemradio', { name: /^Пришёл/ })).toHaveTextContent('снять «В кресле»')
+  await userEvent.keyboard('{Escape}')
+  await pickStatus(panel, 'Пришёл')
+  await waitForSlow(() => expect(statusMenu(panel)).toHaveAccessibleName('Статус: Пришёл'))
+  expect(sent).toEqual([{ inChair: true }, { inChair: false }])
+})
+
+test('отмена «Другое» с парой слов — текст уходит на сервер и виден в карточке; «Не отменять» — ничего не шлёт', async () => {
+  const sent = backend(appointment(10, 1, '23:00', 'Бакыт М.', { version: 1 }))
+  renderApp()
+  const panel = await open(/Бакыт М\./)
+  await pickStatus(panel, 'Отменён')
+  await userEvent.click(within(screen.getByRole('dialog', { name: 'Причина отмены' })).getByRole('button', { name: 'Не отменять' }))
+  expect(screen.queryByRole('dialog', { name: 'Причина отмены' })).toBeNull()
+  expect(sent).toEqual([])
+  await pickStatus(panel, 'Отменён')
+  const sheet = screen.getByRole('dialog', { name: 'Причина отмены' })
+  await userEvent.click(within(sheet).getByRole('radio', { name: 'Другое' }))
+  await userEvent.type(within(sheet).getByRole('textbox', { name: 'Причина — пара слов' }), 'уехал в Ош')
+  await userEvent.click(within(sheet).getByRole('button', { name: 'Отменить запись' }))
+  expect(await within(panel).findByText('Отменён · другое — уехал в Ош')).toBeInTheDocument()
+  expect(sent).toEqual([{ status: 'CANCELLED', reason: 'OTHER', note: 'уехал в Ош' }])
 })
 
 test('«Подтвердил (придёт)» в списке — ответ пациента; «Записан» снимает его', async () => {
@@ -303,15 +356,16 @@ test('«Подтвердил (придёт)» в списке — ответ п�
   expect(sent).toEqual([{ reply: 'CONFIRMED' }, { reply: 'NONE' }])
 })
 
-test('заявка: «Подтвердить» рядом со статусом; «Отменён» в списке — «Отклонить заявку?»', async () => {
-  const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true)
+test('заявка: «Подтвердить» рядом со статусом; «Отменён» в списке — «Отклонить заявку?», причину можно не выбирать', async () => {
   const sent = backend(appointment(10, 1, '23:00', 'Бакыт М.', { version: 1, status: 'REQUESTED' }))
   renderApp()
   const panel = await open(/Бакыт М\./)
   expect(statusMenu(panel)).toHaveAccessibleName('Статус: Заявка')
   expect(within(panel).getByRole('button', { name: 'Подтвердить' })).toHaveClass('primary')
   await pickStatus(panel, 'Отменён')
-  expect(confirm).toHaveBeenCalledWith('Отклонить заявку? Пациенту придёт сообщение.')
+  const sheet = screen.getByRole('dialog', { name: 'Причина отмены' })
+  expect(sheet).toHaveTextContent('Отклонить заявку? Пациенту придёт сообщение.')
+  await userEvent.click(within(sheet).getByRole('button', { name: 'Отклонить заявку' }))
   expect(await within(panel).findByText('Заявка отклонена')).toBeInTheDocument()
   expect(sent).toEqual([{ status: 'CANCELLED' }])
 })

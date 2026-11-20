@@ -108,7 +108,7 @@ test('компьютер: часы врача в шапке колонки, зн
   expect(within(debt).getByRole('img', { name: /Долг 3\s000 сом/ })).toHaveAttribute('data-long', expect.stringMatching(/^Долг 3\s000 сом$/))
   expect(within(debt).queryByRole('img', { name: 'Первый визит в клинике' })).not.toBeInTheDocument()
   expect(screen.getAllByText('09:00–18:00').length).toBeGreaterThan(0)
-  expect(screen.getByText(/❗ важно для врача · 🧾 долг · ⭐ ВИП · 🆕 первый визит · 💬 комментарий/)).toBeInTheDocument()
+  expect(screen.getByText(/❗ важно для врача · 🧾 долг · ½ частично · ✓ оплачено · ⭐ ВИП · 🆕 первый визит · 💬 комментарий/)).toBeInTheDocument()
 })
 
 test('компьютер: дата в заголовке «Расписания» — кнопка, открывает календарь', async () => {

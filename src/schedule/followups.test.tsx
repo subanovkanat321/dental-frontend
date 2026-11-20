@@ -114,6 +114,7 @@ test('409 stale — текст сервера и расписание переч
   const panel = await card(/Бакыт М\./)
   const before = asked.filter((x) => x === 'day').length
   await pickStatus(panel, 'Отменён')
+  await userEvent.click(within(screen.getByRole('dialog', { name: 'Причина отмены' })).getByRole('button', { name: 'Отменить запись' }))
   expect(await within(panel).findByRole('alert')).toHaveTextContent('Данные только что изменились')
   await waitForSlow(() => expect(asked.filter((x) => x === 'day').length).toBeGreaterThan(before))
 })

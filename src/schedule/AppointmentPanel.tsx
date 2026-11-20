@@ -11,7 +11,7 @@ import { AppointmentLab } from '../lab/AppointmentLab'
 import { SourceLine } from '../patients/SourceLine'
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { useAnamnesis } from '../api/anamnesis'
-import { MedAlerts } from '../medical/Anamnesis'
+import { MedAlertPill } from '../medical/Anamnesis'
 import { PatientFiles } from '../medical/PatientFiles'
 import { WaitlistBox } from '../patients/WaitlistTab'
 import { agoText } from '../lib/texts'
@@ -36,6 +36,8 @@ import { PatientExpensesFold } from '../patients/PatientExpenses'
 import type { Slot } from './NewAppointmentPanel'
 import { StatusPill } from './StatusPill'
 import { statusOptions } from './statusOptions'
+import { ReasonSheet } from './ReasonSheet'
+import { reasonLine, type CancelReason } from './cancelReasons'
 import { colleagueMarkText, colleagueTimeOf } from './chairTime'
 import { refreshAppointmentData, useAppointmentAction } from './useAppointmentAction'
 import { VisitDocs } from '../print/VisitDocs'
@@ -77,7 +79,8 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
   /** «Записать снова» / «на следующий визит» — «Новая запись» на этого пациента. */
   onBook?: (slot: Slot, patient: Patient) => void
   /** «Карта зубов и план лечения ›» прямо с приёма — вся медкарта: зубы, план, анкета, снимки; «Назад» — к приёму. */
-  onMedical?: (patient: Patient) => void
+  /** @param tab «anamnesis» — сразу вкладка «Анкета» (из пилюли «⚠ Аллергия…») */
+  onMedical?: (patient: Patient, tab?: 'anamnesis') => void
 }) {
   useClose(onClose)
   const client = useQueryClient()
@@ -165,10 +168,10 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
     })
   }
 
-  const setStatus = async (status: Status, opts: { question?: string; undo?: string } = {}) => {
+  const setStatus = async (status: Status, opts: { question?: string; undo?: string; reason?: CancelReason | null; note?: string | null } = {}) => {
     if (opts.question && !await ask(opts.question)) return
     const previous = a.status as Status
-    action.mutate({ kind: 'status', body: { version: a.version, status } }, {
+    action.mutate({ kind: 'status', body: { version: a.version, status, reason: opts.reason ?? undefined, reasonNote: opts.note ?? undefined } }, {
       onSuccess: () => {
         setUndo(opts.undo ? { label: opts.undo, previous } : null)
         // «Состоялся» — спросить, что из плана лечения сделали сегодня (блок ниже, если есть несделанные этапы)
@@ -184,6 +187,10 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
   }
   // «Пришёл» (V234) и ответ пациента «Подтвердил» — отметки у запланированного приёма, не статус на сервере
   const arrive = (arrived: boolean) => action.mutate({ kind: 'arrived', body: { version: a.version, arrived } })
+  // «В кресле» (V235) — «Начать приём»: сервер отметит и «Пришёл», если её не ставили
+  const seat = (inChair: boolean) => action.mutate({ kind: 'inChair', body: { version: a.version, inChair } })
+  // «Отменён» / «Неявка» — окно с причинами (V235) вместо простого вопроса
+  const [reasonFor, setReasonFor] = useState<'CANCELLED' | 'NO_SHOW' | null>(null)
   const reply = (confirmed: boolean) => action.mutate({ kind: 'reply', body: { version: a.version, reply: confirmed ? 'CONFIRMED' : 'NONE' } })
   const back = (updated: Appointment) => action.mutate({ kind: 'undo', body: { version: updated.version, previousStatus: undo!.previous } },
     { onSuccess: () => setUndo(null) })
@@ -203,19 +210,24 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
     reopen: () => void reopen(a),
     reply,
     arrive,
+    seat,
     done: () => void setStatus('DONE'),
-    noShow: () => void setStatus('NO_SHOW', { question: `Отметить неявку: ${a.patient.fullName} не пришёл(ла) на приём?`, undo: 'Отмечено: неявка' }),
-    cancel: () => void setStatus('CANCELLED', a.status === 'REQUESTED'
-      ? { question: 'Отклонить заявку? Пациенту придёт сообщение.', undo: 'Заявка отклонена' }
-      : { question: `Отменить запись ${a.patient.fullName}? Время освободится.`, undo: 'Запись отменена' }),
+    noShow: () => setReasonFor('NO_SHOW'),
+    cancel: () => setReasonFor('CANCELLED'),
   }) : null
+  const reasonSheet = reasonFor === 'NO_SHOW'
+    ? { question: `Отметить неявку: ${a.patient.fullName} не пришёл(ла) на приём? Почему — если знаете:`, ok: 'Отметить неявку', undo: 'Отмечено: неявка' }
+    : a.status === 'REQUESTED'
+      ? { question: 'Отклонить заявку? Пациенту придёт сообщение. Причина — для отчёта, пациент её не увидит:', ok: 'Отклонить заявку', undo: 'Заявка отклонена' }
+      : { question: `Отменить запись ${a.patient.fullName}? Время освободится. Причина — для отчёта:`, ok: 'Отменить запись', undo: 'Запись отменена' }
   // Следующий шаг — одним касанием рядом со статусом: заявка → «Подтвердить», до прихода → «Пришёл»,
-  // пришёл (или время приёма уже прошло — отмечать приход поздно) → «Приём состоялся»
+  // пришёл → «Начать приём» (В кресле), в кресле (или время приёма уже прошло — отмечать поздно) → «Приём состоялся»
   const next = !canEdit ? null
     : a.status === 'REQUESTED' ? { label: 'Подтвердить', run: () => void setStatus('SCHEDULED') }
-      : a.status === 'SCHEDULED' && started && !a.arrivedAt && !ended ? { label: 'Пришёл', run: () => arrive(true) }
-        : a.status === 'SCHEDULED' && started ? { label: 'Приём состоялся', run: () => void setStatus('DONE') }
-          : null
+      : a.status === 'SCHEDULED' && started && !a.arrivedAt && !a.inChairAt && !ended ? { label: 'Пришёл', run: () => arrive(true) }
+        : a.status === 'SCHEDULED' && started && a.arrivedAt && !a.inChairAt && !ended ? { label: 'Начать приём', run: () => seat(true) }
+          : a.status === 'SCHEDULED' && started ? { label: 'Приём состоялся', run: () => void setStatus('DONE') }
+            : null
   // Долг пациента за все визиты (кто видит «Должников»; врачу — за его приёмы) и за прошлые — без этого приёма
   const debts = usePatientDebts(a.patient.id ?? undefined, seesDebts(me))
   const patientDebt = (debts.data ?? []).reduce((sum, d) => sum + d.debtSom, 0)
@@ -246,6 +258,8 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
         <div className="appt-when">
           <div className="with-hint"><h2>{timeOf(a.startAt)}–{timeOf(a.endAt)}</h2><HelpHint hint="appointment" /></div>
           <span className="hint">{dayTitle(date)}{doctors.length > 1 && doctor ? ` · ${doctor.fullName}` : ''}</span>
+          {/* Важное из анкеты — жёлтой пилюлей у времени («⚠ Аллергия: лидокаин»): нажать — весь список и «Анкета ›» */}
+          {clinical && a.status !== 'CANCELLED' && <MedAlertPill an={anamnesis.data} onOpen={onMedical ? () => onMedical(a.patient, 'anamnesis') : undefined} />}
         </div>
         <div className="panel-head-actions">
           {/* Презентация по услуге — показать на экране; отправлять не нужно: после приёма уходит отчёт */}
@@ -270,10 +284,17 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
         <StatusPill appointment={a} options={statusMenu} disabled={action.isPending} />
         {next && <button type="button" className="btn primary" disabled={action.isPending} onClick={next.run}>{next.label}</button>}
       </div>
+      {reasonFor && (
+        <ReasonSheet kind={reasonFor} question={reasonSheet.question} ok={reasonSheet.ok} onClose={() => setReasonFor(null)}
+          onPick={(reason, note) => {
+            setReasonFor(null)
+            void setStatus(reasonFor, { undo: reasonSheet.undo, reason, note })
+          }} />
+      )}
       {contacts.error && <p className="error" role="alert">{Object.values(contacts.error.fieldErrors)[0] ?? contacts.error.message}</p>}
       {debtForm && a.patient.id && <DebtRemindForm patientId={a.patient.id} name={a.patient.fullName} onDone={() => setDebtForm(false)} />}
       {/* Метки пациента одной строкой, по важности, как на записи в сетке: ❗ важно для врача (тем, кому анкета закрыта —
-          остальным ниже плашка с текстом), 🧾 долг, ⭐ ВИП. Первый визит — строкой «Впервые в клинике» у пациента */}
+          остальным — пилюля «⚠ …» у времени), 🧾 долг, ⭐ ВИП. Первый визит — строкой «Впервые в клинике» у пациента */}
       {(() => {
         const showAlert = Boolean(medAlert && !medAlert.text && a.status !== 'CANCELLED')
         const showDebt = patientDebt > 0 && a.status !== 'CANCELLED' && !payPending
@@ -332,7 +353,6 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
         )}
         {a.reviewComment && <blockquote className="review-comment"><span className="hint">Пациент написал:</span><br />{a.reviewComment}</blockquote>}
       </section>
-      <MedAlerts an={anamnesis.data} compact />
 
       {/* Что за приём: услуга, комментарий, промокод — строками «… изменить» */}
       <section className="appt-what">
@@ -387,6 +407,8 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
 
           {a.status === 'CANCELLED' && (
             <>
+              {/* Почему (V235): «Отменён · дубль записи» */}
+              {reasonLine(a) && <p className="cancel-reason">{reasonLine(a)}</p>}
               {/* Кто и когда отменил (V160): «Отменён: пациент в боте, сегодня 14:20»; старые отмены — без этой строки */}
               {(a.cancelledBy || a.cancelledAt) && (
                 <p className="cancelled-by">Отменён: {[a.cancelledBy ?? 'кто — не записано', a.cancelledAt ? cancelledWhen(a.cancelledAt, { sayToday: true }) : null].filter(Boolean).join(', ')}</p>
@@ -397,6 +419,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
 
           {a.status === 'NO_SHOW' && (
             <>
+              {reasonLine(a) && <p className="cancel-reason">{reasonLine(a)}</p>}
               {onBook && <button type="button" className="btn primary" onClick={() => bookAgain(todayIn())}>Записать снова</button>}
             </>
           )}

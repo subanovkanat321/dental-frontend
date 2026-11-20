@@ -6,9 +6,10 @@ type Tone = 'ok' | 'wait' | 'bad' | 'hint'
 
 /**
  * Вид статуса — заливка блока и чипа (DESIGN.md → Colors): заявка синяя, ждём ответа янтарная,
- * подтвердил зелёная, пришёл бирюзовая (в клинике сейчас), состоялся серая, ждёт оплаты на кассе персиковая, неявка красная.
+ * подтвердил зелёная, пришёл бирюзовая (в клинике сейчас), в кресле сиреневая (приём идёт), состоялся серая,
+ * ждёт оплаты на кассе персиковая, неявка красная.
  */
-type Kind = 'request' | 'wait' | 'ok' | 'here' | 'done' | 'cashier' | 'bad' | 'quiet'
+export type Kind = 'request' | 'wait' | 'ok' | 'here' | 'chair' | 'done' | 'cashier' | 'bad' | 'quiet'
 
 type Status = { label: string; icon: string; tone: Tone; kind: Kind }
 
@@ -19,6 +20,7 @@ export function statusOf(a: Appointment, now = new Date()): Status {
   if (a.status === 'DONE') return { label: 'Приём состоялся', icon: '✅', tone: 'ok', kind: 'done' }
   if (a.status === 'NO_SHOW') return { label: 'Неявка', icon: '🚷', tone: 'bad', kind: 'bad' }
   if (a.status === 'REQUESTED') return { label: 'Заявка — подтвердите', icon: '🆕', tone: 'wait', kind: 'request' }
+  if (a.inChairAt) return { label: CARD_STATUS.chair.label, icon: CARD_STATUS.chair.icon, tone: 'ok', kind: 'chair' }
   if (a.arrivedAt) return { label: CARD_STATUS.arrived.label, icon: CARD_STATUS.arrived.icon, tone: 'ok', kind: 'here' }
   if (a.endAt && new Date(a.endAt) < now) return { label: 'Отметьте: явка или неявка?', icon: '❓', tone: 'wait', kind: 'wait' }
   if (a.reply === 'CONFIRMED') return { label: CARD_STATUS.confirmed.label, icon: CARD_STATUS.confirmed.icon, tone: 'ok', kind: 'ok' }
@@ -31,21 +33,22 @@ export function statusOf(a: Appointment, now = new Date()): Status {
 /**
  * Статус приёма в карточке — пилюля «🟢 Пришёл ▾» (2026-11-19): семь слов, одни и те же в карточке,
  * сетке и руководстве. На сервере это статус (REQUESTED…NO_SHOW) и две отметки у запланированного:
- * «Пришёл» — arrivedAt (V234), «Подтвердил» — ответ пациента reply = CONFIRMED.
+ * «Пришёл» — arrivedAt (V234), «В кресле» — inChairAt (V235, приём начался), «Подтвердил» — ответ пациента reply = CONFIRMED.
  */
-export type CardStatus = 'request' | 'scheduled' | 'confirmed' | 'arrived' | 'done' | 'noshow' | 'cancelled'
+export type CardStatus = 'request' | 'scheduled' | 'confirmed' | 'arrived' | 'chair' | 'done' | 'noshow' | 'cancelled'
 
 export const CARD_STATUS: Record<CardStatus, { label: string; menu: string; icon: string; kind: Kind }> = {
   request: { label: 'Заявка', menu: 'Заявка', icon: '🆕', kind: 'request' },
   scheduled: { label: 'Записан', menu: 'Записан', icon: '📅', kind: 'quiet' },
   confirmed: { label: 'Подтвердил', menu: 'Подтвердил (придёт)', icon: '👍', kind: 'ok' },
   arrived: { label: 'Пришёл', menu: 'Пришёл', icon: '🟢', kind: 'here' },
+  chair: { label: 'В кресле', menu: 'В кресле', icon: '💺', kind: 'chair' },
   done: { label: 'Приём состоялся', menu: 'Приём состоялся', icon: '✅', kind: 'done' },
   noshow: { label: 'Неявка', menu: 'Неявка', icon: '🚷', kind: 'bad' },
   cancelled: { label: 'Отменён', menu: 'Отменён', icon: '❌', kind: 'quiet' },
 }
 
-export const CARD_ORDER: CardStatus[] = ['request', 'scheduled', 'confirmed', 'arrived', 'done', 'noshow', 'cancelled']
+export const CARD_ORDER: CardStatus[] = ['request', 'scheduled', 'confirmed', 'arrived', 'chair', 'done', 'noshow', 'cancelled']
 
 export function cardStatusOf(a: Appointment): CardStatus {
   switch (a.status) {
@@ -53,6 +56,6 @@ export function cardStatusOf(a: Appointment): CardStatus {
     case 'DONE': return 'done'
     case 'NO_SHOW': return 'noshow'
     case 'CANCELLED': return 'cancelled'
-    default: return a.arrivedAt ? 'arrived' : a.reply === 'CONFIRMED' ? 'confirmed' : 'scheduled'
+    default: return a.inChairAt ? 'chair' : a.arrivedAt ? 'arrived' : a.reply === 'CONFIRMED' ? 'confirmed' : 'scheduled'
   }
 }

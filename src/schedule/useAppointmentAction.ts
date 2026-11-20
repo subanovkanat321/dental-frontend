@@ -20,6 +20,7 @@ type Action =
   | { kind: 'promo'; body: Schemas['AppointmentRequestsPromoCode'] }
   | { kind: 'reply'; body: Schemas['AppointmentRequestsChangeReply'] }
   | { kind: 'arrived'; body: Schemas['AppointmentRequestsArrived'] }
+  | { kind: 'inChair'; body: Schemas['AppointmentRequestsInChair'] }
   | { kind: 'remindTelegram' }
   | { kind: 'deposit'; body: Schemas['DepositControllerAction'] }
   | { kind: 'undo'; body: Schemas['AppointmentRequestsUndo'] }
@@ -59,6 +60,8 @@ export function sendAppointmentAction(id: number, action: Action): Promise<Appoi
       return unwrap(api.POST('/api/appointments/{id}/reply', { ...path, body: action.body }))
     case 'arrived':
       return unwrap(api.POST('/api/appointments/{id}/arrived', { ...path, body: action.body }))
+    case 'inChair':
+      return unwrap(api.POST('/api/appointments/{id}/in-chair', { ...path, body: action.body }))
     case 'remindTelegram':
       return unwrap(api.POST('/api/appointments/{id}/remind-telegram', path))
     case 'undo':
@@ -73,7 +76,7 @@ export function sendAppointmentAction(id: number, action: Action): Promise<Appoi
  * отчёт, статистика, источники, зарплата, «Мой заработок») и карточка пациента. После записи, действия и удаления
  * приёма перечитываем всё это — открытые экраны покажут свежее без F5.
  */
-const APPOINTMENT_DATA = ['appointments', 'slots', 'counts', 'to-pay', 'debts', 'revenue', 'report', 'stats', 'sources', 'promo-report', 'salaries', 'earnings', 'patient-card']
+const APPOINTMENT_DATA = ['appointments', 'slots', 'counts', 'to-pay', 'debts', 'revenue', 'report', 'stats', 'sources', 'cancel-reasons', 'promo-report', 'salaries', 'earnings', 'patient-card']
 
 export function refreshAppointmentData(client: QueryClient, extra: string[] = []): void {
   for (const key of [...APPOINTMENT_DATA, ...extra]) void client.invalidateQueries({ queryKey: [key] })

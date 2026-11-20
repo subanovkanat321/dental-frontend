@@ -85,18 +85,21 @@ test('в клинике есть регистратура — врач отпр�
   expect(sent).toEqual([{ path: 'bill', body: { chargeSom: 4000 } }])
 })
 
-test('отменить запись — только после подтверждения в диалоге', async () => {
+test('отменить запись — только после подтверждения в окне причины', async () => {
   const sent = backend([appointment(10, 1, '10:00', 'Бакыт М.')])
-  const confirm = vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true)
   renderApp()
   const panel = await open(/Бакыт М\./)
 
   await pickStatus(panel, 'Отменён')
+  await userEvent.keyboard('{Escape}')
+  expect(screen.queryByRole('dialog', { name: 'Причина отмены' })).toBeNull()
   expect(sent).toEqual([])
   await pickStatus(panel, 'Отменён')
+  const sheet = screen.getByRole('dialog', { name: 'Причина отмены' })
+  await userEvent.click(within(sheet).getByRole('radio', { name: 'Передумал' }))
+  await userEvent.click(within(sheet).getByRole('button', { name: 'Отменить запись' }))
   expect(await within(panel).findByText('Запись отменена')).toBeInTheDocument()
-  expect(sent).toEqual([{ path: 'status', body: { version: 0, status: 'CANCELLED' } }])
-  confirm.mockRestore()
+  expect(sent).toEqual([{ path: 'status', body: { version: 0, status: 'CANCELLED', reason: 'CHANGED_MIND' } }])
 })
 
 test('нажать на пустое место у врача — «Новая запись»: найти пациента, записать на это время', async () => {

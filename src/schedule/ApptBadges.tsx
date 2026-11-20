@@ -26,7 +26,7 @@ export function ApptBadges({ appointment, money, chair, max = MAX_BADGES }: { ap
   return (
     <span className="appt-badges">
       {list.map((b) => (
-        <span key={`${b.icon}${b.long}`} className="appt-badge" title={b.text} role="img" aria-label={b.text} data-short={b.short} data-long={b.long}>{b.icon}</span>
+        <span key={`${b.icon}${b.long}`} className={b.tone ? `appt-badge pay-${b.tone}` : 'appt-badge'} title={b.text} role="img" aria-label={b.text} data-short={b.short} data-long={b.long}>{b.icon}</span>
       ))}
     </span>
   )
@@ -34,5 +34,5 @@ export function ApptBadges({ appointment, money, chair, max = MAX_BADGES }: { ap
 
 /** Легенда значков — одной строкой под расписанием; 🪑 — только в клинике с общими креслами. */
 export function BadgesLegend({ chair = false }: { chair?: boolean }) {
-  return <p className="badges-legend hint small">❗ важно для врача · 🧾 долг · ⭐ ВИП · 🆕 первый визит · 💬 комментарий{chair ? ' · 🪑 в часы коллеги по креслу' : ''}</p>
+  return <p className="badges-legend hint small">❗ важно для врача · 🧾 долг · ½ частично · ✓ оплачено · ⭐ ВИП · 🆕 первый визит · 💬 комментарий{chair ? ' · 🪑 в часы коллеги по креслу' : ''}</p>
 }

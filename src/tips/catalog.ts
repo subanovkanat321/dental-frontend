@@ -154,6 +154,13 @@ export const TIPS: Tip[] = [
     show: (me) => seesAllMoney(me) && hasSub(me, 'cash', 'analytics'),
   },
   {
+    id: 'cancel-reasons',
+    title: 'Почему пациенты не приходят',
+    text: 'При «Отменён» и «Неявка» выберите причину — в «Аналитике» видно, что чаще: дубли, болезнь или «передумал».',
+    action: { show: 'cash/analytics' },
+    show: (me) => hasSub(me, 'cash', 'analytics'),
+  },
+  {
     id: 'referral',
     title: 'Пригласите коллег — +3 месяца',
     text: 'Клиника по вашей ссылке пробует Tish дольше, а когда оплатит — вам +3 месяца бесплатно.',
