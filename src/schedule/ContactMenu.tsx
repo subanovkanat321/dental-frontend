@@ -1,8 +1,7 @@
 import type { ReactNode } from 'react'
 
-import type { ActionItem } from '../layout/ActionMenu'
 import { ActionMenu } from '../layout/ActionMenu'
-import type { ContactItem } from './contactItems'
+import { contactActionItems, type ContactItem } from './contactItems'
 
 /**
  * «📞 Связаться ▾» — все кнопки связи с пациентом одной кнопкой (2026-11-19, «экономить место»): группа
@@ -20,9 +19,6 @@ export function ContactMenu({ items, className = 'btn', content }: { items: Cont
       ? <a className={className} href={i.href} onClick={(e) => i.onSelect(e)} aria-label={i.ariaLabel ?? (content ? i.label : undefined)}>{content ?? i.label}</a>
       : <button type="button" className={className} disabled={i.disabled} title={i.hint} aria-label={content ? i.label : undefined} onClick={i.onSelect}>{content ?? i.label}</button>
   }
-  const menu: ActionItem[] = items.map((i) => ({
-    label: i.label, icon: i.icon, hint: i.hint, disabled: i.disabled, onSelect: i.onSelect, href: i.href,
-    group: i.group === 'contact' ? 'Связаться' : 'Отправить пациенту',
-  }))
-  return <ActionMenu label="Связаться" buttonLabel={content ? 'Связаться' : undefined} className={className} content={content ?? <><span aria-hidden="true">📞 </span>Связаться</>} items={menu} />
+  return <ActionMenu label="Связаться" buttonLabel={content ? 'Связаться' : undefined} className={className} content={content ?? <><span aria-hidden="true">📞 </span>Связаться</>} items={contactActionItems(items)} />
 }
+

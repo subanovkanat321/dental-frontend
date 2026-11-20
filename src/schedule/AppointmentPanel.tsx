@@ -3,7 +3,7 @@ import { KidInfo } from '../patients/KidInfo'
 import { ask } from '../lib/confirm'
 import { PatientHistory } from './PatientHistory'
 import { useReminderNotSent } from './useReminderNotSent'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { TaskDialog } from '../tasks/TaskDialog'
 import { LabOrderDialog } from '../lab/LabOrderDialog'
 import { AppointmentLab } from '../lab/AppointmentLab'
@@ -35,7 +35,8 @@ import { useMedAlert } from '../lib/medAlerts'
 import { PatientExpensesFold } from '../patients/PatientExpenses'
 import type { Slot } from './NewAppointmentPanel'
 import { StatusPill } from './StatusPill'
-import { statusOptions } from './statusOptions'
+import { TagDots } from '../tags/TagDots'
+import { nextStep, statusOptions } from './statusOptions'
 import { ReasonSheet } from './ReasonSheet'
 import { reasonLine, type CancelReason } from './cancelReasons'
 import { colleagueMarkText, colleagueTimeOf } from './chairTime'
@@ -79,7 +80,7 @@ type Status = NonNullable<Schemas['AppointmentRequestsChangeStatus']['status']>
 type Rare = 'deposit' | 'waitlist'
 const RARE_TEXT: Record<Rare, string> = { deposit: 'предоплата', waitlist: 'лист ожидания' }
 
-export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, onBook, onMedical }: {
+export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, onBook, onMedical, intent }: {
   appointment: Appointment
   me: Me
   onClose: () => void
@@ -90,12 +91,22 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
   /** «Карта зубов и план лечения ›» прямо с приёма — вся медкарта: зубы, план, анкета, снимки; «Назад» — к приёму. */
   /** @param tab «anamnesis» — сразу вкладка «Анкета» (из пилюли «⚠ Аллергия…») */
   onMedical?: (patient: Patient, tab?: 'anamnesis') => void
+  /** Открыли из меню быстрых действий на записи: «Перенести» — сразу форма переноса, «Принять оплату» — к оплате. */
+  intent?: 'move' | 'pay'
 }) {
   useClose(onClose)
   const client = useQueryClient()
   const action = useAppointmentAction(a)
   // Какая форма открыта внутри карточки: одна за раз, чтобы карточка не превращалась в анкету
-  const [editing, setEditing] = useState<'move' | 'service' | 'comment' | 'promo' | 'chair' | null>(null)
+  const [editing, setEditing] = useState<'move' | 'service' | 'comment' | 'promo' | 'chair' | null>(
+    intent === 'move' && canEditDoctor(me, a.doctorId) && (a.status === 'REQUESTED' || a.status === 'SCHEDULED') ? 'move' : null)
+  // «Принять оплату» из меню на записи — прокрутить карточку к оплате (а «Перенести» — к форме переноса)
+  const payRef = useRef<HTMLDivElement>(null)
+  const moveRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const target = intent === 'pay' ? payRef.current : intent === 'move' ? moveRef.current : null
+    target?.scrollIntoView?.({ block: 'center' })
+  }, [intent])
   // Только что отметили неявку или отмену — «Вернуть», как было (сервер проверит версию)
   const [undo, setUndo] = useState<{ label: string; previous: Status } | null>(null)
   const close = () => setEditing(null)
@@ -231,12 +242,13 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
       : { question: `Отменить запись ${a.patient.fullName}? Время освободится. Причина — для отчёта:`, ok: 'Отменить запись', undo: 'Запись отменена' }
   // Следующий шаг — одним касанием рядом со статусом: заявка → «Подтвердить», до прихода → «Пришёл»,
   // пришёл → «Начать приём» (В кресле), в кресле (или время приёма уже прошло — отмечать поздно) → «Приём состоялся»
-  const next = !canEdit ? null
-    : a.status === 'REQUESTED' ? { label: 'Подтвердить', run: () => void setStatus('SCHEDULED') }
-      : a.status === 'SCHEDULED' && started && !a.arrivedAt && !a.inChairAt && !ended ? { label: 'Пришёл', run: () => arrive(true) }
-        : a.status === 'SCHEDULED' && started && a.arrivedAt && !a.inChairAt && !ended ? { label: 'Начать приём', run: () => seat(true) }
-          : a.status === 'SCHEDULED' && started ? { label: 'Приём состоялся', run: () => void setStatus('DONE') }
-            : null
+  const step = nextStep(a, { canEdit, started, ended })
+  const next = step && { label: step.label, run: {
+    confirm: () => void setStatus('SCHEDULED'),
+    arrive: () => arrive(true),
+    seat: () => seat(true),
+    done: () => void setStatus('DONE'),
+  }[step.kind] }
   // Долг пациента за все визиты (кто видит «Должников»; врачу — за его приёмы) и за прошлые — без этого приёма
   const debts = usePatientDebts(a.patient.id ?? undefined, seesDebts(me))
   const patientDebt = (debts.data ?? []).reduce((sum, d) => sum + d.debtSom, 0)
@@ -365,7 +377,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
             <p className="appt-debt-hint tone-wait" role="status">🧾 У пациента долг {somText(earlierDebt)} за прошлые визиты — напомните при оплате.</p>
           )}
           {a.status === 'DONE' && seesMoney && (
-            <div className="appt-pay">
+            <div ref={payRef} className="appt-pay appt-pay-anchor">
               <PaymentBox key={[a.id, a.version, a.paidSom, a.chargeSom, a.debtSom, a.dueOn, a.depositStatus].join('-')} appointment={a} me={me} />
             </div>
           )}
@@ -503,6 +515,8 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
           {onOpenPatient && a.patient.id
             ? <button type="button" className="link patient-name" onClick={() => onOpenPatient(a.patient.id)}>{a.patient.fullName} ›</button>
             : <strong className="patient-name">{a.patient.fullName}</strong>}
+          {/* Свои метки клиники (V239) — точками у имени, названия в подсказке; ⭐ ВИП — чипом выше */}
+          <TagDots patient={a.patient} />
           {/* Номер — он же «📞 Связаться ▾»: позвонить, WhatsApp, напомнить, попросить оценку, долг (2026-11-19) */}
           {contacts.items.length
             ? <ContactMenu items={contacts.items} className="link appt-phone"
@@ -553,7 +567,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
           )}
         </div>
       )}
-      {editing === 'move' && <div className="appt-move"><Reschedule appointment={a} me={me} onDone={(text) => { close(); setMoved(text ?? '') }} /></div>}
+      {editing === 'move' && <div ref={moveRef} className="appt-move"><Reschedule appointment={a} me={me} onDone={(text) => { close(); setMoved(text ?? '') }} /></div>}
 
       {/* «Ещё» — редкое у предстоящего приёма: предоплата (ещё не просили), лист ожидания. Статус исправляют в пилюле,
           удаляют — в «⋯» шапки, промокод и «откуда узнал» — строками у услуги, квитанция — под оплатой */}

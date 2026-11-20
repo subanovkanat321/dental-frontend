@@ -57,3 +57,24 @@ export function statusOptions(a: Appointment, { started, paid }: { started: bool
       : planned ? { onSelect: act.cancel, danger: true, hint: 'время освободится' } : null,
   }
 }
+
+/** Следующий шаг приёма одним касанием: заявка → подтвердить, пришёл, начать приём (в кресле), приём состоялся. */
+export type NextStep = { kind: 'confirm' | 'arrive' | 'seat' | 'done'; label: string; icon: string }
+
+/**
+ * Какой шаг следующий — одна логика для кнопки рядом с пилюлей статуса в карточке и для меню быстрых действий на
+ * записи в расписании: заявка → «Подтвердить», в день приёма до прихода → «Пришёл», пришёл → «Начать приём»
+ * (В кресле), в кресле (или время приёма уже прошло — отмечать приход поздно) → «Приём состоялся». Будущий приём —
+ * шага нет (статусы «с дня приёма», как на сервере); без прав — тоже.
+ *
+ * @param started день приёма наступил
+ * @param ended время приёма уже прошло
+ */
+export function nextStep(a: Appointment, { canEdit, started, ended }: { canEdit: boolean; started: boolean; ended: boolean }): NextStep | null {
+  if (!canEdit) return null
+  if (a.status === 'REQUESTED') return { kind: 'confirm', label: 'Подтвердить', icon: '✅' }
+  if (a.status !== 'SCHEDULED' || !started) return null
+  if (!a.arrivedAt && !a.inChairAt && !ended) return { kind: 'arrive', label: 'Пришёл', icon: '🟢' }
+  if (a.arrivedAt && !a.inChairAt && !ended) return { kind: 'seat', label: 'Начать приём', icon: '💺' }
+  return { kind: 'done', label: 'Приём состоялся', icon: '✅' }
+}

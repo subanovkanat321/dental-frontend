@@ -176,4 +176,6 @@ export const server = setupServer(
   http.get('*/api/patients/:id/plan/offers', () => HttpResponse.json([] satisfies Schemas['PlanOffersOfferView'][])),
   http.get('*/api/patient/plans', () => HttpResponse.json([] satisfies Schemas['PlanOffersPatientPlan'][])),
   http.get('*/api/patients/:id/plan/message', () => HttpResponse.json({ text: '', telegram: false } satisfies Schemas['PatientMessage'])),
+  // Метки пациентов (V239): по умолчанию у клиники только встроенная «ВИП» (свои тесты — tags/tags.test.tsx)
+  http.get('*/api/patient-tags', () => HttpResponse.json([{ id: 1, code: 'VIP', name: 'ВИП', color: 'yellow', position: 10, patients: 0 }] satisfies Schemas['PatientTagsTag'][])),
 )

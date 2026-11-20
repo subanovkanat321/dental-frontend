@@ -14,6 +14,7 @@ import { useAppointmentAction } from './useAppointmentAction'
 import { colleagueMarkText, colleagueTimeOf, listedChairTime } from './chairTime'
 import { askPlanDone, canMarkPlan, useAskPlanDone, usePlanLeft } from './planDoneStore'
 import { useRowSwipe } from './useRowSwipe'
+import { TagDots } from '../tags/TagDots'
 import { NOWHERE_TEXT, useRemind } from './useRemind'
 import { useMedia } from '../lib/useMedia'
 import { canEditDoctor as canEdit, seesMoneyOf, seesAllMoney as seesAllMoneyOf } from '../lib/roles'
@@ -59,12 +60,14 @@ function shortName(name: string): string {
  * Один врач — его день; «Все врачи» — все приёмы вместе, у строки имя врача, свободные окна
  * каждого врача отдельно. У приёма — быстрое напоминание (Telegram или WhatsApp). Завтра — «Готово X из Y».
  */
-export function DayList({ me, doctors, date, onDate, onOpen, onNew, onNewHere, selectedId, all, doctorsNote }: {
+export function DayList({ me, doctors, date, onDate, onOpen, onQuick, onNew, onNewHere, selectedId, all, doctorsNote }: {
   me: Me
   doctors: Doctor[]
   date: string
   onDate: (date: string) => void
   onOpen: (a: Appointment) => void
+  /** Долгое нажатие (или правая кнопка) на строку приёма — меню быстрых действий нижним листом */
+  onQuick?: (a: Appointment, at: null) => void
   onNew: (doctorId: number, minutes: number) => void
   /** «＋ Новая запись» на этот день (врач и время — в форме). */
   onNewHere?: () => void
@@ -180,7 +183,7 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, onNewHere, s
                   <ul className="rows">
                     {g.items.map((item) => item.kind === 'appointment'
                       ? <Row key={`a${item.a.id}`} a={item.a} me={me} color={g.doctor.color} chair={item.chair} next={item.a === next} active={item.a.id === selectedId}
-                          canEdit={canEditDoctor(item.a.doctorId)} money={seesMoneyOf(me, item.a.doctorId)} onOpen={onOpen} swipe={swipe} />
+                          canEdit={canEditDoctor(item.a.doctorId)} money={seesMoneyOf(me, item.a.doctorId)} onOpen={onOpen} onQuick={onQuick} swipe={swipe} />
                       : item.kind === 'colleague' ? (
                         <li key={`c${item.at}`} className="row pause colleague" role="note" aria-label={`${timeOf(item.at)}–${timeOf(item.end)}: время ${item.name}`}>
                           <span className="time num">{timeOf(item.at)}</span>
@@ -258,7 +261,7 @@ function FreeRow({ start, end, canEdit, doctor, onPick }: {
  * Ошибка — под строкой. WhatsApp — только когда загружены настройки (подпись клиники и ссылка на бота).
  * Телефон (swipe): свайп вправо — то же напоминание, влево — «Приём состоялся» с «Вернуть» (useRowSwipe).
  */
-function Row({ a, me, color, chair, next, active, canEdit, money, onOpen, swipe = false }: {
+function Row({ a, me, color, chair, next, active, canEdit, money, onOpen, onQuick, swipe = false }: {
   a: Appointment
   me: Me
   /** Цвет врача — полоска слева; статус остаётся заливкой строки и словом (DESIGN.md) */
@@ -271,6 +274,7 @@ function Row({ a, me, color, chair, next, active, canEdit, money, onOpen, swipe 
   active: boolean
   canEdit: boolean
   onOpen: (a: Appointment) => void
+  onQuick?: (a: Appointment, at: null) => void
   /** Телефон: свайп вправо — напомнить, влево — «Приём состоялся» */
   swipe?: boolean
 }) {
@@ -335,7 +339,12 @@ function Row({ a, me, color, chair, next, active, canEdit, money, onOpen, swipe 
   const planLeft = usePlanLeft(a, planAllowed && planAsked)
   const back = () => undo && status.mutate({ kind: 'undo', body: { version: undo.version, previousStatus: 'SCHEDULED' } },
     { onSuccess: () => setUndo(null) })
-  useRowSwipe(li, swipe, { right: canSwipeRemind ? () => { hideSwipeHint(); remind() } : undefined, left: canSwipeDone ? () => { hideSwipeHint(); done() } : undefined })
+  // Свайпы — как были; долгое нажатие (и правая кнопка) — меню быстрых действий, в том числе у «Все врачи», где свайпов нет
+  useRowSwipe(li, swipe || Boolean(onQuick), {
+    right: swipe && canSwipeRemind ? () => { hideSwipeHint(); remind() } : undefined,
+    left: swipe && canSwipeDone ? () => { hideSwipeHint(); done() } : undefined,
+    long: onQuick ? () => onQuick(a, null) : undefined,
+  })
   // «Вернуть» — недолго, как тост
   useEffect(() => {
     if (!undo) return
@@ -360,7 +369,7 @@ function Row({ a, me, color, chair, next, active, canEdit, money, onOpen, swipe 
           aria-label={`${timeOf(a.startAt)}–${timeOf(a.endAt)}, ${a.patient.fullName}: ${s.label}${chair ? `. ${colleagueMarkText(chair)}` : ''}`}>
           <span className="time num">{timeOf(a.startAt)}</span>
           {/* Имя обрезается многоточием, значки — нет: ❗ у длинного имени не должен пропасть */}
-          <span className="name"><span className="name-text">{a.patient.fullName}</span> <ApptBadges appointment={a} money={money} /></span>
+          <span className="name"><TagDots patient={a.patient} /><span className="name-text">{a.patient.fullName}</span> <ApptBadges appointment={a} money={money} /></span>
           <span className="end num hint">{timeOf(a.endAt)}</span>
           <span className={`state tone-${s.tone}`}><span className="ico" aria-hidden="true">{s.icon}</span> {s.label}{a.serviceName ? <span className="hint"> · {serviceEmoji(a.serviceName)} {a.serviceName}</span> : null}</span>
           {chair && (
@@ -454,7 +463,7 @@ function SwipeHint() {
   if (seen) return null
   return (
     <p className="hint swipe-hint" role="note">
-      <span>Смахните запись: → напомнить, ← состоялся</span>
+      <span>Смахните запись: → напомнить, ← состоялся; подержите — меню</span>
       <button type="button" className="btn ghost small" aria-label="Закрыть подсказку" onClick={hideSwipeHint}>✕</button>
     </p>
   )

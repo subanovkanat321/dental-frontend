@@ -314,6 +314,20 @@ export const TIPS: Tip[] = [
     show: (me) => hasSub(me, 'patients', 'ratings'),
   },
   {
+    id: 'quick-menu',
+    title: 'Действия с записью — без карточки',
+    text: 'Наведите на приём в расписании и нажмите «⋯» (или правой кнопкой мыши; на телефоне — долгое нажатие): «Пришёл», оплата, позвонить, перенести, записать повторно.',
+    action: { guide: 'raspisanie/den-na-kompyutere' },
+    show: (me) => Boolean(me.admin || me.reception || me.doctorId != null || isAssistant(me)),
+  },
+  {
+    id: 'patient-tags',
+    title: 'Свои метки пациентов',
+    text: '«Боится», «Опаздывает», «По рекомендации» — цветные точки у имени в расписании и в карточке пациента. Список — «Настройки → Метки пациентов».',
+    action: { show: 'settings/tags' },
+    show: (me) => hasSub(me, 'settings', 'tags'),
+  },
+  {
     id: 'instagram',
     title: 'Tish в Instagram',
     text: 'Короткие видео «как сделать» и юмор про будни стоматолога. Подпишитесь — рилсы можно репостить в Instagram клиники.',

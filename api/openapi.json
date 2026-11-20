@@ -2329,6 +2329,51 @@
         }
       }
     },
+    "/api/patients/{id}/tags/{tagId}" : {
+      "put" : {
+        "tags" : [ "patient-tags-controller" ],
+        "operationId" : "set_3",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "tagId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PatientTagsControllerTagRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PatientView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/patients/{id}/guardian" : {
       "put" : {
         "tags" : [ "patient-controller" ],
@@ -2461,10 +2506,78 @@
         }
       }
     },
+    "/api/patient-tags/{id}" : {
+      "put" : {
+        "tags" : [ "patient-tags-controller" ],
+        "operationId" : "update_13",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PatientTagsRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/PatientTagsTag"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "patient-tags-controller" ],
+        "operationId" : "delete_11",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/PatientTagsTag"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/patient-sources/{id}" : {
       "put" : {
         "tags" : [ "patient-sources-controller" ],
-        "operationId" : "update_13",
+        "operationId" : "update_14",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -2709,7 +2822,7 @@
       },
       "put" : {
         "tags" : [ "my-phone-controller" ],
-        "operationId" : "set_3",
+        "operationId" : "set_4",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -2843,7 +2956,7 @@
       },
       "put" : {
         "tags" : [ "my-email-controller" ],
-        "operationId" : "set_4",
+        "operationId" : "set_5",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -3023,7 +3136,7 @@
       },
       "put" : {
         "tags" : [ "lab-controller" ],
-        "operationId" : "update_14",
+        "operationId" : "update_15",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -3058,7 +3171,7 @@
       },
       "delete" : {
         "tags" : [ "lab-controller" ],
-        "operationId" : "delete_11",
+        "operationId" : "delete_12",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -3115,7 +3228,7 @@
     "/api/expenses/{id}" : {
       "put" : {
         "tags" : [ "expense-controller" ],
-        "operationId" : "update_15",
+        "operationId" : "update_16",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -3150,7 +3263,7 @@
       },
       "delete" : {
         "tags" : [ "expense-controller" ],
-        "operationId" : "delete_12",
+        "operationId" : "delete_13",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -3170,7 +3283,7 @@
     "/api/doctors/{id}/service-types" : {
       "put" : {
         "tags" : [ "doctor-services-controller" ],
-        "operationId" : "set_5",
+        "operationId" : "set_6",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -3331,7 +3444,7 @@
       },
       "put" : {
         "tags" : [ "doctor-hours-controller" ],
-        "operationId" : "update_16",
+        "operationId" : "update_17",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -3491,7 +3604,7 @@
       },
       "put" : {
         "tags" : [ "clinic-controller" ],
-        "operationId" : "update_17",
+        "operationId" : "update_18",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -3579,7 +3692,7 @@
       },
       "put" : {
         "tags" : [ "review-settings-controller" ],
-        "operationId" : "update_18",
+        "operationId" : "update_19",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -4062,7 +4175,7 @@
       },
       "delete" : {
         "tags" : [ "chair-controller" ],
-        "operationId" : "delete_13",
+        "operationId" : "delete_14",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -4119,7 +4232,7 @@
     "/api/care-memos/{id}" : {
       "put" : {
         "tags" : [ "care-memo-controller" ],
-        "operationId" : "update_19",
+        "operationId" : "update_20",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -9190,10 +9303,60 @@
         }
       }
     },
+    "/api/patient-tags" : {
+      "get" : {
+        "tags" : [ "patient-tags-controller" ],
+        "operationId" : "all_4",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/PatientTagsTag"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "patient-tags-controller" ],
+        "operationId" : "add_4",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PatientTagsRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Created",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/PatientTagsTag"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/patient-sources" : {
       "get" : {
         "tags" : [ "patient-sources-controller" ],
-        "operationId" : "all_4",
+        "operationId" : "all_5",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -9212,7 +9375,7 @@
       },
       "post" : {
         "tags" : [ "patient-sources-controller" ],
-        "operationId" : "add_4",
+        "operationId" : "add_5",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -10068,7 +10231,7 @@
       },
       "post" : {
         "tags" : [ "expense-controller" ],
-        "operationId" : "add_5",
+        "operationId" : "add_6",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -10136,7 +10299,7 @@
     "/api/doctors" : {
       "get" : {
         "tags" : [ "doctor-controller" ],
-        "operationId" : "all_5",
+        "operationId" : "all_6",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -11369,7 +11532,7 @@
       },
       "delete" : {
         "tags" : [ "calendar-feed-controller" ],
-        "operationId" : "delete_14",
+        "operationId" : "delete_15",
         "responses" : {
           "204" : {
             "description" : "No Content"
@@ -13970,7 +14133,7 @@
     "/api/platform/support/tickets" : {
       "get" : {
         "tags" : [ "support-controller" ],
-        "operationId" : "all_6",
+        "operationId" : "all_7",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -14836,7 +14999,7 @@
       },
       "delete" : {
         "tags" : [ "medical-record-controller" ],
-        "operationId" : "delete_15",
+        "operationId" : "delete_16",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "path",
@@ -15544,7 +15707,7 @@
     "/api/families" : {
       "get" : {
         "tags" : [ "family-controller" ],
-        "operationId" : "all_7",
+        "operationId" : "all_8",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -16235,7 +16398,7 @@
       },
       "delete" : {
         "tags" : [ "appointment-controller" ],
-        "operationId" : "delete_16",
+        "operationId" : "delete_17",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -17288,7 +17451,7 @@
     "/api/time-off/{id}" : {
       "delete" : {
         "tags" : [ "time-off-controller" ],
-        "operationId" : "delete_17",
+        "operationId" : "delete_18",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -17328,7 +17491,7 @@
     "/api/platform/clinics/{id}" : {
       "delete" : {
         "tags" : [ "platform-controller" ],
-        "operationId" : "delete_18",
+        "operationId" : "delete_19",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -17385,7 +17548,7 @@
     "/api/news/{id}" : {
       "delete" : {
         "tags" : [ "news-controller" ],
-        "operationId" : "delete_19",
+        "operationId" : "delete_20",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -17444,7 +17607,7 @@
     "/api/doctors/{id}" : {
       "delete" : {
         "tags" : [ "doctor-controller" ],
-        "operationId" : "delete_20",
+        "operationId" : "delete_21",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -20037,6 +20200,13 @@
           },
           "vip" : {
             "type" : "boolean"
+          },
+          "tagIds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int64"
+            }
           }
         },
         "required" : [ "fullName", "id", "telegram" ]
@@ -20213,6 +20383,13 @@
           }
         }
       },
+      "PatientTagsControllerTagRequest" : {
+        "properties" : {
+          "on" : {
+            "type" : "boolean"
+          }
+        }
+      },
       "PatientControllerGuardianRequest" : {
         "properties" : {
           "fullName" : {
@@ -20249,6 +20426,42 @@
             "format" : "int64"
           }
         }
+      },
+      "PatientTagsRequest" : {
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "color" : {
+            "type" : "string"
+          }
+        }
+      },
+      "PatientTagsTag" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "code" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "color" : {
+            "type" : "string"
+          },
+          "position" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "patients" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "id", "patients", "position" ]
       },
       "PatientSourcesRequest" : {
         "properties" : {
@@ -30940,6 +31153,10 @@
             "items" : {
               "$ref" : "#/components/schemas/AppointmentView"
             }
+          },
+          "paidSom" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         },
         "required" : [ "cancelled", "done", "noShow" ]

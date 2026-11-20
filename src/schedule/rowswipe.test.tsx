@@ -210,7 +210,7 @@ test('компьютер (мышь): без свайпов и без подск�
 test('подсказка про свайпы — один раз: закрыли — больше не показываем', async () => {
   backend(appointment(10, 1, '23:30', 'Бакыт М.'))
   const { unmount } = renderApp()
-  expect(await screen.findByText('Смахните запись: → напомнить, ← состоялся')).toBeInTheDocument()
+  expect(await screen.findByText('Смахните запись: → напомнить, ← состоялся; подержите — меню')).toBeInTheDocument()
   await userEvent.click(screen.getByRole('button', { name: 'Закрыть подсказку' }))
   expect(screen.queryByText(/Смахните запись/)).not.toBeInTheDocument()
   expect(localStorage.getItem('crm.schedule.swipeHint')).toBe('seen')
