@@ -1954,6 +1954,68 @@
         }
       }
     },
+    "/api/patients/{patientId}/plan/status" : {
+      "get" : {
+        "tags" : [ "plan-state-controller" ],
+        "operationId" : "status",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PlanStatesProgress"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "plan-state-controller" ],
+        "operationId" : "mark_1",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PlanStateControllerMarkRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PlanStatesProgress"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/patients/{patientId}/files/{fileId}/post-text" : {
       "put" : {
         "tags" : [ "medical-record-controller" ],
@@ -4060,7 +4122,7 @@
     "/api/appointments/{id}/teeth/{number}" : {
       "put" : {
         "tags" : [ "visit-teeth-controller" ],
-        "operationId" : "mark_1",
+        "operationId" : "mark_2",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -9681,7 +9743,7 @@
     "/api/lab-orders/{id}/status" : {
       "post" : {
         "tags" : [ "lab-controller" ],
-        "operationId" : "status",
+        "operationId" : "status_1",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -9881,6 +9943,46 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/dropped/{patientId}/snooze" : {
+      "post" : {
+        "tags" : [ "plan-state-controller" ],
+        "operationId" : "snooze",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
+    "/api/dropped/{patientId}/refuse" : {
+      "post" : {
+        "tags" : [ "plan-state-controller" ],
+        "operationId" : "refuse",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
           }
         }
       }
@@ -12395,7 +12497,7 @@
     "/web/telegram-connect/status" : {
       "get" : {
         "tags" : [ "telegram-connect-controller" ],
-        "operationId" : "status_1",
+        "operationId" : "status_2",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -12771,7 +12873,7 @@
     "/web/login/telegram/status" : {
       "get" : {
         "tags" : [ "telegram-login-controller" ],
-        "operationId" : "status_2",
+        "operationId" : "status_3",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -15319,6 +15421,52 @@
         }
       }
     },
+    "/api/dropped" : {
+      "get" : {
+        "tags" : [ "plan-state-controller" ],
+        "operationId" : "board",
+        "parameters" : [ {
+          "name" : "days",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 30
+          }
+        }, {
+          "name" : "offset",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 50
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PlanStatesBoard"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/doctors/admin" : {
       "get" : {
         "tags" : [ "doctor-controller" ],
@@ -15343,7 +15491,7 @@
     "/api/comebacks" : {
       "get" : {
         "tags" : [ "comeback-controller" ],
-        "operationId" : "board",
+        "operationId" : "board_1",
         "parameters" : [ {
           "name" : "filter",
           "in" : "query",
@@ -19281,6 +19429,50 @@
           }
         },
         "required" : [ "id", "stage" ]
+      },
+      "PlanStateControllerMarkRequest" : {
+        "properties" : {
+          "mark" : {
+            "type" : "string",
+            "enum" : [ "AGREED", "REFUSED", "NONE" ]
+          }
+        }
+      },
+      "PlanStatesProgress" : {
+        "properties" : {
+          "status" : {
+            "type" : "string",
+            "enum" : [ "PROPOSED", "AGREED", "IN_PROGRESS", "COMPLETED", "REFUSED" ]
+          },
+          "done" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "total" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "doneSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "totalSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "agreedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "manualAgreed" : {
+            "type" : "boolean"
+          },
+          "refusedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "done", "manualAgreed", "total" ]
       },
       "MedicalRecordControllerPostText" : {
         "properties" : {
@@ -28753,6 +28945,87 @@
             }
           }
         }
+      },
+      "PlanStatesBoard" : {
+        "properties" : {
+          "patients" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PlanStatesDropped"
+            }
+          },
+          "total" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "leftSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "days" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "days", "leftSom", "total" ]
+      },
+      "PlanStatesDropped" : {
+        "properties" : {
+          "patientId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "fullName" : {
+            "type" : "string"
+          },
+          "phone" : {
+            "type" : "string"
+          },
+          "contactPhone" : {
+            "type" : "string"
+          },
+          "telegram" : {
+            "type" : "boolean"
+          },
+          "status" : {
+            "type" : "string",
+            "enum" : [ "PROPOSED", "AGREED", "IN_PROGRESS", "COMPLETED", "REFUSED" ]
+          },
+          "done" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "total" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "leftSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "left" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "lastVisit" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "doctorId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "doctor" : {
+            "type" : "string"
+          },
+          "invitedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "done", "leftSom", "patientId", "telegram", "total" ]
       },
       "ComebacksBoard" : {
         "properties" : {

@@ -95,6 +95,7 @@ export const server = setupServer(
   http.get('*/api/clinic/starter', () => HttpResponse.json({ services: [], memos: [], questions: [], sources: [] })),
   http.get('*/api/families', () => HttpResponse.json([])),
   http.get('*/api/comebacks', () => HttpResponse.json({ patients: [], planSom: 0, planPatients: 0, noShows: 0, recalls: 0 })),
+  http.get('*/api/dropped', () => HttpResponse.json({ patients: [], total: 0, leftSom: 0, days: 30 } satisfies Schemas['PlanStatesBoard'])),
   http.get('*/api/comebacks/result', () => HttpResponse.json({ invited: 0, returned: 0, returnedPlanSom: 0, paidSom: 0 })),
   http.get('*/api/appointments/:id/visit-report', () => new HttpResponse(null, { status: 204 })),
   http.get('*/api/clinic/visit-report-ai', () => HttpResponse.json({ available: false, on: false } satisfies Schemas['VisitReportControllerAiSetting'])),
@@ -141,6 +142,8 @@ export const server = setupServer(
   http.get('*/api/appointments/:id/teeth', () => HttpResponse.json([] satisfies Schemas['VisitToothView'][])),
   http.get('*/api/patients/:id/teeth/history', () => HttpResponse.json([] satisfies Schemas['VisitTeethView'][])),
   http.get('*/api/patients/:id/plan', () => HttpResponse.json([] satisfies Schemas['TreatmentStepView'][])),
+  // Статус плана (V236): плана нет — status пусто, нули
+  http.get('*/api/patients/:id/plan/status', () => HttpResponse.json({ done: 0, total: 0, doneSom: 0, totalSom: 0, manualAgreed: false } satisfies Schemas['PlanStatesProgress'])),
   http.get('*/api/patients/:id/expenses', () => HttpResponse.json([])),
   http.get('*/api/patients/:id/anamnesis', () => HttpResponse.json({ items: [] })),
   // Согласие на публикацию фото (V139): по умолчанию его нет — «До / после» выключена

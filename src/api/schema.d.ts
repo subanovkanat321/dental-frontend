@@ -676,6 +676,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/patients/{patientId}/plan/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["status"];
+        put: operations["mark_1"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/patients/{patientId}/files/{fileId}/post-text": {
         parameters: {
             query?: never;
@@ -1516,7 +1532,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["mark_1"];
+        put: operations["mark_2"];
         post?: never;
         delete: operations["unmark_1"];
         options?: never;
@@ -3949,7 +3965,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["status"];
+        post: operations["status_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3998,6 +4014,38 @@ export interface paths {
         get: operations["list_9"];
         put?: never;
         post: operations["add_5"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/dropped/{patientId}/snooze": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["snooze"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/dropped/{patientId}/refuse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["refuse"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4971,7 +5019,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["status_1"];
+        get: operations["status_2"];
         put?: never;
         post?: never;
         delete?: never;
@@ -5195,7 +5243,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["status_2"];
+        get: operations["status_3"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6660,6 +6708,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/dropped": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["board"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/doctors/admin": {
         parameters: {
             query?: never;
@@ -6683,7 +6747,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["board"];
+        get: operations["board_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -8473,6 +8537,27 @@ export interface components {
             serviceTypeId?: number;
             /** Format: int64 */
             doneAppointmentId?: number;
+        };
+        PlanStateControllerMarkRequest: {
+            /** @enum {string} */
+            mark?: "AGREED" | "REFUSED" | "NONE";
+        };
+        PlanStatesProgress: {
+            /** @enum {string} */
+            status?: "PROPOSED" | "AGREED" | "IN_PROGRESS" | "COMPLETED" | "REFUSED";
+            /** Format: int32 */
+            done: number;
+            /** Format: int32 */
+            total: number;
+            /** Format: int32 */
+            doneSom?: number;
+            /** Format: int32 */
+            totalSom?: number;
+            /** Format: date-time */
+            agreedAt?: string;
+            manualAgreed: boolean;
+            /** Format: date-time */
+            refusedAt?: string;
         };
         MedicalRecordControllerPostText: {
             text?: string;
@@ -12234,6 +12319,39 @@ export interface components {
             standard?: string[];
             own?: string[];
         };
+        PlanStatesBoard: {
+            patients?: components["schemas"]["PlanStatesDropped"][];
+            /** Format: int32 */
+            total: number;
+            /** Format: int32 */
+            leftSom: number;
+            /** Format: int32 */
+            days: number;
+        };
+        PlanStatesDropped: {
+            /** Format: int64 */
+            patientId: number;
+            fullName?: string;
+            phone?: string;
+            contactPhone?: string;
+            telegram: boolean;
+            /** @enum {string} */
+            status?: "PROPOSED" | "AGREED" | "IN_PROGRESS" | "COMPLETED" | "REFUSED";
+            /** Format: int32 */
+            done: number;
+            /** Format: int32 */
+            total: number;
+            /** Format: int32 */
+            leftSom: number;
+            left?: string[];
+            /** Format: date-time */
+            lastVisit?: string;
+            /** Format: int64 */
+            doctorId?: number;
+            doctor?: string;
+            /** Format: date-time */
+            invitedAt?: string;
+        };
         ComebacksBoard: {
             patients?: components["schemas"]["ComebacksCandidate"][];
             /** Format: int32 */
@@ -14315,6 +14433,54 @@ export interface operations {
             };
         };
     };
+    status: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanStatesProgress"];
+                };
+            };
+        };
+    };
+    mark_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlanStateControllerMarkRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanStatesProgress"];
+                };
+            };
+        };
+    };
     postText: {
         parameters: {
             query?: never;
@@ -16108,7 +16274,7 @@ export interface operations {
             };
         };
     };
-    mark_1: {
+    mark_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -20647,7 +20813,7 @@ export interface operations {
             };
         };
     };
-    status: {
+    status_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -20792,6 +20958,46 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ExpensesExpense"];
                 };
+            };
+        };
+    };
+    snooze: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    refuse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -22703,7 +22909,7 @@ export interface operations {
             };
         };
     };
-    status_1: {
+    status_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -23007,7 +23213,7 @@ export interface operations {
             };
         };
     };
-    status_2: {
+    status_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -25094,6 +25300,30 @@ export interface operations {
             };
         };
     };
+    board: {
+        parameters: {
+            query?: {
+                days?: number;
+                offset?: number;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanStatesBoard"];
+                };
+            };
+        };
+    };
     adminList: {
         parameters: {
             query?: never;
@@ -25114,7 +25344,7 @@ export interface operations {
             };
         };
     };
-    board: {
+    board_1: {
         parameters: {
             query?: {
                 filter?: "ALL" | "PLAN" | "CANCELLED" | "NO_SHOW" | "RECALL" | "SENT";

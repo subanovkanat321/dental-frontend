@@ -66,7 +66,7 @@ test('Пациенты: все подразделы вкладками, откр
   window.location.hash = '/patients/booked'
   renderApp()
   const row = await tabs('Пациенты')
-  expect(names(row)).toEqual(['Все', 'Записаны', 'Лист ожидания', 'Позвать снова', 'Вопросы', 'Задачи', 'Оценки'])
+  expect(names(row)).toEqual(['Все', 'Записаны', 'Лист ожидания', 'Позвать снова', 'Бросили лечение', 'Вопросы', 'Задачи', 'Оценки'])
   expect(within(row).getByRole('link', { name: 'Записаны' })).toHaveAttribute('aria-current', 'page')
   // Заголовок страницы — подраздел (для читалок экрана; на экране его показывает вкладка)
   expect(screen.getByRole('heading', { name: 'Записаны' })).toHaveClass('sr-only')

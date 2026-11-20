@@ -13,6 +13,8 @@ const P = {
   calendarCheck: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4M9 15.5l2 2 4-4" /></>,
   hourglass: <path d="M6 3h12M6 21h12M8 3v2.5c0 2 4 4.5 4 6.5s-4 4.5-4 6.5V21M16 3v2.5c0 2-4 4.5-4 6.5s4 4.5 4 6.5V21" />,
   comeback: <><path d="M21 12a9 9 0 1 1-2.6-6.4L21 8" /><path d="M21 3v5h-5" /></>,
+  // «Бросили лечение»: незаконченная дуга прогресса и пауза
+  dropped: <><path d="M12 3a9 9 0 1 0 9 9" /><path d="M10 9v6" /><path d="M14 9v6" /></>,
   tooth: <path d="M7 3.5c-2 0-3.5 1.6-3.5 4 0 3 1.2 4.6 1.8 7.2.5 2.4.9 5.8 2.4 5.8 1.4 0 1.6-3.4 2.4-5.2.4-.9 1.4-.9 1.8 0 .8 1.8 1 5.2 2.4 5.2 1.5 0 1.9-3.4 2.4-5.8.6-2.6 1.8-4.2 1.8-7.2 0-2.4-1.5-4-3.5-4-1.6 0-2.4 1-5 1s-3.4-1-5-1z" />,
   chat: <><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v10a1.5 1.5 0 0 1-1.5 1.5H10l-4.5 3.5V17A1.5 1.5 0 0 1 4 15.5z" /><path d="M8.5 10.5h.01M12 10.5h.01M15.5 10.5h.01" /></>,
   banknote: <><rect x="2.5" y="6" width="19" height="12" rx="2" /><circle cx="12" cy="12" r="2.5" /><path d="M6 12h.01M18 12h.01" /></>,
@@ -56,7 +58,7 @@ const P = {
 
 /** Рисунок каждого подраздела: раздел → ключ подраздела (как в `subsOf`). Новый подраздел — сюда же (тест `subIcons.test`). */
 export const SUB_ICONS: Partial<Record<Page, Record<string, ReactNode>>> = {
-  patients: { all: P.list, booked: P.calendarCheck, waitlist: P.hourglass, comeback: P.comeback, recall: P.tooth, questions: P.chat, tasks: P.checkList, ratings: P.star },
+  patients: { all: P.list, booked: P.calendarCheck, waitlist: P.hourglass, comeback: P.comeback, dropped: P.dropped, recall: P.tooth, questions: P.chat, tasks: P.checkList, ratings: P.star },
   cash: { money: P.banknote, earnings: P.wallet, analytics: P.trend, expenses: P.receipt, debtors: P.debtor, salary: P.envelope, stats: P.bars, report: P.doc },
   stock: { materials: P.box, spending: P.cart, purchase: P.receipt, lab: P.tooth },
   platform: {
