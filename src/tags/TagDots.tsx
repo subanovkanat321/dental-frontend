@@ -10,12 +10,25 @@ type Me = Schemas['BookingViewsMe']
  * и для скринридера («Метки: Боится, Опаздывает»). «ВИП» здесь не рисуем — её показывает ⭐ в значках приёма.
  * Метки клиники грузятся, только если у пациента они есть: у большинства записей запроса нет.
  */
-export function TagDots({ patient, className = '' }: { patient: Pick<Patient, 'tagIds'>; className?: string }) {
+export function TagDots({ patient, className = '', named = false }: {
+  patient: Pick<Patient, 'tagIds'>; className?: string
+  /** Первая метка — словом, остальные — «＋1» (карточка приёма: точки без подписи непонятны) */
+  named?: boolean
+}) {
   const has = (patient.tagIds?.length ?? 0) > 0
   const tags = usePatientTags(has)
   const shown = tagsOf(patient, tags.data, false)
   if (!shown.length) return null
   const names = shown.map((t) => t.name).join(', ')
+  if (named) {
+    const [first] = shown
+    return (
+      <span className={`tag-chip tag-named ${className}`.trim()} role="img" aria-label={`Метки: ${names}`} title={names}>
+        <span className={`tag-dot tag-${first!.color ?? 'gray'}`} aria-hidden="true" />{first!.name}
+        {shown.length > 1 && <span className="hint"> ＋{shown.length - 1}</span>}
+      </span>
+    )
+  }
   return (
     <span className={`tag-dots ${className}`.trim()} role="img" aria-label={`Метки: ${names}`} title={names}>
       {shown.map((t) => <span key={t.id} className={`tag-dot tag-${t.color ?? 'gray'}`} />)}

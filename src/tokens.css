@@ -419,7 +419,7 @@ input[type=date], input[type=month] { min-width: 0; max-width: 100%; }
 .ui-select-pop li.ui-select-group::after { content: none; }
 .ui-select-pop li.ui-select-group + li.ui-select-group { margin-top: 4px; padding-top: 4px; border-top: 1px solid var(--separator); }
 .ui-select-pop .ui-select-group ul { overflow: visible; }
-.ui-select-pop li.ui-select-group-title { min-height: 0; padding: 6px 10px 2px; color: var(--hint); font-size: .78rem; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; cursor: default; }
+.ui-select-pop li.ui-select-group-title { min-height: 0; padding: 6px 10px 2px; color: var(--hint); font-size: .8rem; font-weight: 600; cursor: default; }
 .ui-select-pop li.ui-select-group-title::after { content: none; }
 .ui-select-pop.sheet li.ui-select-group { min-height: 0; padding: 0; }
 .ui-select-pop.sheet li.ui-select-group-title { min-height: 0; padding: 8px 12px 2px; font-size: .8rem; }

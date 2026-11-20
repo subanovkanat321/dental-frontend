@@ -101,6 +101,12 @@ export function slotInstant(date: string, minutes: number): string {
   return new Date(`${date}T${hh}:${mm}:00+06:00`).toISOString()
 }
 
+/** '2026-11-20' → «пт, 20 нояб» — коротко, для шапки карточки приёма (рядом — врач «Айгерим С.»), без переноса. */
+export function shortDayTitle(date: string): string {
+  return new Intl.DateTimeFormat('ru-RU', { timeZone: 'UTC', weekday: 'short', day: 'numeric', month: 'short' })
+    .format(new Date(`${date}T00:00:00Z`)).replace(/\./g, '')
+}
+
 /** '2026-10-31T04:30:00Z' → «31 окт 2026» (или «31 окт, 10:30» с временем) — по Бишкеку. */
 export function shortDate(instant: string, withTime = false): string {
   const d = new Date(instant)

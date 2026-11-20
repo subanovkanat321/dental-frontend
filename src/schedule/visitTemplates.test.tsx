@@ -120,7 +120,7 @@ test('шаблон с разделами — к своим разделам; д�
   await userEvent.click(within(review).getByRole('button', { name: 'Отмена' }))
 
   // Диктовка: без распознавания речи — поле текста, «Разобрать» → разделы от ИИ
-  await userEvent.click(await screen.findByRole('button', { name: '🎤 Надиктовать приём' }))
+  await userEvent.click(await screen.findByRole('button', { name: '🎤 Надиктовать' }))
   await userEvent.type(screen.getByRole('textbox', { name: 'Текст диктовки' }), 'на 36 пломба не есть два часа')
   await userEvent.click(screen.getByRole('button', { name: 'Разобрать' }))
   review = await screen.findByRole('region', { name: 'Проверьте диктовку' })
@@ -150,17 +150,13 @@ test('«Из прошлого визита»: галочки по раздела
   expect(within(form).getByRole('button', { name: 'Сохранить заметку' })).toBeInTheDocument()
 })
 
-test('«Прошлые визиты» под заметкой: свёрнуты, дата — заметка того визита только для чтения', async () => {
+test('«Прошлые визиты» — не под заметкой (они в «Продолжении лечения»); «🎤 Надиктовать» — в строке подписи', async () => {
   backend({ note: 'Сегодня', editable: true, sectionsOn: false })
   renderNote()
-  const fold = await screen.findByRole('region', { name: 'Прошлые визиты' })
-  expect(fold).toHaveTextContent('2')
-  await userEvent.click(within(fold).getByRole('button', { name: /Прошлые визиты/ }))
-  const dates = within(fold).getAllByRole('button', { expanded: false })
-  expect(dates).toHaveLength(2)
-  await userEvent.click(dates[1]!)
-  expect(within(fold).getByText('Аллергия на лидокаин — артикаин')).toBeInTheDocument()
-  expect(within(fold).queryByRole('textbox')).not.toBeInTheDocument()
+  const form = await screen.findByRole('form', { name: 'Заметка о приёме' })
+  expect(within(form).getByRole('button', { name: '🎤 Надиктовать' })).toBeInTheDocument()
+  expect(within(form).getByRole('button', { name: '📄 Шаблон' })).toBeInTheDocument()
+  expect(screen.queryByRole('region', { name: 'Прошлые визиты' })).not.toBeInTheDocument()
 })
 
 test('«Сохранить как шаблон»: название, услуга приёма по галочке, «общий» — у руководителя', async () => {

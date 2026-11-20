@@ -1,10 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
-import { Fold } from '../layout/Fold'
-import { shortDate } from '../lib/time'
-import { Dictation } from './Dictation'
+import { Dictation, type DictationHandle } from './Dictation'
 import { ProposalReview } from './ProposalReview'
 import { asSections, cleanSections, hasText, joinText, mergeSections, renderSections, sameSections, SECTION_TITLE, SECTIONS, type SectionKey, type Sections } from './noteSections'
 import { reviewOf, type Review } from './review'
@@ -40,7 +38,8 @@ function usePreviousNotes(a: Appointment, enabled: boolean) {
  *
  * Шаг 2 (опыт Dentist Plus): разделы заметки (Жалобы · Объективно · Диагноз · Лечение · Рекомендации) — если клиника
  * их включила или заметка уже с разделами; пустые разделы не занимают места — «＋ Жалобы» чипом. Рядом с подписью —
- * «📄 Шаблон» и «↩ Из прошлого визита», под полем — «Сохранить как шаблон» и свёрнутые «Прошлые визиты».
+ * «🎤 Надиктовать», «📄 Шаблон» и «↩ Из прошлого визита», под полем — «Сохранить как шаблон». Прошлые визиты — в
+ * «Продолжении лечения» (UX-аудит 2026-11-20: одно место вместо трёх); поле — на всю ширину сразу под подписью.
  */
 export function VisitNote({ appointment: a, me }: { appointment: Appointment; me?: Me }) {
   const client = useQueryClient()
@@ -57,6 +56,7 @@ export function VisitNote({ appointment: a, me }: { appointment: Appointment; me
   const [done, setDone] = useState('')
   // Пока идёт диктовка, поле заметки прячем: заметка — в экране «Проверьте», чтобы не было двух полей
   const [dictating, setDictating] = useState(false)
+  const dictation = useRef<DictationHandle>(null)
   const editable = note.data?.editable !== false && note.isSuccess
   const previous = usePreviousNotes(a, editable)
 
@@ -118,13 +118,15 @@ export function VisitNote({ appointment: a, me }: { appointment: Appointment; me
 
   return (
     <>
-    {/* Диктовка — первой: врач говорит, ИИ раскладывает по зубам, плану и заметке (и по её разделам) */}
-    {a.patient.id != null && <Dictation appointment={a} current={current} onActive={setDictating} />}
+    {/* Диктовка: кнопка — в строке подписи; врач говорит, ИИ раскладывает по зубам, плану и заметке (и по её разделам) */}
+    {a.patient.id != null && <Dictation ref={dictation} appointment={a} current={current} onActive={setDictating} />}
     {!dictating && <form className="form visit-note" aria-label="Заметка о приёме" onSubmit={(e) => { e.preventDefault(); save.mutate() }}>
       <div className="note-head">
         <span className="note-head-title" id={`note-${a.id}`}>Заметка о приёме</span>
         {canTemplate && (
           <span className="note-tools">
+            <button type="button" className="btn small ghost" title="Скажите по шагам: зуб → что сделали → следующий визит. Шпаргалка будет на экране."
+              onClick={() => dictation.current?.start()}>🎤 Надиктовать</button>
             <button type="button" className="btn small ghost" onClick={() => setSheet('template')}>📄 Шаблон</button>
             {previous.length > 0 && <button type="button" className="btn small ghost" onClick={() => setSheet('previous')}>↩ Из прошлого визита</button>}
           </span>
@@ -173,7 +175,6 @@ export function VisitNote({ appointment: a, me }: { appointment: Appointment; me
       </div>
       {save.error && <p className="error" role="alert">{errorText(save.error)}</p>}
     </form>}
-    {!dictating && previous.length > 0 && <PastVisits notes={previous} />}
     {sheet === 'template' && (
       <TemplateSheet appointment={a} onClose={() => setSheet(null)}
         onProposal={(p, title) => { setSheet(null); setDone(''); setReview(reviewOf(p, current, false, `Шаблон «${title}»`)) }} />
@@ -192,25 +193,4 @@ function rowsFor(text: string | undefined): number {
   const t = text ?? ''
   const lines = t.split('\n').reduce((n, line) => n + Math.max(1, Math.ceil(line.length / 40)), 0)
   return Math.min(5, Math.max(1, lines))
-}
-
-/** Прошлые визиты под заметкой: свёрнутый список дат, нажали — заметка того визита (только читать). */
-function PastVisits({ notes }: { notes: Schemas['VisitNoteView'][] }) {
-  const [open, setOpen] = useState<number | null>(null)
-  return (
-    <Fold title="Прошлые визиты" label="Прошлые визиты" meta={String(notes.length)}>
-      <ul className="past-visits">
-        {notes.map((n) => (
-          <li key={n.appointmentId}>
-            <button type="button" className="past-visit-date" aria-expanded={open === n.appointmentId}
-              onClick={() => setOpen(open === n.appointmentId ? null : n.appointmentId)}>
-              <span>{n.startAt ? shortDate(n.startAt) : '—'}</span>
-              {n.visitDoctorName && <span className="hint small">{n.visitDoctorName}</span>}
-            </button>
-            {open === n.appointmentId && <p className="past-visit-note">{n.note}</p>}
-          </li>
-        ))}
-      </ul>
-    </Fold>
-  )
 }

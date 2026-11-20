@@ -290,7 +290,7 @@ test('приём на завтра — «Пришёл», «В кресле», «
   await userEvent.click(within(sheet).getByRole('radio', { name: 'Дубль записи' }))
   await userEvent.click(within(sheet).getByRole('button', { name: 'Отменить запись' }))
   expect(await within(panel).findByText('Запись отменена')).toBeInTheDocument()
-  expect(within(panel).getByText('Отменён · дубль записи')).toBeInTheDocument()
+  expect(within(panel).getByText('Дубль записи')).toBeInTheDocument()
   expect(sent).toEqual([{ status: 'CANCELLED', reason: 'DUPLICATE' }])
   window.history.replaceState(null, '', '/')
 })
@@ -341,7 +341,7 @@ test('отмена «Другое» с парой слов — текст ухо
   await userEvent.click(within(sheet).getByRole('radio', { name: 'Другое' }))
   await userEvent.type(within(sheet).getByRole('textbox', { name: 'Причина — пара слов' }), 'уехал в Ош')
   await userEvent.click(within(sheet).getByRole('button', { name: 'Отменить запись' }))
-  expect(await within(panel).findByText('Отменён · другое — уехал в Ош')).toBeInTheDocument()
+  expect(await within(panel).findByText('Другое — уехал в Ош')).toBeInTheDocument()
   expect(sent).toEqual([{ status: 'CANCELLED', reason: 'OTHER', note: 'уехал в Ош' }])
 })
 

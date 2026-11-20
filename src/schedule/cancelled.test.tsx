@@ -73,7 +73,8 @@ test('телефон: внизу дня «Отменено: 2 ›» — раск
   server.use(http.get('*/api/appointments/12', () => HttpResponse.json(byPatient)))
   await userEvent.click(rows[0]!)
   const panel = await screen.findByRole('complementary', { name: 'Карточка приёма' })
-  expect(within(panel).getByText(`Отменён: пациент в боте, сегодня ${timeOf(cancelledNow)}`)).toBeInTheDocument()
+  // Отмена одной строкой (UX-аудит 2026-11-20): «Отменён» — в пилюле, причины нет — «Отменил(а) кто, когда»
+  expect(within(panel).getByText(`Отменил(а) пациент в боте, сегодня ${timeOf(cancelledNow)}`)).toBeInTheDocument()
   // «Записан» (восстановить) — «Записан» в списке пилюли статуса
   expect(statusMenu(panel)).toHaveAccessibleName('Статус: Отменён')
 })
@@ -108,7 +109,7 @@ test('карточка старой отмены (до записи «кто») 
   await userEvent.click(await screen.findByRole('button', { name: /Отменено: 1/ }))
   await userEvent.click(within(screen.getByRole('list', { name: 'Отменённые записи' })).getByRole('button'))
   const panel = await screen.findByRole('complementary', { name: 'Карточка приёма' })
-  expect(within(panel).queryByText(/^Отменён:/)).not.toBeInTheDocument()
+  expect(within(panel).queryByText(/^Отменил/)).not.toBeInTheDocument()
   // «Записан» (восстановить) — «Записан» в списке пилюли статуса
   expect(statusMenu(panel)).toHaveAccessibleName('Статус: Отменён')
 })

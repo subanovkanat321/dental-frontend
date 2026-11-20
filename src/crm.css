@@ -523,6 +523,8 @@ p.hours-off { margin: 4px 0 0; font-size: .9rem; }
 .med-pill-more { flex: none; opacity: .8; }
 .appt-when { display: grid; justify-items: start; min-width: 0; }
 .appt-when .med-alert { margin-top: 6px; }
+/* «пт, 20 нояб · Айгерим С.» — коротко: на телефоне одной строкой; врач не рвётся посередине имени */
+.appt-when .appt-day { max-width: 100%; }
 .med-alert-open { justify-self: start; color: inherit; text-decoration: underline; font-weight: 500; }
 .anamnesis { display: grid; gap: 12px; }
 .anamnesis > .btn { justify-self: start; }
@@ -707,7 +709,8 @@ button.remind-sent { background: none; border: 0; padding: 6px 4px; font-family:
 /* Карточка приёма: «Вернуть» после неявки или отмены, оценка, отзыв */
 .undo { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; border-radius: var(--r-md); background: var(--sunken); }
 .undo.warn { background: var(--wait-bg); color: var(--wait-ink); }
-.rating { margin: 0; color: #E0A800; letter-spacing: 2px; }
+.rating { margin: 0; }
+.rating-stars { color: #E0A800; letter-spacing: 2px; }
 .review-comment { margin: 0; padding: 8px 10px; border-left: 3px solid var(--line-strong); background: var(--sunken); border-radius: var(--r-sm); white-space: pre-wrap; }
 .patient-name.link { font-size: 1.05rem; font-weight: 700; }
 .contact .btn { flex: 1; justify-content: center; text-decoration: none; }
@@ -2086,8 +2089,9 @@ button.status-pill:focus-visible { outline: 2px solid var(--accent); outline-off
 @media (max-width: 640px) { .status-pill { min-height: 44px; font-size: 1rem; } .appt-status-row .btn.primary { min-height: 44px; } }
 /* Долг пациента рядом со статусом (cash/DebtRemind): заметно, но одной меткой, без кнопок */
 .appt-card .appt-debt { justify-self: start; font-weight: 600; }
-/* Метки пациента (❗ 🧾 ⭐ 🆕) — одной строкой под статусом, спокойные чипы; цвет только у ❗ и долга */
-.appt-card .appt-marks { display: flex; flex-wrap: wrap; gap: 6px; margin-top: -6px; }
+/* Метки пациента (⚠ ❗ 🧾 ⭐ метка) — одной строкой под именем, спокойные чипы; цвет только у ❗ и долга */
+.appt-card .appt-marks { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 2px 0; }
+.appt-card .appt-marks .med-alert { margin: 0; }
 .appt-card .appt-mark { font-weight: 500; }
 .appt-card .appt-debt-hint { margin: 0; }
 .appt-card .appt-patient { gap: 4px; }
@@ -2153,9 +2157,10 @@ button.status-pill:focus-visible { outline: 2px solid var(--accent); outline-off
 .price-pick { display: grid; gap: 4px; margin-top: 6px; }
 .med-tabs { margin: 12px 0 4px; }
 .pay-unsaved { margin: 0 0 8px; padding: 6px 10px; border-radius: var(--r-md); background: color-mix(in srgb, var(--status-wait) 14%, transparent); color: var(--status-wait); font-size: .9rem; font-weight: 500; }
-.payment-unpaid { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+/* «Оплата не отмечена»: частое («Принять оплату») — кнопкой, редкое («Бесплатно», «Оплачено заранее») — ссылками ниже */
+.payment-unpaid { display: grid; justify-items: start; gap: 8px; }
 .payment-unpaid-text { font-weight: 600; }
-.payment-unpaid-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.payment-unpaid-links { display: flex; gap: 4px 16px; flex-wrap: wrap; font-size: .9rem; }
 
 /* Ребёнок и представитель в шапке карточек пациента и приёма */
 .kid-info { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 4px 0 0; }
@@ -2165,7 +2170,7 @@ button.status-pill:focus-visible { outline: 2px solid var(--accent); outline-off
 .vip-box { display: grid; gap: 4px; }
 .vip-box p { margin: 0; }
 .patient-vip { font-size: .85em; }
-.payment-unpaid .pay-form { flex-basis: 100%; }
+.payment-unpaid .pay-form { justify-self: stretch; }
 
 /* Карточка врача — разделы «Для пациентов», «Работа», «Вход и права» (кто что заполняет) */
 .doctor-group { display: grid; gap: 10px; padding-top: 14px; border-top: 1px solid var(--separator); }
@@ -2568,7 +2573,7 @@ a.menu-item { box-sizing: border-box; text-decoration: none; }
 .menu-check { margin-left: auto; font-weight: 700; }
 .menu-emoji { flex: none; width: 1.4em; text-align: center; }
 .menu-item:disabled .menu-emoji { opacity: .5; }
-.menu-group { padding: 8px 10px 2px; color: var(--hint); font-size: .78rem; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; }
+.menu-group { padding: 8px 10px 2px; color: var(--hint); font-size: .8rem; font-weight: 600; }
 .menu-group:first-child { padding-top: 2px; }
 .menu-sep { margin: 4px 6px; border: 0; border-top: 1px solid var(--separator); }
 .menu-who { display: grid; gap: 1px; min-width: 0; margin: 0; line-height: 1.3; }
@@ -2989,6 +2994,9 @@ button.cash-entry:hover, button.cash-entry.active { background: var(--sunken); }
 .note-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 8px; }
 .note-head-title { font-size: .85rem; color: var(--hint); }
 .note-tools { display: flex; flex-wrap: wrap; gap: 4px; }
+/* Поле заметки — на всю ширину сразу под подписью (было в пол-экрана: textarea без стиля поля) */
+.visit-note > textarea { width: 100%; font: inherit; padding: 7px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); resize: vertical; }
+.visit-note > textarea:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
 .note-tools .btn.small { min-height: 32px; padding: 0 10px; font-size: .85rem; }
 .note-sections { display: grid; gap: 8px; }
 .note-section > span { font-size: .8rem; font-weight: 600; color: var(--hint); }

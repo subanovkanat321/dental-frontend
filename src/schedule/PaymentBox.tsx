@@ -16,6 +16,7 @@ import { useAdvance } from '../patients/advance'
 import { Loading } from '../layout/Loading'
 import { discountText, reasonText } from '../lib/discount'
 import { DiscountField } from './DiscountField'
+import { initialPayView, type PayView } from './payView'
 import { draftOf, draftProblem, draftSom, useDiscountPolicy, type DiscountDraft } from './discountDraft'
 
 type Me = Schemas['BookingViewsMe']
@@ -36,7 +37,7 @@ function useAdvanceFor(a: Appointment, me: Me, spentHere: number): number {
   return (advance.data?.balanceSom ?? 0) + spentHere
 }
 
-type View = 'show' | 'edit' | 'bill' | 'extra' | 'rest' | 'billed' | 'unpaid'
+type View = PayView
 
 /**
  * Оплата состоявшегося приёма — как paymentBox прежнего приложения:
@@ -47,10 +48,23 @@ type View = 'show' | 'edit' | 'bill' | 'extra' | 'rest' | 'billed' | 'unpaid'
  *   «разными способами»); «Снять отметку оплаты» — отдельной кнопкой.
  * После ответа сервера карточка пересоздаёт блок (ключ — версия приёма), он открывается в нужном виде.
  */
-export function PaymentBox({ appointment: a, me }: { appointment: Appointment; me: Me }) {
+export function PaymentBox({ appointment: a, me, open, mainOutside = false, quiet = false, onView }: {
+  appointment: Appointment
+  me: Me
+  /** Открыть сразу форму: нажали «Принять оплату» / «Принять доплату» в нижней панели телефона */
+  open?: 'edit' | 'extra'
+  /** Главная кнопка («Принять оплату», «Принять доплату») — в нижней панели телефона: здесь её нет, блок — сводка */
+  mainOutside?: boolean
+  /** Главное действие карточки другое («Записать на следующий визит») — здесь залитых кнопок нет */
+  quiet?: boolean
+  /** Открыли или закрыли форму — карточка прячет нижнюю «Принять оплату», пока форма открыта */
+  onView?: (view: PayView) => void
+}) {
   // Регистратура открывает счёт с кассы — сразу форма оплаты с суммой счёта
   // Не оплачено — одной строкой с кнопкой: форма с подставленной ценой на полэкрана сбивала с толку
-  const [view, setView] = useState<View>(a.paidSom != null ? 'show' : a.chargeSom != null && !me.reception ? 'billed' : a.chargeSom != null ? 'edit' : 'unpaid')
+  const [view, setViewState] = useState<View>(open ?? initialPayView(a, me))
+  const setView = (v: View) => { setViewState(v); onView?.(v) }
+  const mainClass = quiet ? 'btn' : 'btn primary'
   const history = useQuery({
     queryKey: ['payments', a.id, a.version, a.paidSom],
     queryFn: () => unwrap(api.GET('/api/appointments/{id}/payments', { params: { path: { id: a.id } } })),
@@ -60,7 +74,7 @@ export function PaymentBox({ appointment: a, me }: { appointment: Appointment; m
   // Этот приём уже оплачен с аванса — при «Изменить» эти деньги снова доступны (сервер сотрёт прежние платежи)
   const spentHere = (history.data ?? []).filter((e) => e.method === 'ADVANCE').reduce((sum, e) => sum + e.amountSom, 0)
 
-  if (view === 'unpaid') return <Unpaid a={a} onPay={() => setView('edit')} />
+  if (view === 'unpaid') return <Unpaid a={a} onPay={mainOutside ? undefined : () => setView('edit')} primary={!quiet} />
   if (view === 'extra') return <div className="payment"><ExtraForm a={a} me={me} onCancel={back} /></div>
   if (view === 'rest') return <div className="payment"><RestForm a={a} onCancel={back} /></div>
   if (view === 'edit' || view === 'bill') {
@@ -83,7 +97,7 @@ export function PaymentBox({ appointment: a, me }: { appointment: Appointment; m
           {doctorSide && <button type="button" className="link" onClick={() => setView('bill')}>Изменить сумму</button>}
         </p>
         <p className="hint small">{doctorSide ? 'Регистратура примет оплату — ей пришло сообщение.' : 'Пациент платит здесь — отметьте, как заплатил.'}</p>
-        <button type="button" className="btn primary" onClick={() => setView('edit')}>Принять оплату</button>
+        {!mainOutside && <button type="button" className={mainClass} data-pay-main onClick={() => setView('edit')}>Принять оплату</button>}
       </div>
     )
   }
@@ -97,14 +111,17 @@ export function PaymentBox({ appointment: a, me }: { appointment: Appointment; m
   const installments = new Set(list.map((e) => e.paidAt)).size > 1
   // «Сейчас ничего — всё в долг»: 0 сом со стоимостью — не «Бесплатно» и без способа оплаты
   const allInDebt = a.paidSom === 0 && (a.chargeSom ?? 0) > 0
+  // Оплачено полностью — одной строкой «✅ Оплачено 6 000 сом · наличные», без «6 000 из 6 000» и второй строки
+  const fullyPaid = !debt && a.chargeSom != null && (a.paidSom ?? 0) > 0 && (a.paidSom ?? 0) >= a.chargeSom
   return (
     <div className="payment">
       <p className="payment-done">
         <span>{a.paidSom === 0 && !a.chargeSom ? (a.freeReason === 'PREPAID' ? '✅ Оплачено заранее' : '🎁 Бесплатно')
           : allInDebt ? `Всё в долг · ${somText(a.chargeSom ?? 0)}`
+          : fullyPaid ? `✅ Оплачено ${somText(a.paidSom ?? 0)}${split || !a.paymentMethod ? '' : ` · ${methodName(a.paymentMethod)}`}`
           : a.chargeSom != null && !(a.discount && (a.paidSom ?? 0) >= a.chargeSom) ? `${somText(a.paidSom ?? 0)} из ${somText(a.chargeSom)}`
           : split ? somText(a.paidSom ?? 0) : `${somText(a.paidSom ?? 0)} · ${methodName(a.paymentMethod)}`}</span>
-        {!installments && <button type="button" className="link" onClick={() => setView('edit')}>Изменить</button>}
+        {!installments && <button type="button" className="link" onClick={() => setView('edit')}>{fullyPaid ? 'изменить' : 'Изменить'}</button>}
       </p>
       {a.paidSom === 0 && !allInDebt && a.freeComment && <p className="hint small payment-note">{a.freeComment}</p>}
       {a.discount && (
@@ -116,7 +133,7 @@ export function PaymentBox({ appointment: a, me }: { appointment: Appointment; m
       <EarningsGain a={a} me={me} />
       {installments && <p className="hint small">Есть доплаты — сумму меняют доплатой; ошиблись в платеже — напишите в техподдержку.</p>}
       {debt ? <p className={`tone-${debt.tone} payment-debt`}>{debt.text}</p>
-        : a.chargeSom != null ? <p className="tone-ok">✅ Оплачено полностью</p> : null}
+        : a.chargeSom != null && !fullyPaid ? <p className="tone-ok">✅ Оплачено полностью</p> : null}
       {shown.length > 1 && (
         <p className="hint payment-history">
           {split ? shown.map((e) => `${methodName(e.method)} ${somText(e.amountSom)}`).join(' + ')
@@ -124,9 +141,9 @@ export function PaymentBox({ appointment: a, me }: { appointment: Appointment; m
         </p>
       )}
       {a.depositStatus === 'RECEIVED' && a.chargeSom == null && (
-        <button type="button" className="btn primary" onClick={() => setView('rest')}>Указать стоимость и принять остаток</button>
+        <button type="button" className={mainClass} onClick={() => setView('rest')}>Указать стоимость и принять остаток</button>
       )}
-      {debt && <button type="button" className="btn primary" onClick={() => setView('extra')}>Принять доплату</button>}
+      {debt && !mainOutside && <button type="button" className={mainClass} data-pay-main onClick={() => setView('extra')}>Принять доплату</button>}
     </div>
   )
 }
@@ -204,7 +221,7 @@ function PriceChips({ onPick }: { onPick: (price: number, add: boolean) => void 
  * тоже 0 сом в кассу этого дня (деньги уже получены и учтены раньше, например на прошлом визите), но
  * приём показывается оплаченным; комментарий — по желанию («оплатил 12.10 вместе с лечением»).
  */
-function Unpaid({ a, onPay }: { a: Appointment; onPay: () => void }) {
+function Unpaid({ a, onPay, primary }: { a: Appointment; onPay?: () => void; primary: boolean }) {
   const action = useAppointmentAction(a)
   const [prepaid, setPrepaid] = useState(false)
   const [note, setNote] = useState('')
@@ -220,11 +237,14 @@ function Unpaid({ a, onPay }: { a: Appointment; onPay: () => void }) {
     <div className="payment payment-unpaid">
       <span className="payment-unpaid-text"><span aria-hidden="true">💳</span> Оплата не отмечена</span>
       {!prepaid && (
-        <span className="payment-unpaid-actions">
-          <button type="button" className="btn" disabled={action.isPending} onClick={free}>Бесплатно</button>
-          <button type="button" className="btn" disabled={action.isPending} onClick={() => setPrepaid(true)}>Оплачено заранее</button>
-          <button type="button" className="btn primary" disabled={action.isPending} onClick={onPay}>Принять оплату</button>
-        </span>
+        <>
+          {/* Частое — первым: «Принять оплату» (на телефоне — в нижней панели), редкое — ссылками ниже */}
+          {onPay && <button type="button" className={primary ? 'btn primary' : 'btn'} data-pay-main disabled={action.isPending} onClick={onPay}>Принять оплату</button>}
+          <span className="payment-unpaid-links">
+            <button type="button" className="link" disabled={action.isPending} onClick={free}>Бесплатно</button>
+            <button type="button" className="link" disabled={action.isPending} onClick={() => setPrepaid(true)}>Оплачено заранее</button>
+          </span>
+        </>
       )}
       {prepaid && (
         <form className="pay-form" aria-label="Оплачено заранее" onSubmit={(e) => { e.preventDefault(); savePrepaid() }}>

@@ -72,16 +72,34 @@ test('телефон: «⋯» внизу — перенести, задача, �
   expect(panel.querySelector('.appt-move')).not.toBeNull()
 })
 
-test('телефон: после приёма без оплаты — «Принять оплату» внизу прокручивает к оплате', async () => {
+test('телефон: после приёма без оплаты — «Принять оплату» внизу открывает форму оплаты; кнопка на экране одна', async () => {
   phoneScreen(true)
   backend()
   const scroll = vi.fn()
   Element.prototype.scrollIntoView = scroll
   const panel = renderPanel({ ...base, status: 'DONE' })
   const bar = within(panel).getByRole('toolbar', { name: 'Действия с приёмом' })
+  // Блок оплаты в ленте — сводка «Оплата не отмечена» без второй кнопки; редкое — ссылками
+  expect(within(panel).getAllByRole('button', { name: /^Принять оплату/ })).toHaveLength(1)
+  expect(within(panel.querySelector<HTMLElement>('.appt-pay')!).getByRole('button', { name: 'Бесплатно' })).toHaveClass('link')
   await userEvent.click(within(bar).getByRole('button', { name: 'Принять оплату' }))
-  expect(scroll).toHaveBeenCalled()
-  expect(scroll.mock.contexts[0]).toBe(panel.querySelector('.appt-pay'))
+  await waitForSlow(() => expect(scroll.mock.contexts).toContain(panel.querySelector('.appt-pay')))
+  // Открылась форма: действие теперь — её «Сохранить оплату», нижней «Принять оплату» больше нет
+  const form = await within(panel).findByRole('form', { name: 'Оплата' })
+  expect(within(form).getByRole('button', { name: /^Сохранить оплату/ })).toBeInTheDocument()
+  expect(within(panel).queryAllByRole('button', { name: /^Принять оплату/ })).toHaveLength(0)
+})
+
+test('компьютер: после приёма без оплаты — одна залитая «Принять оплату» в блоке оплаты, «Бесплатно» и «Оплачено заранее» — ссылками ниже', () => {
+  backend()
+  const panel = renderPanel({ ...base, status: 'DONE' })
+  const pay = within(panel).getAllByRole('button', { name: /^Принять оплату/ })
+  expect(pay).toHaveLength(1)
+  expect(pay[0]).toHaveClass('primary')
+  expect(panel.querySelector('.appt-pay')).toContainElement(pay[0]!)
+  expect(before(pay[0]!, within(panel).getByRole('button', { name: 'Оплачено заранее' }))).toBe(true)
+  // «Записать на следующий визит» — не главная, пока не оплачено; залитая на экране одна
+  expect(panel.querySelectorAll('.btn.primary')).toHaveLength(1)
 })
 
 test('компьютер: панели внизу нет, следующий шаг — рядом со статусом, «Перенести» — внизу ленты', () => {
@@ -102,11 +120,11 @@ test('врач своего приёма в кресле: «Приём» сра�
   const about = within(panel).getByRole('region', { name: 'О записи' })
   expect(before(visit, about)).toBe(true)
   expect(before(within(panel).getByRole('region', { name: 'Пациент' }), visit)).toBe(true)
-  // Услуга — подписью свёрнутой «О записи»; комментарий и «＋ Задача» — внутри
+  // Комментарий записи — у пациента, на виду; услуга — подписью свёрнутой «О записи», «＋ Задача» — внутри
+  expect(within(within(panel).getByRole('region', { name: 'Пациент' })).getByText('Боится уколов')).toBeInTheDocument()
   expect(about).toHaveTextContent('Лечение кариеса')
-  expect(within(panel).queryByText('Боится уколов')).not.toBeInTheDocument()
   await userEvent.click(within(about).getByRole('button', { name: /О записи/ }))
-  expect(within(about).getByText('Боится уколов')).toBeInTheDocument()
+  expect(within(about).queryByText('Боится уколов')).not.toBeInTheDocument()
   expect(within(about).getByRole('button', { name: '＋ Задача' })).toBeInTheDocument()
 })
 

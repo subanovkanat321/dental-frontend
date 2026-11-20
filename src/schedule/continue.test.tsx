@@ -44,6 +44,12 @@ test('следующий визит: что сделали в прошлый р�
   expect(within(block).getByText(/Постоянная пломба/)).toBeInTheDocument()
   // Сделанный этап не повторяем
   expect(within(block).queryByText(/удалить нерв/)).not.toBeInTheDocument()
+  // Остальные прошлые визиты — ссылкой «ещё 1 ›» внутри блока (отдельной раскрывашки «Прошлые визиты» больше нет)
+  expect(screen.queryByRole('region', { name: 'Прошлые визиты' })).not.toBeInTheDocument()
+  await userEvent.click(within(block).getByRole('button', { name: /Прошлые визиты: ещё 1/ }))
+  const list = within(block).getByRole('list', { name: 'Прошлые визиты' })
+  await userEvent.click(within(list).getByRole('button', { expanded: false }))
+  expect(within(list).getByText('Старая заметка')).toBeInTheDocument()
 })
 
 test('первый визит — ни заметок, ни плана: блока нет', async () => {
@@ -79,12 +85,12 @@ test('история пациента: врач ничего не записал
     appointment(9, 1, '10:00', 'Бакыт М.', { startAt: ago(5), endAt: ago(5), status: 'NO_SHOW' }),
   ])
   renderApp()
-  // Одной строкой: сколько раз был, когда и с чем последний раз, неявки
+  // Одной короткой строкой: сколько раз был, когда и с чем последний раз (без текущего года), неявки
   const block = await within(await card()).findByLabelText('История пациента')
-  expect(block).toHaveTextContent('Визитов: 2')
-  expect(block).toHaveTextContent('12 дней назад')
-  expect(block).toHaveTextContent('Лечение кариеса')
-  expect(block).toHaveTextContent('не пришёл 1 раз')
+  expect(block).toHaveTextContent('2 визита · был')
+  expect(block).toHaveTextContent('(Лечение кариеса)')
+  expect(block).toHaveTextContent('1 неявка')
+  expect(block).not.toHaveTextContent(String(new Date().getFullYear()))
   // Заметок нет — «Продолжения лечения» нет, а история есть
   expect(screen.queryByRole('region', { name: 'Продолжение лечения' })).not.toBeInTheDocument()
 })
