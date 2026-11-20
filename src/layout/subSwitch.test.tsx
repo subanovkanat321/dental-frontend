@@ -6,12 +6,13 @@ import type { Schemas } from '../api/client'
 import { me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 import { warmSections } from '../test/wait'
+import { LAST_SUB_KEY } from '../lib/sub'
 import { SUB_HINT_KEY } from './section'
 
 /**
- * Телефон: подразделы — панелью вкладок вверху (как папки Telegram): все подразделы видны во всех
- * разделах, нажатие переключает, числа — бейджами, «⌄» — лист со всеми, первый раз — подсказка.
- * Данные вымышленные.
+ * Подразделы (с 2026-11-20). Телефон: над страницей — строка «Склад · Материалы ▾», нажатие на неё и на раздел в
+ * нижнем меню — лист подразделов (layout/NavSheet.tsx): первым — последний открытый, у строк иконка, подсказка и
+ * числа; один подраздел — сразу переход. Компьютер — полоса вкладок над страницей, как была. Данные вымышленные.
  */
 
 function phone() {
@@ -61,8 +62,16 @@ afterEach(() => {
 
 const tabs = (title: string) => screen.findByRole('navigation', { name: `Подразделы: ${title}` })
 const names = (row: HTMLElement) => within(row).getAllByRole('link').map((a) => a.firstChild?.textContent)
+const bottomNav = () => screen.findByRole('navigation', { name: 'Разделы' })
+const navButton = async (title: string) => within(await bottomNav()).getByRole('button', { name: new RegExp(`^${title}`) })
+const sheetOf = (title: string) => screen.getByRole('menu', { name: `Подразделы: ${title}` })
+const noSheet = () => expect(screen.queryByRole('menu', { name: /^Подразделы/ })).not.toBeInTheDocument()
+/** Названия строк листа по порядку (без чисел и отметок) */
+const rows = (sheet: HTMLElement) => within(sheet).getAllByRole('menuitem').map((a) => a.querySelector('.nav-sheet-title')?.textContent)
+/** Строка над страницей «Раздел · Подраздел ▾» */
+const bar = async (title: string) => within(await tabs(title)).getByRole('button', { name: new RegExp(`^${title} · .*выбрать подраздел`) })
 
-test('Пациенты: все подразделы вкладками, открытый отмечен, числа — бейджами; нажатие переключает без листа', async () => {
+test('телефон: над страницей — «Пациенты · Записаны ▾» без вкладок; нажатие — лист, первым открытый; выбор — переход', async () => {
   server.use(
     http.get('*/api/patient-questions/new-count', () => HttpResponse.json({ count: 2 } satisfies Schemas['QuestionControllerNewCount'])),
     http.get('*/api/waitlist', () => HttpResponse.json([{ id: 1, durationMinutes: 0 }, { id: 2, durationMinutes: 0 }, { id: 3, durationMinutes: 0 }] satisfies Schemas['WaitlistView'][])),
@@ -70,79 +79,200 @@ test('Пациенты: все подразделы вкладками, откр
   window.location.hash = '/patients/booked'
   renderApp()
   const row = await tabs('Пациенты')
-  expect(names(row)).toEqual(['Все', 'Записаны', 'Лист ожидания', 'Позвать снова', 'Бросили лечение', 'Без бота', 'Вопросы', 'Задачи', 'Оценки'])
-  expect(within(row).getByRole('link', { name: 'Записаны' })).toHaveAttribute('aria-current', 'page')
-  // Заголовок страницы — подраздел (для читалок экрана; на экране его показывает вкладка)
+  // Вкладок нет — строка целиком: раздел и подраздел; заголовок страницы — для читалок экрана
+  expect(within(row).queryAllByRole('link')).toHaveLength(0)
   expect(screen.getByRole('heading', { name: 'Записаны' })).toHaveClass('sr-only')
-  expect(await within(row).findByRole('link', { name: 'Вопросы · 2' })).toBeInTheDocument()
-  expect(await within(row).findByRole('link', { name: 'Лист ожидания · 3' })).toBeInTheDocument()
+  // Новое в других подразделах (вопросы, лист ожидания) — суммой у ▾, красным: вопросы ждут ответа
+  const button = await within(row).findByRole('button', { name: 'Пациенты · Записаны: выбрать подраздел (новое в других: 5)' })
+  expect(button).toHaveAttribute('aria-haspopup', 'menu')
+  expect(button.querySelector('.nav-count')).not.toHaveClass('quiet')
 
-  await userEvent.click(within(row).getByRole('link', { name: 'Лист ожидания · 3' }))
+  await userEvent.click(button)
+  expect(button).toHaveAttribute('aria-expanded', 'true')
+  const sheet = sheetOf('Пациенты')
+  expect(rows(sheet)).toEqual(['Записаны', 'Все', 'Лист ожидания', 'Позвать снова', 'Бросили лечение', 'Без бота', 'Вопросы', 'Задачи', 'Оценки'])
+  const first = within(sheet).getAllByRole('menuitem')[0]!
+  expect(first).toHaveAccessibleName('Записаны · открыт сейчас')
+  expect(first).toHaveAttribute('aria-current', 'page')
+  expect(first).toHaveClass('first')
+  // Фокус — на первой строке: с клавиатуры Enter сразу открывает последний подраздел; ↓ — следующая
+  expect(first).toHaveFocus()
+  await userEvent.keyboard('{ArrowDown}')
+  expect(within(sheet).getByRole('menuitem', { name: 'Все' })).toHaveFocus()
+  // Подсказка под названием и числа — как в меню
+  expect(within(sheet).getByRole('menuitem', { name: 'Все' })).toHaveTextContent('Вся база и поиск')
+  expect(within(sheet).getByRole('menuitem', { name: 'Вопросы · 2' })).toBeInTheDocument()
+  await userEvent.click(within(sheet).getByRole('menuitem', { name: 'Лист ожидания · 3' }))
   expect(window.location.hash).toBe('#/patients/waitlist')
+  noSheet()
   expect(await screen.findByRole('heading', { name: 'Лист ожидания' })).toBeInTheDocument()
-  expect(within(await tabs('Пациенты')).getByRole('link', { name: 'Лист ожидания · 3' })).toHaveAttribute('aria-current', 'page')
-  expect(screen.queryByRole('dialog', { name: /Подразделы/ })).not.toBeInTheDocument()
+  expect(await bar('Пациенты')).toHaveAccessibleName(/^Пациенты · Лист ожидания: выбрать подраздел/)
 })
 
-test('Касса: видны все 9 подразделов (раньше — только кнопка «Разделы · 8»); «⌄» открывает лист со всеми', async () => {
-  layout(false)
-  window.location.hash = '/cash'
+test('телефон: нажатие на «Касса» внизу — лист подразделов, раздел не меняется до выбора; в следующий раз первым — последний', async () => {
+  window.location.hash = '/schedule'
   renderApp()
-  const row = await tabs('Касса')
-  expect(names(row)).toEqual(['Деньги', 'Касса дня', 'Мой заработок', 'Аналитика', 'Расходы', 'Должники', 'Зарплата', 'Статистика', 'Отчёт'])
-  expect(within(row).getByRole('link', { name: 'Деньги' })).toHaveAttribute('aria-current', 'page')
-  // «?» раздела — в конце строки вкладок
-  expect(within(row).getByRole('button', { name: /^Подсказка:/ })).toBeInTheDocument()
-  await userEvent.click(within(row).getByRole('button', { name: 'Все подразделы: Касса' }))
-  const sheet = screen.getByRole('dialog', { name: 'Подразделы: Касса' })
-  expect(within(sheet).getByText(/долгим нажатием на «Касса»/)).toBeInTheDocument()
-  // У каждого подраздела в листе — своя иконка (украшение: aria-hidden, имя ссылки — подпись); в полосе вкладок иконок нет
-  const links = within(sheet).getAllByRole('link')
-  expect(links.map((a) => a.textContent)).toEqual(['Деньги✓', 'Касса дня', 'Мой заработок', 'Аналитика', 'Расходы', 'Должники', 'Зарплата', 'Статистика', 'Отчёт'])
-  for (const a of links) expect(a.querySelector('svg.sub-ico')).toHaveAttribute('aria-hidden', 'true')
-  expect(new Set(links.map((a) => a.querySelector('svg.sub-ico')!.innerHTML)).size).toBe(links.length)
-  expect(row.querySelector('.sub-ico')).toBeNull()
-  await userEvent.click(within(sheet).getByRole('link', { name: 'Должники' }))
+  // «Расписание» без подразделов — обычная кнопка, без меню
+  expect(await navButton('Расписание')).not.toHaveAttribute('aria-haspopup')
+  const cash = await navButton('Касса')
+  expect(cash).toHaveAttribute('aria-haspopup', 'menu')
+  expect(cash).toHaveAttribute('aria-expanded', 'false')
+  await userEvent.click(cash)
+  expect(cash).toHaveAttribute('aria-expanded', 'true')
+  expect(window.location.hash).toBe('#/schedule')
+  const sheet = sheetOf('Касса')
+  // Ещё не выбирали — первым подраздел по умолчанию, без отметки «в прошлый раз»
+  expect(rows(sheet)).toEqual(['Деньги', 'Касса дня', 'Мой заработок', 'Аналитика', 'Расходы', 'Должники', 'Зарплата', 'Статистика', 'Отчёт'])
+  expect(within(sheet).getAllByRole('menuitem')[0]).toHaveAccessibleName('Деньги')
+  // У каждой строки своя иконка (украшение) и подсказка
+  const items = within(sheet).getAllByRole('menuitem')
+  for (const a of items) {
+    expect(a.querySelector('svg.sub-ico')).toHaveAttribute('aria-hidden', 'true')
+    expect(a.querySelector('.nav-sheet-hint')?.textContent).toBeTruthy()
+  }
+  expect(new Set(items.map((a) => a.querySelector('svg.sub-ico')!.innerHTML)).size).toBe(items.length)
+  await userEvent.click(within(sheet).getByRole('menuitem', { name: 'Должники' }))
   expect(window.location.hash).toBe('#/cash/debtors')
-  expect(screen.queryByRole('dialog', { name: 'Подразделы: Касса' })).not.toBeInTheDocument()
-  expect(within(await tabs('Касса')).getByRole('link', { name: 'Должники' })).toHaveAttribute('aria-current', 'page')
+  noSheet()
+  expect(cash).toHaveAttribute('aria-expanded', 'false')
+  // Запомнено и на устройстве — только ключи подразделов
+  expect(JSON.parse(localStorage.getItem(LAST_SUB_KEY) ?? '{}')).toMatchObject({ cash: 'debtors' })
+
+  // Ушли в «Расписание» (сразу переход) и снова «Касса» — первым «Должники», «в прошлый раз»
+  await userEvent.click(await navButton('Расписание'))
+  expect(window.location.hash).toBe('#/schedule')
+  noSheet()
+  await userEvent.click(await navButton('Касса'))
+  const again = sheetOf('Касса')
+  expect(rows(again)[0]).toBe('Должники')
+  expect(within(again).getAllByRole('menuitem')[0]).toHaveAccessibleName('Должники · в прошлый раз')
+  expect(within(again).getAllByRole('menuitem')[0]).not.toHaveAttribute('aria-current')
+  await userEvent.click(within(again).getAllByRole('menuitem')[0]!)
+  expect(window.location.hash).toBe('#/cash/debtors')
 })
 
-test('Настройки (с 2026-11-13 — вкладками): «⌄» — лист с группами подзаголовками и иконками', async () => {
-  layout(false)
+test('телефон: лист закрывают тот же раздел ещё раз, Esc, ✕ и нажатие мимо; другой раздел — его подразделы', async () => {
+  window.location.hash = '/schedule'
+  renderApp()
+  const stock = await navButton('Склад')
+  await userEvent.click(stock)
+  expect(rows(sheetOf('Склад'))).toEqual(['Материалы', 'Расходы на склад', 'Заказ', 'Лаборатория'])
+  // Тот же раздел ещё раз — закрыть (меню под листом не закрыто фоном)
+  await userEvent.click(stock)
+  noSheet()
+  expect(window.location.hash).toBe('#/schedule')
+
+  await userEvent.click(stock)
+  // Другой раздел — сразу его лист, без закрытия
+  await userEvent.click(await navButton('Пациенты'))
+  expect(screen.queryByRole('menu', { name: 'Подразделы: Склад' })).not.toBeInTheDocument()
+  expect(sheetOf('Пациенты')).toBeInTheDocument()
+  expect(stock).toHaveAttribute('aria-expanded', 'false')
+  // Esc — закрыть, фокус обратно на кнопку раздела
+  await userEvent.keyboard('{Escape}')
+  noSheet()
+  expect(await navButton('Пациенты')).toHaveFocus()
+
+  await userEvent.click(stock)
+  await userEvent.click(within(sheetOf('Склад')).getByRole('button', { name: 'Закрыть' }))
+  noSheet()
+
+  await userEvent.click(stock)
+  await userEvent.click(sheetOf('Склад').parentElement!)
+  noSheet()
+  expect(window.location.hash).toBe('#/schedule')
+})
+
+test('телефон: «Ещё» и лист подразделов не открыты вместе', async () => {
+  window.location.hash = '/schedule'
+  renderApp()
+  await userEvent.click(await navButton('Касса'))
+  await userEvent.click(within(await bottomNav()).getByRole('button', { name: 'Ещё' }))
+  noSheet()
+  expect(screen.getByRole('dialog', { name: 'Ещё разделы' })).toBeInTheDocument()
+  await userEvent.click(await navButton('Склад'))
+  expect(screen.queryByRole('dialog', { name: 'Ещё разделы' })).not.toBeInTheDocument()
+  expect(sheetOf('Склад')).toBeInTheDocument()
+})
+
+test('телефон: у «Кассы» без подразделов (регистратура без денег) — сразу переход, без листа', async () => {
+  server.use(http.get('*/api/patient/me', () => HttpResponse.json({ ...me, admin: false, reception: true, doctorId: undefined })))
+  window.location.hash = '/schedule'
+  renderApp()
+  const cash = await navButton('Касса')
+  expect(cash).not.toHaveAttribute('aria-haspopup')
+  await userEvent.click(cash)
+  expect(window.location.hash).toBe('#/cash')
+  noSheet()
+})
+
+test('телефон: «Настройки» — строка над страницей открывает лист с группами подзаголовками и иконками', async () => {
   window.location.hash = '/settings'
   renderApp()
-  await userEvent.click(within(await tabs('Настройки')).getByRole('button', { name: 'Все подразделы: Настройки' }))
-  const sheet = screen.getByRole('dialog', { name: 'Подразделы: Настройки' })
+  await userEvent.click(await bar('Настройки'))
+  const sheet = sheetOf('Настройки')
+  expect(rows(sheet)[0]).toBe('Напоминание о приёме')
   expect([...sheet.querySelectorAll('.nav-group')].map((p) => p.textContent)).toEqual(['Что получают пациенты', 'Аккаунт клиники', 'Приём', 'Карточка пациента', 'Деньги'])
-  for (const a of within(sheet).getAllByRole('link')) expect(a.querySelector('svg.sub-ico')).toHaveAttribute('aria-hidden', 'true')
-  await userEvent.click(within(sheet).getByRole('link', { name: 'Тариф и оплата' }))
+  for (const a of within(sheet).getAllByRole('menuitem')) expect(a.querySelector('svg.sub-ico')).toHaveAttribute('aria-hidden', 'true')
+  // Подсказки — из пунктов «Настроек»
+  expect(within(sheet).getByRole('menuitem', { name: 'Тариф и оплата' })).toHaveTextContent('Сколько осталось и как продлить')
+  await userEvent.click(within(sheet).getByRole('menuitem', { name: 'Тариф и оплата' }))
   expect(window.location.hash).toBe('#/settings/plan')
 })
 
-test('Клиника (нет в нижнем меню): «⌄» — лист без подсказки про долгое нажатие', async () => {
-  layout(false)
-  window.location.hash = '/clinic'
+test('подсказка про подразделы — один раз: закрыли крестиком — больше нет; тап по строке — тоже закрывает', async () => {
+  localStorage.removeItem(SUB_HINT_KEY)
+  window.location.hash = '/patients/all'
+  const first = renderApp()
+  const tip = await screen.findByRole('note')
+  expect(tip).toHaveTextContent('Здесь — подразделы «Пациенты»: Лист ожидания, Вопросы… Нажмите сюда или на «Пациенты» в нижнем меню.')
+  await userEvent.click(within(tip).getByRole('button', { name: 'Закрыть подсказку' }))
+  expect(screen.queryByRole('note')).not.toBeInTheDocument()
+  expect(localStorage.getItem(SUB_HINT_KEY)).toBe('seen')
+  first.unmount()
+
+  window.location.hash = '/cash'
+  const second = renderApp()
+  await tabs('Касса')
+  expect(screen.queryByRole('note')).not.toBeInTheDocument()
+  second.unmount()
+
+  localStorage.removeItem(SUB_HINT_KEY)
+  await act(async () => { window.location.hash = '/stock' })
   renderApp()
-  await userEvent.click(within(await tabs('Клиника')).getByRole('button', { name: 'Все подразделы: Клиника' }))
-  const sheet = screen.getByRole('dialog', { name: 'Подразделы: Клиника' })
-  expect(within(sheet).queryByText(/долгим нажатием/)).not.toBeInTheDocument()
-  await userEvent.click(within(sheet).getByRole('link', { name: 'Рабочее время' }))
-  expect(window.location.hash).toBe('#/clinic/hours')
+  // Подраздел с числом («Заказ») — первым в подсказке
+  await screen.findByText(/Здесь — подразделы «Склад»: Заказ, Расходы на склад/)
+  await userEvent.click(await bar('Склад'))
+  expect(screen.queryByRole('note')).not.toBeInTheDocument()
+  expect(sheetOf('Склад')).toBeInTheDocument()
 })
 
-test('Платформа: 9 подразделов владельца вкладками; старый адрес «Контента» — «Маркетинг»', async () => {
+test('компьютер: Касса — все 9 вкладок; Платформа — 9 вкладок владельца, старый адрес «Контента» — «Маркетинг»', async () => {
+  vi.unstubAllGlobals()
+  window.location.hash = '/cash'
+  const first = renderApp()
+  const row = await tabs('Касса')
+  expect(names(row)).toEqual(['Деньги', 'Касса дня', 'Мой заработок', 'Аналитика', 'Расходы', 'Должники', 'Зарплата', 'Статистика', 'Отчёт'])
+  expect(within(row).getByRole('link', { name: 'Деньги' })).toHaveAttribute('aria-current', 'page')
+  // «?» раздела — в конце строки вкладок; иконок во вкладках нет
+  expect(within(row).getByRole('button', { name: /^Подсказка:/ })).toBeInTheDocument()
+  expect(row.querySelector('.sub-ico')).toBeNull()
+  // Кнопки разделов на компьютере — без меню: подразделы панелью при наведении
+  expect(await navButton('Касса')).not.toHaveAttribute('aria-haspopup')
+  first.unmount()
+
   server.use(http.get('*/api/patient/me', () => HttpResponse.json({ ...me, doctor: false, admin: false, platform: true, owner: true })))
   window.location.hash = '/platform/content'
   renderApp()
-  const row = await tabs('Платформа')
-  expect(within(row).getAllByRole('link').map((a) => a.textContent)).toEqual(['Клиники', 'Аналитика', 'Финансы', 'Обратная связь',
+  const platform = await tabs('Платформа')
+  expect(within(platform).getAllByRole('link').map((a) => a.textContent)).toEqual(['Клиники', 'Аналитика', 'Финансы', 'Обратная связь',
     'Рассылка клиникам', 'Маркетинг', 'Здоровье', 'Расход ИИ', 'Настройки'])
-  expect(within(row).getByRole('link', { name: 'Маркетинг' })).toHaveAttribute('aria-current', 'page')
+  expect(within(platform).getByRole('link', { name: 'Маркетинг' })).toHaveAttribute('aria-current', 'page')
   expect(window.location.hash).toBe('#/platform/marketing/content')
 })
 
-test('«⌄» — только когда вкладки не влезают; новое в скрытых справа — точкой на ней', async () => {
+test('компьютер: «⌄» — только когда вкладки не влезают; новое в скрытых справа — точкой на ней', async () => {
+  vi.unstubAllGlobals()
   server.use(http.get('*/api/patient-questions/new-count', () => HttpResponse.json({ count: 2 } satisfies Schemas['QuestionControllerNewCount'])))
   layout(true)
   window.location.hash = '/patients'
@@ -152,7 +282,7 @@ test('«⌄» — только когда вкладки не влезают; н
   expect(within(row).queryByRole('button', { name: /Все подразделы/ })).not.toBeInTheDocument()
   first.unmount()
 
-  // Не влезли: «Вопросы» (5-я вкладка) — за правым краем, её число не видно — точка на «⌄»
+  // Не влезли: «Вопросы» (7-я вкладка) — за правым краем, её число не видно — точка на «⌄»
   layout(false)
   renderApp()
   const narrow = await tabs('Пациенты')
@@ -162,53 +292,7 @@ test('«⌄» — только когда вкладки не влезают; н
   expect(more.querySelector('.sub-tabs-dot')).not.toHaveClass('quiet')
 })
 
-test('подсказка «здесь переключаются разделы» — один раз: закрыли крестиком — больше нет', async () => {
-  localStorage.removeItem(SUB_HINT_KEY)
-  window.location.hash = '/patients/all'
-  const first = renderApp()
-  const tip = await screen.findByRole('note')
-  expect(tip).toHaveTextContent('Здесь переключаются разделы: Лист ожидания, Вопросы…')
-  await userEvent.click(within(tip).getByRole('button', { name: 'Закрыть подсказку' }))
-  expect(screen.queryByText(/Здесь переключаются разделы/)).not.toBeInTheDocument()
-  expect(localStorage.getItem(SUB_HINT_KEY)).toBe('seen')
-  first.unmount()
-
-  // Другой раздел, новый запуск — подсказки нет
-  window.location.hash = '/cash'
-  renderApp()
-  await tabs('Касса')
-  expect(screen.queryByText(/Здесь переключаются разделы/)).not.toBeInTheDocument()
-})
-
-test('подсказка закрывается тапом по ней, нажатием на вкладку и когда открыли лист', async () => {
-  localStorage.removeItem(SUB_HINT_KEY)
-  window.location.hash = '/cash'
-  const first = renderApp()
-  await userEvent.click(await screen.findByText(/Здесь переключаются разделы/))
-  expect(screen.queryByText(/Здесь переключаются разделы/)).not.toBeInTheDocument()
-  first.unmount()
-
-  localStorage.removeItem(SUB_HINT_KEY)
-  await act(async () => { window.location.hash = '/stock' })
-  const second = renderApp()
-  // Подраздел с числом («Заказ») — первым в подсказке
-  await screen.findByText(/Здесь переключаются разделы: Заказ, Расходы на склад/)
-  await userEvent.click(within(await tabs('Склад')).getByRole('link', { name: 'Расходы на склад' }))
-  expect(screen.queryByText(/Здесь переключаются разделы/)).not.toBeInTheDocument()
-  expect(localStorage.getItem(SUB_HINT_KEY)).toBe('seen')
-  second.unmount()
-
-  localStorage.removeItem(SUB_HINT_KEY)
-  layout(false)
-  await act(async () => { window.location.hash = '/cash' })
-  renderApp()
-  expect(await screen.findByText(/Листайте вбок или нажмите ⌄/)).toBeInTheDocument()
-  await userEvent.click(within(await tabs('Касса')).getByRole('button', { name: 'Все подразделы: Касса' }))
-  expect(screen.queryByText(/Здесь переключаются разделы/)).not.toBeInTheDocument()
-  expect(localStorage.getItem(SUB_HINT_KEY)).toBe('seen')
-})
-
-test('компьютер: те же вкладки над страницей; «⌄» — список под кнопкой (Esc закрывает), подсказки нет', async () => {
+test('компьютер: вкладки над страницей; «⌄» — список под кнопкой (Esc закрывает), подсказки нет', async () => {
   vi.unstubAllGlobals()
   localStorage.removeItem(SUB_HINT_KEY)
   layout(false)

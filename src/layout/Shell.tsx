@@ -18,6 +18,7 @@ import { OfflineNotice } from './OfflineNotice'
 import { ProfileNotice } from './ProfileNotice'
 import { Icon } from './Icon'
 import { SubIcon } from './subIcons'
+import { NavSheet } from './NavSheet'
 import { Avatar, HelpMenuItems, MeMenuItems, MenuPanel } from './MeMenu'
 import { whoAmI } from './me'
 import { useFitPanels } from './fitPanels'
@@ -78,9 +79,6 @@ const PHONE_MAIN: readonly Page[] = ['schedule', 'patients', 'cash', 'stock']
 /** На телефоне внизу помещается 4 раздела и «Ещё»: остальное — в выезжающем меню. */
 const MOBILE_MAIN = 4
 
-/** Долгое нажатие на кнопку раздела внизу (телефон) — лист подразделов. */
-const LONG_PRESS_MS = 500
-
 /** Окно уже́ — меню по умолчанию свёрнуто (ноутбуки 1280–1366; сначала — что выбрал человек). */
 const NARROW_BY_DEFAULT = '(min-width: 761px) and (max-width: 1366px)'
 
@@ -95,8 +93,10 @@ const NARROW_BY_DEFAULT = '(min-width: 761px) and (max-width: 1366px)'
  * уведомления, календарь, установить приложение, «Выйти» (DESIGN.md → Layout).
  *
  * Телефон: меню — полоса внизу (расписание, пациенты, касса, склад и «Ещё» — остальные разделы, свой
- * аватар и «Помощь»). Подразделы — панелью вкладок вверху (layout/section.tsx, место — `tabsSlot`),
- * весь список — листом снизу: из «⌄» в конце панели или долгим нажатием на кнопку раздела внизу. «Я» и «Помощь» — тоже листом.
+ * аватар и «Помощь»). Нажатие на раздел с подразделами (Пациенты, Касса, Склад) — сразу лист его подразделов над
+ * меню (layout/NavSheet.tsx, с 2026-11-20), первым — последний открытый; один подраздел — сразу переход. Над
+ * страницей — заголовок «Склад · Материалы ▾» (layout/section.tsx, место — `tabsSlot`), он открывает тот же лист.
+ * «Я» и «Помощь» — тоже листом.
  */
 export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; onNavigate: (page: Page) => void; children: ReactNode }) {
   const clinic = me.doctor ? me.clinic?.brandName || me.clinic?.name || 'Клиника' : 'Команда Tish'
@@ -179,15 +179,13 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
   // Раздел, с которого панель открыли клавишей «→» (Esc вернёт на него фокус)
   const flyFrom = useRef<HTMLElement | null>(null)
   const pointer = useRef<string>('mouse')
-  const pressTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
-  const pressed = useRef(false)
   // Панель справа — целиком в окне, прокрутка внутри неё (layout/fitPanels.ts)
   const workspace = useRef<HTMLElement>(null)
   useFitPanels(workspace)
   // Телефон: нижнее меню — у настоящего низа экрана, последний блок страницы докручивается выше него (iPhone, layout/navGap.ts)
   const sidebar = useRef<HTMLElement>(null)
   useNavGap(sidebar, phone)
-  useEffect(() => () => { clearTimeout(flyTimer.current); clearTimeout(pressTimer.current) }, [])
+  useEffect(() => () => clearTimeout(flyTimer.current), [])
   // Панель по нажатию закрывается нажатием мимо неё и Esc
   useEffect(() => {
     if (!fly) return
@@ -246,6 +244,7 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
   }
   const go = (key: Page) => {
     setMore(false)
+    setSheet(null)
     setTip(null)
     setMenu(null)
     setFly(null)
@@ -291,22 +290,15 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
     flyFrom.current = button
     showFly(key, button.closest('.nav-item') as HTMLElement)
   }
-  // Телефон: долгое нажатие на раздел с подразделами — лист; отпустили раньше — обычный переход
-  const pressStart = (key: Page, e: React.PointerEvent) => {
-    pointer.current = e.pointerType
-    pressed.current = false
-    clearTimeout(pressTimer.current)
-    if (!matches('(max-width: 760px)') || !subsBy[key]?.length) return
-    pressTimer.current = setTimeout(() => {
-      pressed.current = true
-      setSheet(key)
-    }, LONG_PRESS_MS)
-  }
-  const pressEnd = () => clearTimeout(pressTimer.current)
+  /** Телефон: у раздела два подраздела и больше — нажатие внизу открывает их лист (а не переход). */
+  const sheetable = (key: Page) => phone && (subsBy[key]?.length ?? 0) > 1
   const clickSection = (key: Page, e: React.MouseEvent<HTMLButtonElement>) => {
-    if (pressed.current) {
-      // Долгое нажатие уже открыло лист — «щелчок» после него не переход
-      pressed.current = false
+    // Телефон (с 2026-11-20): раздел с подразделами — сразу лист выбора, и из другого раздела, и изнутри
+    // своего; тот же раздел ещё раз — закрыть. Один подраздел (или нет) — обычный переход
+    if (sheetable(key) && matches('(max-width: 760px)')) {
+      setMore(false)
+      setMenu(null)
+      setSheet((s) => (s === key ? null : key))
       return
     }
     // Свёрнутое меню и палец (сенсорный ноутбук): наведения нет — нажатие показывает подразделы
@@ -336,13 +328,13 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
             <SubIcon page={key} sub={s.key} />
             <span className="nav-sub-title">{s.title}</span>
             <NavCount n={n} loud={isLoud(loud, key, s.key)} />
-            {className === 'sheet-item' && on && <span className="sheet-check" aria-hidden="true">✓</span>}
           </a>
         </Fragment>
       )
     })
   }
-  const nav: NavApi = { openSheet: setSheet, subs: (key) => subsBy[key] ?? [], active: activeSub, go: goSub, counts, loud, tabsSlot, helpSlot, setHelpSlot }
+  const closeSheet = useCallback(() => setSheet(null), [])
+  const nav: NavApi = { openSheet: setSheet, sheet, subs: (key) => subsBy[key] ?? [], active: activeSub, go: goSub, counts, loud, tabsSlot, helpSlot, setHelpSlot }
   const sheetSection = sheet ? sections.find((s) => s.key === sheet) : undefined
   const { name } = whoAmI(me)
   const meHead = <><Avatar me={me} size="lg" /><p className="menu-who"><strong>{name}</strong><span className="hint">{role} · {clinic}</span></p></>
@@ -389,8 +381,8 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
                     aria-current={s.key === page ? 'page' : undefined}
                     aria-label={narrow ? (total > 0 ? `${s.title} · новое: ${total}` : s.title) : undefined}
                     {...(subs.length ? {} : tipOn(s.title))}
-                    onPointerDown={(e) => pressStart(s.key, e)} onPointerUp={pressEnd} onPointerLeave={pressEnd} onPointerCancel={pressEnd}
-                    onContextMenu={(e) => { if (subs.length && matches('(max-width: 760px)')) e.preventDefault() }}
+                    {...(sheetable(s.key) ? { 'aria-haspopup': 'menu' as const, 'aria-expanded': sheet === s.key } : {})}
+                    onPointerDown={(e) => { pointer.current = e.pointerType }}
                     onKeyDown={(e) => flyKey(s.key, e)}
                     onClick={(e) => clickSection(s.key, e)}>
                     <Icon name={s.key} /> <span>{s.title}</span>
@@ -412,7 +404,7 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
           })}
           {/* Телефон: «Ещё» — остальные разделы, свой аватар и «Помощь» (на компьютере кнопки нет) */}
           <button type="button" className={extra.some((s) => s.key === page) || page === 'me' || page === 'help' || more ? 'nav more active' : 'nav more'}
-            aria-expanded={more} data-tour="more" onClick={() => { setMenu(null); setMore(!more) }}>
+            aria-expanded={more} data-tour="more" onClick={() => { setMenu(null); setSheet(null); setMore(!more) }}>
             <Icon name="more" /> <span>Ещё</span>
           </button>
         </nav>
@@ -468,16 +460,9 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
         </MenuPanel>
       )}
       {sheetSection && (
-        <div className="more-sheet sub-sheet" role="dialog" aria-label={`Подразделы: ${sheetSection.title}`} onClick={() => setSheet(null)}>
-          <div ref={subCard} className="more-card" onClick={(e) => e.stopPropagation()}>
-            <div className="sub-sheet-head">
-              <Icon name={sheetSection.key} /><h2>{sheetSection.title}</h2>
-              <button type="button" className="sub-sheet-close" aria-label="Закрыть" onClick={() => setSheet(null)}>✕</button>
-            </div>
-            {subLinks(sheetSection.key, 'sheet-item')}
-            {!extra.includes(sheetSection) && <p className="hint small sub-sheet-tip">Тот же список — долгим нажатием на «{sheetSection.title}» в нижнем меню.</p>}
-          </div>
-        </div>
+        <NavSheet section={sheetSection} subs={subsBy[sheetSection.key] ?? []} active={activeSub(sheetSection.key)}
+          remembered={chosen[sheetSection.key] != null} current={sheetSection.key === page} counts={counts} loud={loud}
+          card={subCard} onPick={(sub) => goSub(sheetSection.key, sub)} onClose={closeSheet} />
       )}
       {/* Напоминания админу и приглашение в опрос — на главном экране, чтобы не занимать место в каждом разделе */}
       <main ref={workspace} className="workspace"><NavContext.Provider value={nav}><div className="sub-tabs-slot" ref={setTabsSlot} /><OfflineNotice />{page === 'schedule' && <><ProfileNotice me={me} /><AdminNotices me={me} /><SurveyInvite me={me} /><TipOfDay me={me} /></>}{children}</NavContext.Provider></main>

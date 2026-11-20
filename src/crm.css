@@ -2562,6 +2562,47 @@ button.status-pill:focus-visible { outline: 2px solid var(--accent); outline-off
   .sub-sheet .nav-group { margin: 10px 12px 2px; }
   .sub-sheet-tip { margin: 8px 6px 0; }
 }
+/* Телефон (с 2026-11-20): лист подразделов из нижнего меню (layout/NavSheet.tsx). Стоит над меню и его не
+   закрывает — нажатие на раздел внизу переключает или закрывает лист. Появляется сразу, без анимации (частое
+   действие). Строки 56px: иконка 22px в оттенке подраздела, название 16px, под ним подсказка 13px `hint`, число
+   справа; первая — последний открытый, заливка `primary-soft` и ✓ */
+@media (max-width: 760px) {
+  .more-sheet.nav-sheet { bottom: calc(60px + env(safe-area-inset-bottom) - var(--nav-drop, 0px)); background: rgba(15, 42, 48, .28); }
+  .nav-sheet-card.more-card { bottom: 0; gap: 2px; padding: 12px 10px 10px; max-height: calc(100dvh - 60px - env(safe-area-inset-bottom) - 24px);
+    animation: none; box-shadow: 0 -10px 28px rgba(15, 42, 48, .18); }
+  .nav-sheet-card .sub-sheet-head { margin: 0 6px 4px; }
+  .nav-sheet-item { display: flex; align-items: center; gap: 14px; min-height: 56px; padding: 6px 12px; border-radius: var(--r-md);
+    color: var(--text); text-decoration: none; -webkit-tap-highlight-color: transparent; }
+  .nav-sheet-item:active { background: var(--sunken); }
+  .nav-sheet-item:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .nav-sheet-item > .sub-ico { flex: none; width: 22px; height: 22px; }
+  .nav-sheet-text { flex: 1; min-width: 0; display: grid; gap: 1px; }
+  .nav-sheet-title { font-size: 1rem; font-weight: 500; line-height: 1.25; }
+  .nav-sheet-hint { overflow: hidden; color: var(--hint); font-size: .8rem; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
+  .nav-sheet-item.first { margin-bottom: 4px; background: var(--accent-soft); }
+  .nav-sheet-item.first .nav-sheet-title { color: var(--accent-ink); font-weight: 600; }
+  .nav-sheet-item.first > .sub-ico { color: var(--accent-ink); }
+  .nav-sheet-check { flex: none; color: var(--accent-ink); font-weight: 700; }
+  .nav-sheet-card .nav-group { margin: 10px 12px 2px; }
+  /* Раздел, чей лист открыт, — «таблеткой», как открытый раздел */
+  .sidebar .nav[aria-expanded=true] { background: none; color: var(--accent-ink); }
+  .sidebar .nav[aria-expanded=true] .icon { background: var(--accent-soft); }
+}
+/* Телефон: над страницей — строка «▣ Склад · Материалы ▾» (layout/section.tsx → SubTitleBar) вместо полосы вкладок:
+   не обрезается посреди слова, открывает тот же лист. Та же высота 46px, фон `surface`, линия снизу, прилипает */
+.sub-bar { align-items: center; padding-left: 4px; }
+.sub-bar-btn { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 6px; height: 38px; margin: 0 2px; padding: 0 10px;
+  border: 0; border-radius: var(--r-md); background: none; color: var(--text); font: inherit; font-size: .95rem; text-align: left; cursor: pointer;
+  -webkit-tap-highlight-color: transparent; }
+.sub-bar-btn:active, .sub-bar-btn[aria-expanded=true] { background: var(--accent-soft); }
+.sub-bar-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.sub-bar-ico { flex: none; display: grid; place-items: center; }
+.sub-bar-ico .icon { width: 20px; height: 20px; color: inherit; }
+.sub-sheet-head .sub-bar-ico .icon { width: 22px; height: 22px; color: inherit; }
+.sub-bar-sect { flex: none; color: var(--hint); font-weight: 500; }
+.sub-bar-dot { flex: none; color: var(--hint); }
+.sub-bar-sub { min-width: 0; overflow: hidden; color: var(--accent-ink); font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.sub-bar-caret { flex: none; width: 18px; height: 18px; margin-left: 2px; color: var(--link); }
 
 /* Блок «Я» внизу меню (компьютер): аватар с инициалами, имя и роль; по нажатию — меню над ним.
    Меню «Я» и «Помощи» — карточкой у кнопки (телефон — листом снизу, как «Ещё») */
@@ -3288,3 +3329,43 @@ button.cash-entry:hover, button.cash-entry.active { background: var(--sunken); }
 .service-picked .chip { display: inline-flex; align-items: center; gap: 4px; padding-right: 2px; }
 .chip-x { min-width: 28px; min-height: 28px; border: 0; border-radius: var(--r-full, 9999px); background: none; color: var(--hint); font: inherit; cursor: pointer; }
 .chip-x:hover { background: var(--sunken); color: var(--text); }
+
+/* Меню действий — единый вид (2026-11-20, layout/ActionMenu): «⋯» карточки приёма и пациента, меню на записи,
+   «Связаться», статус приёма, «Отправить ещё раз». Строка — колонка значка 24px (линейная иконка в оттенке по смыслу или
+   эмодзи статуса), подпись, мелкая подсказка под ней; группы — подзаголовком обычным регистром с линией над ним;
+   опасное — красным внизу за линией. Компьютер — карточка у кнопки (строки 40px), телефон — лист (строки 48px).
+   Строка-заголовок (о чём меню) — сверху, 600, с линией под ней. Тёмная тема — те же токены */
+.pop-menu.action-menu { gap: 0; padding: 6px; min-width: max(100%, 220px); }
+.pop-menu.action-menu .menu-item { gap: 12px; min-height: 40px; padding: 6px 10px; font-size: .93rem; line-height: 1.3; }
+.pop-menu.action-menu .menu-ico { flex: none; width: 24px; height: 24px; }
+.pop-menu.action-menu svg.menu-ico { padding: 2px; color: var(--menu-ico, var(--hint)); }
+.pop-menu.action-menu .menu-emoji { width: 24px; font-size: 1.05rem; line-height: 24px; text-align: center; }
+.pop-menu.action-menu .menu-item.danger svg.menu-ico { color: var(--destructive); }
+.pop-menu.action-menu .menu-item:disabled .menu-ico { opacity: .5; }
+.pop-menu.action-menu .menu-text { gap: 1px; }
+.pop-menu.action-menu .menu-hint { font-size: .78rem; font-weight: 400; line-height: 1.3; }
+.pop-menu.action-menu .menu-item.checked .menu-hint { color: var(--accent-ink); opacity: .8; }
+.pop-menu.action-menu .menu-group { padding: 8px 10px 4px; color: var(--hint); font-size: .78rem; font-weight: 600; letter-spacing: 0; text-transform: none; }
+.pop-menu.action-menu .menu-group.sep { margin-top: 4px; padding-top: 10px; border-top: 1px solid var(--separator); }
+.pop-menu.action-menu .menu-sep { margin: 4px 4px; border-top: 1px solid var(--separator); }
+.pop-menu.action-menu .menu-title { margin: 0 0 4px; padding: 6px 10px 10px; border-bottom: 1px solid var(--separator); color: var(--text);
+  font: 600 .95rem/1.3 var(--display, inherit); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pop-menu.action-menu.sheet { padding: 10px 12px calc(14px + env(safe-area-inset-bottom)); }
+.pop-menu.action-menu.sheet .menu-item { min-height: 48px; padding: 6px 12px; font-size: 1rem; }
+.pop-menu.action-menu.sheet .menu-ico { width: 24px; height: 24px; }
+.pop-menu.action-menu.sheet .menu-title { padding: 2px 12px 12px; font-size: 1.05rem; }
+.pop-menu.action-menu.sheet .menu-group { padding-inline: 12px; }
+
+/* Закрыть — ✕ в правом верхнем углу (2026-11-20, layout/SheetHead.tsx): окна, листы, печать, фото на весь экран.
+   Касание 44×44, значок 20px `hint`, наведение — `sunken`; шапка — заголовок (Geologica 600) и строка `hint` под ним */
+.x-btn { flex: none; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%;
+  background: none; color: var(--hint); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.x-btn svg { width: 20px; height: 20px; }
+.x-btn:active { background: var(--sunken); color: var(--text); }
+@media (hover: hover) { .x-btn:hover { background: var(--sunken); color: var(--text); } }
+.x-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.sheet-head { display: flex; align-items: flex-start; gap: 8px; margin: -6px -8px 8px 0; }
+.sheet-head-text { flex: 1; min-width: 0; padding-top: 8px; }
+.sheet-head-title { margin: 0; font-family: var(--display); font-size: 1.1rem; font-weight: 600; line-height: 1.3; }
+.sheet-head-sub { margin: 2px 0 0; color: var(--hint); font-size: .875rem; }
+.panel-x-only { justify-content: flex-end; }

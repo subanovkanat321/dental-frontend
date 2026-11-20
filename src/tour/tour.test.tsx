@@ -152,7 +152,7 @@ test('телефон, регистратура: нижнее меню — «Ка
     d = screen.getByRole('dialog', { description: /./ })
     titles.push(titleOf(d))
   }
-  expect(titles).toEqual(['Расписание — здесь день клиники', '＋ Новая запись', 'Пациенты', 'Вкладки подразделов', 'Касса', 'Ещё: профиль и Помощь'])
+  expect(titles).toEqual(['Расписание — здесь день клиники', '＋ Новая запись', 'Пациенты', 'Подразделы', 'Касса', 'Ещё: профиль и Помощь'])
   expect(d).toHaveTextContent('6 из 6')
   expect(document.querySelector('.tour')).toHaveAttribute('data-tour-step', 'more')
   expect(within(d).getByRole('button', { name: 'Готово' })).toBeInTheDocument()

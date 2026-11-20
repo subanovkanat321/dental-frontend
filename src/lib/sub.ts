@@ -10,11 +10,34 @@ import { hashParts, type Page } from './route'
  * Последний подраздел каждого раздела запоминается (пока открыта вкладка браузера): ушли в
  * «Расписание» и вернулись в «Кассу» (#/cash без подраздела) — снова «Зарплата», как было с
  * вкладками. «Настройки» — тоже (с 2026-11-13 их пункты — вкладками): #/settings/reminder.
+ *
+ * С 2026-11-20 запоминается и на устройстве (`localStorage`, только ключи подразделов — без данных): лист
+ * подразделов из нижнего меню первым пунктом предлагает последний открытый, и после перезапуска приложения тоже.
  */
-const last: Partial<Record<Page, string>> = {}
-const listeners = new Set<() => void>()
+export const LAST_SUB_KEY = 'crm.lastSub'
 
+function loadLast(): Partial<Record<Page, string>> {
+  try {
+    const raw = typeof localStorage === 'undefined' ? null : localStorage.getItem(LAST_SUB_KEY)
+    const parsed: unknown = raw ? JSON.parse(raw) : null
+    if (!parsed || typeof parsed !== 'object') return {}
+    return Object.fromEntries(Object.entries(parsed as Record<string, unknown>)
+      .filter(([k, v]) => (WITH_SUBS as readonly string[]).includes(k) && typeof v === 'string' && /^[a-z0-9-]{1,40}$/.test(v))) as Partial<Record<Page, string>>
+  } catch {
+    return {}
+  }
+}
+
+function saveLast(): void {
+  try {
+    localStorage.setItem(LAST_SUB_KEY, JSON.stringify(last))
+  } catch {
+    // приватный режим — помним до закрытия вкладки
+  }
+}
 const WITH_SUBS: readonly Page[] = ['patients', 'cash', 'stock', 'clinic', 'settings', 'platform']
+const last: Partial<Record<Page, string>> = loadLast()
+const listeners = new Set<() => void>()
 
 /** Подраздел в адресе сейчас: [раздел, подраздел] или null. */
 function fromHash(): [Page, string] | null {
@@ -26,6 +49,7 @@ function read(): void {
   const found = fromHash()
   if (!found || last[found[0]] === found[1]) return
   last[found[0]] = found[1]
+  saveLast()
   for (const l of listeners) l()
 }
 
@@ -45,7 +69,10 @@ export function useSub(page: Page): string | null {
   return useSyncExternalStore(subscribe, () => {
     // Адрес поменяли до первой отрисовки (ссылка, тест) — берём из него, не дожидаясь hashchange
     const found = fromHash()
-    if (found && found[0] === page) last[page] = found[1]
+    if (found && found[0] === page && last[page] !== found[1]) {
+      last[page] = found[1]
+      saveLast()
+    }
     return last[page] ?? null
   })
 }
@@ -72,6 +99,7 @@ export function openSub(page: Page, sub: string): void {
 /** Тесты: забыть запомненные подразделы. */
 export function resetSubs(): void {
   for (const k of Object.keys(last)) delete last[k as Page]
+  try { localStorage.removeItem(LAST_SUB_KEY) } catch { /* приватный режим */ }
   const found = fromHash()
   if (found) window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}#/${found[0]}`)
 }

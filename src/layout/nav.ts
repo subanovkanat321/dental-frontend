@@ -9,7 +9,37 @@ type Me = Schemas['BookingViewsMe']
  * Подраздел в меню: адрес (#/раздел/key), подпись; у «Настроек» — группа (подзаголовком в листе и панели).
  * Иконка — по разделу и ключу (layout/subIcons.tsx), в оттенке раздела.
  */
-export type Sub = { key: string; title: string; group?: string }
+export type Sub = { key: string; title: string; group?: string; hint?: string }
+
+/**
+ * Короткая подсказка под названием подраздела в листе из нижнего меню (телефон, layout/NavSheet.tsx): что там,
+ * в 2–5 словах. «Клиника» и «Настройки» берут свою из settings/items.
+ */
+const SUB_HINTS: Partial<Record<Page, Record<string, string>>> = {
+  patients: {
+    all: 'Вся база и поиск', booked: 'У кого есть запись', waitlist: 'Ждут свободного времени', comeback: 'Кого пригласить снова',
+    recall: 'Пора на профосмотр', dropped: 'Начали и пропали', nobot: 'Пригласить в бот клиники', questions: 'Вопросы из бота',
+    tasks: 'Позвонить, напомнить', ratings: 'Как оценили приёмы',
+  },
+  cash: {
+    money: 'Оплаты и к оплате', day: 'Наличные за день', earnings: 'Мои приёмы и проценты', analytics: 'Выручка и средний чек',
+    expenses: 'Аренда, закупки, прочее', debtors: 'Кто должен клинике', salary: 'Расчёт врачам и персоналу', stats: 'Услуги, врачи, источники',
+    report: 'Итоги месяца',
+  },
+  stock: {
+    materials: 'Остатки и списания', spending: 'Покупки по месяцам', purchase: 'Что купить у поставщиков', lab: 'Заказ-наряды технику',
+  },
+  platform: {
+    clinics: 'Все клиники и тарифы', analytics: 'Рост и активность', finance: 'Оплаты клиник', feedback: 'Обращения и опросы',
+    mailing: 'WhatsApp и бот руководителям', marketing: 'Контент-план и материалы', health: 'Ошибки и задачи сервера', ai: 'Сколько тратит ИИ',
+    settings: 'Договор и тарифы',
+  },
+}
+
+function withHints(page: Page, subs: Sub[]): Sub[] {
+  const hints = SUB_HINTS[page]
+  return hints ? subs.map((s) => (s.hint || !hints[s.key] ? s : { ...s, hint: hints[s.key] })) : subs
+}
 
 /** Числа у подразделов («Вопросы» — ждут ответа, «Лист ожидания» — сколько ждут, «Задачи» — мои просроченные). */
 export type Counts = Partial<Record<string, number>>
@@ -35,6 +65,10 @@ const LAB_SUB: Sub = { key: 'lab', title: 'Лаборатория' }
  * проверяет сам). Первый — подраздел по умолчанию. Пусто — у раздела подразделов нет.
  */
 export function subsOf(page: Page, me: Me): Sub[] {
+  return withHints(page, rawSubsOf(page, me))
+}
+
+function rawSubsOf(page: Page, me: Me): Sub[] {
   switch (page) {
     case 'patients':
       // «Позвать снова» — деньги на столе и приглашения; «Бросили лечение» — кто начал или согласился и пропал; ассистенту (денег не видит) — прежний «Профосмотр»
@@ -77,12 +111,12 @@ export function subsOf(page: Page, me: Me): Sub[] {
         .map(([key, title]) => ({ key: key!, title: title! }))
     case 'clinic':
       // «Клиника» (с 2026-11-10 — раздел меню): о клинике, персонал, услуги, рабочее время, кресла
-      return CLINIC_ITEMS.filter((i) => !i.hidden && i.show(me)).map((i) => ({ key: i.key, title: i.title }))
+      return CLINIC_ITEMS.filter((i) => !i.hidden && i.show(me)).map((i) => ({ key: i.key, title: i.title, hint: i.hint }))
     case 'settings':
       // Пусто (у роли нет ни одного пункта) — раздела «Настройки» в меню нет (Shell)
       return SETTINGS_GROUPS.flatMap(([group, items]) => items
         .filter((i) => !i.hidden && i.show(me))
-        .map((i) => ({ key: i.key, title: i.title, group })))
+        .map((i) => ({ key: i.key, title: i.title, group, hint: i.hint })))
     default:
       return []
   }

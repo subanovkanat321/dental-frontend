@@ -20,7 +20,7 @@ import { SUB_HINT_KEY } from './section'
 const own = Object.fromEntries(['offsetWidth', 'offsetLeft', 'clientWidth', 'scrollWidth']
   .map((name) => [name, Object.getOwnPropertyDescriptor(HTMLElement.prototype, name)]))
 
-/** Вкладки не влезают (видно 300px из 900) — есть «⌄». */
+/** Размеры полосы вкладок (компьютер; на телефоне их нет — не мешают). */
 function narrowTabs() {
   const tabIndex = (el: HTMLElement) => [...(el.parentElement?.children ?? [])].indexOf(el)
   const props: Record<string, (el: HTMLElement) => number> = {
@@ -73,23 +73,24 @@ afterEach(async () => {
 const depth = () => (window.history.state as { tishBack?: number } | null)?.tishBack ?? 0
 
 const tabs = (title: string) => screen.findByRole('navigation', { name: `Подразделы: ${title}` })
-const current = async (title: string) => within(await tabs(title)).getAllByRole('link').find((a) => a.getAttribute('aria-current') === 'page')?.firstChild?.textContent
+/** Открытый подраздел — по строке над страницей «Раздел · Подраздел ▾» */
+const current = async (title: string) => within(await tabs(title)).getByRole('button', { name: /выбрать подраздел/ }).querySelector('.sub-bar-sub')?.textContent
 
-/** «⌄» → лист. Пока грузится кусочек кода пункта, шапка с вкладками — временная (Suspense) и сменяется настоящей:
+/** Строка «Раздел · Подраздел ▾» → лист. Пока грузится кусочек кода пункта, шапка с вкладками — временная (Suspense) и сменяется настоящей:
  *  нажатие по кнопке, которую как раз заменили, теряется — тогда нажимаем снова. */
 async function openSheet(title: string) {
   return waitForSlow(async () => {
-    const open = screen.queryByRole('dialog', { name: `Подразделы: ${title}` })
+    const open = screen.queryByRole('menu', { name: `Подразделы: ${title}` })
     if (open) return open
-    await userEvent.click(within(await tabs(title)).getByRole('button', { name: `Все подразделы: ${title}` }))
-    return screen.getByRole('dialog', { name: `Подразделы: ${title}` })
+    await userEvent.click(within(await tabs(title)).getByRole('button', { name: /выбрать подраздел/ }))
+    return screen.getByRole('menu', { name: `Подразделы: ${title}` })
   })
 }
 
 test.each([
   ['settings', 'Настройки', 'Напоминание о приёме', 'Тариф и оплата', '#/settings/plan'],
   ['cash', 'Касса', 'Деньги', 'Должники', '#/cash/debtors'],
-])('%s: пункт из листа «⌄» открывается; сначала лист снимает свою запись истории, потом переход', async (page, title, first, pick, hash) => {
+])('%s: пункт из листа подразделов открывается; сначала лист снимает свою запись истории, потом переход', async (page, title, first, pick, hash) => {
   window.location.hash = `/${page}`
   renderApp()
   expect(await current(title)).toBe(first)
@@ -99,10 +100,10 @@ test.each([
   const sheet = await openSheet(title)
   await waitForSlow(() => expect(depth()).toBe(1))
   events = []
-  await userEvent.click(within(sheet).getByRole('link', { name: pick }))
+  await userEvent.click(within(sheet).getByRole('menuitem', { name: pick }))
 
   await waitForSlow(() => expect(window.location.hash).toBe(hash))
-  expect(screen.queryByRole('dialog', { name: `Подразделы: ${title}` })).not.toBeInTheDocument()
+  expect(screen.queryByRole('menu', { name: `Подразделы: ${title}` })).not.toBeInTheDocument()
   expect(await screen.findByRole('heading', { name: pick })).toBeInTheDocument()
   expect(await current(title)).toBe(pick)
   // Порядок: шаг назад листа — до перехода. Переход на записи листа в Safari оставлял её state, и лист возвращал назад
@@ -126,9 +127,21 @@ test('Настройки: вкладка и экран — из одного и�
 
   const sheet = await openSheet('Настройки')
   await userEvent.click(within(sheet).getByRole('button', { name: 'Закрыть' }))
-  expect(screen.queryByRole('dialog', { name: 'Подразделы: Настройки' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('menu', { name: 'Подразделы: Настройки' })).not.toBeInTheDocument()
   await waitForSlow(() => expect(depth()).toBe(0))
   expect(window.location.hash).toBe('#/settings')
   expect(await current('Настройки')).toBe('Тариф и оплата')
   expect(screen.getByRole('heading', { name: 'Тариф и оплата' })).toBeInTheDocument()
+})
+
+test('«назад» (история браузера) закрывает лист из нижнего меню — раздел не меняется', async () => {
+  window.location.hash = '/schedule'
+  renderApp()
+  const nav = await screen.findByRole('navigation', { name: 'Разделы' })
+  await userEvent.click(within(nav).getByRole('button', { name: /^Склад/ }))
+  expect(screen.getByRole('menu', { name: 'Подразделы: Склад' })).toBeInTheDocument()
+  await waitForSlow(() => expect(depth()).toBe(1))
+  window.history.back()
+  await waitForSlow(() => expect(screen.queryByRole('menu', { name: 'Подразделы: Склад' })).not.toBeInTheDocument())
+  expect(window.location.hash).toBe('#/schedule')
 })

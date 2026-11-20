@@ -5,8 +5,9 @@ import type { Page } from '../lib/route'
 import { useSectionActive } from '../lib/section'
 import { subHref } from '../lib/sub'
 import { matches, useMedia } from '../lib/useMedia'
-import { countOf, isLoud, type Sub } from './nav'
+import { countOf, isLoud, sumOf, type Sub } from './nav'
 import { NavCount } from './NavCount'
+import { Icon } from './Icon'
 import { SubIcon } from './subIcons'
 import { NavContext, type NavApi } from './useSection'
 
@@ -30,22 +31,25 @@ function markHintSeen(): void {
 }
 
 /**
- * Заголовок раздела с подразделами. Подразделы — панелью вкладок над страницей (`SubTabs`, порталом
- * в место от Shell — вне шапки страницы, чтобы панель прилипала при прокрутке всей страницы), и на
- * телефоне, и на компьютере (с 2026-11-11). `h1` подраздела остаётся для читалок экрана, но не
- * виден: подраздел подсвечен во вкладках, раздел — в меню. Без подразделов (или один) — обычный
+ * Заголовок раздела с подразделами. Компьютер — панель вкладок над страницей (`SubTabs`, с 2026-11-11), телефон —
+ * строка «Склад · Материалы ▾» (`SubTitleBar`, с 2026-11-20), она открывает лист подразделов. Обе — порталом в место
+ * от Shell, вне шапки страницы, чтобы прилипать при прокрутке всей страницы. `h1` подраздела остаётся для читалок
+ * экрана, но не виден: подраздел подсвечен во вкладках (в строке), раздел — в меню. Без подразделов (или один) — обычный
  * заголовок; вне Shell (тесты страниц) — мелко «Раздел», крупно подраздел.
  */
 export function SectionTitle({ page, title, subTitle, hint }: { page: Page; title: string; subTitle?: string | null; hint?: ReactNode }) {
   const nav = useContext(NavContext)
   // Разделы, где уже были, остаются на странице скрытыми (App): вкладки — только у видимого
   const visible = useSectionActive()
+  const phone = useMedia('(max-width: 760px)')
   if (!subTitle) return <div className="with-hint"><h1>{title}</h1>{hint}</div>
   if (nav && nav.subs(page).length > 1) {
     return (
       <>
         <h1 className="sr-only sect-h1">{subTitle}</h1>
-        {visible && nav.tabsSlot && createPortal(<SubTabs nav={nav} page={page} title={title} hint={hint} />, nav.tabsSlot)}
+        {visible && nav.tabsSlot && createPortal(phone
+          ? <SubTitleBar nav={nav} page={page} title={title} subTitle={subTitle} hint={hint} />
+          : <SubTabs nav={nav} page={page} title={title} hint={hint} />, nav.tabsSlot)}
       </>
     )
   }
@@ -58,45 +62,10 @@ export function SectionTitle({ page, title, subTitle, hint }: { page: Page; titl
 }
 
 /**
- * Где была полоска и прокрутка вкладок раздела. Платформа и Клиника рисуют шапку заново в каждом
- * подразделе — без этого вкладки при переключении прыгали бы в начало, а полоска не переезжала.
+ * Место «?» подраздела в строке над страницей: строка отдаёт его Shell (nav.helpSlot), подраздел кладёт туда свой
+ * «?» (SubHelp, layout/PageHead.tsx). Возвращает ref для места и есть ли там уже «?» подраздела.
  */
-const lastPos = new Map<Page, { ink: Ink; scroll: number; active: string | null }>()
-type Ink = { left: number; width: number }
-type Edges = { start: boolean; end: boolean; more: boolean; newRight: 0 | 1 | 2 }
-const NO_EDGES: Edges = { start: false, end: false, more: false, newRight: 0 }
-/** Полоска под текстом, а не под всей кнопкой: от края кнопки до текста — её отступ */
-const INK_INSET = 12
-
-/**
- * Подразделы — привычной панелью вкладок (как папки Telegram, YouTube), на телефоне и на компьютере: все подразделы
- * в строку во всю ширину, открытый — цветом акцента с полоской снизу, полоска переезжает при
- * переключении. Не влезли — строка листается вбок (с привязкой к вкладке), у краёв со скрытыми
- * вкладками — затухание, справа — «⌄»: на телефоне лист со всеми подразделами (тот же, что долгим
- * нажатием на раздел внизу), на компьютере — список под кнопкой. Новое во вкладках, скрытых справа, —
- * точкой на «⌄». «?» — в конце строки: раздела или подраздела (`SubHelp`), не оба. Телефон, первый раз — пузырь-подсказка под панелью.
- *
- * Ссылки с `aria-current`, а не `role=tab`: каждая — свой адрес (#/раздел/подраздел), «назад»
- * браузера возвращает в прежний подраздел.
- */
-function SubTabs({ nav, page, title, hint }: { nav: NavApi; page: Page; title: string; hint?: ReactNode }) {
-  const subs = nav.subs(page)
-  const active = nav.active(page)
-  const bar = useRef<HTMLElement>(null)
-  const scroller = useRef<HTMLDivElement>(null)
-  const list = useRef<HTMLDivElement>(null)
-  const helpBox = useRef<HTMLSpanElement>(null)
-  const [ink, setInk] = useState<Ink | null>(() => lastPos.get(page)?.ink ?? null)
-  const [edges, setEdges] = useState<Edges>(NO_EDGES)
-  const [stuck, setStuck] = useState(false)
-  const phone = useMedia('(max-width: 760px)')
-  // Подсказка «здесь переключаются разделы» — только телефону: на компьютере вкладки и так на виду
-  const [tip, setTip] = useState(() => phone && !hintSeen())
-  // Компьютер: «⌄» — список всех подразделов под кнопкой (на телефоне — лист снизу от Shell)
-  const [menu, setMenu] = useState(false)
-  const moreBox = useRef<HTMLDivElement>(null)
-  const mounted = useRef(false)
-  // Место «?» подраздела: отдаём его Shell (nav.helpSlot) и следим, положил ли туда подраздел свой «?»
+function useHelpSlot(nav: NavApi): [(el: HTMLSpanElement | null) => void, boolean] {
   const [slotEl, setSlotEl] = useState<HTMLSpanElement | null>(null)
   const { setHelpSlot: giveSlot } = nav
   const setHelpSlot = useCallback((el: HTMLSpanElement | null) => {
@@ -112,6 +81,102 @@ function SubTabs({ nav, page, title, hint }: { nav: NavApi; page: Page; title: s
     observer.observe(slotEl, { childList: true })
     return () => observer.disconnect()
   }, [slotEl])
+  return [setHelpSlot, subHelp]
+}
+
+/**
+ * Телефон (с 2026-11-20): над страницей — не полоса вкладок, а одна строка-заголовок «▣ Склад · Материалы ▾».
+ * Владелец: вкладки обрезались посреди слова («Материалы · Расходы на склад · Зак…»), непонятно, что там, и
+ * открывают их редко. Строка всегда целиком говорит, где ты, и открывает тот же лист подразделов, что и нажатие
+ * на раздел в нижнем меню (layout/NavSheet.tsx). Число нового в других подразделах — бейджем у ▾ (сумма, красным —
+ * если ждёт действия). Справа — «?» подраздела или раздела, как было у вкладок. Прилипает к верху при прокрутке.
+ * Первый раз — пузырь-подсказка «Здесь — подразделы…» (флаг `crm.subSwitchHint`).
+ */
+function SubTitleBar({ nav, page, title, subTitle, hint }: { nav: NavApi; page: Page; title: string; subTitle: string; hint?: ReactNode }) {
+  const subs = nav.subs(page)
+  const active = nav.active(page)
+  const [setHelpSlot, subHelp] = useHelpSlot(nav)
+  const [tip, setTip] = useState(() => !hintSeen())
+  const [stuck, setStuck] = useState(false)
+  useEffect(() => {
+    const onScroll = () => setStuck(window.scrollY > 4)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+  const closeTip = () => {
+    if (!tip) return
+    markHintSeen()
+    setTip(false)
+  }
+  // Новое в других подразделах (в открытом его и так видно на странице)
+  const others = subs.filter((s) => s.key !== active)
+  const sum = sumOf(nav.counts, page, others, nav.loud)
+  const open = nav.sheet === page
+  return (
+    <nav className="sub-tabs sub-bar" data-tour="sub-tabs" aria-label={`Подразделы: ${title}`} data-stuck={stuck || undefined}>
+      <button type="button" className="sub-bar-btn" aria-haspopup="menu" aria-expanded={open}
+        aria-label={`${title} · ${subTitle}: выбрать подраздел${sum.total ? ` (новое в других: ${sum.total})` : ''}`}
+        onClick={() => { closeTip(); nav.openSheet(page) }}>
+        <span className="sub-bar-ico" style={{ color: `var(--ico-${page})` }}><Icon name={page} /></span>
+        <span className="sub-bar-sect">{title}</span>
+        <span className="sub-bar-dot" aria-hidden="true">·</span>
+        <strong className="sub-bar-sub">{subTitle}</strong>
+        <NavCount n={sum.total} loud={sum.loud} />
+        <svg className="sub-bar-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+      </button>
+      <span className="sub-tabs-helps">
+        {hint && !subHelp && <span className="sub-tabs-help">{hint}</span>}
+        <span ref={setHelpSlot} className="sub-tabs-help sub-help" />
+      </span>
+      {tip && (
+        <div className="sect-tip" role="note" onClick={closeTip}>
+          <span>Здесь — подразделы «{title}»: {tipNames(nav, page, others)} Нажмите сюда или на «{title}» в нижнем меню.</span>
+          <button type="button" className="sect-tip-close" aria-label="Закрыть подсказку" onClick={(e) => { e.stopPropagation(); closeTip() }}>✕</button>
+        </div>
+      )}
+    </nav>
+  )
+}
+
+/**
+ * Где была полоска и прокрутка вкладок раздела. Платформа и Клиника рисуют шапку заново в каждом
+ * подразделе — без этого вкладки при переключении прыгали бы в начало, а полоска не переезжала.
+ */
+const lastPos = new Map<Page, { ink: Ink; scroll: number; active: string | null }>()
+type Ink = { left: number; width: number }
+type Edges = { start: boolean; end: boolean; more: boolean; newRight: 0 | 1 | 2 }
+const NO_EDGES: Edges = { start: false, end: false, more: false, newRight: 0 }
+/** Полоска под текстом, а не под всей кнопкой: от края кнопки до текста — её отступ */
+const INK_INSET = 12
+
+/**
+ * Компьютер: подразделы — привычной панелью вкладок (как папки Telegram, YouTube; на телефоне с 2026-11-20 — `SubTitleBar`): все подразделы
+ * в строку во всю ширину, открытый — цветом акцента с полоской снизу, полоска переезжает при
+ * переключении. Не влезли — строка листается вбок (с привязкой к вкладке), у краёв со скрытыми
+ * вкладками — затухание, справа — «⌄» — список всех подразделов под кнопкой. Новое во вкладках, скрытых справа, —
+ * точкой на «⌄». «?» — в конце строки: раздела или подраздела (`SubHelp`), не оба.
+ *
+ * Ссылки с `aria-current`, а не `role=tab`: каждая — свой адрес (#/раздел/подраздел), «назад»
+ * браузера возвращает в прежний подраздел.
+ */
+function SubTabs({ nav, page, title, hint }: { nav: NavApi; page: Page; title: string; hint?: ReactNode }) {
+  const subs = nav.subs(page)
+  const active = nav.active(page)
+  const bar = useRef<HTMLElement>(null)
+  const scroller = useRef<HTMLDivElement>(null)
+  const list = useRef<HTMLDivElement>(null)
+  const helpBox = useRef<HTMLSpanElement>(null)
+  const [ink, setInk] = useState<Ink | null>(() => lastPos.get(page)?.ink ?? null)
+  const [edges, setEdges] = useState<Edges>(NO_EDGES)
+  const [stuck, setStuck] = useState(false)
+  const phone = useMedia('(max-width: 760px)')
+  // Компьютер: «⌄» — список всех подразделов под кнопкой (на телефоне — лист снизу от Shell)
+  const [menu, setMenu] = useState(false)
+  const moreBox = useRef<HTMLDivElement>(null)
+  const mounted = useRef(false)
+  // Место «?» подраздела: отдаём его Shell (nav.helpSlot) и следим, положил ли туда подраздел свой «?»
+  const [setHelpSlot, subHelp] = useHelpSlot(nav)
 
   const activeTab = useCallback(() => list.current?.querySelector<HTMLElement>('[aria-current="page"]') ?? null, [])
 
@@ -213,13 +278,7 @@ function SubTabs({ nav, page, title, hint }: { nav: NavApi; page: Page; title: s
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  const closeTip = () => {
-    if (!tip) return
-    markHintSeen()
-    setTip(false)
-  }
   const open = () => {
-    closeTip()
     if (phone) nav.openSheet(page)
     else setMenu((v) => !v)
   }
@@ -238,7 +297,6 @@ function SubTabs({ nav, page, title, hint }: { nav: NavApi; page: Page; title: s
     setMenu(false)
     if (key !== active) nav.go(page, key)
   }
-  const others = subs.filter((s) => s.key !== active)
   return (
     <nav ref={bar} className="sub-tabs" data-tour="sub-tabs" aria-label={`Подразделы: ${title}`} data-stuck={stuck || undefined}>
       <div ref={scroller} className="sub-tabs-scroll" onScroll={measure}
@@ -252,7 +310,7 @@ function SubTabs({ nav, page, title, hint }: { nav: NavApi; page: Page; title: s
             return (
               <a key={s.key} className={on ? 'sub-tab active' : 'sub-tab'} href={subHref(page, s.key)} aria-current={on ? 'page' : undefined}
                 aria-label={n ? `${s.title} · ${n}` : undefined} data-count={n > 0 ? (loud ? 'loud' : 'quiet') : undefined}
-                onClick={(e) => { e.preventDefault(); closeTip(); if (!on) nav.go(page, s.key) }}>
+                onClick={(e) => { e.preventDefault(); if (!on) nav.go(page, s.key) }}>
                 {s.title}
                 <NavCount n={n} loud={loud} />
               </a>
@@ -293,12 +351,6 @@ function SubTabs({ nav, page, title, hint }: { nav: NavApi; page: Page; title: s
               })}
             </div>
           )}
-        </div>
-      )}
-      {tip && (
-        <div className="sect-tip" role="note" onClick={closeTip}>
-          <span>Здесь переключаются разделы: {tipNames(nav, page, others)}{edges.more ? ' Листайте вбок или нажмите ⌄ — весь список.' : ''}</span>
-          <button type="button" className="sect-tip-close" aria-label="Закрыть подсказку" onClick={(e) => { e.stopPropagation(); closeTip() }}>✕</button>
         </div>
       )}
     </nav>

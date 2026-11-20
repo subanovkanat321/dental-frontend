@@ -120,42 +120,19 @@ function phone() {
   vi.stubGlobal('matchMedia', (query: string) => ({ matches: query.includes('max-width: 760px'), addEventListener() {}, removeEventListener() {} }))
 }
 
-test('телефон: подразделы — вкладками вверху (меню слева нет); нажатие — новый адрес и заголовок', async () => {
+test('телефон: над страницей — «Пациенты · Лист ожидания ▾» (меню слева нет); выбор в листе — новый адрес и заголовок', async () => {
   phone()
   window.location.hash = '/patients/waitlist'
   renderApp()
-  const tabs = await screen.findByRole('navigation', { name: 'Подразделы: Пациенты' })
-  // Подраздел — заголовком страницы, как на компьютере (на телефоне виден вкладкой, заголовок — для читалок)
+  const bar = await screen.findByRole('navigation', { name: 'Подразделы: Пациенты' })
+  // Подраздел — заголовком страницы, как на компьютере (на телефоне — в строке над страницей, заголовок — для читалок)
   expect(screen.getByRole('heading', { name: 'Лист ожидания' })).toBeInTheDocument()
   expect(screen.queryByRole('tablist', { name: 'Списки пациентов' })).not.toBeInTheDocument()
-  expect(within(tabs).getByRole('link', { name: 'Лист ожидания' })).toHaveAttribute('aria-current', 'page')
-  await userEvent.click(within(tabs).getByRole('link', { name: 'Вопросы' }))
+  await userEvent.click(within(bar).getByRole('button', { name: /^Пациенты · Лист ожидания: выбрать подраздел/ }))
+  await userEvent.click(within(screen.getByRole('menu', { name: 'Подразделы: Пациенты' })).getByRole('menuitem', { name: 'Вопросы' }))
   expect(window.location.hash).toBe('#/patients/questions')
   expect(await screen.findByRole('heading', { name: 'Вопросы' })).toBeInTheDocument()
-  expect(within(screen.getByRole('navigation', { name: 'Подразделы: Пациенты' })).getByRole('link', { name: 'Вопросы' })).toHaveAttribute('aria-current', 'page')
-})
-
-test('телефон: долгое нажатие на раздел внизу — тот же лист; короткое — просто переход', async () => {
-  phone()
-  window.location.hash = '/schedule'
-  renderApp()
-  const cash = await within(await screen.findByRole('navigation', { name: 'Разделы' })).findByRole('button', { name: /^Касса/ })
-  fireEvent.pointerDown(cash, { pointerType: 'touch' })
-  await act(() => new Promise((r) => setTimeout(r, 600)))
-  fireEvent.pointerUp(cash)
-  fireEvent.click(cash)
-  const sheet = screen.getByRole('dialog', { name: 'Подразделы: Касса' })
-  // Лист открыт, раздел не сменился
-  expect(window.location.hash).toBe('#/schedule')
-  await userEvent.click(within(sheet).getByRole('link', { name: 'Должники' }))
-  expect(window.location.hash).toBe('#/cash/debtors')
-
-  const patients = within(nav()).getByRole('button', { name: /^Пациенты/ })
-  fireEvent.pointerDown(patients, { pointerType: 'touch' })
-  fireEvent.pointerUp(patients)
-  fireEvent.click(patients)
-  expect(window.location.hash).toBe('#/patients')
-  expect(screen.queryByRole('dialog', { name: /Подразделы/ })).not.toBeInTheDocument()
+  expect(within(screen.getByRole('navigation', { name: 'Подразделы: Пациенты' })).getByRole('button', { name: /^Пациенты · Вопросы/ })).toBeInTheDocument()
 })
 
 test('права в дереве: ассистент — без «Кассы» и цен, «Профосмотр»; менеджер платформы — только «Клиники» и «Опросы»', async () => {
@@ -242,7 +219,7 @@ test('старые адреса пунктов «Клиники»: #/settings/st
   }
 })
 
-test('телефон: внизу четыре раздела и «Ещё»; в «Ещё» — свой аватар, «Клиника», «Для пациента», «Настройки», «Помощь»; у «Клиники» — вкладки подразделов', async () => {
+test('телефон: внизу четыре раздела и «Ещё»; в «Ещё» — свой аватар, «Клиника», «Для пациента», «Настройки», «Помощь»; у «Клиники» — строка подразделов', async () => {
   phone()
   server.use(http.get('*/api/clinic', () => HttpResponse.json({ brandName: 'Стоматология «Тест»', workDays: [] })))
   window.location.hash = '/schedule'
@@ -258,12 +235,11 @@ test('телефон: внизу четыре раздела и «Ещё»; в �
   ])
   await userEvent.click(within(more).getByRole('button', { name: 'Клиника' }))
   expect(window.location.hash).toBe('#/clinic')
-  const tabs = await screen.findByRole('navigation', { name: 'Подразделы: Клиника' })
-  expect(within(tabs).getByRole('link', { name: 'О клинике' })).toHaveAttribute('aria-current', 'page')
-  await userEvent.click(within(tabs).getByRole('link', { name: 'Рабочее время' }))
+  const bar = await screen.findByRole('navigation', { name: 'Подразделы: Клиника' })
+  await userEvent.click(within(bar).getByRole('button', { name: /^Клиника · О клинике: выбрать подраздел/ }))
+  await userEvent.click(within(screen.getByRole('menu', { name: 'Подразделы: Клиника' })).getByRole('menuitem', { name: 'Рабочее время' }))
   expect(window.location.hash).toBe('#/clinic/hours')
-  expect(within(await screen.findByRole('navigation', { name: 'Подразделы: Клиника' })).getByRole('link', { name: 'Рабочее время' }))
-    .toHaveAttribute('aria-current', 'page')
+  expect(within(await screen.findByRole('navigation', { name: 'Подразделы: Клиника' })).getByRole('button', { name: /^Клиника · Рабочее время/ })).toBeInTheDocument()
 })
 
 test('«Настройки» — вкладками, как другие разделы: #/settings — первый пункт роли, старый адрес пункта — его вкладка, «‹ Настройки» нет', async () => {
