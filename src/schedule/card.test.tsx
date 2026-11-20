@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
 import { addDays, todayIn } from '../lib/time'
-import { appointment, contactMenu, me, pickContact, pickStatus, renderApp, statusMenu } from '../test/fixtures'
+import { appointment, contactMenu, me, meArrivals, pickContact, pickStatus, renderApp, statusMenu } from '../test/fixtures'
 import { fixNow } from '../test/now'
 import { server } from '../test/server'
 import { waitForSlow } from '../test/wait'
@@ -209,24 +209,32 @@ test('до начала приёма — без заметки и материа
   expect(panel).not.toHaveClass('panel-full')
 })
 
-test('«＋ Промокод» — рядом с «＋ Комментарий»; под «Ещё» — предоплата и лист ожидания', async () => {
+test('«＋ Промокод» — рядом с «＋ Комментарий»; «＋ Предоплата · ＋ В лист ожидания» — строкой ссылок, без свёрнутого «Ещё»', async () => {
   backend(appointment(11, 1, '23:59', 'Айгуль С.', { version: 1 }))
+  server.use(http.get('*/api/waitlist', () => HttpResponse.json([])))
   renderApp()
   const panel = await open(/Айгуль С\./)
   expect(within(panel).getByRole('button', { name: '＋ Промокод' }).parentElement).toContainElement(within(panel).getByRole('button', { name: '＋ Комментарий' }))
-  expect(within(panel).queryByRole('button', { name: 'Попросить предоплату' })).not.toBeInTheDocument()
-  const more = within(panel).getByRole('button', { name: /^Ещё/ })
-  expect(more).not.toHaveAccessibleName(/промокод|откуда узнал/)
-  await userEvent.click(more)
-  expect(within(panel).getByRole('button', { name: 'Попросить предоплату' })).toBeInTheDocument()
+  expect(within(panel).queryByRole('button', { name: /^Ещё ·|^Ещё$/ })).not.toBeInTheDocument()
+  expect(within(panel).queryByRole('region', { name: 'Ещё' })).not.toBeInTheDocument()
+  const deposit = within(panel).getByRole('button', { name: '＋ Предоплата' })
+  const waitlist = await within(panel).findByRole('button', { name: '＋ В лист ожидания' })
+  expect(deposit.parentElement).toContainElement(waitlist)
+  await userEvent.click(deposit)
+  expect(within(panel).getByRole('group', { name: 'Предоплата' })).toBeInTheDocument()
+  expect(within(panel).queryByRole('button', { name: '＋ Предоплата' })).not.toBeInTheDocument()
+  await userEvent.click(within(within(panel).getByRole('group', { name: 'Предоплата' })).getByRole('button', { name: 'Отмена' }))
+  expect(within(panel).getByRole('button', { name: '＋ Предоплата' })).toBeInTheDocument()
+  await userEvent.click(within(panel).getByRole('button', { name: '＋ В лист ожидания' }))
+  expect(await within(panel).findByRole('form', { name: 'В лист ожидания' })).toBeInTheDocument()
 })
 
-test('промокод уже задан — виден сразу, не под «Ещё»', async () => {
+test('промокод уже задан — виден сразу, с карандашом «Изменить промокод»', async () => {
   backend(appointment(12, 1, '23:59', 'Нурлан К.', { version: 1, promoCode: 'OSEN5' }))
   renderApp()
   const panel = await open(/Нурлан К\./)
   expect(within(panel).getByText('🎟 OSEN5')).toBeInTheDocument()
-  expect(within(panel).getByRole('button', { name: /^Ещё/ })).not.toHaveAccessibleName(/промокод/)
+  expect(within(panel).getByRole('button', { name: 'Изменить промокод' })).toHaveAttribute('title', 'Изменить промокод')
 })
 
 test('снимки и фото — прямо из карточки приёма: свёрнутая строка, раскрыть — загрузка и «до / после»', async () => {
@@ -241,7 +249,7 @@ test('снимки и фото — прямо из карточки приёма
   expect(await within(files).findByRole('region', { name: 'Для Instagram' })).toBeInTheDocument()
 })
 
-test('пилюля статуса: текущий с ✓, допустимые статусы списком; Esc закрывает список, а не карточку', async () => {
+test('пилюля статуса: текущий с ✓, допустимые статусы списком (без «Пришёл» и «В кресле» — клиника их не отмечает); Esc закрывает список, а не карточку', async () => {
   backend(appointment(10, 1, '00:05', 'Бакыт М.', { version: 1 }))
   renderApp()
   const panel = await open(/Бакыт М\./)
@@ -256,7 +264,7 @@ test('пилюля статуса: текущий с ✓, допустимые �
   const menu = screen.getByRole('menu', { name: 'Статус приёма' })
   // Заявкой приём снова не станет — пункта нет
   expect(within(menu).getAllByRole('menuitemradio').map((i) => i.querySelector('.menu-text')?.firstChild?.textContent))
-    .toEqual(['Записан', 'Подтвердил (придёт)', 'Пришёл', 'В кресле', 'Приём состоялся', 'Неявка', 'Отменён'])
+    .toEqual(['Записан', 'Подтвердил (придёт)', 'Просит перенести', 'Нет ответа', 'Приём состоялся', 'Неявка', 'Отменён'])
   expect(within(menu).getByRole('menuitemradio', { name: /^Записан/ })).toHaveAttribute('aria-checked', 'true')
   expect(within(menu).getByRole('menuitemradio', { name: /^Подтвердил/ })).toHaveFocus()
   await userEvent.keyboard('{Escape}')
@@ -269,7 +277,7 @@ test('приём на завтра — «Пришёл», «В кресле», «
   const today = appointment(10, 1, '10:00', 'Бакыт М.', { version: 1 })
   const day = 24 * 3600_000
   const tomorrow = { ...today, startAt: new Date(Date.parse(today.startAt) + day).toISOString(), endAt: new Date(Date.parse(today.endAt) + day).toISOString() }
-  const sent = backend(tomorrow)
+  const sent = backend(tomorrow, meArrivals)
   server.use(http.get('*/api/appointments/10', () => HttpResponse.json(tomorrow)))
   // Открываем кнопкой бота «Открыть приём» — без листания расписания на завтра
   window.history.replaceState(null, '', '/?appointment=10')
@@ -295,10 +303,10 @@ test('приём на завтра — «Пришёл», «В кресле», «
   window.history.replaceState(null, '', '/')
 })
 
-test('следующий шаг одним касанием: «Пришёл» → «Начать приём» (В кресле) → «Приём состоялся» → оплата', async () => {
+test('клиника отмечает приход — следующий шаг одним касанием: «Пришёл» → «Начать приём» (В кресле) → «Приём состоялся» → оплата', async () => {
   // 10:10 по Бишкеку: приём 10:00–10:30 идёт
   fixNow(`${todayIn()}T10:10:00+06:00`, { frozen: true })
-  const sent = backend(appointment(10, 1, '10:00', 'Бакыт М.', { version: 1 }))
+  const sent = backend(appointment(10, 1, '10:00', 'Бакыт М.', { version: 1 }), meArrivals)
   renderApp()
   const panel = await open(/Бакыт М\./)
   await userEvent.click(within(panel).getByRole('button', { name: 'Пришёл' }))
@@ -313,8 +321,8 @@ test('следующий шаг одним касанием: «Пришёл» �
   expect(within(panel).getByRole('button', { name: 'Принять оплату' })).toBeInTheDocument()
 })
 
-test('«В кресле» в списке статусов: «Пришёл» снимает только кресло, «Записан» — обе отметки', async () => {
-  const sent = backend(appointment(10, 1, '00:05', 'Бакыт М.', { version: 1 }))
+test('клиника отмечает приход — «В кресле» в списке статусов: «Пришёл» снимает только кресло, «Записан» — обе отметки', async () => {
+  const sent = backend(appointment(10, 1, '00:05', 'Бакыт М.', { version: 1 }), meArrivals)
   renderApp()
   const panel = await open(/Бакыт М\./)
   await pickStatus(panel, 'В кресле')
@@ -326,6 +334,51 @@ test('«В кресле» в списке статусов: «Пришёл» с�
   await pickStatus(panel, 'Пришёл')
   await waitForSlow(() => expect(statusMenu(panel)).toHaveAccessibleName('Статус: Пришёл'))
   expect(sent).toEqual([{ inChair: true }, { inChair: false }])
+})
+
+test('по умолчанию (приход не отмечают): до начала — главная «Приём состоялся» без «Неявки» рядом; после начала — «🚷 Неявка» ссылкой', async () => {
+  // 09:50 по Бишкеку: приём 10:00–10:30 ещё не начался
+  fixNow(`${todayIn()}T09:50:00+06:00`, { frozen: true })
+  const sent = backend(appointment(10, 1, '10:00', 'Бакыт М.', { version: 1 }))
+  renderApp()
+  const panel = await open(/Бакыт М\./)
+  expect(within(panel).queryByRole('button', { name: 'Пришёл' })).toBeNull()
+  expect(within(panel).queryByRole('button', { name: 'Начать приём' })).toBeNull()
+  expect(within(panel).getByRole('button', { name: 'Приём состоялся' })).toHaveClass('primary')
+  expect(within(panel).queryByRole('button', { name: '🚷 Неявка' })).toBeNull()
+  await userEvent.click(within(panel).getByRole('button', { name: 'Приём состоялся' }))
+  await waitForSlow(() => expect(statusMenu(panel)).toHaveAccessibleName('Статус: Приём состоялся'))
+  expect(sent).toEqual([{ status: 'DONE' }])
+})
+
+test('по умолчанию: время приёма наступило — «🚷 Неявка» ссылкой рядом с главной, с причиной', async () => {
+  fixNow(`${todayIn()}T10:10:00+06:00`, { frozen: true })
+  const sent = backend(appointment(10, 1, '10:00', 'Бакыт М.', { version: 1 }))
+  renderApp()
+  const panel = await open(/Бакыт М\./)
+  // Одна главная кнопка (DESIGN.md), «Неявка» — ссылка
+  expect(within(panel).getAllByRole('button').filter((b) => b.classList.contains('primary'))).toHaveLength(1)
+  const noShow = within(panel).getByRole('button', { name: '🚷 Неявка' })
+  expect(noShow).toHaveClass('link')
+  await userEvent.click(noShow)
+  const sheet = screen.getByRole('dialog', { name: /Причина/ })
+  await userEvent.click(within(sheet).getByRole('button', { name: 'Отметить неявку' }))
+  await waitForSlow(() => expect(statusMenu(panel)).toHaveAccessibleName('Статус: Неявка'))
+  expect(sent).toEqual([{ status: 'NO_SHOW' }])
+})
+
+test('по умолчанию: старая отметка «Пришёл» видна в пилюле, но «В кресле» не предлагается; главная — «Приём состоялся»', async () => {
+  backend(appointment(10, 1, '00:05', 'Бакыт М.', { version: 1, arrivedAt: new Date().toISOString() }))
+  renderApp()
+  const panel = await open(/Бакыт М\./)
+  expect(statusMenu(panel)).toHaveAccessibleName('Статус: Пришёл')
+  expect(within(panel).getByRole('button', { name: 'Приём состоялся' })).toBeInTheDocument()
+  await userEvent.click(statusMenu(panel)!)
+  const menu = screen.getByRole('menu', { name: 'Статус приёма' })
+  expect(within(menu).getAllByRole('menuitemradio').map((i) => i.querySelector('.menu-text')?.firstChild?.textContent))
+    .toEqual(['Записан', 'Пришёл', 'Приём состоялся', 'Неявка', 'Отменён'])
+  expect(within(menu).getByRole('menuitemradio', { name: /^Пришёл/ })).toHaveAttribute('aria-checked', 'true')
+  expect(within(menu).getByRole('menuitemradio', { name: /^Записан/ })).toHaveTextContent('снять «Пришёл»')
 })
 
 test('отмена «Другое» с парой слов — текст уходит на сервер и виден в карточке; «Не отменять» — ничего не шлёт', async () => {

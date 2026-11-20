@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { SaveBar } from '../layout/SaveBar'
 import { useUnsaved } from '../lib/unsaved'
+import { EditButton } from '../layout/EditButton'
 
 type Me = Schemas['BookingViewsMe']
 type Member = Schemas['StaffMembersMemberView']
@@ -44,7 +45,7 @@ export function AssistantDoctors({ me, member }: { me: Me; member: Member }) {
     return (
       <>
         <div className="hint">Помогает: {names.join(', ') || '—'}{' '}
-          <button type="button" className="link" onClick={() => { save.reset(); setIds(member.doctorIds ?? []); setEditing(true) }}>изменить</button></div>
+          <EditButton label="Изменить врачей ассистента" onClick={() => { save.reset(); setIds(member.doctorIds ?? []); setEditing(true) }} /></div>
         <SaveBar dirty={false} saving={false} saved={save.isSuccess} savedText="Врачи ассистента сохранены" />
       </>
     )
