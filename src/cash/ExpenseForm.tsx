@@ -173,7 +173,7 @@ export function ExpenseForm({ me, doctorId, patientPick, shared: sharedDefault =
           </label>
         </fieldset>
       )}
-      {/* Касса дня (V240): наличные из ящика вычитаются из остатка; перевод и карта — нет */}
+      {/* Касса дня (V241): наличные из ящика вычитаются из остатка; перевод и карта — нет */}
       <label className="check">
         <input type="checkbox" checked={fromCash} onChange={(e) => setFromCash(e.target.checked)} />
         <span>Из кассы наличными <span className="hint small">— вычтется из остатка «Кассы дня»</span></span>
