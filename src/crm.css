@@ -683,6 +683,7 @@ details.agreement-box { max-height: none; }
 .date-sub { font-size: .9rem; color: var(--hint); }
 .btn.date-today { flex: none; min-height: 52px; padding: 0 12px; border-radius: 12px; font-size: .95rem; }
 .date-caret { font-size: .8em; color: var(--link); }
+.date-step:disabled { opacity: .35; cursor: default; }
 /* «📅 другой день»: прозрачное поле даты поверх — нажатие открывает календарь */
 .day-actions { display: flex; gap: 8px; }
 .day-actions .btn { flex: 1 1 0; min-height: 44px; justify-content: center; }
@@ -3224,9 +3225,15 @@ button.cash-entry:hover, button.cash-entry.active { background: var(--sunken); }
 .cash-day-sum .cash-day-total { border-bottom: 0; padding-top: 10px; font-weight: 600; font-size: 1.05rem; }
 .cash-day-methods { margin: 6px 0 0; }
 .cash-day-note { margin: 10px 0 0; padding: 8px 10px; border-radius: var(--r-md); background: color-mix(in srgb, var(--wait-bg) 45%, var(--card)); font-size: .9rem; }
-.cash-day-actions { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin-top: 12px; max-width: 460px; }
-.cash-day-actions .btn { width: 100%; justify-content: center; }
-.cash-day-actions .btn.primary { grid-column: 1 / -1; }
+.cash-day-actions { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; margin-top: 14px; max-width: 640px; }
+/* Действие кассы: что делаем крупно + когда мелко (2026-11-20) */
+.cash-act { display: grid; gap: 2px; justify-items: start; text-align: left; min-height: 56px; padding: 10px 14px; border: 1px solid var(--line-strong);
+  border-radius: var(--r-md); background: var(--card); color: var(--text); font: inherit; cursor: pointer; }
+.cash-act:hover, .cash-act:focus-visible { border-color: var(--accent); background: var(--accent-soft); outline: none; }
+.cash-act-title { font-weight: 600; }
+.cash-act-hint { color: var(--hint); font-size: .85rem; }
+.cash-day-close { display: grid; gap: 6px; margin-top: 14px; max-width: 640px; }
+.cash-day-close .btn { width: 100%; justify-content: center; }
 .cash-day-closed { display: grid; gap: 6px; justify-items: start; margin-top: 12px; padding: 8px 10px; border-radius: var(--r-md); background: var(--sunken); }
 .cash-day-closed p { margin: 0; }
 .cash-day-form { margin-top: 12px; max-width: 460px; }
