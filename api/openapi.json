@@ -9257,6 +9257,105 @@
         }
       }
     },
+    "/api/patients/{patientId}/advance" : {
+      "get" : {
+        "tags" : [ "advance-controller" ],
+        "operationId" : "view_3",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AdvancesView"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "advance-controller" ],
+        "operationId" : "deposit",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AdvanceControllerDeposit"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AdvancesView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/patients/{patientId}/advance/refund" : {
+      "post" : {
+        "tags" : [ "advance-controller" ],
+        "operationId" : "refund",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AdvanceControllerRefund"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AdvancesView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/patients/{id}/recall-invited" : {
       "post" : {
         "tags" : [ "patient-controller" ],
@@ -13146,7 +13245,7 @@
     "/api/appointments/report" : {
       "get" : {
         "tags" : [ "report-controller" ],
-        "operationId" : "view_3",
+        "operationId" : "view_4",
         "parameters" : [ {
           "name" : "month",
           "in" : "query",
@@ -14427,7 +14526,7 @@
     "/api/push" : {
       "get" : {
         "tags" : [ "push-controller" ],
-        "operationId" : "view_4",
+        "operationId" : "view_5",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -15842,7 +15941,7 @@
     "/api/patient/deposit" : {
       "get" : {
         "tags" : [ "patient-booking-controller" ],
-        "operationId" : "deposit",
+        "operationId" : "deposit_1",
         "parameters" : [ {
           "name" : "appointmentId",
           "in" : "query",
@@ -16599,7 +16698,7 @@
     "/api/clinic/pay" : {
       "get" : {
         "tags" : [ "pay-controller" ],
-        "operationId" : "view_5",
+        "operationId" : "view_6",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -17567,6 +17666,49 @@
         }
       }
     },
+    "/api/appointments/load" : {
+      "get" : {
+        "tags" : [ "owner-reports-controller" ],
+        "operationId" : "load",
+        "parameters" : [ {
+          "name" : "from",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }, {
+          "name" : "to",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }, {
+          "name" : "doctorId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/OwnerReportsLoadView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/appointments/from-tish" : {
       "get" : {
         "tags" : [ "tish-report-controller" ],
@@ -17671,6 +17813,49 @@
                   "items" : {
                     "$ref" : "#/components/schemas/DayCount"
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appointments/conversion" : {
+      "get" : {
+        "tags" : [ "owner-reports-controller" ],
+        "operationId" : "conversion",
+        "parameters" : [ {
+          "name" : "from",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }, {
+          "name" : "to",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }, {
+          "name" : "doctorId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/OwnerReportsConversionView"
                 }
               }
             }
@@ -22529,6 +22714,36 @@
           }
         }
       },
+      "AdvancesRefund" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "at" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "amountSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "method" : {
+            "type" : "string",
+            "enum" : [ "CASH", "TRANSFER", "CARD", "ADVANCE" ]
+          },
+          "reason" : {
+            "type" : "string"
+          },
+          "patient" : {
+            "type" : "string"
+          },
+          "by" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "amountSom", "id" ]
+      },
       "CashDaysCashExpense" : {
         "properties" : {
           "id" : {
@@ -22649,9 +22864,19 @@
           "closedSom" : {
             "type" : "integer",
             "format" : "int64"
+          },
+          "refunds" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AdvancesRefund"
+            }
+          },
+          "cashRefundsSom" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         },
-        "required" : [ "cashInSom", "closed", "closingSom", "depositsSom", "expensesSom", "inSom", "withdrawalsSom" ]
+        "required" : [ "cashInSom", "cashRefundsSom", "closed", "closingSom", "depositsSom", "expensesSom", "inSom", "withdrawalsSom" ]
       },
       "CareMemoControllerMemo" : {
         "properties" : {
@@ -22872,7 +23097,7 @@
           },
           "paymentMethod" : {
             "type" : "string",
-            "enum" : [ "CASH", "TRANSFER", "CARD" ]
+            "enum" : [ "CASH", "TRANSFER", "CARD", "ADVANCE" ]
           },
           "chargeSom" : {
             "type" : "integer",
@@ -25172,6 +25397,110 @@
         },
         "required" : [ "h", "w", "x", "y" ]
       },
+      "AdvanceControllerDeposit" : {
+        "properties" : {
+          "amountSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "method" : {
+            "type" : "string",
+            "enum" : [ "CASH", "TRANSFER", "CARD", "ADVANCE" ]
+          },
+          "comment" : {
+            "type" : "string"
+          }
+        }
+      },
+      "AdvancesEntry" : {
+        "properties" : {
+          "at" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "kind" : {
+            "type" : "string",
+            "enum" : [ "IN", "REFUND", "TRANSFER", "SPEND" ]
+          },
+          "deltaSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "method" : {
+            "type" : "string",
+            "enum" : [ "CASH", "TRANSFER", "CARD", "ADVANCE" ]
+          },
+          "comment" : {
+            "type" : "string"
+          },
+          "patientId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "patient" : {
+            "type" : "string"
+          },
+          "by" : {
+            "type" : "string"
+          },
+          "appointmentId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "appointmentStartAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "deltaSom", "patientId" ]
+      },
+      "AdvancesView" : {
+        "properties" : {
+          "patientId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "balanceSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "familyId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "familyName" : {
+            "type" : "string"
+          },
+          "members" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "entries" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AdvancesEntry"
+            }
+          }
+        },
+        "required" : [ "balanceSom", "patientId" ]
+      },
+      "AdvanceControllerRefund" : {
+        "properties" : {
+          "amountSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "method" : {
+            "type" : "string",
+            "enum" : [ "CASH", "TRANSFER", "CARD", "ADVANCE" ]
+          },
+          "reason" : {
+            "type" : "string"
+          }
+        }
+      },
       "FamilyControllerJoin" : {
         "properties" : {
           "relativeId" : {
@@ -25458,7 +25787,7 @@
         "properties" : {
           "method" : {
             "type" : "string",
-            "enum" : [ "CASH", "TRANSFER", "CARD" ]
+            "enum" : [ "CASH", "TRANSFER", "CARD", "ADVANCE" ]
           }
         }
       },
@@ -25644,7 +25973,7 @@
           },
           "method" : {
             "type" : "string",
-            "enum" : [ "CASH", "TRANSFER", "CARD" ]
+            "enum" : [ "CASH", "TRANSFER", "CARD", "ADVANCE" ]
           }
         }
       },
@@ -26601,7 +26930,7 @@
           },
           "method" : {
             "type" : "string",
-            "enum" : [ "CASH", "TRANSFER", "CARD" ]
+            "enum" : [ "CASH", "TRANSFER", "CARD", "ADVANCE" ]
           },
           "chargeSom" : {
             "type" : "integer",
@@ -26662,7 +26991,7 @@
           },
           "method" : {
             "type" : "string",
-            "enum" : [ "CASH", "TRANSFER", "CARD" ]
+            "enum" : [ "CASH", "TRANSFER", "CARD", "ADVANCE" ]
           }
         },
         "required" : [ "amountSom" ]
@@ -26675,7 +27004,7 @@
           },
           "method" : {
             "type" : "string",
-            "enum" : [ "CASH", "TRANSFER", "CARD" ]
+            "enum" : [ "CASH", "TRANSFER", "CARD", "ADVANCE" ]
           }
         }
       },
@@ -26765,7 +27094,7 @@
           },
           "method" : {
             "type" : "string",
-            "enum" : [ "CASH", "TRANSFER", "CARD" ]
+            "enum" : [ "CASH", "TRANSFER", "CARD", "ADVANCE" ]
           }
         }
       },
@@ -31472,7 +31801,7 @@
           },
           "method" : {
             "type" : "string",
-            "enum" : [ "CASH", "TRANSFER", "CARD" ]
+            "enum" : [ "CASH", "TRANSFER", "CARD", "ADVANCE" ]
           },
           "takenBy" : {
             "type" : "string"
@@ -31525,6 +31854,14 @@
           },
           "discount" : {
             "$ref" : "#/components/schemas/PaymentDiscount"
+          },
+          "advanceSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "advanceLeftSom" : {
+            "type" : "integer",
+            "format" : "int32"
           }
         },
         "required" : [ "appointmentId", "debtSom", "paidSom", "telegram" ]
@@ -31541,7 +31878,7 @@
           },
           "method" : {
             "type" : "string",
-            "enum" : [ "CASH", "TRANSFER", "CARD" ]
+            "enum" : [ "CASH", "TRANSFER", "CARD", "ADVANCE" ]
           },
           "paidAt" : {
             "type" : "string",
@@ -31779,9 +32116,13 @@
           "openingDebtsSom" : {
             "type" : "integer",
             "format" : "int64"
+          },
+          "advancesSom" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         },
-        "required" : [ "depositsSom", "openingDebtsSom", "paymentsCount", "totalSom" ]
+        "required" : [ "advancesSom", "depositsSom", "openingDebtsSom", "paymentsCount", "totalSom" ]
       },
       "RevenueViewDay" : {
         "properties" : {
@@ -31992,6 +32333,103 @@
         },
         "required" : [ "active", "bookings", "newPatients", "promoCodeId", "visits" ]
       },
+      "OwnerReportsChairLoad" : {
+        "properties" : {
+          "chairId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "availableMinutes" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "bookedMinutes" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "loadPercent" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "availableMinutes", "bookedMinutes", "chairId", "name" ]
+      },
+      "OwnerReportsDoctorLoad" : {
+        "properties" : {
+          "doctorId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "plannedMinutes" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "bookedMinutes" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "outsideMinutes" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "doneMinutes" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "loadPercent" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "bookedMinutes", "doctorId", "doneMinutes", "name", "outsideMinutes", "plannedMinutes" ]
+      },
+      "OwnerReportsLoadView" : {
+        "properties" : {
+          "from" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "to" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "doctors" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/OwnerReportsDoctorLoad"
+            }
+          },
+          "chairs" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/OwnerReportsChairLoad"
+            }
+          },
+          "plannedMinutes" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "bookedMinutes" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "doneMinutes" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "loadPercent" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "bookedMinutes", "chairs", "doctors", "doneMinutes", "from", "plannedMinutes", "to" ]
+      },
       "TishReportControllerChannelRow" : {
         "properties" : {
           "channel" : {
@@ -32093,6 +32531,70 @@
           }
         },
         "required" : [ "booked", "requested" ]
+      },
+      "OwnerReportsConversionView" : {
+        "properties" : {
+          "from" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "to" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "booked" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "done" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "cancelled" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "noShow" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "waiting" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "patients" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "continued" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "newPatients" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "returningPatients" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "money" : {
+            "type" : "boolean"
+          },
+          "revenueSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "paidVisits" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "avgCheckSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "booked", "cancelled", "continued", "done", "from", "money", "newPatients", "noShow", "patients", "returningPatients", "to", "waiting" ]
       },
       "ChairOptionView" : {
         "properties" : {
@@ -32223,11 +32725,11 @@
           },
           "method" : {
             "type" : "string",
-            "enum" : [ "CASH", "TRANSFER", "CARD" ]
+            "enum" : [ "CASH", "TRANSFER", "CARD", "ADVANCE" ]
           },
           "purpose" : {
             "type" : "string",
-            "enum" : [ "VISIT", "DEBT", "DEPOSIT", "OPENING_DEBT" ]
+            "enum" : [ "VISIT", "DEBT", "DEPOSIT", "OPENING_DEBT", "ADVANCE" ]
           },
           "appointmentId" : {
             "type" : "integer",

@@ -26,6 +26,16 @@ export const server = setupServer(
   // Диагнозы (шаг 3): подсказки в «Диагнозе» и «Аналитика → Диагнозы за период» — по умолчанию пусто
   http.get('*/api/diagnoses/suggest', () => HttpResponse.json({ codes: [], own: [] } satisfies Schemas['DiagnosesSuggestions'])),
   http.get('*/api/diagnoses/report', () => HttpResponse.json([] satisfies Schemas['DiagnosesCodeCount'][])),
+  // Загрузка и конверсия (шаг 5Б, «Аналитика»): по умолчанию пусто
+  http.get('*/api/appointments/load', ({ request }) => {
+    const q = new URL(request.url).searchParams
+    return HttpResponse.json({ from: q.get('from')!, to: q.get('to')!, doctors: [], chairs: [], plannedMinutes: 0, bookedMinutes: 0, doneMinutes: 0 } satisfies Schemas['OwnerReportsLoadView'])
+  }),
+  http.get('*/api/appointments/conversion', ({ request }) => {
+    const q = new URL(request.url).searchParams
+    return HttpResponse.json({ from: q.get('from')!, to: q.get('to')!, booked: 0, done: 0, cancelled: 0, noShow: 0, waiting: 0, patients: 0, continued: 0,
+      newPatients: 0, returningPatients: 0, money: false } satisfies Schemas['OwnerReportsConversionView'])
+  }),
   // Долги (полоса «Сегодня», карточка приёма): по умолчанию нет. Без обработчика запрос падал бы обрывом
   // сети — а это плашка «Tish обновляется» (api/updating.ts) поверх того, что проверяет тест
   http.get('*/api/appointments/debts', () => HttpResponse.json([] satisfies Schemas['PaymentQueryDebt'][])),

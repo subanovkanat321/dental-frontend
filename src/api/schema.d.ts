@@ -3636,6 +3636,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/patients/{patientId}/advance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["view_3"];
+        put?: never;
+        post: operations["deposit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/patients/{patientId}/advance/refund": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["refund"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/patients/{id}/recall-invited": {
         parameters: {
             query?: never;
@@ -5259,7 +5291,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["view_3"];
+        get: operations["view_4"];
         put?: never;
         post: operations["report_1"];
         delete?: never;
@@ -5963,7 +5995,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["view_4"];
+        get: operations["view_5"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6747,7 +6779,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["deposit"];
+        get: operations["deposit_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -7211,7 +7243,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["view_5"];
+        get: operations["view_6"];
         put?: never;
         post?: never;
         delete?: never;
@@ -7684,6 +7716,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/appointments/load": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["load"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/appointments/from-tish": {
         parameters: {
             query?: never;
@@ -7724,6 +7772,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["counts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/appointments/conversion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["conversion"];
         put?: never;
         post?: never;
         delete?: never;
@@ -9770,6 +9834,19 @@ export interface components {
             /** Format: int32 */
             amountSom?: number;
         };
+        AdvancesRefund: {
+            /** Format: int64 */
+            id: number;
+            /** Format: date-time */
+            at?: string;
+            /** Format: int32 */
+            amountSom: number;
+            /** @enum {string} */
+            method?: "CASH" | "TRANSFER" | "CARD" | "ADVANCE";
+            reason?: string;
+            patient?: string;
+            by?: string;
+        };
         CashDaysCashExpense: {
             /** Format: int64 */
             id: number;
@@ -9822,6 +9899,9 @@ export interface components {
             closedBy?: string;
             /** Format: int64 */
             closedSom?: number;
+            refunds?: components["schemas"]["AdvancesRefund"][];
+            /** Format: int64 */
+            cashRefundsSom: number;
         };
         CareMemoControllerMemo: {
             title?: string;
@@ -9912,7 +9992,7 @@ export interface components {
             /** Format: int32 */
             paidSom?: number;
             /** @enum {string} */
-            paymentMethod?: "CASH" | "TRANSFER" | "CARD";
+            paymentMethod?: "CASH" | "TRANSFER" | "CARD" | "ADVANCE";
             /** Format: int32 */
             chargeSom?: number;
             /** Format: int32 */
@@ -10855,6 +10935,50 @@ export interface components {
             /** Format: double */
             h: number;
         };
+        AdvanceControllerDeposit: {
+            /** Format: int32 */
+            amountSom?: number;
+            /** @enum {string} */
+            method?: "CASH" | "TRANSFER" | "CARD" | "ADVANCE";
+            comment?: string;
+        };
+        AdvancesEntry: {
+            /** Format: date-time */
+            at?: string;
+            /** @enum {string} */
+            kind?: "IN" | "REFUND" | "TRANSFER" | "SPEND";
+            /** Format: int32 */
+            deltaSom: number;
+            /** @enum {string} */
+            method?: "CASH" | "TRANSFER" | "CARD" | "ADVANCE";
+            comment?: string;
+            /** Format: int64 */
+            patientId: number;
+            patient?: string;
+            by?: string;
+            /** Format: int64 */
+            appointmentId?: number;
+            /** Format: date-time */
+            appointmentStartAt?: string;
+        };
+        AdvancesView: {
+            /** Format: int64 */
+            patientId: number;
+            /** Format: int32 */
+            balanceSom: number;
+            /** Format: int64 */
+            familyId?: number;
+            familyName?: string;
+            members?: string[];
+            entries?: components["schemas"]["AdvancesEntry"][];
+        };
+        AdvanceControllerRefund: {
+            /** Format: int32 */
+            amountSom?: number;
+            /** @enum {string} */
+            method?: "CASH" | "TRANSFER" | "CARD" | "ADVANCE";
+            reason?: string;
+        };
         FamilyControllerJoin: {
             /** Format: int64 */
             relativeId?: number;
@@ -10977,7 +11101,7 @@ export interface components {
         };
         OpeningDebtControllerPayRequest: {
             /** @enum {string} */
-            method?: "CASH" | "TRANSFER" | "CARD";
+            method?: "CASH" | "TRANSFER" | "CARD" | "ADVANCE";
         };
         NewsControllerCreate: {
             text?: string;
@@ -11053,7 +11177,7 @@ export interface components {
             /** Format: int32 */
             amountSom?: number;
             /** @enum {string} */
-            method?: "CASH" | "TRANSFER" | "CARD";
+            method?: "CASH" | "TRANSFER" | "CARD" | "ADVANCE";
         };
         FamilyMoneyControllerApplied: {
             /** Format: int64 */
@@ -11435,7 +11559,7 @@ export interface components {
             /** Format: int32 */
             amountSom?: number;
             /** @enum {string} */
-            method?: "CASH" | "TRANSFER" | "CARD";
+            method?: "CASH" | "TRANSFER" | "CARD" | "ADVANCE";
             /** Format: int32 */
             chargeSom?: number;
             /** Format: date */
@@ -11461,13 +11585,13 @@ export interface components {
             /** Format: int32 */
             amountSom: number;
             /** @enum {string} */
-            method?: "CASH" | "TRANSFER" | "CARD";
+            method?: "CASH" | "TRANSFER" | "CARD" | "ADVANCE";
         };
         AppointmentControllerExtra: {
             /** Format: int32 */
             amountSom?: number;
             /** @enum {string} */
-            method?: "CASH" | "TRANSFER" | "CARD";
+            method?: "CASH" | "TRANSFER" | "CARD" | "ADVANCE";
         };
         AppointmentControllerBill: {
             /** Format: int32 */
@@ -11500,7 +11624,7 @@ export interface components {
             /** Format: int32 */
             amountSom?: number;
             /** @enum {string} */
-            method?: "CASH" | "TRANSFER" | "CARD";
+            method?: "CASH" | "TRANSFER" | "CARD" | "ADVANCE";
         };
         CareMemoControllerSend: {
             /** Format: int64 */
@@ -13344,7 +13468,7 @@ export interface components {
             /** Format: int32 */
             amountSom: number;
             /** @enum {string} */
-            method?: "CASH" | "TRANSFER" | "CARD";
+            method?: "CASH" | "TRANSFER" | "CARD" | "ADVANCE";
             takenBy?: string;
         };
         ReceiptsReceiptView: {
@@ -13365,6 +13489,10 @@ export interface components {
             text?: string;
             telegram: boolean;
             discount?: components["schemas"]["PaymentDiscount"];
+            /** Format: int32 */
+            advanceSom?: number;
+            /** Format: int32 */
+            advanceLeftSom?: number;
         };
         PaymentQueryEntry: {
             /** Format: int64 */
@@ -13372,7 +13500,7 @@ export interface components {
             /** Format: int32 */
             amountSom: number;
             /** @enum {string} */
-            method?: "CASH" | "TRANSFER" | "CARD";
+            method?: "CASH" | "TRANSFER" | "CARD" | "ADVANCE";
             /** Format: date-time */
             paidAt?: string;
         };
@@ -13476,6 +13604,8 @@ export interface components {
             days?: components["schemas"]["RevenueViewDay"][];
             /** Format: int64 */
             openingDebtsSom: number;
+            /** Format: int64 */
+            advancesSom: number;
         };
         RevenueViewDay: {
             /** Format: date */
@@ -13562,6 +13692,48 @@ export interface components {
             /** Format: int64 */
             revenueSom?: number;
         };
+        OwnerReportsChairLoad: {
+            /** Format: int64 */
+            chairId: number;
+            name: string;
+            /** Format: int32 */
+            availableMinutes: number;
+            /** Format: int32 */
+            bookedMinutes: number;
+            /** Format: int32 */
+            loadPercent?: number;
+        };
+        OwnerReportsDoctorLoad: {
+            /** Format: int64 */
+            doctorId: number;
+            name: string;
+            /** Format: int32 */
+            plannedMinutes: number;
+            /** Format: int32 */
+            bookedMinutes: number;
+            /** Format: int32 */
+            outsideMinutes: number;
+            /** Format: int32 */
+            doneMinutes: number;
+            /** Format: int32 */
+            loadPercent?: number;
+        };
+        OwnerReportsLoadView: {
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            doctors: components["schemas"]["OwnerReportsDoctorLoad"][];
+            chairs: components["schemas"]["OwnerReportsChairLoad"][];
+            /** Format: int32 */
+            plannedMinutes: number;
+            /** Format: int32 */
+            bookedMinutes: number;
+            /** Format: int32 */
+            doneMinutes: number;
+            /** Format: int32 */
+            loadPercent?: number;
+        };
         TishReportControllerChannelRow: {
             /** @enum {string} */
             channel: "BOT" | "MINI_APP" | "SITE" | "INSTAGRAM" | "TWOGIS" | "WHATSAPP" | "REELS" | "QR" | "REFERRAL" | "RECALL";
@@ -13606,6 +13778,37 @@ export interface components {
             booked: number;
             /** Format: int64 */
             requested: number;
+        };
+        OwnerReportsConversionView: {
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            /** Format: int32 */
+            booked: number;
+            /** Format: int32 */
+            done: number;
+            /** Format: int32 */
+            cancelled: number;
+            /** Format: int32 */
+            noShow: number;
+            /** Format: int32 */
+            waiting: number;
+            /** Format: int32 */
+            patients: number;
+            /** Format: int32 */
+            continued: number;
+            /** Format: int32 */
+            newPatients: number;
+            /** Format: int32 */
+            returningPatients: number;
+            money: boolean;
+            /** Format: int64 */
+            revenueSom?: number;
+            /** Format: int32 */
+            paidVisits?: number;
+            /** Format: int32 */
+            avgCheckSom?: number;
         };
         ChairOptionView: {
             /** Format: int64 */
@@ -13656,9 +13859,9 @@ export interface components {
             /** Format: int32 */
             amountSom: number;
             /** @enum {string} */
-            method?: "CASH" | "TRANSFER" | "CARD";
+            method?: "CASH" | "TRANSFER" | "CARD" | "ADVANCE";
             /** @enum {string} */
-            purpose?: "VISIT" | "DEBT" | "DEPOSIT" | "OPENING_DEBT";
+            purpose?: "VISIT" | "DEBT" | "DEPOSIT" | "OPENING_DEBT" | "ADVANCE";
             /** Format: int64 */
             appointmentId?: number;
             /** Format: date-time */
@@ -21187,6 +21390,80 @@ export interface operations {
             };
         };
     };
+    view_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdvancesView"];
+                };
+            };
+        };
+    };
+    deposit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdvanceControllerDeposit"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdvancesView"];
+                };
+            };
+        };
+    };
+    refund: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdvanceControllerRefund"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdvancesView"];
+                };
+            };
+        };
+    };
     recallInvited: {
         parameters: {
             query?: never;
@@ -24244,7 +24521,7 @@ export interface operations {
             };
         };
     };
-    view_3: {
+    view_4: {
         parameters: {
             query: {
                 month: string;
@@ -25270,7 +25547,7 @@ export interface operations {
             };
         };
     };
-    view_4: {
+    view_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -26420,7 +26697,7 @@ export interface operations {
             };
         };
     };
-    deposit: {
+    deposit_1: {
         parameters: {
             query?: {
                 appointmentId?: number;
@@ -27037,7 +27314,7 @@ export interface operations {
             };
         };
     };
-    view_5: {
+    view_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -27723,6 +28000,30 @@ export interface operations {
             };
         };
     };
+    load: {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+                doctorId?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnerReportsLoadView"];
+                };
+            };
+        };
+    };
     report_5: {
         parameters: {
             query?: {
@@ -27788,6 +28089,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DayCount"][];
+                };
+            };
+        };
+    };
+    conversion: {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+                doctorId?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnerReportsConversionView"];
                 };
             };
         };

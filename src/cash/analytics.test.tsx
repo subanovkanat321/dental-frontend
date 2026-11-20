@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
@@ -220,4 +220,74 @@ test('«Аналитика»: под «30 дней / Месяц» — какие
   expect(await screen.findByLabelText('Даты периода')).toHaveTextContent('последние 30 дней по сегодня')
   await userEvent.click(screen.getByRole('button', { name: 'Месяц' }))
   expect(screen.getByLabelText('Даты периода')).toHaveTextContent(/с 1-го числа|месяц только начался/)
+})
+
+test('аналитика: загрузка врачей и кресел — свободные сверху, меньше 50 % подсвечено; конверсия со средним чеком', async () => {
+  const asked: string[] = []
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/appointments/load', ({ request }) => {
+      const q = new URL(request.url).searchParams
+      asked.push(`${q.get('from')}..${q.get('to')}`)
+      return HttpResponse.json({
+        from: q.get('from')!, to: q.get('to')!, plannedMinutes: 4200, bookedMinutes: 2760, doneMinutes: 1800, loadPercent: 64,
+        doctors: [
+          { doctorId: 2, name: 'Дастан Т.', plannedMinutes: 2400, bookedMinutes: 960, outsideMinutes: 0, doneMinutes: 600, loadPercent: 40 },
+          { doctorId: 1, name: 'Айгерим Садыкова', plannedMinutes: 1800, bookedMinutes: 1860, outsideMinutes: 60, doneMinutes: 1200, loadPercent: 100 },
+        ],
+        chairs: [{ chairId: 5, name: 'Кресло 1', availableMinutes: 3000, bookedMinutes: 2400, loadPercent: 80 }],
+      } satisfies Schemas['OwnerReportsLoadView'])
+    }),
+    http.get('*/api/appointments/conversion', ({ request }) => {
+      const q = new URL(request.url).searchParams
+      return HttpResponse.json({
+        from: q.get('from')!, to: q.get('to')!, booked: 20, done: 14, cancelled: 3, noShow: 2, waiting: 1, patients: 12, continued: 9,
+        newPatients: 4, returningPatients: 8, money: true, revenueSom: 70000, paidVisits: 14, avgCheckSom: 5000,
+      } satisfies Schemas['OwnerReportsConversionView'])
+    }),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await findSub('Аналитика'))
+  const load = await screen.findByRole('region', { name: 'Загрузка врачей и кресел' })
+  expect(await within(load).findByText('64%')).toBeInTheDocument()
+  const doctors = within(within(load).getByRole('list', { name: 'Загрузка врачей' })).getAllByRole('listitem')
+  expect(doctors[0]).toHaveClass('low')
+  expect(doctors[0]).toHaveTextContent(/Дастан Т\.есть свободные окна.*40%.*16 ч из 40 ч/)
+  expect(doctors[1]).not.toHaveClass('low')
+  expect(doctors[1].getAttribute('aria-label')).toMatch(/вне часов ещё 1 ч/)
+  expect(within(within(load).getByRole('list', { name: 'Загрузка кресел' })).getByRole('listitem')).toHaveTextContent(/Кресло 1.*80%/)
+
+  const conv = screen.getByRole('region', { name: 'Конверсия пациентов' })
+  expect(await within(conv).findByText('70%')).toBeInTheDocument()
+  const steps = within(within(conv).getByRole('list', { name: /Записались/ })).getAllByRole('listitem')
+  expect(steps.map((s) => s.querySelector('.hbar-name')?.textContent)).toEqual(['Записались', 'Пришли', 'Отменили', 'Не пришли', 'Ещё ждут'])
+  expect(within(conv).getByLabelText('Продолжили лечение')).toHaveTextContent(/75%.*9 из 12 пришедших/)
+  expect(within(conv).getByLabelText('Новые и постоянные')).toHaveTextContent('4 / 8')
+  expect(within(conv).getByLabelText('Средний чек')).toHaveTextContent(/5\s000 сом/)
+
+  // Свои даты — запрос за выбранный период
+  await user.click(screen.getByRole('button', { name: 'Свои даты' }))
+  const from = screen.getByLabelText('С какого дня')
+  fireEvent.change(from, { target: { value: '2026-10-01' } })
+  await waitFor(() => expect(asked.some((a) => a.startsWith('2026-10-01..'))).toBe(true))
+})
+
+test('аналитика: конверсия без права на деньги — без среднего чека', async () => {
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/appointments/conversion', ({ request }) => {
+      const q = new URL(request.url).searchParams
+      return HttpResponse.json({
+        from: q.get('from')!, to: q.get('to')!, booked: 5, done: 3, cancelled: 1, noShow: 1, waiting: 0, patients: 3, continued: 1,
+        newPatients: 1, returningPatients: 2, money: false,
+      } satisfies Schemas['OwnerReportsConversionView'])
+    }),
+  )
+  renderApp()
+  await userEvent.click(await findSub('Аналитика'))
+  const conv = await screen.findByRole('region', { name: 'Конверсия пациентов' })
+  expect(await within(conv).findByLabelText('Продолжили лечение')).toBeInTheDocument()
+  expect(within(conv).queryByLabelText('Средний чек')).not.toBeInTheDocument()
+  expect(within(conv).queryByText('Ещё ждут')).not.toBeInTheDocument()
 })
