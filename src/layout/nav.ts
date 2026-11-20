@@ -14,8 +14,17 @@ export type Sub = { key: string; title: string; group?: string }
 /** Числа у подразделов («Вопросы» — ждут ответа, «Лист ожидания» — сколько ждут, «Задачи» — мои просроченные). */
 export type Counts = Partial<Record<string, number>>
 
-/** Заметное число (бирюзовое) — ждёт действия; остальные — серым. */
+/**
+ * Заметное число — красная точка-счётчик (с 2026-11-20, шаг 6А; раньше бирюзовое): новое, что ждёт действия;
+ * остальные — серым. Всегда заметные — вопросы пациентов и просроченные задачи; «Лист ожидания» — когда в нём
+ * есть новые с прошлого захода (Shell, layout/waitlistSeen.ts).
+ */
 export const LOUD: ReadonlySet<string> = new Set(['patients/questions', 'patients/tasks'])
+
+/** Заметное ли число у подраздела: `loud` — набор от Shell (LOUD + то, что заметно сейчас), без него — LOUD. */
+export function isLoud(loud: ReadonlySet<string> | undefined, page: Page, key: string): boolean {
+  return (loud ?? LOUD).has(`${page}/${key}`)
+}
 
 /** «Склад → Заказ» — список к закупке у поставщиков; «Склад → Лаборатория» — заказ-наряды технику. */
 const PURCHASE_SUB: Sub = { key: 'purchase', title: 'Заказ' }
@@ -90,13 +99,13 @@ export function countOf(counts: Counts, page: Page, key: string): number {
   return counts[`${page}/${key}`] ?? 0
 }
 
-export function sumOf(counts: Counts, page: Page, subs: Sub[]): { total: number; loud: boolean } {
+export function sumOf(counts: Counts, page: Page, subs: Sub[], loudSet?: ReadonlySet<string>): { total: number; loud: boolean } {
   let total = 0
   let loud = false
   for (const s of subs) {
     const n = countOf(counts, page, s.key)
     total += n
-    if (n > 0 && LOUD.has(`${page}/${s.key}`)) loud = true
+    if (n > 0 && isLoud(loudSet, page, s.key)) loud = true
   }
   return { total, loud }
 }

@@ -66,7 +66,9 @@ test('Экран входа после выхода: подсказка один
   const user = userEvent.setup()
   const { unmount } = renderApp()
 
-  const hint = await screen.findByRole('status')
+  // Ждём саму подсказку, а не первый попавшийся role=status: пока грузится экран входа (ленивый модуль), им бывает
+  // «Загрузка…» — тест падал через раз под нагрузкой
+  const hint = (await screen.findByText(/Вы вышли из Tish/)).closest<HTMLElement>('[role="status"]')!
   expect(hint).toHaveTextContent('Вы вышли из Tish')
   expect(hint).toHaveTextContent('Не сохраняйте пароль в браузере')
   expect(hint).toHaveTextContent('в режиме инкогнито')

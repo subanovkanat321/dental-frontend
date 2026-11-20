@@ -9,7 +9,9 @@ import { openSub, subHref, useSub } from '../lib/sub'
 import { matches, useMedia } from '../lib/useMedia'
 import { useWaitlist } from '../api/settings'
 import { CLINIC_ALIAS, SETTINGS_ALIAS } from '../settings/items'
-import { countOf, currentSub, LOUD, subsOf, sumOf, type Counts, type Sub } from './nav'
+import { countOf, currentSub, isLoud, LOUD, subsOf, sumOf, type Counts, type Sub } from './nav'
+import { NavCount } from './NavCount'
+import { useWaitlistNew } from './waitlistSeen'
 import { NavContext, type NavApi } from './useSection'
 import { AdminNotices } from './AdminNotices'
 import { OfflineNotice } from './OfflineNotice'
@@ -103,15 +105,21 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
   const sections = useMemo(() => sectionsOf(me), [me])
   // Числа у подразделов: вопросы пациентов ждут ответа, сколько в листе ожидания (видно из любого раздела)
   const questions = useNewQuestions(Boolean(me.doctor)).data?.count ?? 0
-  const waitlist = useWaitlist(Boolean(me.doctor)).data?.length ?? 0
+  const waitlistList = useWaitlist(Boolean(me.doctor)).data
+  const waitlist = waitlistList?.length ?? 0
   // Мои просроченные задачи — заметным числом: их пора сделать
   const overdueTasks = useTaskSummary(Boolean(me.doctor)).data?.overdue ?? 0
   // Позиций к заказу у поставщиков — серым числом у «Склад → Заказ»
   const toOrder = usePurchaseCount(Boolean(me.doctor)).data?.count ?? 0
-  const counts: Counts = { 'patients/questions': questions, 'patients/waitlist': waitlist, 'patients/tasks': overdueTasks, 'stock/purchase': toOrder }
+  // Лист ожидания: новые с прошлого захода — красным числом новых, иначе серым — сколько ждут всего 
+  const patientsSub = useSub('patients')
+  const waitlistOpen = page === 'patients' && patientsSub === 'waitlist'
+  const waitlistNew = useWaitlistNew(waitlistList, waitlistOpen)
+  const counts: Counts = { 'patients/questions': questions, 'patients/waitlist': waitlistNew || waitlist, 'patients/tasks': overdueTasks, 'stock/purchase': toOrder }
+  const loud = useMemo<ReadonlySet<string>>(() => (waitlistNew > 0 ? new Set([...LOUD, 'patients/waitlist']) : LOUD), [waitlistNew])
   // Открытый подраздел каждого раздела (адрес или последний открытый) и пункт «Настроек»
   const chosen: Partial<Record<Page, string | null>> = {
-    patients: useSub('patients'), cash: useSub('cash'), stock: useSub('stock'), clinic: useSub('clinic'), platform: useSub('platform'),
+    patients: patientsSub, cash: useSub('cash'), stock: useSub('stock'), clinic: useSub('clinic'), platform: useSub('platform'),
     settings: useSub('settings'),
   }
   const subsBy = useMemo(() => Object.fromEntries(sections.map((s) => [s.key, subsOf(s.key, me)])) as Record<Page, Sub[]>, [sections, me])
@@ -327,14 +335,14 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
             onClick={(e) => { e.preventDefault(); goSub(key, s.key) }}>
             <SubIcon page={key} sub={s.key} />
             <span className="nav-sub-title">{s.title}</span>
-            {n > 0 && <span className={LOUD.has(`${key}/${s.key}`) ? 'nav-count' : 'nav-count quiet'} aria-hidden="true">{n}</span>}
+            <NavCount n={n} loud={isLoud(loud, key, s.key)} />
             {className === 'sheet-item' && on && <span className="sheet-check" aria-hidden="true">✓</span>}
           </a>
         </Fragment>
       )
     })
   }
-  const nav: NavApi = { openSheet: setSheet, subs: (key) => subsBy[key] ?? [], active: activeSub, go: goSub, counts, tabsSlot, helpSlot, setHelpSlot }
+  const nav: NavApi = { openSheet: setSheet, subs: (key) => subsBy[key] ?? [], active: activeSub, go: goSub, counts, loud, tabsSlot, helpSlot, setHelpSlot }
   const sheetSection = sheet ? sections.find((s) => s.key === sheet) : undefined
   const { name } = whoAmI(me)
   const meHead = <><Avatar me={me} size="lg" /><p className="menu-who"><strong>{name}</strong><span className="hint">{role} · {clinic}</span></p></>
@@ -371,7 +379,8 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
           {sections.map((s) => {
             const subs = subsBy[s.key] ?? []
             const open = subs.length > 0 && expanded(s.key)
-            const { total, loud } = sumOf(counts, s.key, subs)
+            const sum = sumOf(counts, s.key, subs, loud)
+            const total = sum.total
             return (
               <div key={s.key} className={['nav-item', open ? 'open' : '', extra.includes(s) ? 'extra' : '', s.key === page && activeSub(s.key) ? 'sub-active' : ''].join(' ').trim()}
                 onMouseEnter={(e) => enter(s.key, e.currentTarget)} onMouseLeave={leave}>
@@ -385,9 +394,7 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
                     onKeyDown={(e) => flyKey(s.key, e)}
                     onClick={(e) => clickSection(s.key, e)}>
                     <Icon name={s.key} /> <span>{s.title}</span>
-                    {total > 0 && (
-                      <span className={loud ? 'nav-badge' : 'nav-badge quiet'} aria-label={`${s.title}: новое — ${total}`}>{total}</span>
-                    )}
+                    <NavCount badge n={total} loud={sum.loud} label={`${s.title}: новое — ${total}`} />
                   </button>
                   {subs.length > 0 && (
                     <button type="button" className="nav-chev" aria-expanded={open} aria-label={`${open ? 'Свернуть' : 'Раскрыть'} подразделы: ${s.title}`}

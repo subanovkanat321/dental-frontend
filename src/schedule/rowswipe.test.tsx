@@ -7,7 +7,7 @@ import { appointment, me, renderApp } from '../test/fixtures'
 import { fixNow } from '../test/now'
 import { server } from '../test/server'
 import { todayIn } from '../lib/time'
-import { waitForSlow } from '../test/wait'
+import { waitForSlow, warmSchedule } from '../test/wait'
 import { swipeClock } from './useRowSwipe'
 
 type Appointment = Schemas['AppointmentView']
@@ -20,6 +20,9 @@ function screenOf(kind: 'phone' | 'desktop') {
     addListener() {}, removeListener() {}, dispatchEvent: () => false,
   }))
 }
+
+// Оболочка и «Расписание» — заранее, со своим сроком: под нагрузкой их сборка не влезала в 5 с findBy первого теста
+beforeAll(warmSchedule, 60_000)
 
 /** Часы жеста: каждый шаг пальца — +stepMs (по умолчанию медленно, без флика) */
 let clock = 0

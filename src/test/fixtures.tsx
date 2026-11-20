@@ -7,6 +7,12 @@ import type { Schemas } from '../api/client'
 import { createQueryClient } from '../api/queryClient'
 import { App } from '../App'
 import { todayIn } from '../lib/time'
+import { warmSchedule } from './wait'
+
+// Оболочка и «Расписание» в App.tsx — ленивые: файл, который рисует приложение (renderApp), заранее собирает их в
+// beforeAll со своим сроком. Иначе под нагрузкой (полный прогон, --maxWorkers) первый тест файла ждал сборку внутри
+// 5 с findBy и падал «Unable to find …» через раз, а один — проходил (2026-11-20: rowswipe, telegram, actions…)
+beforeAll(warmSchedule, 60_000)
 
 /** Вымышленная клиника и пациенты — настоящих данных в тестах не бывает. */
 export const me: Schemas['BookingViewsMe'] = {

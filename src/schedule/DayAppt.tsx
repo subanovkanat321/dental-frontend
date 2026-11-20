@@ -1,4 +1,4 @@
-import { memo } from 'react'
+import { memo, type CSSProperties } from 'react'
 
 import type { Schemas } from '../api/client'
 import { timeOf } from '../lib/time'
@@ -7,6 +7,7 @@ import { ApptBadges } from './ApptBadges'
 import { MAX_BADGES, narrowAppt } from './badges'
 import { colleagueTimeOf } from './chairTime'
 import { PAD, PX, SHORT } from './gridScale'
+import { isShaky } from './paint'
 import { statusOf } from './status'
 import type { useApptHover } from './useApptHover'
 import { apptSpan, fromYesterday, untilTomorrow } from './workSpans'
@@ -19,7 +20,7 @@ type Appointment = Schemas['AppointmentView']
  * сохраняет тот же объект, если приём не изменился), выбор или раскладка. Все props — значения или
  * стабильные функции (onOpen — useCallback, hover — из хранилища наведения).
  */
-export const DayAppt = memo(function DayAppt({ a, date, from, limit, active, money, chairTime, hover, onOpen, onQuick }: {
+export const DayAppt = memo(function DayAppt({ a, date, from, limit, active, money, chairTime, hover, onOpen, onQuick, paint }: {
   a: Appointment
   date: string
   /** Минута, с которой начинается сетка. */
@@ -34,6 +35,8 @@ export const DayAppt = memo(function DayAppt({ a, date, from, limit, active, mon
   onOpen: (id: number) => void
   /** Меню быстрых действий: правая кнопка мыши или «⋯» (у точки) — стабильная функция (useCallback) */
   onQuick?: (a: Appointment, at: { x: number; y: number }) => void
+  /** «Красить по врачу / услуге» (schedule/paint.ts): цвет заливки вместо цвета статуса; статус остаётся словом */
+  paint?: string
 }) {
   const s = statusOf(a)
   // Через полночь: в своём дне — целиком (сетка продлена после 24:00) или, если сетка и так на сутки
@@ -47,8 +50,8 @@ export const DayAppt = memo(function DayAppt({ a, date, from, limit, active, mon
   const short = h < SHORT
   return (
     <>
-    <button type="button" className={`appt s-${s.kind}${short ? ' short' : ''}${active ? ' active' : ''}${carried ? ' carried' : ''}${continues ? ' continues' : ''}`}
-      style={{ top, height: h }} {...hover(a)}
+    <button type="button" className={`appt s-${s.kind}${short ? ' short' : ''}${active ? ' active' : ''}${carried ? ' carried' : ''}${continues ? ' continues' : ''}${isShaky(a) ? ' shaky' : ''}${paint ? ' painted' : ''}`}
+      style={paint ? { top, height: h, '--paint': paint } as CSSProperties : { top, height: h }} {...hover(a)}
       onClick={() => onOpen(a.id)}
       onContextMenu={onQuick ? (e) => { e.preventDefault(); e.stopPropagation(); onQuick(a, { x: e.clientX, y: e.clientY }) } : undefined}
       aria-label={`${carried ? 'со вчера ' : ''}${timeOf(a.startAt)}–${timeOf(a.endAt)}, ${a.patient.fullName}: ${s.label}`}>

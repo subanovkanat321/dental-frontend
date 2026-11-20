@@ -196,6 +196,13 @@ export const TIPS: Tip[] = [
     show: (me) => hasSub(me, 'cash', 'analytics'),
   },
   {
+    id: 'load-report',
+    title: 'Загрузка врачей и конверсия',
+    text: 'В «Аналитике» — сколько рабочих часов занято записями (меньше 50 % — есть свободные окна) и сколько пациентов дошли до лечения, средний чек.',
+    action: { show: 'cash/analytics' },
+    show: (me) => hasSub(me, 'cash', 'analytics'),
+  },
+  {
     id: 'referral',
     title: 'Пригласите коллег — +3 месяца',
     text: 'Клиника по вашей ссылке пробует Tish дольше, а когда оплатит — вам +3 месяца бесплатно.',
@@ -354,6 +361,13 @@ export const TIPS: Tip[] = [
     text: '«Боится», «Опаздывает», «По рекомендации» — цветные точки у имени в расписании и в карточке пациента. Список — «Настройки → Метки пациентов».',
     action: { show: 'settings/tags' },
     show: (me) => hasSub(me, 'settings', 'tags'),
+  },
+  {
+    id: 'schedule-colors',
+    title: 'Календарь врача и «чем красить»',
+    text: 'Нажмите на имя врача над колонкой — месяц: рабочие дни, отпуск, сколько свободно. Под расписанием — «Красить запись»: по статусу, врачу или услуге.',
+    action: { guide: 'raspisanie/chitat-raspisanie' },
+    show: (me) => Boolean(me.admin || me.reception || me.doctorId != null || isAssistant(me)),
   },
   {
     id: 'instagram',

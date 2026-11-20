@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type MouseEvent } from 'react'
 
 import type { Schemas } from '../../api/client'
-import { canEditDoctor, seesMoneyOf } from '../../lib/roles'
+import { canEditDoctor, isAssistant, seesMoneyOf } from '../../lib/roles'
 import { ApptBadges } from '../ApptBadges'
 import { MAX_BADGES, narrowAppt } from '../badges'
 import { useApptHover } from '../useApptHover'
@@ -11,6 +11,7 @@ import { colleagueTimeOf } from '../chairTime'
 import { addDays, dateOf, dayMinutes, dayTitle, minutesOf, timeOf } from '../../lib/time'
 import { apptSpan, DAY, fromYesterday, hourLabel, offSpans, touchesDay, untilTomorrow, workSpans } from '../workSpans'
 import { hhmm, PAD, PX, useFitToWindow, useNowMinutes } from '../gridScale'
+import { isShaky, usePaintOf } from '../paint'
 import { statusOf } from '../status'
 import { useDrag } from './useDrag'
 import { useMove, type Move } from './useMove'
@@ -56,6 +57,8 @@ export function WeekGrid({ me, doctorId, monday, today, selectedId, onOpen, onNe
   const nowMinutes = useNowMinutes()
   const editable = canEditDoctor(me, doctorId)
   const hover = useApptHover(me, (id) => (me.doctors ?? []).find((d) => d.id === id)?.fullName ?? '')
+  // «Чем красить запись» — тот же выбор, что у «Дня»; цвет врача — по списку клиники, как в шапке колонки
+  const { paintOf } = usePaintOf((me.doctors ?? []).filter((d) => d.active !== false && (!isAssistant(me) || me.assistantOf!.includes(d.id))))
 
   const grid = useRef<HTMLDivElement>(null)
   const columns = useRef<(HTMLElement | null)[]>([])
@@ -175,7 +178,7 @@ export function WeekGrid({ me, doctorId, monday, today, selectedId, onOpen, onNe
               <ChairTimeBands slots={sl} date={date} y={y} from={from} to={to} appointments={own} />
               {date === today && showNow && <div className="grid-now" style={{ top: y(nowMinutes) }} />}
               {own.map((a) => (
-                <Block key={a.id} a={a} date={date} limit={limit} me={me} y={y} selected={selectedId === a.id} hover={hover.bind(a)}
+                <Block key={a.id} a={a} date={date} limit={limit} me={me} y={y} selected={selectedId === a.id} hover={hover.bind(a)} paint={paintOf(a)}
                   chair={colleagueTimeOf(a, sl?.chairTime)}
                   moving={ghost?.appointment.id === a.id || (move.isPending && move.variables?.appointment.id === a.id)}
                   drag={canDrag(a, me) && !fromYesterday(a, date) ? handlers(a) : undefined}
@@ -225,8 +228,10 @@ function Hours({ slots: sl, date, from, to, height, y }: {
 const WEEK_SHORT = 40
 
 /** Приём в колонке дня: заливка статуса, время и имя; можно тащить — курсор «рука». */
-function Block({ a, date, limit, me, y, selected, moving, drag, hover, onClick, chair }: {
+function Block({ a, date, limit, me, y, selected, moving, drag, hover, onClick, chair, paint }: {
   a: Appointment
+  /** «Красить по врачу / услуге»: цвет заливки (schedule/paint.ts); по статусу — undefined */
+  paint?: string
   /** Докуда видно приём в своём дне: 1440 — полночь, больше — сетка продлена после полуночи. */
   limit: number
   /** Часы коллеги по креслу, в которые попал приём (colleagueTimeOf), — значок 🪑 */
@@ -253,8 +258,8 @@ function Block({ a, date, limit, me, y, selected, moving, drag, hover, onClick, 
   return (
     <button type="button" {...drag} {...hover} onClick={onClick}
       onPointerDown={(e) => { hover.onPointerDown(); drag?.onPointerDown(e) }}
-      className={`appt s-${s.kind}${short ? ' short' : ''}${selected ? ' active' : ''}${drag ? ' can-drag' : ''}${moving ? ' moving' : ''}${carried ? ' carried' : ''}${continues ? ' continues' : ''}`}
-      style={{ top: y(start), height: h }} aria-label={`${carried ? 'со вчера ' : ''}${range}, ${a.patient.fullName}: ${s.label}`}
+      className={`appt s-${s.kind}${short ? ' short' : ''}${selected ? ' active' : ''}${drag ? ' can-drag' : ''}${moving ? ' moving' : ''}${carried ? ' carried' : ''}${continues ? ' continues' : ''}${isShaky(a) ? ' shaky' : ''}${paint ? ' painted' : ''}`}
+      style={paint ? { top: y(start), height: h, '--paint': paint } as CSSProperties : { top: y(start), height: h }} aria-label={`${carried ? 'со вчера ' : ''}${range}, ${a.patient.fullName}: ${s.label}`}
       title={drag ? 'Перетащите мышью на другое время или день' : canEditPast(a, me) ? 'Прошедший приём не переносят' : undefined}>
       <span className="appt-time num">
         {carried && <span className="appt-carried">со вчера </span>}

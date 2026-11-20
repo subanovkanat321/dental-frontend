@@ -204,13 +204,16 @@ describe('сетка «Дня»', () => {
     expect(styles).toMatch(/\.grid-break \{[^}]*background: var\(--hatch\)/)
   })
 
-  test('полоска слева у приёма — цвет статуса', async () => {
+  test('полоска слева у приёма — цвет статуса; в «Все врачи» (multi) — цвет врача', async () => {
     screenOf('desktop')
     backend()
     const block = await openTomorrow()
     expect(block).toHaveClass('s-quiet')
     expect(block.style.getPropertyValue('--doc')).toBe('')
-    expect(styles).toMatch(/\.appt\.s-request \{ --stripe: var\(--req-ink\); \}/)
+    // Цвет статуса — в --tone (полоска, рамка и штриховка непрочной записи); полоска по умолчанию — он
+    expect(styles).toMatch(/\.appt\.s-request, \.day-list \.row\.s-request \{ --tone: var\(--req-ink\); \}/)
+    expect(styles).toMatch(/\.appt \{ --stripe: var\(--tone, transparent\);/)
+    expect(styles).toMatch(/\.grid\.multi \.appt \{ --stripe: var\(--doc, var\(--tone\)\); \}/)
   })
 
   test('всплывающая карточка: мышь — через 300 мс, все поля, Esc закрывает; клик открывает карточку справа', async () => {

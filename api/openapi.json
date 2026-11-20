@@ -17666,6 +17666,49 @@
         }
       }
     },
+    "/api/appointments/load" : {
+      "get" : {
+        "tags" : [ "owner-reports-controller" ],
+        "operationId" : "load",
+        "parameters" : [ {
+          "name" : "from",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }, {
+          "name" : "to",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }, {
+          "name" : "doctorId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/OwnerReportsLoadView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/appointments/from-tish" : {
       "get" : {
         "tags" : [ "tish-report-controller" ],
@@ -17770,6 +17813,49 @@
                   "items" : {
                     "$ref" : "#/components/schemas/DayCount"
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appointments/conversion" : {
+      "get" : {
+        "tags" : [ "owner-reports-controller" ],
+        "operationId" : "conversion",
+        "parameters" : [ {
+          "name" : "from",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }, {
+          "name" : "to",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }, {
+          "name" : "doctorId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/OwnerReportsConversionView"
                 }
               }
             }
@@ -32247,6 +32333,103 @@
         },
         "required" : [ "active", "bookings", "newPatients", "promoCodeId", "visits" ]
       },
+      "OwnerReportsChairLoad" : {
+        "properties" : {
+          "chairId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "availableMinutes" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "bookedMinutes" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "loadPercent" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "availableMinutes", "bookedMinutes", "chairId", "name" ]
+      },
+      "OwnerReportsDoctorLoad" : {
+        "properties" : {
+          "doctorId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "plannedMinutes" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "bookedMinutes" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "outsideMinutes" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "doneMinutes" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "loadPercent" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "bookedMinutes", "doctorId", "doneMinutes", "name", "outsideMinutes", "plannedMinutes" ]
+      },
+      "OwnerReportsLoadView" : {
+        "properties" : {
+          "from" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "to" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "doctors" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/OwnerReportsDoctorLoad"
+            }
+          },
+          "chairs" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/OwnerReportsChairLoad"
+            }
+          },
+          "plannedMinutes" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "bookedMinutes" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "doneMinutes" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "loadPercent" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "bookedMinutes", "chairs", "doctors", "doneMinutes", "from", "plannedMinutes", "to" ]
+      },
       "TishReportControllerChannelRow" : {
         "properties" : {
           "channel" : {
@@ -32348,6 +32531,70 @@
           }
         },
         "required" : [ "booked", "requested" ]
+      },
+      "OwnerReportsConversionView" : {
+        "properties" : {
+          "from" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "to" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "booked" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "done" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "cancelled" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "noShow" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "waiting" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "patients" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "continued" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "newPatients" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "returningPatients" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "money" : {
+            "type" : "boolean"
+          },
+          "revenueSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "paidVisits" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "avgCheckSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "booked", "cancelled", "continued", "done", "from", "money", "newPatients", "noShow", "patients", "returningPatients", "to", "waiting" ]
       },
       "ChairOptionView" : {
         "properties" : {
