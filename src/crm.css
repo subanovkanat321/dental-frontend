@@ -862,6 +862,23 @@ button.grid-head:not(:disabled):hover .grid-head-name { color: var(--link); }
 .hbar-fill { display: block; height: 100%; min-width: 2px; border-radius: 0 4px 4px 0; background: var(--chart-1); }
 .hbar-value { white-space: nowrap; font-size: .85rem; }
 @media (max-width: 760px) { .hbars li, .hbar-row { grid-template-columns: 1fr auto; } .hbar-track { grid-column: 1 / -1; order: 3; } }
+/* Загрузка и конверсия (шаг 5Б): шкала 0–100 %, мало загружен — янтарная полоса и «есть свободные окна» (пара wait) */
+.load-filter { margin-top: 4px; }
+.load-dates { display: inline-flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: .9rem; }
+.load-dates input { min-height: 36px; }
+.load-bars .hbar-track, .funnel .hbar-track { background: var(--sunken); border-radius: 4px; }
+.load-bars li.low .hbar-fill { background: var(--wait-ink); }
+.load-bars .hbar-name { white-space: normal; line-height: 1.25; }
+.load-free { display: block; color: var(--wait-ink); font-size: .78rem; }
+html .analytics-filter.load-filter .segments > button { white-space: nowrap; padding-inline: 10px; }
+.load-sub { margin: 14px 0 8px; font-size: .95rem; }
+.funnel li.bad .hbar-fill { background: var(--chart-bad); }
+.funnel li.muted .hbar-fill { background: var(--faint); }
+.conversion-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 12px 0 6px; }
+.conversion-facts div { padding: 8px 10px; border-radius: var(--r-sm); background: var(--sunken); }
+.conversion-facts dt { font-size: .8rem; color: var(--faint); }
+.conversion-facts dd { margin: 2px 0 0; }
+.conversion-facts b { font-size: 1.2rem; }
 /* «Выручка по дням»: столбики одного цвета от общей линии, ≤24px, 2px просвета; пустой день — черта */
 .dbars { display: flex; align-items: stretch; gap: 2px; height: 150px; }
 .dbar { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: stretch; gap: 4px; padding: 0; border: 0; border-radius: 4px 4px 0 0;

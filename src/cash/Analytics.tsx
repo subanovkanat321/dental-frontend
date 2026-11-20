@@ -12,6 +12,7 @@ import { HBars } from './HBars'
 import { TishChart } from './TishChart'
 import { DroppedTile } from './DroppedTile'
 import { BotTile } from './BotTile'
+import { LoadReports } from './LoadReports'
 import { Loading } from '../layout/Loading'
 import { EmptyState } from '../layout/EmptyState'
 import { HeadTools } from '../layout/PageHead'
@@ -81,6 +82,8 @@ export function AnalyticsTab({ me, doctorId, seesAll }: { me: Me; doctorId: numb
       {(doctorId == null || doctorId === me.doctorId) && <DroppedTile />}
       {/* Сколько пациентов в боте — вся клиника (ассистенту сервер считает только его врачей); выбран врач — не показываем */}
       {doctorId == null && <BotTile />}
+      {/* Загрузка врачей и кресел, конверсия (шаг 5Б) — свой период: неделя, месяц, даты; кто что видит — решает сервер */}
+      <LoadReports doctorId={doctorId} />
       <MonthsChart month={month ?? todayIn().slice(0, 7)} scope={scope} />
       <DaysChart key={`${period.from}-${period.to}`} period={period} scope={scope} />
       {seesAll && doctorId == null && (me.doctors ?? []).filter((d) => d.active !== false).length > 1 && <DoctorsChart me={me} period={period} />}
