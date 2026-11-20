@@ -11,9 +11,10 @@ function dayMonth(date: string): string {
 
 /**
  * За что деньги: «приём сегодня 10:00» / «приём 16.11 10:00», «долг за приём 16.11», «предоплата за 20.11»,
- * «старый долг (из Excel)». Сервер решает, что это (purpose), — фронт только пишет словами.
+ * «старый долг (из Excel)», «аванс пациента» (V243: деньги вперёд, без приёма). Сервер решает, что это (purpose), — фронт только пишет словами.
  */
 export function purposeText(e: Entry, today = todayIn()): string {
+  if (e.purpose === 'ADVANCE') return 'аванс пациента'
   if (e.purpose === 'OPENING_DEBT' || !e.appointmentStartAt) return 'старый долг (из Excel)'
   const day = dateOf(e.appointmentStartAt)
   if (e.purpose === 'DEBT') return `долг за приём ${dayMonth(day)}`

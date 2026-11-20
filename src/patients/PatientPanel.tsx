@@ -6,7 +6,7 @@ import { useAnamnesis } from '../api/anamnesis'
 import { MedAlerts } from '../medical/Anamnesis'
 import { useClose } from '../lib/useClose'
 import { useBack } from '../lib/back'
-import { canEditDoctor, isAssistant, seesMoneyOf, seesAllMoney } from '../lib/roles'
+import { canEditDoctor, isAssistant, seesAdvance, seesMoneyOf, seesAllMoney } from '../lib/roles'
 import { debtLine, remindedText, seesDebts } from '../lib/debt'
 import { DebtPromiseForm, DebtRemindForm } from '../cash/DebtRemind'
 import { formatPhone, shortDate, somText } from '../lib/time'
@@ -21,6 +21,8 @@ import { VisitDocs } from '../print/VisitDocs'
 import { WaitlistBox } from './WaitlistTab'
 import { SourceLine } from './SourceLine'
 import { FamilyBox } from './FamilyBox'
+import { AdvanceBox } from './AdvanceBox'
+import { advanceText, useAdvance } from './advance'
 import { PatientTasks } from '../tasks/PatientTasks'
 import { PatientLab } from '../lab/PatientLab'
 import { GuardianBox } from './GuardianBox'
@@ -90,6 +92,9 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
   })
   // «📲 Пригласить в Telegram-бот» в «Связаться» — пациенту без бота (хук — до ранних return)
   const botInviteOf = useBotInvite(card.data?.patient)
+  // Аванс (V243): остаток счёта пациента или его семьи — в строке денег шапки и во вкладке «Деньги»
+  const advance = useAdvance(patientId, seesAdvance(me))
+  const advanceSom = advance.data?.balanceSom ?? 0
   const debts = useQuery({
     queryKey: ['debts', 'patient', patientId],
     queryFn: () => unwrap(api.GET('/api/appointments/debts', { params: { query: { patientId } } })),
@@ -160,7 +165,7 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
   // Деньги одной строкой в шапке: «Долг 4 000 · оплачено 52 000». Оплачено — за все приёмы с сервера (null — денег этого
   // пациента не видно: ассистент, коллега без прав); долг — тот же, что во вкладке «Деньги»
   const paidTotal = card.data.paidSom ?? null
-  const moneyLine = debtTotal > 0 || (paidTotal ?? 0) > 0
+  const moneyLine = debtTotal > 0 || (paidTotal ?? 0) > 0 || advanceSom > 0
   // Лечащий врач — врач последнего состоявшегося приёма (past — последний первым). Только когда врачей больше одного
   const treating = many ? past.find((a) => a.status === 'DONE' && a.doctorId != null) : undefined
   const treatingName = treating ? doctorName(treating.doctorId) : undefined
@@ -175,7 +180,7 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
   const tabs: [Tab, string][] = [
     ['visits', 'Визиты'],
     ...(clinical ? [['medical', 'Медкарта'] as [Tab, string]] : []),
-    ...(staff || debtRows.length ? [['money', 'Деньги'] as [Tab, string]] : []),
+    ...(staff || debtRows.length || seesAdvance(me) ? [['money', 'Деньги'] as [Tab, string]] : []),
     ['more', 'Прочее'],
   ]
   const shown = tabs.some(([key]) => key === tab) ? tab : 'visits'
@@ -208,6 +213,11 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
                   )}
                   {debtTotal > 0 && (paidTotal ?? 0) > 0 && <span className="hint"> · </span>}
                   {(paidTotal ?? 0) > 0 && <span className="hint">оплачено {somText(paidTotal!)}</span>}
+                  {advanceSom > 0 && (debtTotal > 0 || (paidTotal ?? 0) > 0) && <span className="hint"> · </span>}
+                  {advanceSom > 0 && (
+                    <button type="button" className="link patient-advance" onClick={() => setTab('money')}
+                      aria-label={`${advanceText(advance.data!)} — открыть «Деньги»`}>{advanceText(advance.data!)}</button>
+                  )}
                 </p>
               )}
               {treatingName && <p className="hint patient-treating">Лечащий врач: {treatingName}</p>}
@@ -283,6 +293,7 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
 
       {shown === 'money' && (
         <section className="patient-money">
+          {patient?.id != null && seesAdvance(me) && <AdvanceBox patientId={patient.id} me={me} />}
           {debtRows.length === 0 && <EmptyState compact title="Долгов нет" />}
           {/* Напомнить о долге (бот или WhatsApp) и «Обещал оплатить до…» — те же формы, что в «Должниках» */}
           {debtRows.length > 0 && patient?.id != null && seesDebts(me) && <DebtTools patientId={patient.id} name={patient.fullName} debts={debtRows} form={debtForm} setForm={setDebtForm} />}

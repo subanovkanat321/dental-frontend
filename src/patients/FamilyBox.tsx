@@ -6,6 +6,7 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { RELATION } from '../lib/relations'
 import { isAssistant, seesAllMoney } from '../lib/roles'
 import { somText } from '../lib/time'
+import { useAdvance } from './advance'
 
 type Me = Schemas['BookingViewsMe']
 type Patient = Schemas['PatientView']
@@ -38,6 +39,8 @@ export function FamilyBox({ patient, me, onOpenPatient }: { patient: Patient; me
   })
   const [adding, setAdding] = useState(false)
   const [paying, setPaying] = useState(false)
+  // Общий аванс семьи (V243): долги семьи можно закрыть «С аванса»
+  const advance = useAdvance(patient.id, money && familyId != null)
   const refresh = () => {
     void client.invalidateQueries({ queryKey: ['family'] })
     void client.invalidateQueries({ queryKey: ['families'] })
@@ -72,7 +75,8 @@ export function FamilyBox({ patient, me, onOpenPatient }: { patient: Patient; me
           {money && total > 0 && !paying && (
             <button type="button" className="btn primary" onClick={() => setPaying(true)}>Оплатить за семью</button>
           )}
-          {paying && familyId != null && <FamilyPay familyId={familyId} total={total} onDone={() => setPaying(false)} />}
+          {paying && familyId != null && <FamilyPay familyId={familyId} total={total} advance={advance.data?.balanceSom ?? 0}
+            onDone={() => setPaying(false)} />}
         </>
       ) : <p className="hint">Мама платит за детей? Свяжите родственников — их долги будут видны вместе и закрываются одной оплатой.</p>}
       <div className="actions">
@@ -125,14 +129,14 @@ function AddRelative({ patient, onDone }: { patient: Patient; onDone: () => void
 }
 
 /** Одна оплата на всю семью: сумма (по умолчанию весь долг) и способ; сервер раскладывает сам. */
-function FamilyPay({ familyId, total, onDone }: { familyId: number; total: number; onDone: () => void }) {
+function FamilyPay({ familyId, total, advance, onDone }: { familyId: number; total: number; advance: number; onDone: () => void }) {
   const client = useQueryClient()
   const [amount, setAmount] = useState(String(total))
   const [method, setMethod] = useState<Method>('CASH')
   const pay = useMutation<Schemas['FamilyMoneyControllerPaid'], ApiError>({
     mutationFn: () => unwrap(api.POST('/api/families/{id}/pay', { params: { path: { id: familyId } }, body: { amountSom: Number(amount || 0), method } })),
     onSuccess: () => {
-      for (const k of ['debts', 'patient-card', 'appointments', 'revenue', 'report', 'to-pay']) void client.invalidateQueries({ queryKey: [k] })
+      for (const k of ['debts', 'patient-card', 'appointments', 'revenue', 'report', 'to-pay', 'advance']) void client.invalidateQueries({ queryKey: [k] })
     },
   })
   const submit = (e: FormEvent) => {
@@ -153,8 +157,10 @@ function FamilyPay({ familyId, total, onDone }: { familyId: number; total: numbe
     <form className="form sub-form" aria-label="Оплата за семью" onSubmit={submit}>
       <label className="field"><span>Сумма, сом</span>
         <input inputMode="numeric" value={amount} autoFocus onChange={(e) => setAmount(e.target.value.replace(/\D/g, ''))} /></label>
-      <div className="segments" role="group" aria-label="Способ оплаты">
-        {METHODS.map(([m, t]) => <button key={m} type="button" aria-pressed={method === m} onClick={() => setMethod(m)}>{t}</button>)}
+      <div className="segments wrap" role="group" aria-label="Способ оплаты">
+        {(advance > 0 ? [...METHODS, ['ADVANCE', `С аванса · ${somText(advance)}`] as [Method, string]] : METHODS).map(([m, t]) => (
+          <button key={m} type="button" aria-pressed={method === m} onClick={() => setMethod(m)}>{t}</button>
+        ))}
       </div>
       <p className="hint">Закроет долги по порядку — сначала самые старые.</p>
       {pay.error && <p className="error" role="alert">{errorText(pay.error)}</p>}

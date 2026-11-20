@@ -27,9 +27,9 @@ function view(extra: Partial<Day> = {}): Day {
     day: todayIn(), openingSom: 2000, openingSource: 'PREVIOUS', openingFrom: '2026-11-19',
     inByMethod: { CASH: 4000, TRANSFER: 1500, CARD: 700 }, inSom: 6200, cashInSom: 4000,
     expenses: [{ id: 1, category: 'Материалы', comment: 'Перчатки', amountSom: 400 }], expensesSom: 400,
-    movements: [], depositsSom: 0, withdrawalsSom: 0, closingSom: 5600, closed: false, ...extra,
+    movements: [], depositsSom: 0, withdrawalsSom: 0, closingSom: 5600, closed: false, refunds: [], cashRefundsSom: 0, ...extra,
   }
-  return { ...v, closingSom: (v.openingSom ?? 0) + v.cashInSom - v.expensesSom + v.depositsSom - v.withdrawalsSom }
+  return { ...v, closingSom: (v.openingSom ?? 0) + v.cashInSom - v.expensesSom - v.cashRefundsSom + v.depositsSom - v.withdrawalsSom }
 }
 
 test('касса дня: итог столбиком, приход по способам, изъятие с причиной и закрытие дня', async () => {
@@ -105,4 +105,24 @@ test('«Касса дня» — только тому, кто видит ден�
   expect(subsOf('cash', me).map((s) => s.key)).toContain('day')
   expect(subsOf('cash', { ...me, admin: false, doctorId: 1 }).map((s) => s.key)).not.toContain('day')
   expect(subsOf('cash', { ...me, admin: false, reception: true, doctorId: undefined })).toEqual([])
+})
+
+test('касса дня: возврат аванса наличными — расход ящика, переводом — только для сведения', async () => {
+  const current = view({
+    cashRefundsSom: 3000,
+    refunds: [
+      { id: 1, amountSom: 3000, method: 'CASH', reason: 'Лечение отменили', patient: 'Айгуль Т.', by: 'Айгерим', at: new Date().toISOString() },
+      { id: 2, amountSom: 1000, method: 'TRANSFER', reason: 'Переехали', patient: 'Нурлан Т.', at: new Date().toISOString() },
+    ],
+  })
+  server.use(http.get('*/api/cash-day', () => HttpResponse.json(current)))
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await findSub('Касса дня'))
+  const block = await screen.findByRole('region', { name: 'Касса дня' })
+  // 2 000 + 4 000 − 400 − 3 000
+  expect(await within(block).findByRole('definition', { name: 'Остаток на конец' })).toHaveTextContent(/2\s600 сом/)
+  const list = within(block).getByRole('list', { name: 'Возвраты аванса' })
+  expect(list).toHaveTextContent(/Айгуль Т\. · Лечение отменили · Айгерим−3\s000 сом/)
+  expect(list).toHaveTextContent(/Нурлан Т\. · Переехали · переводом, не из ящика−1\s000 сом/)
 })

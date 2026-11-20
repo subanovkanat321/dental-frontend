@@ -76,7 +76,7 @@ export function sendAppointmentAction(id: number, action: Action): Promise<Appoi
  * отчёт, статистика, источники, зарплата, «Мой заработок») и карточка пациента. После записи, действия и удаления
  * приёма перечитываем всё это — открытые экраны покажут свежее без F5.
  */
-const APPOINTMENT_DATA = ['appointments', 'slots', 'counts', 'to-pay', 'debts', 'revenue', 'report', 'stats', 'sources', 'cancel-reasons', 'promo-report', 'salaries', 'earnings', 'patient-card']
+const APPOINTMENT_DATA = ['appointments', 'slots', 'counts', 'to-pay', 'debts', 'revenue', 'report', 'stats', 'sources', 'cancel-reasons', 'promo-report', 'salaries', 'earnings', 'patient-card', 'advance']
 
 export function refreshAppointmentData(client: QueryClient, extra: string[] = []): void {
   for (const key of [...APPOINTMENT_DATA, ...extra]) void client.invalidateQueries({ queryKey: [key] })

@@ -17,7 +17,7 @@ type Receipt = Schemas['ReceiptsReceiptView']
 type CareMemo = Schemas['CareMemosAppointmentMemo']
 type MemoLang = 'RU' | 'KY'
 
-const METHODS: Record<string, string> = { CASH: 'наличные', TRANSFER: 'перевод', CARD: 'карта' }
+const METHODS: Record<string, string> = { CASH: 'наличные', TRANSFER: 'перевод', CARD: 'карта', ADVANCE: 'с аванса' }
 
 /**
  * Документы приёма, который состоялся: памятка после процедуры и квитанция об оплате (ей — кто
@@ -153,7 +153,7 @@ function ReceiptDocs({ appointment: a }: { appointment: Appointment }) {
   const [printing, setPrinting] = useState(false)
   const receipt = useQuery({
     // Ключ — по деньгам приёма: доплатили — квитанция перечитается
-    queryKey: ['receipt', id, a.paidSom, a.chargeSom, a.debtSom, a.discount?.som],
+    queryKey: ['receipt', id, a.paidSom, a.chargeSom, a.debtSom, a.discount?.som, a.paymentMethod],
     queryFn: () => unwrap(api.GET('/api/appointments/{id}/receipt', { params: { path: { id } } })),
     retry: false,
   })
@@ -214,6 +214,9 @@ function ReceiptSheet({ r, narrow }: { r: Receipt; narrow: boolean }) {
         </table>
       )}
       <p className="total">Оплачено: {somText(r.paidSom)}</p>
+      {/* Аванс (V243): сколько из оплаты — с аванса и сколько на нём осталось (у семьи — общий остаток) */}
+      {r.advanceSom != null && <p className="total">Оплачено с аванса: {somText(r.advanceSom)}</p>}
+      {r.advanceSom != null && r.advanceLeftSom != null && <p className="total">Остаток аванса: {somText(r.advanceLeftSom)}</p>}
       <p className="total">{r.debtSom ? `Осталось оплатить: ${somText(r.debtSom)}` : 'Оплачено полностью'}</p>
       <div className="signatures"><span>Принял ____________________</span></div>
       <p className="fiscal">Не является фискальным чеком</p>

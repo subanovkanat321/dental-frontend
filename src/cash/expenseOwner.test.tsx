@@ -110,7 +110,7 @@ test('«Врачи работают независимо», руководите
   backend({ ...head, doctorId: undefined, clinic: { ...me.clinic!, independentDoctors: true } }, posted)
   server.use(http.get('*/api/appointments/revenue', () => HttpResponse.json({
     totalSom: 0, paidCount: 0, unpaidCount: 0, freeCount: 0, prepaidCount: 0, debtCount: 0, debtSom: 0, partialCount: 0, partialDebtSom: 0, discountCount: 0, discountSom: 0, byMethod: {}, days: [],
-    cash: { totalSom: 0, paymentsCount: 0, depositsSom: 0, byMethod: {}, days: [], openingDebtsSom: 0 },
+    cash: { totalSom: 0, paymentsCount: 0, depositsSom: 0, byMethod: {}, days: [], openingDebtsSom: 0, advancesSom: 0 },
   } satisfies Schemas['RevenueView'])))
   const user = userEvent.setup()
   renderApp()
