@@ -29,6 +29,7 @@ const ProfilePage = lazy(() => import('./ProfilePage').then((m) => ({ default: m
 const ReviewTimingPage = lazy(() => import('./ReviewTimingPage').then((m) => ({ default: m.ReviewTimingPage })))
 const DebtTextPage = lazy(() => import('./DebtTextPage').then((m) => ({ default: m.DebtTextPage })))
 const ReminderTextPage = lazy(() => import('./ReminderTextPage').then((m) => ({ default: m.ReminderTextPage })))
+const VisitTemplatesPage = lazy(() => import('./VisitTemplatesPage').then((m) => ({ default: m.VisitTemplatesPage })))
 const AiPage = lazy(() => import('./AiPage').then((m) => ({ default: m.AiPage })))
 const SourcesPage = lazy(() => import('./SourcesPage').then((m) => ({ default: m.SourcesPage })))
 const ContractTemplatePage = lazy(() => import('../contract/ContractTemplatePage').then((m) => ({ default: m.ContractTemplatePage })))
@@ -71,6 +72,7 @@ const RENDER: Record<string, (title: string) => Render> = {
   agreement: (t) => account('agreement', t),
   data: (t) => account('data', t),
   ai: () => (_me, back) => <AiPage onBack={back} />,
+  'visit-templates': () => (me, back) => <VisitTemplatesPage me={me} onBack={back} />,
   // «Выйти на всех устройствах» — внизу «Моего профиля» (обычный «Выйти» — в блоке «Я»)
   profile: () => (me, back) => <ProfilePage me={me} onBack={back} footer={<LogoutSection />} />,
   appearance: (t) => (_me, back) => <AppearancePage title={t} onBack={back} />,

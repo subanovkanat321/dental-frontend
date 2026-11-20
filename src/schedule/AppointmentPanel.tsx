@@ -466,7 +466,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
       {(clinical || (canEdit && (visitTools || a.status === 'NO_SHOW'))) && a.status !== 'CANCELLED' && (
         <section className="appt-visit" aria-label="Приём">
           {clinical && <ContinueTreatment appointment={a} open={visitTools && a.status === 'SCHEDULED'} onMedical={medical} />}
-          {canEdit && (visitTools || a.status === 'NO_SHOW') && <VisitNote appointment={a} />}
+          {canEdit && (visitTools || a.status === 'NO_SHOW') && <VisitNote appointment={a} me={me} />}
           {/* Зубы этого приёма: врач приёма и админ отмечают, ассистент видит; «Карта зубов и план лечения ›» — вся медкарта */}
           {canEdit && visitTools && clinical && a.patient.id != null && (
             <VisitTeeth appointment={a} onMedical={medical}
