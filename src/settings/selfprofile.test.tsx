@@ -84,7 +84,7 @@ test('подсказка «Заполните свой профиль»: вра�
   expect(localStorage.getItem('crm.profile-notice.hidden')).toBe('1')
   unmount()
   renderApp()
-  await screen.findByRole('button', { name: /Расписание/ })
+  await screen.findByRole('button', { name: /^Расписание/ }) // меню; «Подсказка: Расписание» на странице — не она
   expect(screen.queryByRole('region', { name: 'Заполните профиль' })).not.toBeInTheDocument()
 })
 
@@ -92,7 +92,7 @@ test('подсказки нет, когда профиль заполнен; с�
   const filled = { ...me, doctors: [{ id: 1, fullName: 'Айгерим Садыкова', active: true, about: 'терапевт', photoUrl: '/doctors/1/photo?v=1' }] }
   server.use(http.get('*/api/patient/me', () => HttpResponse.json(filled)))
   const { unmount } = renderApp()
-  await screen.findByRole('button', { name: /Расписание/ })
+  await screen.findByRole('button', { name: /^Расписание/ }) // меню; «Подсказка: Расписание» на странице — не она
   expect(screen.queryByRole('region', { name: 'Заполните профиль' })).not.toBeInTheDocument()
   unmount()
 

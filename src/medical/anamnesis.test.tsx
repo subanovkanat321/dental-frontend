@@ -60,7 +60,7 @@ test('медкарта: анкета с плашкой — отметить бо
   ] })
 })
 
-test('карточка приёма: важное из анкеты — жёлтой пилюлей у времени; нажать — весь список и «Анкета в медкарте ›»', async () => {
+test('карточка приёма: важное из анкеты — жёлтой пилюлей у пациента; нажать — весь список и «Анкета в медкарте ›»', async () => {
   const asked: string[] = []
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
@@ -77,8 +77,8 @@ test('карточка приёма: важное из анкеты — жёлт
   const pill = await within(panel).findByRole('button', { name: /^Важно перед лечением/ })
   expect(pill).toHaveTextContent('⚠Аллергия: лидокаин')
   expect(pill).toHaveClass('med-pill', 'danger')
-  // В шапке карточки, у времени; отдельной плашки ниже и чипа «❗ Важно для врача» нет — карточка короче
-  expect(pill.closest('.appt-when')).not.toBeNull()
+  // У пациента, под именем (с 2026-11-20 пациент — над статусом); отдельной плашки ниже и чипа «❗ Важно для врача» нет
+  expect(pill.closest('[aria-label="Пациент"]')).not.toBeNull()
   expect(within(panel).queryByRole('note', { name: 'Важно перед лечением' })).toBeNull()
   expect(within(panel).queryByText('Важно для врача')).toBeNull()
   await user.click(pill)

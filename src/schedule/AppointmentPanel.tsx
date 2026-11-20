@@ -19,7 +19,7 @@ import { bookedByText } from '../lib/relations'
 import { useClose } from '../lib/useClose'
 import { useFullView } from '../lib/fullView'
 import { useNowMinutes } from './gridScale'
-import { addDays, dateOf, dayTitle, formatPhone, minutesOf, slotInstant, somText, timeOf, todayIn } from '../lib/time'
+import { addDays, dateOf, formatPhone, shortDayTitle, minutesOf, slotInstant, somText, timeOf, todayIn } from '../lib/time'
 import { ChairEdit, CommentEdit, PromoEdit, Remind, Reschedule, ServiceEdit, Supplies, VisitNote } from './AppointmentExtras'
 import { useChairs } from '../team/chairs'
 import { ActionMenu } from '../layout/ActionMenu'
@@ -30,7 +30,10 @@ import { ContinueTreatment } from './ContinueTreatment'
 import { VisitTeeth } from './VisitTeeth'
 import { DepositBox } from './DepositBox'
 import { PaymentBox } from './PaymentBox'
-import { seesDebts, usePatientDebts } from '../lib/debt'
+import { initialPayView, PAY_FORMS, type PayView } from './payView'
+import { seesDebts, seesPatientDebts, usePatientDebts } from '../lib/debt'
+import { mainActionKind, type MainKind } from './mainAction'
+import { shortName } from '../lab/text'
 import { useMedAlert } from '../lib/medAlerts'
 import { PatientExpensesFold } from '../patients/PatientExpenses'
 import type { Slot } from './NewAppointmentPanel'
@@ -38,7 +41,7 @@ import { StatusPill } from './StatusPill'
 import { TagDots } from '../tags/TagDots'
 import { nextStep, statusOptions } from './statusOptions'
 import { ReasonSheet } from './ReasonSheet'
-import { reasonLine, type CancelReason } from './cancelReasons'
+import { REASON_TEXT, reasonLine, type CancelReason } from './cancelReasons'
 import { colleagueMarkText, colleagueTimeOf } from './chairTime'
 import { refreshAppointmentData, useAppointmentAction } from './useAppointmentAction'
 import { VisitDocs } from '../print/VisitDocs'
@@ -59,10 +62,11 @@ type Patient = Schemas['PatientView']
 type Status = NonNullable<Schemas['AppointmentRequestsChangeStatus']['status']>
 
 /**
- * Карточка приёма — сверху вниз: шапка (время, врач; 📖 «Показать пациенту») → статус пилюлей «🟢 Пришёл ▾»
- * (все статусы одним списком) и рядом следующий шаг одной залитой кнопкой («Подтвердить», «Пришёл»,
- * «Приём состоялся») → пациент (история одной строкой, аллергии) → услуга и комментарий → после приёма
- * «Принять оплату» / «Записать снова» →
+ * Карточка приёма — сверху вниз: шапка (время, «пт, 20 нояб · Айгерим С.»; 📖 «Показать пациенту») → пациент (имя,
+ * номер «Связаться ▾», метка словом, ⚠ аллергия, чипы ❗ / 🧾 долг / ⭐, история одной строкой) → статус пилюлей
+ * «🟢 Пришёл ▾» (все статусы одним списком; с 2026-11-20 — под пациентом, по просьбе владельца) и рядом главное
+ * действие состояния (mainAction.ts) → блок момента: до прихода — ответ пациента, после — оплата → услуга
+ * и комментарий («О записи» свёрнуто после визита) →
  * «Приём» для врача по приоритету: продолжение лечения → заметка и диктовка → «Зубы» → «План лечения» →
  * «Материалы» → «Расход (техник, лаборатория)» → лаборатория на этот приём (если есть работа) → «Снимки»
  * (раскрывашками) → «Сообщение после приёма» → перенести → «Ещё» (редкое:
@@ -70,9 +74,12 @@ type Status = NonNullable<Schemas['AppointmentRequestsChangeStatus']['status']>
  * Приём коллеги — только посмотреть и позвонить. Esc — закрыть.
  *
  * Шаг 3 (опыт Dentist Plus):
- * - телефон — внизу закреплена панель: следующий шаг одной кнопкой («Пришёл», «Начать приём», «Приём состоялся»,
- *   «Принять оплату» — прокрутит к оплате) и «⋯» (перенести, задача, лаборатория, показать пациенту, удалить);
- *   в строке статуса и внизу ленты эти кнопки тогда не дублируются;
+ * - телефон — внизу закреплена панель: главное действие состояния одной кнопкой (UX-аудит 2026-11-20: «Напомнить»,
+ *   «Подтвердить», «Пришёл», «Начать приём», «Приём состоялся», «Принять оплату» / «Принять доплату» — открывает форму
+ *   оплаты, «Записать на следующий визит», «Записать снова») и «⋯» (перенести, задача, лаборатория, показать
+ *   пациенту, удалить); в ленте эти кнопки тогда не дублируются — «Принять оплату» на экране ровно одна;
+ * - компьютер — шаг, «Напомнить» и «Записать снова» — рядом с пилюлей статуса, оплата и «следующий визит» — одной
+ *   залитой кнопкой в своём блоке ленты;
  * - «врач» и «регистратура» — одна карточка, разный порядок: врачу своего приёма (и его ассистенту), когда пациент
  *   пришёл, в кресле или приём состоялся сегодня, клиническое («Приём») — сразу под статусом, а услуга, связь,
  *   промокод, «откуда узнал», задачи — ниже, в «О записи». Остальным — как раньше: контакты и оплата сверху.
@@ -136,8 +143,9 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
   const [labOpen, setLabOpen] = useState(false)
   const active = a.status === 'REQUESTED' || a.status === 'SCHEDULED'
   const rare = ([
-    active && seesMoneyOf(me, a.doctorId) && !a.depositStatus ? 'deposit' : null,
-    active && future && a.patient ? 'waitlist' : null,
+    // Пришёл или в кресле — предоплату не просят, лист ожидания не нужен
+    active && !a.arrivedAt && !a.inChairAt && seesMoneyOf(me, a.doctorId) && !a.depositStatus ? 'deposit' : null,
+    active && !a.arrivedAt && !a.inChairAt && future && a.patient ? 'waitlist' : null,
   ] as const).filter((x): x is Rare => x != null)
   // Подпись «Ещё»: что внутри, кратко
   const more = rare.map((r) => RARE_TEXT[r])
@@ -249,8 +257,9 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
     seat: () => seat(true),
     done: () => void setStatus('DONE'),
   }[step.kind] }
-  // Долг пациента за все визиты (кто видит «Должников»; врачу — за его приёмы) и за прошлые — без этого приёма
-  const debts = usePatientDebts(a.patient.id ?? undefined, seesDebts(me))
+  // Долг пациента за все визиты (кто видит «Должников»; врачу — за его приёмы; регистратуре — по всей клинике, она
+  // принимает оплату) и за прошлые — без этого приёма
+  const debts = usePatientDebts(a.patient.id ?? undefined, seesPatientDebts(me))
   const patientDebt = (debts.data ?? []).reduce((sum, d) => sum + d.debtSom, 0)
   // «Связаться ▾»: позвонить, написать, напомнить о приёме, попросить оценку, напомнить о долге (форма — под статусом)
   const [debtForm, setDebtForm] = useState(false)
@@ -272,6 +281,27 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
   const ownVisit = a.doctorId != null && (a.doctorId === me.doctorId || Boolean(me.assistantOf?.includes(a.doctorId)))
   const doctorView = ownVisit && canEdit && (
     (a.status === 'SCHEDULED' && started && Boolean(a.arrivedAt || a.inChairAt)) || (a.status === 'DONE' && date === todayIn()))
+  // Регистратура на чужом приёме: без материалов и «В лабораторию» на виду, в кресле — ждёт врача (главной кнопки нет)
+  const desk = Boolean(me.reception) && !seesAllMoney(me) && !ownVisit
+  const afterVisit = a.status === 'DONE' || a.status === 'NO_SHOW' || a.status === 'CANCELLED'
+  // До прихода — ответ пациента («Подтвердил / Перенос / Нет ответа»); пришёл — уже не нужно
+  const beforeArrival = a.status === 'SCHEDULED' && !a.arrivedAt && !a.inChairAt
+
+  // Главное действие состояния (UX-аудит 2026-11-20) — одно на карточку: телефон — внизу, компьютер — у пилюли статуса
+  // или в своём блоке ленты (оплата, следующий визит)
+  const canBook = Boolean(onBook && canEdit && a.patient)
+  const thisDebt = a.status === 'DONE' && seesMoney && (a.debtSom ?? 0) > 0
+  const kind: MainKind | null = mainActionKind(a, { step, payPending, debt: thisDebt, canBook, canRemind: contacts.remindMain != null, waitsDoctor: desk })
+  // Оплата: нижняя «Принять оплату» открывает форму в блоке (ключ — по деньгам приёма, как у самого блока);
+  // пока форма открыта, нижней кнопки нет — её «Сохранить» и есть «Принять оплату»
+  const payKey = [a.id, a.version, a.paidSom, a.chargeSom, a.debtSom, a.dueOn, a.depositStatus].join('-')
+  const [payOpen, setPayOpen] = useState<{ at: string; view: 'edit' | 'extra' } | null>(null)
+  const [payViewAt, setPayViewAt] = useState<{ at: string; view: PayView } | null>(null)
+  const openNow = payOpen?.at === payKey ? payOpen.view : undefined
+  const payView = payViewAt?.at === payKey ? payViewAt.view : openNow ?? initialPayView(a, me)
+  const payFormOpen = a.status === 'DONE' && PAY_FORMS.includes(payView)
+  const payMain = kind === 'pay' || kind === 'extra'
+  const nextVisitDay = () => addDays(date > todayIn() ? date : todayIn(), 7)
   const sourceHint = a.bookedBy ? bookedByText(a.bookedBy) : a.source === 'PATIENT' ? 'Запись через бота'
     : a.source === 'WEB' ? (a.status === 'REQUESTED' ? '🌐 Заявка с сайта, без Telegram — подтвердите звонком' : '🌐 С сайта, без Telegram — бот не напомнит')
       : null
@@ -281,7 +311,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
     <span className="appt-quick">
       {/* «Перезвонить после удаления», «отправить снимок в лабораторию» — задача с этим пациентом и приёмом */}
       <button type="button" className="link appt-task" onClick={() => setTaskOpen(true)}>＋ Задача</button>
-      {canEdit && <button type="button" className="link appt-lab-new" onClick={() => setLabOpen(true)}>＋ В лабораторию</button>}
+      {canEdit && !desk && <button type="button" className="link appt-lab-new" onClick={() => setLabOpen(true)}>＋ В лабораторию</button>}
     </span>
   ) : null
   // Откуда запись и «напоминание отправлено» — регистратуре сверху, врачу на приёме — в «О записи»
@@ -291,20 +321,26 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
       {a.reminderOpenedAt && a.status === 'SCHEDULED' && <ReminderSent a={a} canEdit={canEdit} />}
     </>
   )
-  const whatSection = (
+  // Комментарий записи («Боится уколов») — врачу на приёме у пациента, остальным — у услуги
+  const commentBlock = editing === 'comment' ? <CommentEdit appointment={a} onDone={close} /> : a.comment ? (
+    <p className="comment line-edit"><span>{a.comment}</span>
+      {canEdit && <button type="button" className="link" onClick={() => setEditing('comment')}>изменить</button>}</p>
+  ) : null
+  // Что за приём: услуга и комментарий — на виду
+  const serviceBlock = (
     <>
-      {/* Что за приём: услуга, комментарий, промокод — строками «… изменить» */}
-      <section className="appt-what">
-        {editing === 'service' ? <ServiceEdit appointment={a} me={me} onDone={close} prices={!isAssistant(me)} /> : (
-          <p className="line-edit">
-            <span><span className="hint">Услуга:</span> {a.serviceName ?? '—'}</span>
-            {canEdit && a.status !== 'CANCELLED' && <button type="button" className="link" onClick={() => setEditing('service')}>изменить</button>}
-          </p>
-        )}
-        {editing === 'comment' ? <CommentEdit appointment={a} onDone={close} /> : a.comment ? (
-          <p className="comment line-edit"><span>{a.comment}</span>
-            {canEdit && <button type="button" className="link" onClick={() => setEditing('comment')}>изменить</button>}</p>
-        ) : null}
+      {editing === 'service' ? <ServiceEdit appointment={a} me={me} onDone={close} prices={!isAssistant(me)} /> : (
+        <p className="line-edit">
+          <span><span className="hint">Услуга:</span> {a.serviceName ?? '—'}</span>
+          {canEdit && a.status !== 'CANCELLED' && <button type="button" className="link" onClick={() => setEditing('service')}>изменить</button>}
+        </p>
+      )}
+      {!doctorView && commentBlock}
+    </>
+  )
+  // Редкое о записи: «＋ Комментарий / ＋ Промокод», кресло, промокод, «откуда узнал» — после визита свёрнуто в «О записи»
+  const aboutBlock = (
+    <>
         {/* «＋ Комментарий» и «＋ Промокод» — одной строкой ссылок (промокод раньше прятался под «Ещё») */}
         {canEdit && a.status !== 'CANCELLED' && ((!a.comment && editing !== 'comment') || (!a.promoCode && editing !== 'promo' && canEditDoctor(me, a.doctorId))) && (
           <p className="appt-add-links">
@@ -324,9 +360,17 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
         )}
         {/* Откуда узнал о клинике — строкой «Откуда узнал о клинике? выбрать» / «… Instagram изменить» (раньше — под «Ещё») */}
         {canEdit && a.patient.id != null && <SourceLine patient={a.patient} canEdit compact admin={Boolean(me.admin)} />}
-      </section>
-
     </>
+  )
+  const aboutMeta = a.promoCode ? `🎟 ${a.promoCode}` : undefined
+  // Регистратуре: до визита — всё строками; после (состоялся, неявка, отмена) — услуга на виду, остальное в «О записи»
+  const whatSection = (
+    <section className="appt-what">
+      {serviceBlock}
+      {afterVisit ? (
+        <Fold title="О записи" label="О записи" meta={aboutMeta}><div className="appt-about">{aboutBlock}</div></Fold>
+      ) : aboutBlock}
+    </section>
   )
   const workBlock = (
     <>
@@ -345,18 +389,15 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
         <>
           {moved && <p className="tone-ok" role="status">{moved}</p>}
           {/* Напомнить и ответ пациента — связь: врачу на приёме — в «О записи» */}
-          {a.status === 'SCHEDULED' && !doctorView && <Remind appointment={a} nowhere={contacts.nowhere} />}
+          {beforeArrival && !doctorView && <Remind appointment={a} nowhere={contacts.nowhere} />}
           {/* Предоплату уже попросили — на виду; ещё не просили — под «Ещё». Ассистенту деньги не показываем */}
           {(a.status === 'REQUESTED' || a.status === 'SCHEDULED') && seesMoney && a.depositStatus && <DepositBox key={a.depositStatus} appointment={a} />}
 
           {a.status === 'CANCELLED' && (
             <>
-              {/* Почему (V235): «Отменён · дубль записи» */}
-              {reasonLine(a) && <p className="cancel-reason">{reasonLine(a)}</p>}
-              {/* Кто и когда отменил (V160): «Отменён: пациент в боте, сегодня 14:20»; старые отмены — без этой строки */}
-              {(a.cancelledBy || a.cancelledAt) && (
-                <p className="cancelled-by">Отменён: {[a.cancelledBy ?? 'кто — не записано', a.cancelledAt ? cancelledWhen(a.cancelledAt, { sayToday: true }) : null].filter(Boolean).join(', ')}</p>
-              )}
+              {/* Почему (V235) и кто когда отменил (V160) — одной строкой, «Отменён» уже в пилюле:
+                  «Перенёс на другое время · отменил(а) пациент в боте, сегодня 09:20»; старые отмены — без «кто» */}
+              {cancelText(a) && <p className="cancel-reason">{cancelText(a)}</p>}
               {a.depositStatus === 'RECEIVED' && seesMoney && <p className="tone-wait">Предоплата {somText(a.depositSom ?? 0)} получена — верните пациенту или запишите его снова.</p>}
             </>
           )}
@@ -364,13 +405,12 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
           {a.status === 'NO_SHOW' && (
             <>
               {reasonLine(a) && <p className="cancel-reason">{reasonLine(a)}</p>}
-              {onBook && <button type="button" className="btn primary" onClick={() => bookAgain(todayIn())}>Записать снова</button>}
             </>
           )}
 
           {/* «Что сделали сегодня?» — этапы плана лечения сразу после «Приём состоялся», над оплатой: блоком
               в этой же карточке, а не окном поверх неё. Главная кнопка — у оплаты, если она ещё не принята */}
-          {a.status === 'DONE' && <PlanDone appointment={a} me={me} primary={!payPending} />}
+          {a.status === 'DONE' && <PlanDone appointment={a} me={me} primary={kind == null} />}
           {/* Оплата — сразу после приёма. Ключ — по самим деньгам: оплата на сервере версию приёма не
               меняет, а блок после сохранения должен открыться заново («оплачено», а не форма) */}
           {payPending && earlierDebt > 0 && (
@@ -378,15 +418,16 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
           )}
           {a.status === 'DONE' && seesMoney && (
             <div ref={payRef} className="appt-pay appt-pay-anchor">
-              <PaymentBox key={[a.id, a.version, a.paidSom, a.chargeSom, a.debtSom, a.dueOn, a.depositStatus].join('-')} appointment={a} me={me} />
+              <PaymentBox key={`${payKey}-${openNow ?? ''}`} appointment={a} me={me} open={openNow}
+                mainOutside={phone && payMain} quiet={phone || !payMain} onView={(view) => setPayViewAt({ at: payKey, view })} />
             </div>
           )}
           {/* Квитанция — строкой сразу под оплатой: «Печать» и «Отправить пациенту» (раньше — под «Ещё») */}
           {a.status === 'DONE' && canEdit && <VisitDocs appointment={a} me={me} memo={false} />}
-          {a.status === 'DONE' && (
-            <>
-              {onBook && <button type="button" className={payPending ? 'btn' : 'btn primary'} onClick={() => bookAgain(addDays(date > todayIn() ? date : todayIn(), 7))}>Записать на следующий визит</button>}
-            </>
+          {/* «Записать на следующий визит»: главная — внизу (телефон) или здесь залитой (компьютер); при оплате или
+              долге — обычной кнопкой, главная у них — оплата */}
+          {a.status === 'DONE' && canBook && !(phone && kind === 'next-visit') && (
+            <button type="button" className={!phone && kind === 'next-visit' ? 'btn primary' : 'btn'} onClick={() => bookAgain(nextVisitDay())}>Записать на следующий визит</button>
           )}
         </>
       )}
@@ -395,8 +436,8 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
   )
   const visitSection = (
     <>
-      {/* «Приём» — работа врача, по приоритету: продолжение лечения, заметка и диктовка, зубы, план лечения,
-          материалы, расход (техник, лаборатория), лаборатория на этот приём, снимки. Раскрывашками со счётчиками */}
+      {/* «Приём» — работа врача, по приоритету: продолжение лечения, заметка (диктовка — в её строке), зубы, план
+          лечения, снимки, материалы, расход (техник, лаборатория), лаборатория на этот приём. Раскрывашками со счётчиками */}
       {(clinical || (canEdit && (visitTools || a.status === 'NO_SHOW'))) && a.status !== 'CANCELLED' && (
         <section className="appt-visit" aria-label="Приём">
           {clinical && <ContinueTreatment appointment={a} open={visitTools && a.status === 'SCHEDULED'} onMedical={medical} />}
@@ -408,7 +449,12 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
           )}
           {/* План лечения — сразу после зубов: тот же редактор, что в медкарте — добавить этапы, отметить сделанное */}
           {visitTools && clinical && a.patient.id != null && <VisitPlan appointment={a} me={me} />}
-          {canEdit && visitTools && <Supplies appointment={a} me={me} />}
+          {/* Раскрывашки — по частоте (UX-аудит 2026-11-20): Зубы → План → Снимки → Материалы → Расход */}
+          {canEdit && visitTools && clinical && a.patient.id != null && (
+            <PatientFiles patientId={a.patient.id} readOnly={isAssistant(me)} compact defaultKind="PHOTO" takenOn={date} />
+          )}
+          {/* Материалы списывает врач или ассистент — регистратуре не показываем */}
+          {canEdit && visitTools && !desk && <Supplies appointment={a} me={me} />}
           {/* Расход по пациенту (техник, лаборатория) — врачу часто, поэтому не под «Ещё»; как «Материалы» — уже во время
               приёма, не только после «состоялся». Регистратуре и ассистенту нет (у них нет своих расходов) */}
           {canEdit && visitTools && seesMoney && a.patient.id != null && (me.admin || me.doctorId != null) && (
@@ -416,9 +462,6 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
           )}
           {/* Заказы лаборатории на этот приём (примерка) — только если есть такая работа */}
           {canEdit && visitTools && a.patient.id ? <AppointmentLab appointment={a} /> : null}
-          {canEdit && visitTools && clinical && a.patient.id != null && (
-            <PatientFiles patientId={a.patient.id} readOnly={isAssistant(me)} compact defaultKind="PHOTO" takenOn={date} />
-          )}
           {canEdit && a.status === 'SCHEDULED' && started && !visitTools && (
             <p className="hint small">Заметка, зубы и материалы — к началу приёма.{' '}
               <button type="button" className="link" onClick={() => setEarly(true)}>Показать сейчас</button></p>
@@ -435,9 +478,22 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
     el?.scrollIntoView?.({ block: 'center', behavior: 'smooth' })
     el?.querySelector<HTMLElement>('input, button, select, textarea')?.focus({ preventScroll: true })
   }
-  const barMain = next ?? (payPending ? { label: 'Принять оплату', run: () => scrollTo('.appt-pay') } : null)
+  const main: { label: string; run: () => void; disabled?: boolean } | null = kind && {
+    step: next ? { label: next.label, run: next.run } : null,
+    remind: contacts.remindMain,
+    reply: { label: 'Подтвердил', run: () => reply(true) },
+    pay: { label: 'Принять оплату', run: () => { setPayOpen({ at: payKey, view: 'edit' }); requestAnimationFrame(() => scrollTo('.appt-pay')) } },
+    extra: { label: 'Принять доплату', run: () => { setPayOpen({ at: payKey, view: 'extra' }); requestAnimationFrame(() => scrollTo('.appt-pay')) } },
+    'next-visit': { label: 'Записать на следующий визит', run: () => bookAgain(nextVisitDay()) },
+    'book-again': { label: 'Записать снова', run: () => bookAgain(todayIn()) },
+  }[kind]
+  // Пока форма оплаты открыта, нижней «Принять оплату» нет: кнопка формы — та же «Принять оплату»
+  const barMain = main && !(payMain && payFormOpen) ? main : null
+  // Компьютер: шаг, «Напомнить», «Подтвердил», «Записать снова» — у пилюли; оплата и следующий визит — в ленте
+  const statusMain = !phone && main && kind !== 'pay' && kind !== 'extra' && kind !== 'next-visit' ? main : null
   const barMenu = [
-    canEdit && (a.status === 'REQUESTED' || a.status === 'SCHEDULED')
+    // В кресле — не переносят
+    canEdit && (a.status === 'REQUESTED' || a.status === 'SCHEDULED') && !a.inChairAt
       ? { label: editableDoctors(me, doctors).length > 1 ? 'Перенести или передать врачу' : 'Перенести',
           onSelect: () => { setMoved(''); setEditing('move'); requestAnimationFrame(() => scrollTo('.appt-move')) } } : null,
     a.patient.id ? { label: '＋ Задача', onSelect: () => setTaskOpen(true) } : null,
@@ -450,13 +506,12 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
     <>
     {full && <div className="panel-backdrop" onClick={toggleFull} aria-hidden="true" />}
     <aside className={full ? 'panel panel-full appt-card' : 'panel appt-card'} aria-label="Карточка приёма">
-      {/* Шапка: когда, у кого и статус; справа — показать пациенту, на весь экран, закрыть */}
+      {/* Шапка: когда и у кого — коротко, без переноса («пт, 20 нояб · Айгерим С.»); справа — показать пациенту, на весь
+          экран, закрыть */}
       <header className="panel-head">
         <div className="appt-when">
           <div className="with-hint"><h2>{timeOf(a.startAt)}–{timeOf(a.endAt)}</h2><HelpHint hint="appointment" /></div>
-          <span className="hint">{dayTitle(date)}{doctors.length > 1 && doctor ? ` · ${doctor.fullName}` : ''}</span>
-          {/* Важное из анкеты — жёлтой пилюлей у времени («⚠ Аллергия: лидокаин»): нажать — весь список и «Анкета ›» */}
-          {clinical && a.status !== 'CANCELLED' && <MedAlertPill an={anamnesis.data} onOpen={onMedical ? () => onMedical(a.patient, 'anamnesis') : undefined} />}
+          <span className="hint appt-day">{shortDayTitle(date)}{doctors.length > 1 && doctor ? <> · <span className="nowrap">{shortName(doctor.fullName ?? '')}</span></> : null}</span>
         </div>
         <div className="panel-head-actions">
           {/* Презентация по услуге — показать на экране; отправлять не нужно: после приёма уходит отчёт */}
@@ -477,9 +532,55 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
       {lesson && a.patient && (
         <LessonPicker key={`${a.id}-${a.serviceName ?? ''}`} serviceName={a.serviceName} patientId={a.patient.id} onClose={() => setLesson(false)} />
       )}
+
+      {/* Пациент — сразу под шапкой (по просьбе владельца, 2026-11-20): имя (→ его карточка), номер «Связаться ▾», метка
+          словом, аллергия, чипы, история одной строкой. Статус — ниже */}
+      <section className="appt-patient" aria-label="Пациент">
+        <div className="appt-who">
+          {onOpenPatient && a.patient.id
+            ? <button type="button" className="link patient-name" onClick={() => onOpenPatient(a.patient.id)}>{a.patient.fullName} ›</button>
+            : <strong className="patient-name">{a.patient.fullName}</strong>}
+          {/* Номер — он же «📞 Связаться ▾»: позвонить, WhatsApp, напомнить, попросить оценку, долг (2026-11-19) */}
+          {contacts.items.length
+            ? <ContactMenu items={contacts.items} className="link appt-phone"
+                content={a.patient.phone ? <span className="num">{formatPhone(a.patient.phone)}</span> : <><span aria-hidden="true">📞 </span>Связаться</>} />
+            : a.patient.phone && <span className="num">{formatPhone(a.patient.phone)}</span>}
+        </div>
+        {/* Метки пациента одной строкой, по важности: ⚠ аллергия из анкеты (кто видит медкарту; нажать — весь список и
+            «Анкета ›»), ❗ важно для врача (кому анкета закрыта), 🧾 долг, ⭐ ВИП, своя метка клиники словом (V239) */}
+        {(() => {
+          const pill = clinical && a.status !== 'CANCELLED'
+            ? <MedAlertPill an={anamnesis.data} onOpen={onMedical ? () => onMedical(a.patient, 'anamnesis') : undefined} /> : null
+          // ❗ без текста — тем, кому пилюля не видна: регистратуре, коллеге; анкета не открылась (403) — тоже чип
+          const showAlert = Boolean(medAlert && a.status !== 'CANCELLED' && !(clinical && anamnesis.isSuccess))
+          const showDebt = patientDebt > 0 && a.status !== 'CANCELLED' && !payPending
+          const tags = (a.patient.tagIds?.length ?? 0) > 0
+          if (!pill && !showAlert && !showDebt && !a.patient.vip && !tags) return null
+          return (
+            <div className="appt-marks">
+              {pill}
+              {showAlert && <span className="chip s-bad appt-mark" role="note" title={medAlert?.text ?? 'Есть отметки в анкете: аллергия, болезни — видит врач'}><span className="ico" aria-hidden="true">❗</span>Важно для врача</span>}
+              {/* Долг пациента — на виду, пока он записан или пришёл; после «Приём состоялся» — подсказка у оплаты */}
+              {showDebt && <span className="chip s-bad appt-debt" role="note"><span className="ico" aria-hidden="true">🧾</span>Долг {somText(patientDebt)}</span>}
+              {a.patient.vip && <span className="chip appt-mark" role="note" title="ВИП — особое внимание"><span className="ico" aria-hidden="true">⭐</span>ВИП</span>}
+              <TagDots patient={a.patient} named />
+            </div>
+          )
+        })()}
+        {/* История одной строкой слева, «＋ Задача» и «＋ В лабораторию» — справа в той же строке (врачу на приёме — в «О записи») */}
+        <div className="appt-history-row">
+          <PatientHistory appointment={a} me={me} />
+          {!doctorView && quickLinks}
+        </div>
+        <KidInfo patient={a.patient} />
+        {/* Врачу на приёме комментарий записи («Боится уколов») — здесь, у пациента, а не в свёрнутой «О записи» */}
+        {doctorView && commentBlock}
+      </section>
+
+      {/* Статус пилюлей и рядом главное действие (компьютер; телефон — внизу) */}
       <div className="appt-status-row">
         <StatusPill appointment={a} options={statusMenu} disabled={action.isPending} />
-        {next && !phone && <button type="button" className="btn primary" disabled={action.isPending} onClick={next.run}>{next.label}</button>}
+        {statusMain && <button type="button" className="btn primary" disabled={action.isPending || statusMain.disabled} onClick={statusMain.run}>{statusMain.label}</button>}
       </div>
       {reasonFor && (
         <ReasonSheet kind={reasonFor} question={reasonSheet.question} ok={reasonSheet.ok} onClose={() => setReasonFor(null)}
@@ -491,55 +592,18 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
       {contacts.inviteSheet}
       {contacts.error && <p className="error" role="alert">{Object.values(contacts.error.fieldErrors)[0] ?? contacts.error.message}</p>}
       {debtForm && a.patient.id && <DebtRemindForm patientId={a.patient.id} name={a.patient.fullName} onDone={() => setDebtForm(false)} />}
-      {/* Метки пациента одной строкой, по важности, как на записи в сетке: ❗ важно для врача (тем, кому анкета закрыта —
-          остальным — пилюля «⚠ …» у времени), 🧾 долг, ⭐ ВИП. Первый визит — строкой «Впервые в клинике» у пациента */}
-      {(() => {
-        const showAlert = Boolean(medAlert && !medAlert.text && a.status !== 'CANCELLED')
-        const showDebt = patientDebt > 0 && a.status !== 'CANCELLED' && !payPending
-        if (!showAlert && !showDebt && !a.patient.vip) return null
-        return (
-          <div className="appt-marks">
-            {showAlert && <span className="chip s-bad appt-mark" role="note" title="Есть отметки в анкете: аллергия, болезни — видит врач"><span className="ico" aria-hidden="true">❗</span>Важно для врача</span>}
-            {/* Долг пациента — на виду, пока он записан или пришёл; после «Приём состоялся» — подсказка у оплаты */}
-            {showDebt && <span className="chip s-bad appt-debt" role="note"><span className="ico" aria-hidden="true">🧾</span>Долг {somText(patientDebt)}</span>}
-            {a.patient.vip && <span className="chip appt-mark" role="note" title="ВИП — особое внимание"><span className="ico" aria-hidden="true">⭐</span>ВИП</span>}
-          </div>
-        )
-      })()}
       {colleague && (
         <p className="appt-chair-mark" role="note"><span aria-hidden="true">🪑 </span>{colleagueMarkText(colleague)}</p>
       )}
-
-      {/* Пациент: имя (→ его карточка), телефон, история одной строкой и важное из анкеты */}
-      <section className="appt-patient" aria-label="Пациент">
-        <div className="appt-who">
-          {onOpenPatient && a.patient.id
-            ? <button type="button" className="link patient-name" onClick={() => onOpenPatient(a.patient.id)}>{a.patient.fullName} ›</button>
-            : <strong className="patient-name">{a.patient.fullName}</strong>}
-          {/* Свои метки клиники (V239) — точками у имени, названия в подсказке; ⭐ ВИП — чипом выше */}
-          <TagDots patient={a.patient} />
-          {/* Номер — он же «📞 Связаться ▾»: позвонить, WhatsApp, напомнить, попросить оценку, долг (2026-11-19) */}
-          {contacts.items.length
-            ? <ContactMenu items={contacts.items} className="link appt-phone"
-                content={a.patient.phone ? <span className="num">{formatPhone(a.patient.phone)}</span> : <><span aria-hidden="true">📞 </span>Связаться</>} />
-            : a.patient.phone && <span className="num">{formatPhone(a.patient.phone)}</span>}
-        </div>
-        {/* История одной строкой слева, «＋ Задача» и «＋ В лабораторию» — справа в той же строке (врачу на приёме — в «О записи») */}
-        <div className="appt-history-row">
-          <PatientHistory appointment={a} me={me} />
-          {!doctorView && quickLinks}
-        </div>
-        {/* Примерка на этот приём: работа пришла? Нет — предупреждение и «WhatsApp технику». До приёма — здесь,
-            наверху (успеть позвонить технику); на приёме и после — в секции «Приём», после расхода */}
-        {a.patient.id && canEdit && !visitTools ? <AppointmentLab appointment={a} /> : null}
-        <KidInfo patient={a.patient} />
-        {!doctorView && patientExtras}
-        {/* Оценка и отзыв пациента — всем, и врачу на приёме */}
-        {a.rating != null && (
-          <p className="rating" aria-label={`Оценка пациента: ${a.rating} из 5`}>{'★'.repeat(a.rating)}{'☆'.repeat(5 - a.rating)} <span className="hint">оценка пациента{a.ratingVia === 'PAGE' ? ' · по ссылке' : ''}</span></p>
-        )}
-        {a.reviewComment && <blockquote className="review-comment"><span className="hint">Пациент написал:</span><br />{a.reviewComment}</blockquote>}
-      </section>
+      {/* Примерка на этот приём: работа пришла? Нет — предупреждение и «WhatsApp технику». До приёма — здесь,
+          наверху (успеть позвонить технику); на приёме и после — в секции «Приём», после расхода */}
+      {a.patient.id && canEdit && !visitTools ? <AppointmentLab appointment={a} /> : null}
+      {!doctorView && patientExtras}
+      {/* Оценка и отзыв пациента — всем, и врачу на приёме */}
+      {a.rating != null && (
+        <p className="rating" aria-label={`Оценка пациента: ${a.rating} из 5`}><span className="rating-stars">{'★'.repeat(a.rating)}{'☆'.repeat(5 - a.rating)}</span> <span className="hint">оценка пациента{a.ratingVia === 'PAGE' ? ' · по ссылке' : ''}</span></p>
+      )}
+      {a.reviewComment && <blockquote className="review-comment"><span className="hint">Пациент написал:</span><br />{a.reviewComment}</blockquote>}
 
       {!doctorView && whatSection}
       {doctorView && visitSection}
@@ -553,7 +617,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
         <Fold title="О записи" label="О записи" meta={a.serviceName ?? undefined}>
           <div className="appt-about">
             {whatSection}
-            {a.status === 'SCHEDULED' && <Remind appointment={a} nowhere={contacts.nowhere} />}
+            {beforeArrival && <Remind appointment={a} nowhere={contacts.nowhere} />}
             {quickLinks}
             {patientExtras}
           </div>
@@ -561,7 +625,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
       )}
 
       {/* Перенести — на виду внизу (телефон — в «⋯» нижней панели); неявка и отмена — в списке статуса, их можно «Вернуть» */}
-      {canEdit && !phone && (a.status === 'REQUESTED' || a.status === 'SCHEDULED') && (
+      {canEdit && !phone && (a.status === 'REQUESTED' || a.status === 'SCHEDULED') && !a.inChairAt && (
         <div className="danger-zone actions">
           {editing !== 'move' && (
             <button type="button" className="btn" onClick={() => { setMoved(''); setEditing('move') }}>{editableDoctors(me, doctors).length > 1 ? 'Перенести или передать врачу' : 'Перенести'}</button>
@@ -591,7 +655,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
       {/* Телефон: следующий шаг и «⋯» — внизу карточки, всегда под пальцем (над безопасной зоной iPhone) */}
       {phone && (barMain || barMenu.length > 0) && (
         <div className="appt-bar" role="toolbar" aria-label="Действия с приёмом">
-          {barMain && <button type="button" className="btn primary appt-bar-main" disabled={action.isPending} onClick={barMain.run}>{barMain.label}</button>}
+          {barMain && <button type="button" className="btn primary appt-bar-main" disabled={action.isPending || barMain.disabled} onClick={barMain.run}>{barMain.label}</button>}
           {barMenu.length > 0 && (
             <ActionMenu label="Ещё действия" buttonLabel="Ещё действия" className="btn appt-bar-more" content="⋯" caret={false} align="right"
               disabled={remove.isPending} items={barMenu} />
@@ -613,4 +677,17 @@ function ReminderSent({ a, canEdit }: { a: Appointment; canEdit: boolean }) {
       {undo.error && <p className="error" role="alert">{undo.error.message}</p>}
     </>
   )
+}
+
+/**
+ * Отмена одной строкой (UX-аудит 2026-11-20): «Перенёс на другое время · отменил(а) пациент в боте, сегодня 09:20».
+ * «Отменён» уже написан в пилюле статуса. Причины нет — «Отменил(а) …»; ни причины, ни «кто» (старые отмены) — null.
+ */
+function cancelText(a: Appointment): string | null {
+  const reason = a.cancelReason ? `${REASON_TEXT[a.cancelReason]}${a.cancelNote ? ` — ${a.cancelNote}` : ''}` : null
+  const who = a.cancelledBy || a.cancelledAt
+    ? [a.cancelledBy ?? 'кто — не записано', a.cancelledAt ? cancelledWhen(a.cancelledAt, { sayToday: true }) : null].filter(Boolean).join(', ')
+    : null
+  if (reason && who) return `${reason} · отменил(а) ${who}`
+  return reason ?? (who ? `Отменил(а) ${who}` : null)
 }

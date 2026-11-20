@@ -17,3 +17,13 @@ export function waitForSlow<T>(callback: () => T | Promise<T>, options: { timeou
 export async function warmSchedule(): Promise<void> {
   await Promise.all([import('../layout/Shell'), import('../schedule/SchedulePage')])
 }
+
+/**
+ * То же для тестов, которые ходят по разделам меню (вкладки подразделов, «⌄»): оболочка и ленивые страницы разделов.
+ * Без этого под нагрузкой (полный прогон, --maxWorkers) каждый тест, первым открывший новый раздел, ждал сборку его
+ * модулей внутри 5 с `findBy` и падал «Unable to find … Подразделы: Касса» (subSwitch.test.tsx, 2026-11-20).
+ */
+export async function warmSections(): Promise<void> {
+  await Promise.all([import('../layout/Shell'), import('../patients/PatientsPage'), import('../cash/CashPage'), import('../stock/StockPage'),
+    import('../settings/SettingsPage'), import('../platform/PlatformPage'), import('../schedule/SchedulePage')])
+}

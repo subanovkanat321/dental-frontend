@@ -30,6 +30,9 @@ import './doctorChips.css'
 import { colorOf as doctorColor, initials, specialtyOf } from '../lib/avatars'
 import { NewAppointmentPanel, type Slot } from './NewAppointmentPanel'
 import { QuickMenu } from './QuickMenu'
+import { DoctorCalendar } from './DoctorCalendar'
+import { PaintSwitch } from './PaintSwitch'
+import { usePaintOf } from './paint'
 import { DAY, fromYesterday, gridRange, hourLabel, offSpans, slotsHoursText, workSpans } from './workSpans'
 import { statusOf } from './status'
 import { PAD, PX, useFitToWindow, useNowMinutes } from './gridScale'
@@ -167,6 +170,11 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
   const doctors = orderDoctors(clinicDoctors, doctorOrder, me.doctorId)
   // Цвет врача — по списку клиники, не по порядку на экране: поменяли порядок — цвета не перепутались
   const colorOf = (d: (typeof doctors)[number]) => doctorColor(clinicDoctors, d.id)
+  // «Чем красить запись»: статус (по умолчанию), врач или раздел услуги — выбор на устройстве (schedule/paint.ts)
+  const { paintOf } = usePaintOf(clinicDoctors)
+  // Мини-календарь врача: шапка колонки (компьютер — окно под ней) или кнопка 📅 у выбора врача (телефон — лист снизу)
+  const [calendar, setCalendar] = useState<{ id: number; anchor: DOMRect | null } | null>(null)
+  const calendarDoctor = calendar ? doctors.find((d) => d.id === calendar.id) : undefined
   // Чьё расписание: все врачи колонками или один. Выбор запоминается на устройстве (только id врача —
   // не личные данные). По умолчанию на телефоне — свой врач, на компьютере — все
   const [view, setViewState] = useState<number | 'all'>(() => {
@@ -420,7 +428,8 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
   const doctorSwitch = doctors.length > 1 && (narrow || doctors.length > MAX_CHIPS ? (
     // Телефон (и больше 6 врачей на компьютере — ряд чипов уже не помещается): одна кнопка со списком
     <DoctorPicker me={me} doctors={doctors} view={weekMode && weekDoctor != null ? weekDoctor : view} date={date} onChange={setView}
-      colorDoctors={clinicDoctors} onOrder={() => setOrdering(true)} shownCount={shown.length} compact={!narrow} />
+      colorDoctors={clinicDoctors} onOrder={() => setOrdering(true)} shownCount={shown.length} compact={!narrow}
+      onCalendar={(id) => setCalendar({ id, anchor: null })} />
   ) : (
     // Компьютер: чипы с тем же цветным кружком, что у колонки врача, — видно, кто где
     <div className="doctor-chips" role="group" aria-label="Чьё расписание">
@@ -598,6 +607,7 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
 
         {dayList ? (
           <DayList me={me} doctors={dayList.map((d) => ({ id: d.id, name: d.fullName ?? '', color: colorOf(d) }))} date={date} onDate={setDate} selectedId={selected?.id}
+            paintOf={paintOf} onCalendar={(id) => setCalendar({ id, anchor: null })}
             all={view === 'all' && doctors.length > 1}
             doctorsNote={partial || offHidden.length ? <>{partial && <span className="shown-of">{partial.replace(/^./, (c) => c.toUpperCase())}</span>}{partial && offHidden.length ? ' · ' : ''}{offHint}</> : undefined}
             onNewHere={bookable.length > 0 ? newHere : undefined}
@@ -617,7 +627,8 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
           </EmptyState>
         ) : (
           <div className="grid-wrap">
-            <div ref={grid} className="grid" style={{ gridTemplateColumns: `56px repeat(${shown.length}, minmax(140px, 1fr))`, '--cols': shown.length } as CSSProperties}>
+            {/* multi — несколько врачей колонками: полоска слева у записи — цвет врача (статус — заливкой и словом) */}
+            <div ref={grid} className={shown.length > 1 ? 'grid multi' : 'grid'} style={{ gridTemplateColumns: `56px repeat(${shown.length}, minmax(140px, 1fr))`, '--cols': shown.length } as CSSProperties}>
               <div className="grid-corner" />
               {shown.map((d) => {
                 // Свой цвет врача — полоса над колонкой и слева на карточках; часы работы и кресло — под именем
@@ -625,8 +636,10 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
                 const sl = slots[doctors.indexOf(d)]?.data
                 const hoursText = slotsHoursText(sl)
                 return (
-                  <button key={d.id} type="button" className="grid-head" title={`Только ${d.fullName}`} disabled={shown.length === 1}
-                    style={{ '--doc': color } as CSSProperties} onClick={() => setView(d.id)}>
+                  // Нажатие — мини-календарь врача на месяц (в нём же «Только этот врач», прежнее действие шапки)
+                  <button key={d.id} type="button" className="grid-head" title={`Календарь врача: ${d.fullName}`} aria-haspopup="dialog"
+                    aria-expanded={calendar?.id === d.id}
+                    style={{ '--doc': color } as CSSProperties} onClick={(e) => setCalendar({ id: d.id, anchor: e.currentTarget.getBoundingClientRect() })}>
                     {d.photoUrl
                       ? <img className="avatar photo" src={d.photoUrl} alt="" />
                       : <span className="avatar" style={{ background: color }} aria-hidden="true">{initials(d.fullName)}</span>}
@@ -657,7 +670,7 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
                 const y = (minutes: number) => PAD + (Math.min(Math.max(minutes, from), to) - from) * PX
                 const off = sl?.workingDay ? offSpans(workSpans(sl, date), from, to) : []
                 return (
-                  <div key={d.id} className="grid-col" style={{ height }} role="group" aria-label={d.fullName}
+                  <div key={d.id} className="grid-col" style={{ height, '--doc': colorOf(d) } as CSSProperties} role="group" aria-label={d.fullName}
                     title={canEditDoctor(me, d.id) ? 'Нажмите на свободное время — новая запись' : 'Расписание коллеги — только просмотр'} onClick={pick(d.id)}>
                     {hours.map((m) => <div key={m} className="grid-hour" style={{ top: PAD + (m - from) * PX }} />)}
                     {/* Сетка продлена после полуночи: черта «полночь» с датой следующего дня (подпись — справа в последней колонке: слева обычно приёмы) */}
@@ -717,7 +730,7 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
                     {q?.error && <div className="error grid-loading">{q.error.message}</div>}
                     {(q?.data ?? []).filter((a) => a.status !== 'CANCELLED').map((a) => (
                       <DayAppt key={a.id} a={a} date={date} from={from} limit={limit} active={selected?.id === a.id} money={seesMoneyOf(me, a.doctorId)}
-                        chairTime={sl?.chairTime} hover={hover.bind} onOpen={openAppt} onQuick={openQuick} />
+                        chairTime={sl?.chairTime} hover={hover.bind} onOpen={openAppt} onQuick={openQuick} paint={paintOf(a)} />
                     ))}
                   </div>
                 )
@@ -725,7 +738,8 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
             </div>
             {hover.card}
             {/* Ни одного приёма в дне — Тишка «водяным знаком» поверх видимой части сетки (вне прокрутки); нажатия проходят к свободным окнам */}
-            {shown.length > 0 && shown.every((d) => days[doctors.indexOf(d)]?.isSuccess)
+            {/* Одна колонка: при нескольких врачах надпись ложилась поверх чужих колонок и полос «время коллеги» */}
+            {shown.length === 1 && shown.every((d) => days[doctors.indexOf(d)]?.isSuccess)
               && shown.every((d) => !(days[doctors.indexOf(d)]?.data ?? []).some((a) => a.status !== 'CANCELLED')) && (
               <div className="grid-empty">
                 <EmptyState title={emptyDayText(date, today)}>{date >= today ? 'Нажмите на свободное время, чтобы записать.' : null}</EmptyState>
@@ -734,7 +748,12 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
           </div>
         )}
         {!weekMode && !monthMode && reviewLine}
-        {!dayList && !monthMode && doctors.length > 0 && <BadgesLegend chair={Boolean(chairs.data?.some((c) => (c.doctorIds?.length ?? 0) > 1))} />}
+        {!dayList && !monthMode && doctors.length > 0 && (
+          <div className="schedule-legend">
+            <BadgesLegend chair={Boolean(chairs.data?.some((c) => (c.doctorIds?.length ?? 0) > 1))} />
+            <PaintSwitch compact />
+          </div>
+        )}
       </section>
       {summary && (
         <DaySummary date={date} today={today} all={all} requests={requests} waiting={waiting} toPay={toPay.data?.length ?? 0}
@@ -757,6 +776,12 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
         <QuickMenu key={quick.a.id} appointment={withCarried.find((x) => x.id === quick.a.id) ?? quick.a} me={me} at={quick.at} onClose={closeQuick}
           onOpen={(a, intent) => setSide({ kind: 'appointment', id: a.id, fallback: a, intent })}
           onOpenPatient={onOpenPatient} onBook={(slot, patient) => setSide({ kind: 'new', slot: { ...slot, next: true }, patient })} />
+      )}
+      {calendar && calendarDoctor && (
+        <DoctorCalendar doctor={{ id: calendarDoctor.id, name: calendarDoctor.fullName ?? '', color: colorOf(calendarDoctor) }} date={date} today={today}
+          anchor={calendar.anchor} onClose={() => setCalendar(null)}
+          onPick={(day) => { setDate(day); if (monthMode) setMode('day') }}
+          onOnly={view === 'all' && shown.length > 1 ? () => setView(calendarDoctor.id) : undefined} />
       )}
       {reviewAsksOpen && <ReviewAsksDialog doctorName={doctorName} onClose={() => setReviewAsksOpen(false)} />}
     </div>

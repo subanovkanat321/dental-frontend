@@ -5,6 +5,7 @@ import { http, HttpResponse } from 'msw'
 import type { Schemas } from '../api/client'
 import { me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
+import { warmSections } from '../test/wait'
 import { SUB_HINT_KEY } from './section'
 
 /**
@@ -37,6 +38,9 @@ function layout(fits: boolean) {
 /** Свои свойства HTMLElement.prototype до подмены (clientWidth и scrollWidth — у Element, их просто убираем) */
 const own = Object.fromEntries(['offsetWidth', 'offsetLeft', 'clientWidth', 'scrollWidth']
   .map((name) => [name, Object.getOwnPropertyDescriptor(HTMLElement.prototype, name)]))
+
+// Ленивые разделы — заранее, со своим сроком: иначе под нагрузкой первый тест каждого раздела ждёт их сборку в 5 с findBy
+beforeAll(warmSections, 60_000)
 
 beforeEach(() => {
   phone()

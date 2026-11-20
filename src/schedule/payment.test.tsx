@@ -180,10 +180,14 @@ test('после предоплаты — указать стоимость, о�
   expect(within(panel).getByText(/^Долг 3\s000 сом$/)).toBeInTheDocument()
 })
 
-test('долг закрыт — «Оплачено полностью»; врач правит сумму на кассу', async () => {
-  backend(appointment(10, 1, '10:00', 'Бакыт М.', { status: 'DONE', paidSom: 4000, chargeSom: 4000, debtSom: 0, version: 1 }), () => ({}))
+test('оплачено полностью — одной строкой «✅ Оплачено 4 000 сом · наличные» и «изменить», без «из»', async () => {
+  backend(appointment(10, 1, '10:00', 'Бакыт М.', { status: 'DONE', paidSom: 4000, chargeSom: 4000, debtSom: 0, paymentMethod: 'CASH', version: 1 }), () => ({}))
   renderApp()
-  expect(await within(await card()).findByText(/Оплачено полностью/)).toBeInTheDocument()
+  const panel = await card()
+  expect(await within(panel).findByText(/^✅ Оплачено 4\s000 сом · наличные$/)).toBeInTheDocument()
+  expect(within(panel).queryByText(/из 4\s000 сом/)).not.toBeInTheDocument()
+  expect(within(panel).queryByText(/Оплачено полностью/)).not.toBeInTheDocument()
+  expect(within(panel).getByRole('button', { name: 'изменить' })).toBeInTheDocument()
 })
 
 test('на кассе: врач меняет сумму счёта', async () => {

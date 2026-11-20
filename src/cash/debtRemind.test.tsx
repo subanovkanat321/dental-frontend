@@ -147,22 +147,27 @@ test('карточка приёма: пациент с долгом записа
   expect(await within(panel).findByText(/У пациента долг 5\s000 сом за прошлые визиты — напомните при оплате/)).toBeInTheDocument()
 })
 
-test('регистратура «Должников» не видит — меток долга и запроса долгов нет', async () => {
-  let asked = 0
+test('регистратура: «Должников» не видит (меток долга в расписании нет), а долг пациента в карточке приёма — видит', async () => {
+  const asked: string[] = []
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json({ ...me, admin: false, reception: true, doctorId: undefined, hasReception: true })),
     http.get('*/api/appointments', ({ request }) => HttpResponse.json(new URL(request.url).searchParams.get('doctorId') === '1'
       ? [appointment(10, 1, '00:05', 'Айгуль Вымышленная')] : [])),
-    http.get('*/api/appointments/debts', () => {
-      asked++
+    http.get('*/api/appointments/debts', ({ request }) => {
+      asked.push(new URL(request.url).search)
       return HttpResponse.json([debt(3, 10, 'Айгуль Вымышленная')])
     }),
   )
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: /Айгуль Вымышленная/ }))
   const panel = screen.getByRole('complementary', { name: 'Карточка приёма' })
-  expect(within(panel).queryByText(/Долг 5\s000/)).not.toBeInTheDocument()
-  expect(asked).toBe(0)
+  // Сервер отдаёт регистратуре долги одного пациента (она принимает оплату) — общий список не спрашиваем
+  expect(await within(panel).findByText(/Долг 5\s000/)).toBeInTheDocument()
+  expect(asked).toEqual(['?patientId=10'])
+  // «Напомнить о долге» — у руководителя и врачей
+  await userEvent.click(panel.querySelector<HTMLElement>('.appt-phone')!)
+  expect(await screen.findByRole('menuitem', { name: /Позвонить/ })).toBeInTheDocument()
+  expect(screen.queryByRole('menuitem', { name: /Напомнить о долге/ })).not.toBeInTheDocument()
 })
 
 test('«Настройки → Напоминание о долге»: стандартный текст, реквизиты в предпросмотре, свой текст — на сервер', async () => {

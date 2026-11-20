@@ -92,5 +92,12 @@ export function useAppointmentContacts(a: Appointment, { canEdit, debtSom, onDeb
     items.push({ label: 'Напомнить о долге', group: 'send', icon: '🧾', hint: `долг ${somText(debtSom)}`, onSelect: onDebt })
   }
   if (botInvite.item) items.push(botInvite.item)
-  return { items, inviteSheet: botInvite.sheet, error: remind.action.error ?? remind.opened.error ?? sendReview.error, nowhere: canRemind && remind.nowhere }
+  // «Напомнить» — главной кнопкой карточки у записи на будущий день (бот, иначе WhatsApp); те же действия, что в меню
+  const remindMain = canRemind && a.patient.telegram
+    ? { label: 'Напомнить в Telegram', disabled: remind.action.isPending, run: () => void confirmRemind(a).then((ok) => ok && remind.telegram()) }
+    : canRemind && phone
+      ? { label: 'Напомнить в WhatsApp', disabled: remind.text == null || remind.opened.isPending,
+          run: () => { if (asks) void confirmRemind(a).then((ok) => ok && remind.whatsapp()); else remind.whatsapp() } }
+      : null
+  return { items, remindMain, inviteSheet: botInvite.sheet, error: remind.action.error ?? remind.opened.error ?? sendReview.error, nowhere: canRemind && remind.nowhere }
 }

@@ -194,7 +194,7 @@ function AfterVisitMessage({ appointment: a, me, last }: { appointment: Appointm
   const fallback = send.error?.code === 'not-delivered' && phone
 
   // Пока черновика нет — блок свёрнут в одну строку (2026-11-19, экономия места): не отправлено — кнопка
-  // «📝 Отчёт пациенту ▾», отправлено — «✓ Сообщение отправлено … · Отправить ещё раз ▾». Пункты меню одни и те же;
+  // «📝 Сообщение после приёма ▾», отправлено — «✓ Сообщение отправлено … · Отправить ещё раз ▾». Пункты меню одни и те же;
   // выбрали — открывается черновик или отправка памятки
   const write = aiOn ? 'AI' : 'TEMPLATE'
   if (!draft) {
@@ -222,7 +222,7 @@ function AfterVisitMessage({ appointment: a, me, last }: { appointment: Appointm
               </>
             ) : (
               <>
-                <ActionMenu label="📝 Отчёт пациенту" items={items} disabled={make.isPending} />
+                <ActionMenu label="📝 Сообщение после приёма" items={items} disabled={make.isPending} />
                 <span className="hint small">не отправлен</span>
               </>
             )}

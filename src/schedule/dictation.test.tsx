@@ -66,7 +66,7 @@ class FakeRecognition {
 async function openPanel() {
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: /Бакыт М\./ }))
-  return screen.findByRole('button', { name: '🎤 Надиктовать приём' })
+  return screen.findByRole('button', { name: '🎤 Надиктовать' })
 }
 
 afterEach(() => {
@@ -145,7 +145,7 @@ test('регистратуре кнопки нет: заметка о приём
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: /Бакыт М\./ }))
   await waitForSlow(() => expect(screen.queryByText('Заметка о приёме')).not.toBeInTheDocument())
-  expect(screen.queryByRole('button', { name: '🎤 Надиктовать приём' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: '🎤 Надиктовать' })).not.toBeInTheDocument()
 })
 
 test('тишина не обрывает запись: браузер закончил сам — тихо начинаем заново, текст на месте; шпаргалка отмечает сказанное', async () => {

@@ -7716,6 +7716,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/appointments/load": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["load"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/appointments/from-tish": {
         parameters: {
             query?: never;
@@ -7756,6 +7772,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["counts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/appointments/conversion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["conversion"];
         put?: never;
         post?: never;
         delete?: never;
@@ -13660,6 +13692,48 @@ export interface components {
             /** Format: int64 */
             revenueSom?: number;
         };
+        OwnerReportsChairLoad: {
+            /** Format: int64 */
+            chairId: number;
+            name: string;
+            /** Format: int32 */
+            availableMinutes: number;
+            /** Format: int32 */
+            bookedMinutes: number;
+            /** Format: int32 */
+            loadPercent?: number;
+        };
+        OwnerReportsDoctorLoad: {
+            /** Format: int64 */
+            doctorId: number;
+            name: string;
+            /** Format: int32 */
+            plannedMinutes: number;
+            /** Format: int32 */
+            bookedMinutes: number;
+            /** Format: int32 */
+            outsideMinutes: number;
+            /** Format: int32 */
+            doneMinutes: number;
+            /** Format: int32 */
+            loadPercent?: number;
+        };
+        OwnerReportsLoadView: {
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            doctors: components["schemas"]["OwnerReportsDoctorLoad"][];
+            chairs: components["schemas"]["OwnerReportsChairLoad"][];
+            /** Format: int32 */
+            plannedMinutes: number;
+            /** Format: int32 */
+            bookedMinutes: number;
+            /** Format: int32 */
+            doneMinutes: number;
+            /** Format: int32 */
+            loadPercent?: number;
+        };
         TishReportControllerChannelRow: {
             /** @enum {string} */
             channel: "BOT" | "MINI_APP" | "SITE" | "INSTAGRAM" | "TWOGIS" | "WHATSAPP" | "REELS" | "QR" | "REFERRAL" | "RECALL";
@@ -13704,6 +13778,37 @@ export interface components {
             booked: number;
             /** Format: int64 */
             requested: number;
+        };
+        OwnerReportsConversionView: {
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            /** Format: int32 */
+            booked: number;
+            /** Format: int32 */
+            done: number;
+            /** Format: int32 */
+            cancelled: number;
+            /** Format: int32 */
+            noShow: number;
+            /** Format: int32 */
+            waiting: number;
+            /** Format: int32 */
+            patients: number;
+            /** Format: int32 */
+            continued: number;
+            /** Format: int32 */
+            newPatients: number;
+            /** Format: int32 */
+            returningPatients: number;
+            money: boolean;
+            /** Format: int64 */
+            revenueSom?: number;
+            /** Format: int32 */
+            paidVisits?: number;
+            /** Format: int32 */
+            avgCheckSom?: number;
         };
         ChairOptionView: {
             /** Format: int64 */
@@ -27895,6 +28000,30 @@ export interface operations {
             };
         };
     };
+    load: {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+                doctorId?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnerReportsLoadView"];
+                };
+            };
+        };
+    };
     report_5: {
         parameters: {
             query?: {
@@ -27960,6 +28089,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DayCount"][];
+                };
+            };
+        };
+    };
+    conversion: {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+                doctorId?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnerReportsConversionView"];
                 };
             };
         };

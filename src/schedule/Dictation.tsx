@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useImperativeHandle, useRef, useState, type Ref } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { Spinner } from '../layout/Loading'
@@ -51,7 +51,11 @@ function errorText(e: ApiError | null): string | null {
  * (на телефоне есть микрофон на клавиатуре); нет ИИ — текст идёт в заметку как есть.
  * Права — как у заметки (врач приёма и админ): блок показывают, только когда заметка открылась.
  */
-export function Dictation({ appointment: a, current, onActive }: {
+/** Кнопка «🎤 Надиктовать» — в строке подписи заметки (VisitNote): она зовёт start(). */
+export type DictationHandle = { start: () => void }
+
+export function Dictation({ appointment: a, current, onActive, ref }: {
+  ref?: Ref<DictationHandle>
   appointment: Appointment
   /** Заметка сейчас: к ней (к её разделам) добавится надиктованное. */
   current: CurrentNote
@@ -184,6 +188,7 @@ export function Dictation({ appointment: a, current, onActive }: {
     go('speak')
     if (canSpeak) listen()
   }
+  useImperativeHandle(ref, () => ({ start }))
 
   const parse = useMutation<Proposal, ApiError>({
     mutationFn: () => unwrap(api.POST('/api/appointments/{id}/dictation/parse', { params: { path: { id: a.id } }, body: { text: textNow.current.trim() } })),
@@ -233,13 +238,8 @@ export function Dictation({ appointment: a, current, onActive }: {
   }
 
   if (step === 'idle') {
-    return (
-      <div className="dictation">
-        <button type="button" className="btn dictation-start" onClick={start}>🎤 Надиктовать приём</button>
-        <p className="hint small">Скажите по шагам: зуб → что сделали → следующий визит. Шпаргалка будет на экране.</p>
-        {saved && <p className="tone-ok small" role="status">{saved}</p>}
-      </div>
-    )
+    // Кнопка «🎤 Надиктовать» — в строке подписи заметки; здесь только «Сохранено» после разбора
+    return saved ? <p className="tone-ok small" role="status">{saved}</p> : null
   }
 
   if (step === 'speak') {

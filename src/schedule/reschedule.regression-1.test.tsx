@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { addDays, dayTitle, todayIn } from '../lib/time'
+import { addDays, shortDayTitle, todayIn } from '../lib/time'
 import { appointment, me, renderApp } from '../test/fixtures'
 import { pickDate } from '../test/date'
 import { server } from '../test/server'
@@ -50,5 +50,5 @@ test('перенос на другой день: карточка остаётс
   await waitForSlow(() => expect(screen.getAllByRole('button', { name: /Бакыт М\./ })).toHaveLength(1))
   const heading = within(panel).getByRole('heading', { level: 2 })
   expect(heading).toHaveTextContent('11:00–11:30')
-  expect(panel).toHaveTextContent(dayTitle(tomorrow))
+  expect(panel).toHaveTextContent(shortDayTitle(tomorrow))
 })

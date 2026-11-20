@@ -54,6 +54,10 @@
   --chair-bg: #ECE6FA; --chair-ink: #55418F;
   /* «Не напомнили» и прочее тихое: заливка светлее/темнее поля, чтобы блок не сливался с сеткой */
   --quiet-bg: #E9EFEF;
+  /* Шаг 6А: штриховка непрочной записи и окраска «по врачу / услуге» — доли цвета (в тёмной — свои, ниже) */
+  --shaky-mix: 16%; --paint-mix: 16%;
+  /* Красная точка-счётчик у пунктов меню (новое, ждёт действия): белые цифры ≥ 4.5:1, одна в обеих темах */
+  --count-new: #C62F2F;
   /* Штриховка «записать нельзя» (нерабочее время, перерыв, выходной; «Месяц» — нерабочий день): тонкие
      диагональные линии цвета рамок поля. Объявлена на :root — в тёмной теме берёт её --line-strong */
   --hatch: repeating-linear-gradient(135deg, var(--line-strong) 0 1.5px, transparent 1.5px 8px);
@@ -85,6 +89,7 @@
   --wait-bg: #4D3A12; --wait-ink: #F2C46D; --bad-bg: #57232A; --bad-ink: #FF9C9C;
   --done-bg: #1A2B2F; --done-ink: #93AAB0; --cash-bg: #4F2F16; --cash-ink: #FFB27A; --quiet-bg: #1F343A;
   --chair-bg: #33295A; --chair-ink: #C9BBFF;
+  --shaky-mix: 12%; --paint-mix: 24%;
   --shadow: 0 1px 2px rgba(0, 0, 0, .3); --panel-shadow: -8px 0 24px rgba(0, 0, 0, .35);
 }
 @media (prefers-color-scheme: dark) {
@@ -102,6 +107,7 @@
     --wait-bg: #4D3A12; --wait-ink: #F2C46D; --bad-bg: #57232A; --bad-ink: #FF9C9C;
     --done-bg: #1A2B2F; --done-ink: #93AAB0; --cash-bg: #4F2F16; --cash-ink: #FFB27A; --quiet-bg: #1F343A;
     --chair-bg: #33295A; --chair-ink: #C9BBFF;
+    --shaky-mix: 12%; --paint-mix: 24%;
     --shadow: 0 1px 2px rgba(0, 0, 0, .3); --panel-shadow: -8px 0 24px rgba(0, 0, 0, .35);
   }
 }
@@ -419,7 +425,7 @@ input[type=date], input[type=month] { min-width: 0; max-width: 100%; }
 .ui-select-pop li.ui-select-group::after { content: none; }
 .ui-select-pop li.ui-select-group + li.ui-select-group { margin-top: 4px; padding-top: 4px; border-top: 1px solid var(--separator); }
 .ui-select-pop .ui-select-group ul { overflow: visible; }
-.ui-select-pop li.ui-select-group-title { min-height: 0; padding: 6px 10px 2px; color: var(--hint); font-size: .78rem; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; cursor: default; }
+.ui-select-pop li.ui-select-group-title { min-height: 0; padding: 6px 10px 2px; color: var(--hint); font-size: .8rem; font-weight: 600; cursor: default; }
 .ui-select-pop li.ui-select-group-title::after { content: none; }
 .ui-select-pop.sheet li.ui-select-group { min-height: 0; padding: 0; }
 .ui-select-pop.sheet li.ui-select-group-title { min-height: 0; padding: 8px 12px 2px; font-size: .8rem; }

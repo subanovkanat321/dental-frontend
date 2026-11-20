@@ -27,6 +27,16 @@ export function seesDebts(me: Me | undefined): boolean {
   return seesAllMoney(me) || (me.doctorId != null && !isAssistant(me))
 }
 
+/**
+ * Долг одного пациента (карточки приёма и пациента, GET /api/appointments/debts?patientId=…): кто видит «Должников» и
+ * регистратура — она принимает оплату, сервер отдаёт ей долги пациента по всей клинике (как долги семьи). Общий список
+ * «Должники» и «Напомнить о долге» регистратуре по-прежнему закрыты ({@link seesDebts}).
+ */
+export function seesPatientDebts(me: Me | undefined): boolean {
+  if (!me) return false
+  return seesDebts(me) || (Boolean(me.reception) && !isAssistant(me))
+}
+
 /** «напомнили 15.11» — у строки должника и в карточке пациента. */
 export function remindedText(remindedAt: string | undefined): string | null {
   return remindedAt ? `напомнили ${dayMonth(remindedAt)}` : null
