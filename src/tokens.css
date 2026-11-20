@@ -277,8 +277,8 @@ input[type=date], input[type=month] { min-width: 0; max-width: 100%; }
 .btn[data-tone=bad]:not(.primary) { color: var(--destructive); }
 
 /*
- * Телефон: переключатель (`.segments`) — всегда одной строкой, пункты делят ширину поровну; длинный текст
- * переносится внутри пункта (до двух строк), на узком (≤380px) — мельче. Раньше ряд переносился сам, и один
+ * Телефон: переключатель (`.segments`) — одной строкой, пункты делят ширину поровну; длинный текст
+ * переносится внутри пункта между словами (слово не рвётся; не влезает — ряд переносится целиком), на узком (≤380px) — мельче. Раньше ряд переносился сам, и один
  * пункт оставался во второй строке («30 дней | 90 дней» + «Год», «График» + «Перерывы», владелец, 2026-11-13).
  * Много длинных пунктов (фильтры со счётчиками) — не сюда: на телефоне это выпадающий список (layout/Segments).
  * Много коротких (`.wrap`: состояния зуба, врачи, способы оплаты) — ровной сеткой по 2–3 в ряд, последний
@@ -287,12 +287,15 @@ input[type=date], input[type=month] { min-width: 0; max-width: 100%; }
  * в том числе из CSS, который грузится позже вместе с экраном.
  */
 @media (max-width: 760px) {
-  html .segments.segments { flex-wrap: nowrap; overflow: visible; min-width: 0; max-width: 100%; }
-  html .segments.segments > button { flex: 1 1 0; min-width: 0; min-height: 38px; padding: 6px; white-space: normal; overflow-wrap: break-word;
-    hyphens: auto; line-height: 1.15; text-wrap: balance; }
-  html .segments.wrap:has(> button:nth-child(4)) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* Слово внутри пункта не рвётся никогда («Кыргызч / а», 2026-11-20): пункт не уже своего самого длинного слова
+     (min-width: min-content), переносы — только между словами. Не помещаются и так — ряд переносится целиком,
+     а не режет слово */
+  html .segments.segments { flex-wrap: wrap; overflow: visible; min-width: 0; max-width: 100%; }
+  html .segments.segments > button { flex: 1 1 0; min-width: min-content; min-height: 38px; padding: 6px; white-space: normal; overflow-wrap: normal;
+    word-break: normal; hyphens: manual; line-height: 1.15; text-wrap: balance; }
+  html .segments.wrap:has(> button:nth-child(4)) { display: grid; grid-template-columns: repeat(2, minmax(min-content, 1fr)); }
   html .segments.wrap:has(> button:nth-child(4)) > button:last-child:nth-child(odd) { grid-column: 1 / -1; }
-  html .segments.wrap:has(> button:nth-child(7)) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  html .segments.wrap:has(> button:nth-child(7)) { grid-template-columns: repeat(3, minmax(min-content, 1fr)); }
   html .segments.wrap:has(> button:nth-child(7)) > button:last-child:nth-child(odd) { grid-column: auto; }
   html .segments.wrap:has(> button:nth-child(7)) > button:last-child:nth-child(3n+1) { grid-column: 1 / -1; }
   /* Оценка 0–10 в опросе — два ряда по 6 (0–5, 6–10) */
