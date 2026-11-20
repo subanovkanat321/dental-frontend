@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw'
 
 import { appointment, me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
-import { waitForSlow } from '../test/wait'
+import { waitForSlow, warmSchedule } from '../test/wait'
 
 /** Фальшивый Telegram.WebApp: подпись запуска и системная кнопка «Назад». */
 function fakeTelegram() {
@@ -14,6 +14,9 @@ function fakeTelegram() {
   window.Telegram = { WebApp: { initData: 'query_id=1&user=%7B%22id%22%3A111%7D&hash=abc', ready() {}, expand() {}, BackButton: back } }
   return { back, press: () => [...handlers].forEach((h) => h()) }
 }
+
+// Оболочка и «Расписание» — заранее, со своим сроком: под нагрузкой их сборка не влезала в 5 с findBy первого теста
+beforeAll(warmSchedule, 60_000)
 
 afterEach(() => {
   delete window.Telegram
@@ -38,7 +41,10 @@ test('в Telegram: запросы с подписью initData, «Назад» T
 
   tg.press()
   await waitForSlow(() => expect(screen.queryByRole('complementary', { name: 'Карточка приёма' })).not.toBeInTheDocument())
-  expect(tg.back.visible).toBe(false)
+  // Стрелку прячет уборка эффекта закрытой карточки (useBack → remove), а React зовёт её уже после того, как убрал
+  // карточку из DOM, — отдельной задачей. Под нагрузкой между ними проходило время, и проверка сразу после исчезновения
+  // карточки падала через раз (2026-11-20): ждём и стрелку
+  await waitForSlow(() => expect(tg.back.visible).toBe(false))
 })
 
 test('в Telegram подпись устарела (401) — «откройте заново из бота», а не вход через сайт', async () => {

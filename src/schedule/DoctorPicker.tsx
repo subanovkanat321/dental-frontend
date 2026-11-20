@@ -29,7 +29,7 @@ function Avatar({ doctor, color }: { doctor: Doctor; color: string }) {
  * карточками: фото или инициалы, имя, «я», сколько записей в выбранный день, заявки из бота;
  * «Все врачи» — последним. Свой список вместо системного: у системного — только текст.
  */
-export function DoctorPicker({ me, doctors, view, date, onChange, colorDoctors = doctors, onOrder, shownCount, compact = false }: {
+export function DoctorPicker({ me, doctors, view, date, onChange, colorDoctors = doctors, onOrder, shownCount, compact = false, onCalendar }: {
   me: Me
   /** Врачи в порядке на экране (schedule/doctorOrder.ts) */
   doctors: Doctor[]
@@ -44,6 +44,8 @@ export function DoctorPicker({ me, doctors, view, date, onChange, colorDoctors =
   shownCount?: number
   /** Компьютер, больше 6 врачей: кнопка в строке над сеткой вместо ряда чипов */
   compact?: boolean
+  /** 📅 рядом с выбранным врачом — его мини-календарь на месяц (DoctorCalendar); у «Все врачи» кнопки нет */
+  onCalendar?: (doctorId: number) => void
 }) {
   const [open, setOpen] = useState(false)
   const root = useRef<HTMLDivElement>(null)
@@ -84,6 +86,7 @@ export function DoctorPicker({ me, doctors, view, date, onChange, colorDoctors =
 
   return (
     <div ref={root} className={compact ? 'doctor-picker compact' : 'doctor-picker'}>
+      <div className="pick-row">
       <button type="button" className="pick-current" aria-haspopup="listbox" aria-expanded={open}
         aria-label={`Чьё расписание: ${current ? nameOf(current) : `Все врачи${partial ? `, показано ${shownCount} из ${doctors.length}` : ''}`}`}
         onClick={() => setOpen(!open)}>
@@ -94,6 +97,11 @@ export function DoctorPicker({ me, doctors, view, date, onChange, colorDoctors =
         </span>
         <span className="pick-caret" aria-hidden="true">{open ? '▴' : '▾'}</span>
       </button>
+      {current && onCalendar && (
+        <button type="button" className="pick-calendar" aria-haspopup="dialog" aria-label={`Календарь врача: ${current.fullName ?? ''}`}
+          title="Рабочие дни и свободное время на месяц" onClick={() => { setOpen(false); onCalendar(current.id) }}>📅</button>
+      )}
+      </div>
       {open && (
         <div className="pick-list">
         <ul role="listbox" aria-label="Чьё расписание">

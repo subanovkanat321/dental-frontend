@@ -1747,7 +1747,7 @@ section.dictation { padding: 12px; border: 1px solid var(--separator); border-ra
 .earn-gain { margin: 4px 0 0; color: var(--ok-ink); font-weight: 500; }
 
 /* Вопросы пациентов (Пациенты → Вопросы): число новых у раздела, текст вопроса, поле ответа */
-.nav .nav-badge { margin-left: auto; min-width: 18px; padding: 0 6px; border-radius: 99px; background: var(--accent); color: #fff; font-size: .72rem; font-weight: 600; line-height: 18px; text-align: center; }
+.nav .nav-badge { margin-left: auto; min-width: 18px; padding: 0 6px; border-radius: 99px; background: var(--count-new); color: #fff; font-size: .72rem; font-weight: 600; line-height: 18px; text-align: center; }
 @media (max-width: 760px) {
   .nav { position: relative; }
   .nav .nav-badge { position: absolute; top: 2px; left: calc(50% + 6px); margin: 0; }
@@ -1768,17 +1768,19 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
 .grid-head .avatar { width: 34px; height: 34px; font-size: .85rem; }
 .avatar.photo { object-fit: cover; background: var(--sunken); border: 1px solid var(--separator); }
 /* Полоска слева у приёма — цвет статуса (его *-ink поверх *-bg заливки): статус узнаётся по краю даже
-   у короткого блока и в узкой колонке недели. Цвет врача — в шапке колонки (2026-11-06, просьба владельца) */
-.appt { --stripe: transparent; box-shadow: inset 4px 0 0 var(--stripe), 0 1px 2px rgba(15, 42, 48, .08); padding-left: 12px; }
-.appt.s-request { --stripe: var(--req-ink); }
-.appt.s-wait { --stripe: var(--wait-ink); }
-.appt.s-ok { --stripe: var(--ok-ink); }
-.appt.s-here { --stripe: var(--accent); }
-.appt.s-chair { --stripe: var(--chair-ink); }
-.appt.s-done { --stripe: color-mix(in srgb, var(--done-ink) 55%, transparent); }
-.appt.s-cashier { --stripe: var(--cash-ink); }
-.appt.s-bad { --stripe: var(--bad-ink); }
-.appt.s-quiet { --stripe: var(--line-strong); }
+   у короткого блока и в узкой колонке недели. Цвет врача — в шапке колонки (2026-11-06, просьба владельца);
+   с 2026-11-20 (шаг 6А) в «Все врачи» (.grid.multi) полоска — цвет врача, статус — заливкой и словом.
+   --tone — цвет статуса (или выбранной окраски .painted): полоска, рамка и штриховка непрочной записи */
+.appt { --stripe: var(--tone, transparent); box-shadow: inset 4px 0 0 var(--stripe), 0 1px 2px rgba(15, 42, 48, .08); padding-left: 12px; }
+.appt.s-request, .day-list .row.s-request { --tone: var(--req-ink); }
+.appt.s-wait, .day-list .row.s-wait { --tone: var(--wait-ink); }
+.appt.s-ok, .day-list .row.s-ok { --tone: var(--ok-ink); }
+.appt.s-here, .day-list .row.s-here { --tone: var(--accent); }
+.appt.s-chair, .day-list .row.s-chair { --tone: var(--chair-ink); }
+.appt.s-done, .day-list .row.s-done { --tone: color-mix(in srgb, var(--done-ink) 55%, transparent); }
+.appt.s-cashier, .day-list .row.s-cashier { --tone: var(--cash-ink); }
+.appt.s-bad, .day-list .row.s-bad { --tone: var(--bad-ink); }
+.appt.s-quiet, .day-list .row.s-quiet { --tone: var(--faint); }
 
 /* Всплывающая карточка приёма при наведении мышью (ApptHover): над сеткой, без нажатий */
 .appt-hover {
@@ -2396,7 +2398,7 @@ button.status-pill:focus-visible { outline: 2px solid var(--accent); outline-off
 .nav-subitem:hover { background: var(--sunken); color: var(--text); }
 .nav-subitem.active { background: var(--accent-soft); color: var(--link); font-weight: 600; }
 .nav-sub-title { flex: 1; min-width: 0; line-height: 1.3; overflow-wrap: anywhere; } /* длинный пункт «Настроек» — в две строки, а не «Текст напомин…» */
-.nav-count { flex: none; min-width: 18px; padding: 0 6px; border-radius: 99px; background: var(--accent); color: #fff; font-size: .72rem; font-weight: 600; line-height: 18px; text-align: center; }
+.nav-count { flex: none; min-width: 18px; padding: 0 6px; border-radius: 99px; background: var(--count-new); color: #fff; font-size: .72rem; font-weight: 600; line-height: 18px; text-align: center; }
 .nav-group { margin: 8px 10px 2px; font-size: .8rem; font-weight: 600; color: var(--faint); }
 .nav-sub > .nav-group:first-child { margin-top: 2px; }
 /* Свёрнутое меню: подразделы панелью рядом с иконкой */
@@ -2464,7 +2466,7 @@ button.status-pill:focus-visible { outline: 2px solid var(--accent); outline-off
 .sub-tabs-more svg { width: 34px; height: 34px; padding: 8px; border-radius: 50%; background: var(--accent-soft); }
 .sub-tabs-more:active svg { background: var(--accent); color: var(--accent-text); }
 .sub-tabs-more:focus-visible { outline: 2px solid var(--accent); outline-offset: -4px; }
-.sub-tabs-dot { position: absolute; top: 8px; right: 6px; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 2px var(--card); }
+.sub-tabs-dot { position: absolute; top: 8px; right: 6px; width: 9px; height: 9px; border-radius: 50%; background: var(--count-new); box-shadow: 0 0 0 2px var(--card); }
 .sub-tabs-dot.quiet { background: var(--hint); }
 /* Компьютер (с 2026-11-11): та же панель над страницей во всю ширину рабочей области; под ней прилипает
    шапка страницы (инструменты подраздела), под шапкой — шапки таблиц. Тень при прокрутке — у шапки */
@@ -3190,3 +3192,33 @@ button.cash-entry:hover, button.cash-entry.active { background: var(--sunken); }
 .bot-tile-bar { height: 8px; margin: 6px 0 8px; border-radius: 999px; background: var(--sunken); overflow: hidden; }
 .bot-tile-bar > span { display: block; height: 100%; border-radius: inherit; background: var(--accent); }
 .no-bot .calm-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+
+/* ── Шаг 6А: читаемость расписания (DESIGN.md → Components «Блок приёма») ──
+   «Все врачи» колонками — полоска слева цвета врача (--doc ставит колонка), статус — заливкой и словом */
+.grid.multi .appt { --stripe: var(--doc, var(--tone)); }
+/* «Красить по врачу / услуге» (schedule/paint.ts): лёгкая заливка выбранным цветом вместо цвета статуса, текст
+   обычный; полоска и рамка — тем же цветом (в «Все врачи» полоска — по-прежнему врач) */
+.appt.painted { --tone: var(--paint); background-color: color-mix(in srgb, var(--paint) var(--paint-mix), var(--card)); color: var(--text); }
+.day-list .row.painted { --tone: var(--paint); background: color-mix(in srgb, var(--paint) var(--paint-mix), var(--card)); }
+/* Непрочная запись (заявка, «Записан», но не подтвердил): тонкая штриховка цветом статуса поверх заливки и рамка 1px
+   того же цвета. Наклон 45° — в другую сторону, чем серая штриховка «записать нельзя» (--hatch, 135°): не спутать.
+   Линии светлые (--shaky-mix): текст на них ≥ 4.5:1 в обеих темах */
+.appt.shaky, .day-list .row.shaky {
+  background-image: repeating-linear-gradient(45deg, color-mix(in srgb, var(--tone) var(--shaky-mix), transparent) 0 1.5px, transparent 1.5px 7px);
+}
+.appt.shaky { box-shadow: inset 4px 0 0 var(--stripe), inset 0 0 0 1px color-mix(in srgb, var(--tone) 60%, transparent), 0 1px 2px rgba(15, 42, 48, .08); }
+.day-list .row.shaky { border-color: color-mix(in srgb, var(--tone) 55%, transparent); }
+.day-list .row.shaky.s-quiet { border-style: dashed; }
+
+/* «Красить запись: Статус | Врач | Услуга» — под сеткой рядом со значками и в «Оформлении» */
+.schedule-legend { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 16px; }
+.schedule-legend .badges-legend { margin: 0; }
+.paint-switch { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.paint-switch.compact .segments button { min-height: 28px; padding: 0 10px; font-size: .82rem; }
+.paint-switch-label { font-size: .85rem; }
+/* Телефон: 📅 рядом с выбором врача — его мини-календарь */
+.pick-row { display: flex; gap: 6px; align-items: stretch; }
+.pick-row .pick-current { flex: 1; min-width: 0; }
+.pick-calendar { flex: none; width: 52px; border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--card); font-size: 1.25rem; cursor: pointer; }
+.pick-calendar:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.doctor-day-name.link { font: inherit; font-weight: inherit; color: inherit; text-decoration: underline dotted; text-underline-offset: 3px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
