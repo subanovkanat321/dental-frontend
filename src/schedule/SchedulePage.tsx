@@ -52,6 +52,10 @@ import { addMonths, monthTitle } from './month/monthModel'
 import { useMonthData } from './month/useMonth'
 import { ReviewAsksChip, ReviewAsksDialog } from './AskReview'
 import { useReviewAsks } from './reviewLinks'
+import { FreeWindowsChip, FreeWindowsDialog, FreeWindowsHint } from './FreeWindows'
+import { useFreeWindows } from './windowsModel'
+import { BirthdaysChip, BirthdaysDialog } from '../patients/Birthdays'
+import { useBirthdays } from '../patients/birthdaysModel'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
@@ -354,6 +358,16 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
   )
   // «💬 Попросить отзыв у N пациентов» — пациенты без Telegram за сегодня и вчера (бот их не спросит); только на сегодняшнем дне
   const [reviewAsksOpen, setReviewAsksOpen] = useState(false)
+  // Шаг 6Б: «🔔 Окна» — свободное время сегодня и завтра, в которое подходят пациенты из листа ожидания (подбирает сервер);
+  // «🎂 Дни рождения» — регистратуре и руководителю, только на сегодняшнем дне
+  const [windowsOpen, setWindowsOpen] = useState(false)
+  const [birthdaysOpen, setBirthdaysOpen] = useState(false)
+  const windowsDay = date === today || date === addDays(today, 1)
+  const freeWindows = useFreeWindows(windowsDay).data ?? []
+  const shownWindows = windowsDay ? freeWindows : []
+  const greets = Boolean(me.reception || me.admin)
+  const birthdayRows = useBirthdays(greets).data?.items
+  const shownBirthdays = date === today && greets ? birthdayRows : undefined
   const reviewAsks = useReviewAsks(date === today).data?.length ?? 0
   // Не срочно — не в «Требует внимания» сверху (там «⭐ 4» читалось как оценка), а тихой строкой под расписанием
   const reviewLine = date === today && <ReviewAsksChip count={reviewAsks} onOpen={() => setReviewAsksOpen(true)} />
@@ -529,9 +543,12 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
           <>
             {/* Телефон: только то, что нужно сделать сейчас, — заявки и оплата на кассе (и «мой день» врача). «Ждём ответа» видно в строках
                 дня, «склад: мало» — в «Складе» и сообщением бота: на главной это было лишнее */}
-            {(requests.length > 0 || (toPay.data?.length ?? 0) > 0 || earnings.data || overdueTasks > 0) && (
+            {(requests.length > 0 || (toPay.data?.length ?? 0) > 0 || earnings.data || overdueTasks > 0 || shownWindows.length > 0
+              || (shownBirthdays?.length ?? 0) > 0) && (
               <div className="today-strip compact" role="group" aria-label="Требует внимания">
                 {tasksChip(true)}
+                <FreeWindowsChip compact windows={shownWindows} onOpen={() => setWindowsOpen(true)} />
+                <BirthdaysChip compact rows={shownBirthdays} onOpen={() => setBirthdaysOpen(true)} />
                 {requests.length > 0 && (
                   <button type="button" className="stat s-request" onClick={firstOf(requests)}>
                     <b>{requests.length}</b> {requests.length === 1 ? 'заявка' : 'заявки'}
@@ -554,6 +571,8 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
             {!summary && !weekMode && !monthMode && (
               <div className="today-strip" role="group" aria-label="Требует внимания">
                 {tasksChip(false)}
+                <FreeWindowsChip windows={shownWindows} onOpen={() => setWindowsOpen(true)} />
+                <BirthdaysChip rows={shownBirthdays} onOpen={() => setBirthdaysOpen(true)} />
                 {requests.length > 0 && (
                   <button type="button" className="stat s-request" onClick={firstOf(requests)}
                     aria-label={`${requests.length} ${requests.length === 1 ? 'заявка из бота' : 'заявки из бота'} — подтвердить`} title="Заявки из бота — подтвердить">
@@ -584,7 +603,7 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
                     <b>{low}</b> мало на складе
                   </button>
                 )}
-                {!requests.length && !waiting.length && !toPay.data?.length && !low && (
+                {!requests.length && !waiting.length && !toPay.data?.length && !low && !shownWindows.some((w) => w.matches.some((m) => !m.declined)) && !(shownBirthdays ?? []).some((r) => !r.greetedAt) && (
                   <span className="stat s-quiet calm" title="Всё под контролем: заявок и срочных дел нет" aria-label="Всё под контролем: заявок и срочных дел нет">✓ Всё спокойно</span>
                 )}
               </div>
@@ -760,7 +779,11 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
           revenueSom={revenue.data ? revenue.data.totalSom : null} earnings={earnings.data ?? null} onOpenEarnings={openEarnings} low={low} free={shown.length > 0 && date >= today ? free : []}
           doctorName={(id) => doctors.find((d) => d.id === id)?.fullName ?? ''}
           onOpen={(a) => setSide({ kind: 'appointment', id: a.id, fallback: a })} onBook={bookAt} onNavigate={onNavigate} onClose={toggleSummary}
-          reviewAsks={date === today ? reviewAsks : 0} onReviewAsks={() => setReviewAsksOpen(true)} />
+          reviewAsks={date === today ? reviewAsks : 0} onReviewAsks={() => setReviewAsksOpen(true)}
+          extra={<>
+            <BirthdaysChip rows={shownBirthdays} onOpen={() => setBirthdaysOpen(true)} />
+          </>}
+          windowsHint={<FreeWindowsHint windows={shownWindows} doctorName={doctorName} onOffer={() => setWindowsOpen(true)} />} />
       )}
       {/* key: другой приём — новая карточка, формы и «Вернуть» прежнего не переносятся */}
       {selected && <AppointmentPanel key={`${selected.id}-${side?.kind === 'appointment' ? side.intent ?? '' : ''}`} appointment={selected} me={me} onClose={close} onOpenPatient={onOpenPatient}
@@ -784,6 +807,9 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
           onOnly={view === 'all' && shown.length > 1 ? () => setView(calendarDoctor.id) : undefined} />
       )}
       {reviewAsksOpen && <ReviewAsksDialog doctorName={doctorName} onClose={() => setReviewAsksOpen(false)} />}
+      {windowsOpen && <FreeWindowsDialog doctorName={doctorName} onClose={() => setWindowsOpen(false)}
+        onBook={(doctorId, day, minutes) => setSide({ kind: 'new', slot: { doctorId, date: day, minutes } })} />}
+      {birthdaysOpen && <BirthdaysDialog onClose={() => setBirthdaysOpen(false)} onOpen={onOpenPatient} />}
     </div>
   )
 }

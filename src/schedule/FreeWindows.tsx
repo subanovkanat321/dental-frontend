@@ -1,0 +1,142 @@
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
+
+import { api, ApiError, unwrap, type Schemas } from '../api/client'
+import { useSettings } from '../api/settings'
+import { contactPhone } from '../lib/guardian'
+import { freeSlotText, whatsappUrl } from '../lib/texts'
+import { openLink } from '../lib/telegram'
+import { dateOf, minutesOf, shortDate, timeOf } from '../lib/time'
+import { AttentionDialog } from './AttentionDialog'
+import { fitsText, useFreeWindows, waitingCount, windowTitle, WINDOWS_KEY, type FreeWindow } from './windowsModel'
+
+type Match = Schemas['WaitlistWindowsMatch']
+
+/** «🔔 2 окна» в полосе «Требует внимания»: есть окна, в которые кто-то подходит. */
+export function FreeWindowsChip({ windows, compact, onOpen }: { windows: FreeWindow[]; compact?: boolean; onOpen: () => void }) {
+  const open = windows.filter((w) => waitingCount(w) > 0)
+  if (!open.length) return null
+  const people = new Set(open.flatMap((w) => w.matches.filter((m) => !m.declined).map((m) => m.entryId))).size
+  const freed = open.some((w) => w.freed)
+  return (
+    <button type="button" className="stat s-request" onClick={onOpen}
+      aria-label={`${freed ? 'Освободилось окно' : 'Свободные окна'}: ${fitsText(people)}`} title="Окна для листа ожидания — предложить">
+      🔔 {compact ? <><b>{open.length}</b> {open.length === 1 ? 'окно' : 'окна'}</> : <>{freed ? 'Освободилось окно' : 'Окна'} · <b>{people}</b> из листа</>}
+    </button>
+  )
+}
+
+/**
+ * Подсказка в «Сводке дня»: «Освободилось 15:00–16:00 · подходят 2 пациента из листа ожидания» и «Предложить» — первые три
+ * окна; «Предложить» открывает список с кнопками у каждого пациента.
+ */
+export function FreeWindowsHint({ windows, doctorName, onOffer }: { windows: FreeWindow[]; doctorName: (id: number) => string; onOffer: () => void }) {
+  const open = windows.filter((w) => waitingCount(w) > 0).slice(0, 3)
+  if (!open.length) return null
+  return (
+    <section className="ds-block fw-hint" aria-label="Освободилось окно">
+      <h2 className="ds-title">Окна для листа ожидания</h2>
+      {open.map((w) => (
+        <div key={`${w.doctorId}-${w.start}`} className="fw-window">
+          <span className="fw-window-head"><strong className="num">{windowTitle(w)}</strong><span className="hint small">{doctorName(w.doctorId)}</span></span>
+          <span className="hint small">{fitsText(waitingCount(w))}</span>
+          <button type="button" className="btn small primary" onClick={onOffer}>Предложить</button>
+        </div>
+      ))}
+    </section>
+  )
+}
+
+/** Окно со списком всех окон и «Предложить» у каждого подходящего пациента. */
+export function FreeWindowsDialog({ doctorName, onBook, onClose }: {
+  doctorName: (id: number) => string
+  /** «Записать сюда» — «Новая запись» на это время: там «Подходит из листа ожидания» */
+  onBook?: (doctorId: number, date: string, minutes: number) => void
+  onClose: () => void
+}) {
+  const windows = useFreeWindows()
+  return (
+    <AttentionDialog title="🔔 Окна для листа ожидания" labelId="free-windows-title" onClose={onClose}>
+      <p className="hint">Свободное время сегодня и завтра и кто из листа ожидания в него подходит — по их «Когда удобно». Записывает
+        только сам пациент кнопкой в боте или вы — «Записать».</p>
+      {windows.isPending && <p className="hint">Загружаем…</p>}
+      {windows.error && <p className="error" role="alert">{windows.error.message}</p>}
+      {windows.data && !windows.data.length && <p className="tone-ok" role="status">Подходящих окон нет ✓</p>}
+      <div className="attention-scroll">
+        {windows.data?.map((w) => <WindowCard key={`${w.doctorId}-${w.start}`} w={w} doctorName={doctorName}
+          onBook={onBook && (() => { onClose(); onBook(w.doctorId, dateOf(w.start), minutesOf(w.start)) })} />)}
+      </div>
+    </AttentionDialog>
+  )
+}
+
+/** Одно окно: заголовок и пациенты с «Предложить: В бот / WhatsApp». Тоже — в карточке отменённого приёма. */
+export function WindowCard({ w, doctorName, onBook }: { w: FreeWindow; doctorName: (id: number) => string; onBook?: () => void }) {
+  return (
+    <section className="fw-window" aria-label={windowTitle(w)}>
+      <span className="fw-window-head">
+        <strong className="num">{windowTitle(w)}</strong>
+        <span className="hint small">{doctorName(w.doctorId)} · {fitsText(waitingCount(w))}</span>
+      </span>
+      <ul className="fw-list">
+        {w.matches.map((m) => <MatchRow key={m.entryId} m={m} doctorId={w.doctorId} />)}
+      </ul>
+      {onBook && <button type="button" className="link" onClick={onBook}>Записать на {timeOf(w.start)} ›</button>}
+    </section>
+  )
+}
+
+function MatchRow({ m, doctorId }: { m: Match; doctorId: number }) {
+  const client = useQueryClient()
+  const settings = useSettings()
+  const [done, setDone] = useState<'TELEGRAM' | 'WHATSAPP' | null>(null)
+  const offer = useMutation<unknown, ApiError, 'TELEGRAM' | 'WHATSAPP'>({
+    mutationFn: (channel) => unwrap(api.POST('/api/waitlist/{id}/offer', { params: { path: { id: m.entryId } }, body: { doctorId, startAt: m.startAt, channel } })),
+    onSuccess: (_r, channel) => {
+      setDone(channel)
+      void client.invalidateQueries({ queryKey: WINDOWS_KEY })
+      void client.invalidateQueries({ queryKey: ['waitlist'] })
+    },
+  })
+  const whatsapp = () => {
+    // Отметка «предложили» — не ждём ответа: WhatsApp открывается сразу
+    offer.mutate('WHATSAPP')
+    openLink(whatsappUrl(contactPhone(m.patient) ?? '', freeSlotText(m.patient.fullName, m.startAt, settings.data?.clinicSignature)))
+  }
+  const state = m.declined ? 'отказался' : done ? (done === 'TELEGRAM' ? '✓ отправили в бот' : '✓ WhatsApp открыт')
+    : m.offeredAt ? `предложили ${timeOf(m.offeredAt)}${m.offeredVia === 'WHATSAPP' ? ' · WhatsApp' : ' · в бот'}` : null
+  return (
+    <li>
+      <span className="fw-who">
+        <strong>{m.patient.fullName}</strong>
+        <span className="hint small">с {timeOf(m.startAt)} · {m.durationMinutes} мин{m.upcomingAt ? ` · записан ${shortDate(m.upcomingAt, true)}` : ''}
+          {state && <> · <span className={m.declined ? 'tone-bad' : 'tone-ok'}>{state}</span></>}</span>
+        {offer.error && <span className="error small" role="alert">{offer.error.message}</span>}
+      </span>
+      {!m.declined && (
+        <span className="fw-actions">
+          {m.patient.telegram && (
+            <button type="button" className="btn small primary" disabled={offer.isPending}
+              aria-label={`Предложить в бот: ${m.patient.fullName}`} onClick={() => offer.mutate('TELEGRAM')}>Предложить в бот</button>
+          )}
+          {contactPhone(m.patient) && (
+            <button type="button" className={m.patient.telegram ? 'btn small' : 'btn small primary'} disabled={offer.isPending || !settings.data}
+              aria-label={`Предложить в WhatsApp: ${m.patient.fullName}`} onClick={whatsapp}>💬 WhatsApp</button>
+          )}
+        </span>
+      )}
+    </li>
+  )
+}
+
+/**
+ * В карточке отменённого приёма (сегодня или завтра): «Освободилось 15:00–16:00 · подходят 2 пациента из листа ожидания» и
+ * «Предложить» у каждого — то же окно, что в «🔔 Окна».
+ */
+export function FreedHere({ appointment: a, me }: { appointment: Schemas['AppointmentView']; me: Schemas['BookingViewsMe'] }) {
+  const windows = useFreeWindows()
+  const w = windows.data?.find((x) => x.doctorId === a.doctorId && x.start < a.endAt && x.end > a.startAt && waitingCount(x) > 0)
+  if (!w) return null
+  const name = (id: number) => (me.doctors ?? []).find((d) => d.id === id)?.fullName ?? ''
+  return <WindowCard w={w} doctorName={name} />
+}

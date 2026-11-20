@@ -370,6 +370,13 @@ export const TIPS: Tip[] = [
     show: (me) => Boolean(me.admin || me.reception || me.doctorId != null || isAssistant(me)),
   },
   {
+    id: 'waitlist-windows',
+    title: '🔔 Освободилось окно — кому предложить',
+    text: 'Укажите в листе ожидания, когда пациенту удобно. Освободится подходящее время — в «Расписании» появится «🔔 Окна»: «Предложить» в бот или WhatsApp.',
+    action: { guide: 'pacienty/osvobodilos-okno' },
+    show: (me) => Boolean(me.admin || me.reception),
+  },
+  {
     id: 'instagram',
     title: 'Tish в Instagram',
     text: 'Короткие видео «как сделать» и юмор про будни стоматолога. Подпишитесь — рилсы можно репостить в Instagram клиники.',

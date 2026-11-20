@@ -7,6 +7,8 @@ import { MedicalRecord } from '../medical/MedicalRecord'
 import { NewPatientPanel } from './PatientForm'
 import { PatientPanel } from './PatientPanel'
 import { BookedTab, type BookedFilter } from './BookedTab'
+import { BirthdayList } from './Birthdays'
+import { useBirthdays } from './birthdaysModel'
 import { RecallTab, WaitlistTab } from './WaitlistTab'
 import { ComebackTab, type BookPreset } from './ComebackTab'
 import { QuestionPanel, QuestionsTab } from './QuestionsTab'
@@ -76,6 +78,10 @@ export function PatientsPage({ me, onBook, initialPatient, initialQuestion, init
   // Ассистент сразу видит пациентов своего врача
   const [doctorId, setDoctorId] = useState<number | null>(() => (me.assistantOf?.length === 1 ? me.assistantOf[0]! : null))
   const [slot, setSlot] = useHeadSlot()
+  // Фильтр «🎂 Сегодня» (шаг 6Б): именинники сегодня с «Поздравить»; кнопка — только когда они есть
+  const [birthdaysOnly, setBirthdaysOnly] = useState(false)
+  const birthdays = useBirthdays(tab === 'all')
+  const birthdayCount = birthdays.data?.items.length ?? 0
   const recent = useQuery({
     queryKey: ['patients', 'recent', doctorId],
     queryFn: () => unwrap(api.GET('/api/patients/recent', { params: { query: { doctorId: doctorId ?? undefined } } })),
@@ -142,6 +148,10 @@ export function PatientsPage({ me, onBook, initialPatient, initialQuestion, init
                     {doctors.map((d) => <option key={d.id} value={d.id}>{d.fullName}{d.id === me.doctorId ? ' (я)' : ''}</option>)}
                   </Select>
                 )}
+                {(birthdayCount > 0 || birthdaysOnly) && (
+                  <button type="button" className="btn small" aria-pressed={birthdaysOnly} onClick={() => setBirthdaysOnly(!birthdaysOnly)}
+                    title="Сегодня день рождения — поздравить">🎂 Сегодня{birthdayCount ? ` · ${birthdayCount}` : ''}</button>
+                )}
                 <Select aria-label="Порядок" value={sort} onChange={(e) => setSort(e.target.value as SortKey)}>
                   {SORTS.map(([key, title]) => <option key={key} value={key}>{title}</option>)}
                 </Select>
@@ -165,13 +175,14 @@ export function PatientsPage({ me, onBook, initialPatient, initialQuestion, init
         {tab === 'dropped' && <DroppedTab me={me} onOpen={setSelected} onBook={onBook} />}
         {tab === 'nobot' && <NoBotTab onOpen={setSelected} />}
         {tab === 'comeback' && <ComebackTab onOpen={setSelected} onBook={onBook} canEditServices={canEditServices(me)} />}
-        {tab === 'all' && recent.error && <p className="error">{recent.error.message}</p>}
-        {tab === 'all' && recent.isSuccess && sorted.length === 0 && (
+        {tab === 'all' && birthdaysOnly && <section className="card-block" aria-label="Дни рождения сегодня"><BirthdayList onOpen={setSelected} /></section>}
+        {tab === 'all' && !birthdaysOnly && recent.error && <p className="error">{recent.error.message}</p>}
+        {tab === 'all' && !birthdaysOnly && recent.isSuccess && sorted.length === 0 && (
           <EmptyState fill title={text ? (remote.isFetching ? 'Ищем по всей клинике…' : `Никого не нашли по «${query.trim()}»`) : doctorId != null ? 'У этого врача пока не было пациентов' : 'Пациентов пока нет'}>
             {text ? (remote.isFetching ? undefined : 'Попробуйте последние цифры телефона.') : doctorId == null ? 'Появятся с первой записью.' : undefined}
           </EmptyState>
         )}
-        {tab === 'all' && sorted.length > 0 && (
+        {tab === 'all' && !birthdaysOnly && sorted.length > 0 && (
           <ul className="calm-list" aria-label="Пациенты">
             {sorted.map((p) => (
               <CalmRow key={p.id} open={() => setSelected(p.id)} active={p.id === selected} name={p.fullName}

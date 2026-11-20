@@ -14,6 +14,7 @@ import { useAnamnesis } from '../api/anamnesis'
 import { MedAlertPill } from '../medical/Anamnesis'
 import { PatientFiles } from '../medical/PatientFiles'
 import { WaitlistBox } from '../patients/WaitlistTab'
+import { FreedHere } from './FreeWindows'
 import { agoText } from '../lib/texts'
 import { bookedByText } from '../lib/relations'
 import { useClose } from '../lib/useClose'
@@ -399,6 +400,8 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
                   «Перенёс на другое время · отменил(а) пациент в боте, сегодня 09:20»; старые отмены — без «кто» */}
               {cancelText(a) && <p className="cancel-reason">{cancelText(a)}</p>}
               {a.depositStatus === 'RECEIVED' && seesMoney && <p className="tone-wait">Предоплата {somText(a.depositSom ?? 0)} получена — верните пациенту или запишите его снова.</p>}
+              {/* Шаг 6Б: это время освободилось, а его ждут из листа ожидания — «Предложить» прямо здесь */}
+              {canEdit && <FreedHere appointment={a} me={me} />}
             </>
           )}
 

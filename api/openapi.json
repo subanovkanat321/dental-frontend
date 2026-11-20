@@ -10,10 +10,65 @@
     "description" : "Generated server url"
   } ],
   "paths" : {
+    "/api/waitlist/{id}" : {
+      "put" : {
+        "tags" : [ "waitlist-controller" ],
+        "operationId" : "update",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/WaitlistControllerUpdate"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/WaitlistView"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "waitlist-controller" ],
+        "operationId" : "remove",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        }
+      }
+    },
     "/api/visit-templates/{id}" : {
       "put" : {
         "tags" : [ "visit-template-controller" ],
-        "operationId" : "update",
+        "operationId" : "update_1",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -93,7 +148,7 @@
       },
       "put" : {
         "tags" : [ "task-controller" ],
-        "operationId" : "update_1",
+        "operationId" : "update_2",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -148,7 +203,7 @@
     "/api/supplies/{id}" : {
       "put" : {
         "tags" : [ "supply-controller" ],
-        "operationId" : "update_2",
+        "operationId" : "update_3",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -353,7 +408,7 @@
     "/api/shifts/{id}" : {
       "put" : {
         "tags" : [ "shift-controller" ],
-        "operationId" : "update_3",
+        "operationId" : "update_4",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -470,7 +525,7 @@
     "/api/service-types/{id}" : {
       "put" : {
         "tags" : [ "service-type-controller" ],
-        "operationId" : "update_4",
+        "operationId" : "update_5",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -772,7 +827,7 @@
     "/api/promo-codes/{id}" : {
       "put" : {
         "tags" : [ "promo-code-controller" ],
-        "operationId" : "update_5",
+        "operationId" : "update_6",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -893,7 +948,7 @@
       },
       "put" : {
         "tags" : [ "survey-controller" ],
-        "operationId" : "update_6",
+        "operationId" : "update_7",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -992,7 +1047,7 @@
     "/api/platform/outreach/{id}" : {
       "put" : {
         "tags" : [ "outreach-controller" ],
-        "operationId" : "update_7",
+        "operationId" : "update_8",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1272,7 +1327,7 @@
     "/api/platform/finance/expenses/{id}" : {
       "put" : {
         "tags" : [ "platform-finance-controller" ],
-        "operationId" : "update_8",
+        "operationId" : "update_9",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1396,7 +1451,7 @@
     "/api/platform/content/{id}" : {
       "put" : {
         "tags" : [ "content-controller" ],
-        "operationId" : "update_9",
+        "operationId" : "update_10",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1708,7 +1763,7 @@
     "/api/platform/agreements/{id}" : {
       "put" : {
         "tags" : [ "agreement-controller" ],
-        "operationId" : "update_10",
+        "operationId" : "update_11",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1800,7 +1855,7 @@
     "/api/plan-templates/{id}" : {
       "put" : {
         "tags" : [ "plan-template-controller" ],
-        "operationId" : "update_11",
+        "operationId" : "update_12",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1855,7 +1910,7 @@
     "/api/patients/{patientId}/teeth/{number}" : {
       "put" : {
         "tags" : [ "chart-controller" ],
-        "operationId" : "update_12",
+        "operationId" : "update_13",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "path",
@@ -2353,7 +2408,7 @@
     "/api/patients/{id}" : {
       "put" : {
         "tags" : [ "patient-controller" ],
-        "operationId" : "update_13",
+        "operationId" : "update_14",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -2604,7 +2659,7 @@
     "/api/patient-tags/{id}" : {
       "put" : {
         "tags" : [ "patient-tags-controller" ],
-        "operationId" : "update_14",
+        "operationId" : "update_15",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -2672,7 +2727,7 @@
     "/api/patient-sources/{id}" : {
       "put" : {
         "tags" : [ "patient-sources-controller" ],
-        "operationId" : "update_15",
+        "operationId" : "update_16",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -2943,7 +2998,7 @@
       },
       "delete" : {
         "tags" : [ "my-phone-controller" ],
-        "operationId" : "remove",
+        "operationId" : "remove_1",
         "responses" : {
           "204" : {
             "description" : "No Content"
@@ -3077,7 +3132,7 @@
       },
       "delete" : {
         "tags" : [ "my-email-controller" ],
-        "operationId" : "remove_1",
+        "operationId" : "remove_2",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -3231,7 +3286,7 @@
       },
       "put" : {
         "tags" : [ "lab-controller" ],
-        "operationId" : "update_16",
+        "operationId" : "update_17",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -3323,7 +3378,7 @@
     "/api/expenses/{id}" : {
       "put" : {
         "tags" : [ "expense-controller" ],
-        "operationId" : "update_17",
+        "operationId" : "update_18",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -3539,7 +3594,7 @@
       },
       "put" : {
         "tags" : [ "doctor-hours-controller" ],
-        "operationId" : "update_18",
+        "operationId" : "update_19",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -3699,7 +3754,7 @@
       },
       "put" : {
         "tags" : [ "clinic-controller" ],
-        "operationId" : "update_19",
+        "operationId" : "update_20",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -3787,7 +3842,7 @@
       },
       "put" : {
         "tags" : [ "review-settings-controller" ],
-        "operationId" : "update_20",
+        "operationId" : "update_21",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -4232,10 +4287,54 @@
         }
       }
     },
+    "/api/clinic/birthday-settings" : {
+      "get" : {
+        "tags" : [ "birthday-controller" ],
+        "operationId" : "settings_4",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/BirthdaysSettings"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "birthday-controller" ],
+        "operationId" : "update_22",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/BirthdaysSettings"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/BirthdaysSettings"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/clinic/audit/settings" : {
       "get" : {
         "tags" : [ "audit-controller" ],
-        "operationId" : "settings_4",
+        "operationId" : "settings_5",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -4399,7 +4498,7 @@
     "/api/care-memos/{id}" : {
       "put" : {
         "tags" : [ "care-memo-controller" ],
-        "operationId" : "update_21",
+        "operationId" : "update_23",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -5659,6 +5758,36 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/waitlist/{id}/offer" : {
+      "post" : {
+        "tags" : [ "waitlist-controller" ],
+        "operationId" : "offer",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/WaitlistControllerOffer"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
           }
         }
       }
@@ -12103,6 +12232,43 @@
         }
       }
     },
+    "/api/birthdays/{patientId}/greet" : {
+      "post" : {
+        "tags" : [ "birthday-controller" ],
+        "operationId" : "greet",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/BirthdayControllerGreet"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/BirthdaysGreeting"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/assist/draft" : {
       "post" : {
         "tags" : [ "assist-controller" ],
@@ -14144,6 +14310,65 @@
         }
       }
     },
+    "/api/waitlist/windows" : {
+      "get" : {
+        "tags" : [ "waitlist-controller" ],
+        "operationId" : "windows",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/WaitlistWindowsFreeWindow"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/waitlist/fits" : {
+      "get" : {
+        "tags" : [ "waitlist-controller" ],
+        "operationId" : "fits",
+        "parameters" : [ {
+          "name" : "doctorId",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "startAt",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/WaitlistWindowsMatch"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/tasks/summary" : {
       "get" : {
         "tags" : [ "task-controller" ],
@@ -14392,7 +14617,7 @@
     "/api/settings" : {
       "get" : {
         "tags" : [ "settings-controller" ],
-        "operationId" : "settings_5",
+        "operationId" : "settings_6",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -17005,6 +17230,24 @@
         }
       }
     },
+    "/api/birthdays/today" : {
+      "get" : {
+        "tags" : [ "birthday-controller" ],
+        "operationId" : "today",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/BirthdaysToday"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/appointments/{id}" : {
       "get" : {
         "tags" : [ "appointment-controller" ],
@@ -18149,26 +18392,6 @@
         }
       }
     },
-    "/api/waitlist/{id}" : {
-      "delete" : {
-        "tags" : [ "waitlist-controller" ],
-        "operationId" : "remove_2",
-        "parameters" : [ {
-          "name" : "id",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int64"
-          }
-        } ],
-        "responses" : {
-          "204" : {
-            "description" : "No Content"
-          }
-        }
-      }
-    },
     "/api/time-off/{id}" : {
       "delete" : {
         "tags" : [ "time-off-controller" ],
@@ -18415,6 +18638,327 @@
   },
   "components" : {
     "schemas" : {
+      "WaitlistControllerUpdate" : {
+        "properties" : {
+          "doctorId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "durationMinutes" : {
+            "type" : "integer",
+            "format" : "int32",
+            "maximum" : 240,
+            "minimum" : 15
+          },
+          "wish" : {
+            "$ref" : "#/components/schemas/WaitlistWish"
+          }
+        },
+        "required" : [ "durationMinutes" ]
+      },
+      "WaitlistWish" : {
+        "properties" : {
+          "desiredFrom" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "desiredTo" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "timeFrom" : {
+            "type" : "string",
+            "format" : "time-local"
+          },
+          "timeTo" : {
+            "type" : "string",
+            "format" : "time-local"
+          },
+          "weekdays" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int32"
+            }
+          },
+          "serviceTypeId" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "AppointmentView" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "doctorId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "patient" : {
+            "$ref" : "#/components/schemas/PatientView"
+          },
+          "startAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "endAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "status" : {
+            "type" : "string",
+            "enum" : [ "REQUESTED", "SCHEDULED", "CANCELLED", "DONE", "NO_SHOW" ]
+          },
+          "reply" : {
+            "type" : "string",
+            "enum" : [ "NONE", "CONFIRMED", "RESCHEDULE", "NO_ANSWER" ]
+          },
+          "reminderOpenedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "version" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "source" : {
+            "type" : "string",
+            "enum" : [ "DOCTOR", "PATIENT", "WEB" ]
+          },
+          "serviceName" : {
+            "type" : "string"
+          },
+          "servicePriceSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "rating" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "paidSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "paymentMethod" : {
+            "type" : "string",
+            "enum" : [ "CASH", "TRANSFER", "CARD", "ADVANCE" ]
+          },
+          "chargeSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "debtSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "dueOn" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "depositSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "depositStatus" : {
+            "type" : "string"
+          },
+          "reviewComment" : {
+            "type" : "string"
+          },
+          "comment" : {
+            "type" : "string"
+          },
+          "promoCode" : {
+            "type" : "string"
+          },
+          "bookedBy" : {
+            "$ref" : "#/components/schemas/FamiliesBooker"
+          },
+          "firstVisit" : {
+            "type" : "boolean"
+          },
+          "cancelledAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "cancelledBy" : {
+            "type" : "string"
+          },
+          "freeReason" : {
+            "type" : "string",
+            "enum" : [ "FREE", "PREPAID" ]
+          },
+          "freeComment" : {
+            "type" : "string"
+          },
+          "chairId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "chairManual" : {
+            "type" : "boolean"
+          },
+          "ratingVia" : {
+            "type" : "string"
+          },
+          "arrivedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "inChairAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "cancelReason" : {
+            "type" : "string",
+            "enum" : [ "CHANGED_MIND", "DUPLICATE", "ILL", "OTHER_TIME", "CLINIC", "OTHER", "PATIENT" ]
+          },
+          "cancelNote" : {
+            "type" : "string"
+          },
+          "discount" : {
+            "$ref" : "#/components/schemas/PaymentDiscount"
+          }
+        },
+        "required" : [ "chairManual", "debtSom", "doctorId", "endAt", "firstVisit", "id", "patient", "source", "startAt", "status", "version" ]
+      },
+      "FamiliesBooker" : {
+        "properties" : {
+          "fullName" : {
+            "type" : "string"
+          },
+          "relation" : {
+            "type" : "string",
+            "enum" : [ "CHILD", "SPOUSE", "PARENT", "SIBLING", "OTHER" ]
+          }
+        }
+      },
+      "Guardian" : {
+        "properties" : {
+          "fullName" : {
+            "type" : "string"
+          },
+          "relation" : {
+            "type" : "string",
+            "enum" : [ "MOTHER", "FATHER", "PARENT", "GRANDMOTHER", "GRANDFATHER", "GUARDIAN", "OTHER" ]
+          },
+          "phone" : {
+            "type" : "string"
+          }
+        }
+      },
+      "PatientView" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "fullName" : {
+            "type" : "string"
+          },
+          "phone" : {
+            "type" : "string"
+          },
+          "telegram" : {
+            "type" : "boolean"
+          },
+          "workplace" : {
+            "type" : "string"
+          },
+          "birthDate" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "sourceId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "dentition" : {
+            "type" : "string",
+            "enum" : [ "PERMANENT", "PRIMARY", "MIXED" ]
+          },
+          "guardian" : {
+            "$ref" : "#/components/schemas/Guardian"
+          },
+          "vip" : {
+            "type" : "boolean"
+          },
+          "tagIds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int64"
+            }
+          },
+          "botInvitedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "fullName", "id", "telegram" ]
+      },
+      "PaymentDiscount" : {
+        "properties" : {
+          "som" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "percent" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "reason" : {
+            "type" : "string",
+            "enum" : [ "PROMO", "FAMILY", "VIP", "REGULAR", "OTHER" ]
+          },
+          "comment" : {
+            "type" : "string"
+          },
+          "priceSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "priceSom", "som" ]
+      },
+      "WaitlistView" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "doctorId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "patient" : {
+            "$ref" : "#/components/schemas/PatientView"
+          },
+          "durationMinutes" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "upcoming" : {
+            "$ref" : "#/components/schemas/AppointmentView"
+          },
+          "wish" : {
+            "$ref" : "#/components/schemas/WaitlistWish"
+          },
+          "offeredAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "durationMinutes", "id" ]
+      },
       "DiagnosisCode" : {
         "properties" : {
           "code" : {
@@ -21027,70 +21571,6 @@
           }
         }
       },
-      "Guardian" : {
-        "properties" : {
-          "fullName" : {
-            "type" : "string"
-          },
-          "relation" : {
-            "type" : "string",
-            "enum" : [ "MOTHER", "FATHER", "PARENT", "GRANDMOTHER", "GRANDFATHER", "GUARDIAN", "OTHER" ]
-          },
-          "phone" : {
-            "type" : "string"
-          }
-        }
-      },
-      "PatientView" : {
-        "properties" : {
-          "id" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "fullName" : {
-            "type" : "string"
-          },
-          "phone" : {
-            "type" : "string"
-          },
-          "telegram" : {
-            "type" : "boolean"
-          },
-          "workplace" : {
-            "type" : "string"
-          },
-          "birthDate" : {
-            "type" : "string",
-            "format" : "date"
-          },
-          "sourceId" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "dentition" : {
-            "type" : "string",
-            "enum" : [ "PERMANENT", "PRIMARY", "MIXED" ]
-          },
-          "guardian" : {
-            "$ref" : "#/components/schemas/Guardian"
-          },
-          "vip" : {
-            "type" : "boolean"
-          },
-          "tagIds" : {
-            "type" : "array",
-            "items" : {
-              "type" : "integer",
-              "format" : "int64"
-            }
-          },
-          "botInvitedAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          }
-        },
-        "required" : [ "fullName", "id", "telegram" ]
-      },
       "DebtReminderControllerPromise" : {
         "properties" : {
           "dueOn" : {
@@ -22622,6 +23102,22 @@
         },
         "required" : [ "custom" ]
       },
+      "BirthdaysSettings" : {
+        "properties" : {
+          "autoGreet" : {
+            "type" : "boolean"
+          },
+          "greetHour" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "promoCodeId" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "autoGreet", "greetHour" ]
+      },
       "AuditControllerSettingsChange" : {
         "properties" : {
           "disabled" : {
@@ -23038,180 +23534,6 @@
             "format" : "int64"
           }
         }
-      },
-      "AppointmentView" : {
-        "properties" : {
-          "id" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "doctorId" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "patient" : {
-            "$ref" : "#/components/schemas/PatientView"
-          },
-          "startAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "endAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "status" : {
-            "type" : "string",
-            "enum" : [ "REQUESTED", "SCHEDULED", "CANCELLED", "DONE", "NO_SHOW" ]
-          },
-          "reply" : {
-            "type" : "string",
-            "enum" : [ "NONE", "CONFIRMED", "RESCHEDULE", "NO_ANSWER" ]
-          },
-          "reminderOpenedAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "version" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "source" : {
-            "type" : "string",
-            "enum" : [ "DOCTOR", "PATIENT", "WEB" ]
-          },
-          "serviceName" : {
-            "type" : "string"
-          },
-          "servicePriceSom" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "rating" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "paidSom" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "paymentMethod" : {
-            "type" : "string",
-            "enum" : [ "CASH", "TRANSFER", "CARD", "ADVANCE" ]
-          },
-          "chargeSom" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "debtSom" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "dueOn" : {
-            "type" : "string",
-            "format" : "date"
-          },
-          "depositSom" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "depositStatus" : {
-            "type" : "string"
-          },
-          "reviewComment" : {
-            "type" : "string"
-          },
-          "comment" : {
-            "type" : "string"
-          },
-          "promoCode" : {
-            "type" : "string"
-          },
-          "bookedBy" : {
-            "$ref" : "#/components/schemas/FamiliesBooker"
-          },
-          "firstVisit" : {
-            "type" : "boolean"
-          },
-          "cancelledAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "cancelledBy" : {
-            "type" : "string"
-          },
-          "freeReason" : {
-            "type" : "string",
-            "enum" : [ "FREE", "PREPAID" ]
-          },
-          "freeComment" : {
-            "type" : "string"
-          },
-          "chairId" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "chairManual" : {
-            "type" : "boolean"
-          },
-          "ratingVia" : {
-            "type" : "string"
-          },
-          "arrivedAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "inChairAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "cancelReason" : {
-            "type" : "string",
-            "enum" : [ "CHANGED_MIND", "DUPLICATE", "ILL", "OTHER_TIME", "CLINIC", "OTHER", "PATIENT" ]
-          },
-          "cancelNote" : {
-            "type" : "string"
-          },
-          "discount" : {
-            "$ref" : "#/components/schemas/PaymentDiscount"
-          }
-        },
-        "required" : [ "chairManual", "debtSom", "doctorId", "endAt", "firstVisit", "id", "patient", "source", "startAt", "status", "version" ]
-      },
-      "FamiliesBooker" : {
-        "properties" : {
-          "fullName" : {
-            "type" : "string"
-          },
-          "relation" : {
-            "type" : "string",
-            "enum" : [ "CHILD", "SPOUSE", "PARENT", "SIBLING", "OTHER" ]
-          }
-        }
-      },
-      "PaymentDiscount" : {
-        "properties" : {
-          "som" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "percent" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "reason" : {
-            "type" : "string",
-            "enum" : [ "PROMO", "FAMILY", "VIP", "REGULAR", "OTHER" ]
-          },
-          "comment" : {
-            "type" : "string"
-          },
-          "priceSom" : {
-            "type" : "integer",
-            "format" : "int32"
-          }
-        },
-        "required" : [ "priceSom", "som" ]
       },
       "AppointmentRequestsPromoCode" : {
         "properties" : {
@@ -23969,36 +24291,29 @@
             "format" : "int32",
             "maximum" : 240,
             "minimum" : 15
+          },
+          "wish" : {
+            "$ref" : "#/components/schemas/WaitlistWish"
           }
         },
         "required" : [ "durationMinutes", "patientId" ]
       },
-      "WaitlistView" : {
+      "WaitlistControllerOffer" : {
         "properties" : {
-          "id" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "doctorId" : {
             "type" : "integer",
             "format" : "int64"
           },
-          "patient" : {
-            "$ref" : "#/components/schemas/PatientView"
-          },
-          "durationMinutes" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "createdAt" : {
+          "startAt" : {
             "type" : "string",
             "format" : "date-time"
           },
-          "upcoming" : {
-            "$ref" : "#/components/schemas/AppointmentView"
+          "channel" : {
+            "type" : "string",
+            "enum" : [ "TELEGRAM", "WHATSAPP" ]
           }
         },
-        "required" : [ "durationMinutes", "id" ]
+        "required" : [ "channel", "doctorId", "startAt" ]
       },
       "WaitlistControllerBook" : {
         "properties" : {
@@ -26429,6 +26744,30 @@
         },
         "required" : [ "services" ]
       },
+      "BirthdayControllerGreet" : {
+        "properties" : {
+          "channel" : {
+            "type" : "string",
+            "enum" : [ "TELEGRAM", "WHATSAPP", "AUTO" ]
+          },
+          "lang" : {
+            "type" : "string",
+            "enum" : [ "RU", "KY" ]
+          }
+        }
+      },
+      "BirthdaysGreeting" : {
+        "properties" : {
+          "text" : {
+            "type" : "string"
+          },
+          "lang" : {
+            "type" : "string",
+            "enum" : [ "RU", "KY" ]
+          }
+        },
+        "required" : [ "lang" ]
+      },
       "AssistDraftRequest" : {
         "properties" : {
           "token" : {
@@ -27685,6 +28024,70 @@
             "type" : "string"
           }
         }
+      },
+      "WaitlistWindowsFreeWindow" : {
+        "properties" : {
+          "doctorId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "start" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "end" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "freed" : {
+            "type" : "boolean"
+          },
+          "matches" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/WaitlistWindowsMatch"
+            }
+          }
+        },
+        "required" : [ "doctorId", "end", "freed", "matches", "start" ]
+      },
+      "WaitlistWindowsMatch" : {
+        "properties" : {
+          "entryId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "patient" : {
+            "$ref" : "#/components/schemas/PatientView"
+          },
+          "startAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "durationMinutes" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "doctorId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "upcomingAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "offeredAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "offeredVia" : {
+            "type" : "string"
+          },
+          "declined" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "declined", "durationMinutes", "entryId", "patient", "startAt" ]
       },
       "TaskControllerSummary" : {
         "properties" : {
@@ -31747,6 +32150,44 @@
           }
         },
         "required" : [ "memoId", "serviceId" ]
+      },
+      "BirthdaysRow" : {
+        "properties" : {
+          "patient" : {
+            "$ref" : "#/components/schemas/PatientView"
+          },
+          "age" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "greetedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "greetedVia" : {
+            "type" : "string",
+            "enum" : [ "TELEGRAM", "WHATSAPP", "AUTO" ]
+          }
+        },
+        "required" : [ "age", "patient" ]
+      },
+      "BirthdaysToday" : {
+        "properties" : {
+          "date" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/BirthdaysRow"
+            }
+          },
+          "promoCode" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "date", "items" ]
       },
       "VisitReportsSent" : {
         "properties" : {
