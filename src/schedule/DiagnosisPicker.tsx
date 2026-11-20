@@ -97,7 +97,7 @@ export function DiagnosisPicker({ codes, text, onCodes, onText, autoFocus, noToo
             {icd.map((c) => (
               <button key={c.code} type="button" role="option" aria-selected={false} className="dx-option"
                 onMouseDown={(e) => e.preventDefault()} onClick={() => addCode(c)}>
-                <span className="dx-code num">{c.code}</span><span className="dx-opt-text">{c.title}</span>
+                <span className="dx-code num">{c.code}</span>{' '}<span className="dx-opt-text">{c.title}</span>
               </button>
             ))}
             {own.length > 0 && <div className="dx-group" role="presentation">Свои формулировки</div>}
