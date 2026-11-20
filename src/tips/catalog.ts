@@ -92,6 +92,13 @@ export const TIPS: Tip[] = [
     show: (me) => me.doctorId != null,
   },
   {
+    id: 'plan-templates',
+    title: '🗂 План из шаблона и срок у этапа',
+    text: 'В плане лечения «📄 Из шаблона» — «Имплант под ключ» или «Санация» одним нажатием; «👤» у этапа — врач и срок, просроченный подсветится.',
+    action: { guide: 'pacienty/plan-vrach-srok-shablony' },
+    show: (me) => me.doctorId != null || Boolean(me.admin),
+  },
+  {
     id: 'diagnosis-icd',
     title: '🩺 Диагноз по МКБ-10 — с подсказками',
     text: 'В заметке «＋ Диагноз»: печатайте «K02» или «пульп» — Tish подскажет код МКБ-10 и частые формулировки вашей клиники.',
