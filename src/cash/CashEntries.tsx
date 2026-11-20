@@ -8,7 +8,7 @@ import { purposeText } from './cashEntryText'
 
 type Entry = Schemas['PaymentQueryCashEntry']
 
-const METHODS: Record<string, string> = { CASH: 'наличные', TRANSFER: 'перевод', CARD: 'карта' }
+const METHODS: Record<string, string> = { CASH: 'наличные', TRANSFER: 'перевод', CARD: 'карта', ADVANCE: 'с аванса' }
 
 /** Кто отметил: имя сотрудника и «через бот», если отметил помощник в боте. */
 function whoText(e: Entry): string {

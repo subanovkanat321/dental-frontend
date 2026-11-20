@@ -13,12 +13,18 @@ import { LabOrderDialog } from '../lab/LabOrderDialog'
 import { labKindOf } from '../lab/text'
 import { planSaved } from '../lib/planStatus'
 import { PlanStatusBar } from './PlanProgress'
+import { StepAssignForm, StepAssignMeta } from './PlanStepAssign'
+import { PlanTemplateSheet } from './PlanTemplateSheet'
+import { PlanRepriceSheet } from './PlanReprice'
+import { overdueCount } from '../lib/planSteps'
+import './plan.css'
 
 type Patient = Schemas['PatientView']
 type Step = Schemas['TreatmentStepView']
 
 /**
  * План лечения пациента — этапы (что сделать, зуб, цена, этап 1–5), отметка «сделано», правка и удаление,
+ * врач и срок у этапа (V241, «👤»; у заголовка «Этап N» — всей группе), «📄 Из шаблона», «💲 Обновить цены»,
  * печать и отправка пациенту. Один редактор на медкарту (вкладка «План лечения») и карточку приёма
  * (строка «План лечения ›»): после осмотра врач добавляет этапы, не уходя из приёма. Права — на сервере
  * (ChartService.requireEdit): readOnly — ассистент, он план только смотрит.
@@ -45,6 +51,9 @@ export function TreatmentPlan({ patient, prefill = null, readOnly, heading = tru
   // Этап «коронка», «винир», «протез»… — «🦷 В лабораторию»: заказ технику с этим зубом
   const me = useMe().data
   const [toLab, setToLab] = useState<Step | null>(null)
+  // «👤 Врач и срок»: один этап (key — id) или вся группа «Этап N» (key — 'stage-N')
+  const [assigning, setAssigning] = useState<string | null>(null)
+  const [tool, setTool] = useState<'template' | 'prices' | null>(null)
   const title = useRef<HTMLInputElement>(null)
   // Пришёл зуб из карты — подставить в новый этап (состояние меняем при отрисовке, без эффекта)
   const [applied, setApplied] = useState(prefill)
@@ -93,6 +102,9 @@ export function TreatmentPlan({ patient, prefill = null, readOnly, heading = tru
   const total = steps.reduce((s, x) => s + (x.priceSom ?? 0), 0)
   const left = steps.filter((x) => !x.doneAt).reduce((s, x) => s + (x.priceSom ?? 0), 0)
   const error = add.error ?? toggle.error ?? remove.error
+  const overdue = overdueCount(steps)
+  // «Обновить цены» — есть несделанные этапы с услугой из прайса (только их цену берём из прайса)
+  const repriceable = steps.some((x) => !x.doneAt && x.serviceTypeId != null)
   // Пустое «Что сделать» — не молча выключенная кнопка, а подсказка, что вписать
   const [missing, setMissing] = useState(false)
   const submit = (e: FormEvent) => {
@@ -110,26 +122,47 @@ export function TreatmentPlan({ patient, prefill = null, readOnly, heading = tru
         ? <h2>План лечения{total ? <span className="hint"> · {somText(total)}{left && left !== total ? `, осталось ${somText(left)}` : ''}</span> : null}</h2>
         : total ? <p className="hint small">{somText(total)}{left && left !== total ? `, осталось ${somText(left)}` : ''}</p> : null}
       {steps.length > 0 && <PlanStatusBar patientId={patientId} readOnly={readOnly} />}
+      {overdue > 0 && <p className="plan-overdue-line" role="status">⏱ Просрочен{overdue > 1 ? 'о' : ''} {overdue} {overdue === 1 ? 'этап' : overdue < 5 ? 'этапа' : 'этапов'} — срок прошёл, не сделано</p>}
       {steps.length > 0 && (
         <ul className="plan" aria-label="Этапы лечения">
           {steps.map((s, i) => (
             <Fragment key={s.id}>
             {staged && !s.doneAt && steps[i - 1]?.stage !== s.stage && (
-              <li className="plan-stage">Этап {s.stage}{stageTotal(stages, s.stage) ? <span className="hint"> · {somText(stageTotal(stages, s.stage))}</span> : null}</li>
+              <li className="plan-stage">
+                <span>Этап {s.stage}{stageTotal(stages, s.stage) ? <span className="hint"> · {somText(stageTotal(stages, s.stage))}</span> : null}</span>
+                {!readOnly && (
+                  <button type="button" className="btn ghost small" aria-label={`Врач и срок: этап ${s.stage}`} title="Врач и срок всего этапа"
+                    onClick={() => setAssigning(`stage-${s.stage}`)}>👤</button>
+                )}
+              </li>
             )}
-            <li className={s.doneAt ? 'done' : undefined}>
+            {staged && !s.doneAt && steps[i - 1]?.stage !== s.stage && assigning === `stage-${s.stage}` && (
+              <li className="plan-assign-row">
+                <StepAssignForm patientId={patientId} label={`Врач и срок: этап ${s.stage}`} current={s}
+                  stepIds={steps.filter((x) => !x.doneAt && x.stage === s.stage).map((x) => x.id)}
+                  onDone={(fresh) => { if (fresh) saved(fresh); setAssigning(null) }} />
+              </li>
+            )}
+            <li className={s.doneAt ? 'done' : s.overdue ? 'overdue' : undefined}>
               {editing === s.id ? (
                 <StepEdit patientId={patientId} step={s} onDone={(steps) => { if (steps) saved(steps); setEditing(null) }} />
+              ) : assigning === String(s.id) ? (
+                <StepAssignForm patientId={patientId} stepIds={[s.id]} label={`Врач и срок: ${s.title}`} current={s}
+                  onDone={(fresh) => { if (fresh) saved(fresh); setAssigning(null) }} />
               ) : (
                 <>
                   <label className="check">
                     <input type="checkbox" checked={Boolean(s.doneAt)} disabled={readOnly || toggle.isPending} onChange={() => toggle.mutate(s)}
                       aria-label={`Сделано: ${s.title}`} />
-                    <span>{s.tooth ? <b>{s.tooth} · </b> : null}{s.title}</span>
+                    <span>{s.tooth ? <b>{s.tooth} · </b> : null}{s.title}<StepAssignMeta step={s} /></span>
                   </label>
                   <span className="nowrap">{s.priceSom != null ? somText(s.priceSom) : ''}</span>
                   {!readOnly && me && !s.doneAt && labKindOf(s.title) && (
                     <button type="button" className="btn ghost small" aria-label={`В лабораторию: ${s.title}`} title="Заказ в лабораторию" onClick={() => setToLab(s)}>🦷</button>
+                  )}
+                  {!readOnly && !s.doneAt && (
+                    <button type="button" className="btn ghost small" aria-label={`Врач и срок: ${s.title}`} title="Врач и срок"
+                      onClick={() => setAssigning(String(s.id))}>👤</button>
                   )}
                   {!readOnly && <button type="button" className="btn ghost small" aria-label={`Изменить этап: ${s.title}`} onClick={() => setEditing(s.id)}>✏️</button>}
                 </>
@@ -147,6 +180,16 @@ export function TreatmentPlan({ patient, prefill = null, readOnly, heading = tru
         <LabOrderDialog me={me} preset={{ patient: { id: patient.id, fullName: patient.fullName }, kind: labKindOf(toLab.title) ?? undefined,
           teeth: toLab.tooth != null ? String(toLab.tooth) : undefined }} onClose={() => setToLab(null)} />
       )}
+      {!readOnly && plan.isSuccess && (
+        <div className="actions plan-tools">
+          <button type="button" className="btn" onClick={() => setTool('template')}>📄 Из шаблона</button>
+          {repriceable && <button type="button" className="btn" onClick={() => setTool('prices')}>💲 Обновить цены</button>}
+        </div>
+      )}
+      {tool === 'template' && (
+        <PlanTemplateSheet patientId={patientId} steps={steps} onClose={() => setTool(null)} onAdded={(fresh) => { saved(fresh); setTool(null) }} />
+      )}
+      {tool === 'prices' && <PlanRepriceSheet patientId={patientId} onClose={() => setTool(null)} onSaved={(fresh) => { saved(fresh); setTool(null) }} />}
       {/* Печать и отправка — и ассистенту (без цен): он отдаёт план пациенту */}
       <PlanDocs patient={patient} steps={steps} />
       {plan.isSuccess && steps.length === 0 && <EmptyState compact title="Плана лечения пока нет">{readOnly ? null : 'Добавьте первый этап ниже.'}</EmptyState>}

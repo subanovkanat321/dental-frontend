@@ -78,11 +78,25 @@ export const TIPS: Tip[] = [
     show: (me) => Boolean(me.admin),
   },
   {
+    id: 'advance',
+    title: '👛 Аванс пациента — на брекеты и долгое лечение',
+    text: 'Карточка пациента → «Деньги» → «＋ Внести аванс». Приёмы потом оплачиваются «С аванса», а у семьи — один общий аванс.',
+    action: { guide: 'raspisanie/avans' },
+    show: (me) => Boolean(me.admin || me.reception),
+  },
+  {
     id: 'visit-templates',
     title: '📄 Шаблон приёма — заметка одной кнопкой',
     text: 'В карточке приёма «📄 Шаблон» заполнит заметку, зубы и план. Свой шаблон — «Сохранить как шаблон» под заметкой.',
     action: { guide: 'raspisanie/shablony-priema' },
     show: (me) => me.doctorId != null,
+  },
+  {
+    id: 'plan-templates',
+    title: '🗂 План из шаблона и срок у этапа',
+    text: 'В плане лечения «📄 Из шаблона» — «Имплант под ключ» или «Санация» одним нажатием; «👤» у этапа — врач и срок, просроченный подсветится.',
+    action: { guide: 'pacienty/plan-vrach-srok-shablony' },
+    show: (me) => me.doctorId != null || Boolean(me.admin),
   },
   {
     id: 'diagnosis-icd',

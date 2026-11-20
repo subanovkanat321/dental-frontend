@@ -108,3 +108,19 @@ export function seesRatings(me: Me): boolean {
   const ids = ratingDoctors(me)
   return ids == null || ids.length > 0
 }
+
+/**
+ * Аванс пациента (V243): остаток видят руководитель, регистратура и врачи (оплатить приём «С аванса»); ассистент — нет.
+ * Принимают аванс регистратура и руководитель, возвращает — только руководитель. Как AdvanceController на сервере.
+ */
+export function seesAdvance(me: Me): boolean {
+  return !isAssistant(me) && Boolean(me.admin || me.reception || me.doctorId != null)
+}
+
+export function takesAdvance(me: Me): boolean {
+  return Boolean(me.admin || me.reception)
+}
+
+export function refundsAdvance(me: Me): boolean {
+  return Boolean(me.admin)
+}

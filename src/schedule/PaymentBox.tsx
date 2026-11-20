@@ -11,7 +11,8 @@ import { DateInput } from '../layout/DateInput'
 import { Select } from '../layout/Select'
 import { serviceOptions, usePopularServices } from '../clinic/serviceOptions'
 import { useEarnings } from '../earnings/earnings'
-import { seesOwnEarnings } from '../lib/roles'
+import { seesAdvance, seesOwnEarnings } from '../lib/roles'
+import { useAdvance } from '../patients/advance'
 import { Loading } from '../layout/Loading'
 import { discountText, reasonText } from '../lib/discount'
 import { DiscountField } from './DiscountField'
@@ -23,8 +24,17 @@ type Method = NonNullable<Schemas['AppointmentControllerPayment']['method']>
 type Entry = Schemas['PaymentQueryEntry']
 
 const METHODS: [Method, string][] = [['CASH', 'Наличные'], ['TRANSFER', 'Перевод'], ['CARD', 'Карта']]
-const METHOD_NAME: Record<Method, string> = { CASH: 'наличные', TRANSFER: 'перевод', CARD: 'карта' }
+const METHOD_NAME: Record<Method, string> = { CASH: 'наличные', TRANSFER: 'перевод', CARD: 'карта', ADVANCE: 'с аванса' }
 const methodName = (m?: Method) => (m ? METHOD_NAME[m] : '')
+
+/**
+ * Сколько можно оплатить «С аванса» (V243) в этой форме: остаток аванса пациента (семьи) плюс то, что этот приём уже
+ * оплатил с аванса, — «Изменить» оплату заменит прежние платежи, сервер их тоже не считает. 0 — кнопки нет.
+ */
+function useAdvanceFor(a: Appointment, me: Me, spentHere: number): number {
+  const advance = useAdvance(a.patient?.id, seesAdvance(me) && a.status === 'DONE')
+  return (advance.data?.balanceSom ?? 0) + spentHere
+}
 
 type View = 'show' | 'edit' | 'bill' | 'extra' | 'rest' | 'billed' | 'unpaid'
 
@@ -47,9 +57,11 @@ export function PaymentBox({ appointment: a, me }: { appointment: Appointment; m
     enabled: a.paidSom != null,
   })
   const back = () => setView(a.paidSom != null ? 'show' : a.chargeSom != null ? 'billed' : 'unpaid')
+  // Этот приём уже оплачен с аванса — при «Изменить» эти деньги снова доступны (сервер сотрёт прежние платежи)
+  const spentHere = (history.data ?? []).filter((e) => e.method === 'ADVANCE').reduce((sum, e) => sum + e.amountSom, 0)
 
   if (view === 'unpaid') return <Unpaid a={a} onPay={() => setView('edit')} />
-  if (view === 'extra') return <div className="payment"><ExtraForm a={a} onCancel={back} /></div>
+  if (view === 'extra') return <div className="payment"><ExtraForm a={a} me={me} onCancel={back} /></div>
   if (view === 'rest') return <div className="payment"><RestForm a={a} onCancel={back} /></div>
   if (view === 'edit' || view === 'bill') {
     // «Изменить» оплату частями — подставить части; ждём историю, чтобы форма открылась уже заполненной
@@ -57,7 +69,7 @@ export function PaymentBox({ appointment: a, me }: { appointment: Appointment; m
     if (needParts && history.isPending) return <div className="payment"><Loading /></div>
     return (
       <div className="payment">
-        <PayForm a={a} me={me} billOnly={view === 'bill'} parts={needParts ? history.data ?? [] : []}
+        <PayForm a={a} me={me} billOnly={view === 'bill'} parts={needParts ? history.data ?? [] : []} spentHere={spentHere}
           onCancel={back} />
       </div>
     )
@@ -137,10 +149,15 @@ function EarningsGain({ a, me }: { a: Appointment; me: Me }) {
   return <p className="earn-gain">+{somText(gain)} {today ? 'к вашему дню' : 'к вашему заработку'}</p>
 }
 
-function MethodButtons({ value, onChange, label = 'Как заплатили' }: { value: Method; onChange: (m: Method) => void; label?: string }) {
+function MethodButtons({ value, onChange, label = 'Как заплатили', advance = 0 }: {
+  value: Method; onChange: (m: Method) => void; label?: string
+  /** Остаток аванса: больше 0 — ещё кнопка «С аванса · …» */
+  advance?: number
+}) {
+  const options: [Method, string][] = advance > 0 ? [...METHODS, ['ADVANCE', `С аванса · ${somText(advance)}`]] : METHODS
   return (
-    <div className="segments" role="group" aria-label={label}>
-      {METHODS.map(([code, name]) => (
+    <div className="segments wrap" role="group" aria-label={label}>
+      {options.map(([code, name]) => (
         <button key={code} type="button" aria-pressed={value === code} onClick={() => onChange(code)}>{name}</button>
       ))}
     </div>
@@ -228,8 +245,8 @@ function Unpaid({ a, onPay }: { a: Appointment; onPay: () => void }) {
 type How = Method | 'SPLIT'
 const HOW: [How, string][] = [...METHODS, ['SPLIT', 'Разными способами']]
 type Split = Record<Method, string>
-const NO_SPLIT: Split = { CASH: '', TRANSFER: '', CARD: '' }
-const SPLIT_LABEL: Record<Method, string> = { CASH: 'Наличными, сом', TRANSFER: 'Переводом, сом', CARD: 'Картой, сом' }
+const NO_SPLIT: Split = { CASH: '', TRANSFER: '', CARD: '', ADVANCE: '' }
+const SPLIT_LABEL: Record<Method, string> = { CASH: 'Наличными, сом', TRANSFER: 'Переводом, сом', CARD: 'Картой, сом', ADVANCE: 'С аванса, сом' }
 
 /**
  * Оплата приёма по шагам — как говорят на кассе:
@@ -238,14 +255,21 @@ const SPLIT_LABEL: Record<Method, string> = { CASH: 'Наличными, сом'
  * 3) чем заплатил: наличные, перевод, карта или «разными способами» — сумма по каждому.
  * Одна сумма вводится один раз: «всё сразу» — оплачено = стоимость; части считаются от «заплатил».
  */
-function PayForm({ a, me, billOnly, parts: initialParts, onCancel }: {
+function PayForm({ a, me, billOnly, parts: initialParts, spentHere = 0, onCancel }: {
   a: Appointment
   me: Me
   billOnly: boolean
   parts: Entry[]
+  /** Этот приём уже оплачен с аванса на столько — при «Изменить» доступно снова */
+  spentHere?: number
   onCancel?: () => void
 }) {
   const action = useAppointmentAction(a)
+  // «С аванса» (V243): кнопка способа и поле в «Разными способами» — когда на авансе пациента (семьи) что-то есть
+  const advance = useAdvanceFor(a, me, spentHere)
+  const splitMethods: [Method, string][] = advance > 0 || initialParts.some((e) => e.method === 'ADVANCE')
+    ? [...METHODS, ['ADVANCE', 'С аванса']] : METHODS
+  const how3: [How, string][] = advance > 0 ? [...METHODS, ['ADVANCE', `С аванса · ${somText(advance)}`], ['SPLIT', 'Разными способами']] : HOW
   const hadDebt = a.debtSom > 0
   // Со скидкой «стоимость» в форме — цена до скидки, к оплате — её посчитанный остаток
   const [cost, setCost] = useState(String(a.discount?.priceSom ?? a.chargeSom ?? a.paidSom ?? a.servicePriceSom ?? ''))
@@ -271,7 +295,7 @@ function PayForm({ a, me, billOnly, parts: initialParts, onCancel }: {
   const costNum = priceNum == null ? null : Math.max(priceNum - off, 0)
   const paid = whole ? costNum : paidNow === '' ? null : Number(paidNow)
   const rest = costNum != null && paid != null ? costNum - paid : null
-  const splitSum = METHODS.reduce((sum, [m]) => sum + (Number(split[m]) || 0), 0)
+  const splitSum = splitMethods.reduce((sum, [m]) => sum + (Number(split[m]) || 0), 0)
   // «Сейчас ничего — всё в долг»: шаг «Чем заплатил» не нужен
   const nothingNow = !whole && paid === 0
 
@@ -301,10 +325,16 @@ function PayForm({ a, me, billOnly, parts: initialParts, onCancel }: {
       }
     }
     const amount = paid!
+    // Подсказка до сервера (он проверит сам): с аванса — не больше остатка
+    const fromAdvance = how === 'ADVANCE' ? amount : how === 'SPLIT' ? Number(split.ADVANCE) || 0 : 0
+    if (!nothingNow && fromAdvance > advance) {
+      setProblem(advance > 0 ? `На авансе только ${somText(advance)} — остальное другим способом («Разными способами»)` : 'На авансе нет денег')
+      return
+    }
     let parts: { amountSom: number; method: Method }[] | undefined
     let method: Method = how === 'SPLIT' ? 'CASH' : how
     if (how === 'SPLIT' && !nothingNow) {
-      parts = METHODS.filter(([m]) => Number(split[m]) > 0).map(([m]) => ({ amountSom: Number(split[m]), method: m }))
+      parts = splitMethods.filter(([m]) => Number(split[m]) > 0).map(([m]) => ({ amountSom: Number(split[m]), method: m }))
       if (splitSum !== amount) {
         setProblem(`По способам вышло ${somText(splitSum)}, а заплатил ${somText(amount)} — поправьте суммы`)
         return
@@ -416,14 +446,14 @@ function PayForm({ a, me, billOnly, parts: initialParts, onCancel }: {
         <div className="pay-step-body">
           <span className="pay-step-title">Чем заплатил</span>
           <div className="segments wrap" role="group" aria-label="Как заплатили">
-            {HOW.map(([code, name]) => (
+            {how3.map(([code, name]) => (
               <button key={code} type="button" aria-pressed={how === code} onClick={() => setHow(code)}>{name}</button>
             ))}
           </div>
           {how === 'SPLIT' && (
             <div className="payment-split">
-              {METHODS.map(([m]) => (
-                <label key={m} className="field"><span>{SPLIT_LABEL[m]}</span>
+              {splitMethods.map(([m]) => (
+                <label key={m} className="field"><span>{m === 'ADVANCE' ? `${SPLIT_LABEL[m]} (есть ${somText(advance)})` : SPLIT_LABEL[m]}</span>
                   <input type="number" min={0} inputMode="numeric" placeholder="0" value={split[m]}
                     onChange={(e) => setSplit({ ...split, [m]: e.target.value })} /></label>
               ))}
@@ -449,10 +479,12 @@ function PayForm({ a, me, billOnly, parts: initialParts, onCancel }: {
 }
 
 /** Доплата долга: сумма (не больше долга) и способ. */
-function ExtraForm({ a, onCancel }: { a: Appointment; onCancel: () => void }) {
+function ExtraForm({ a, me, onCancel }: { a: Appointment; me: Me; onCancel: () => void }) {
   const action = useAppointmentAction(a)
+  const advance = useAdvanceFor(a, me, 0)
   const [amount, setAmount] = useState(String(a.debtSom))
-  const [method, setMethod] = useState<Method>(a.paymentMethod ?? 'CASH')
+  // Прошлый платёж был с аванса, а он кончился — по умолчанию наличные
+  const [method, setMethod] = useState<Method>(a.paymentMethod && a.paymentMethod !== 'ADVANCE' ? a.paymentMethod : 'CASH')
   return (
     <form className="pay-form" aria-label="Доплата" onSubmit={(e) => {
       e.preventDefault()
@@ -461,7 +493,7 @@ function ExtraForm({ a, onCancel }: { a: Appointment; onCancel: () => void }) {
       <label className="field"><span>Доплата (долг {somText(a.debtSom)})</span>
         <input type="number" min={1} max={a.debtSom} inputMode="numeric" aria-label="Доплата, сом" autoFocus
           value={amount} onChange={(e) => setAmount(e.target.value)} /></label>
-      <MethodButtons value={method} onChange={setMethod} />
+      <MethodButtons value={method} onChange={setMethod} advance={advance} />
       {action.error && <p className="error" role="alert">{fieldError(action.error)}</p>}
       <button type="submit" className="btn primary" disabled={action.isPending}>Сохранить доплату</button>
       <button type="button" className="link" onClick={onCancel}>Отмена</button>

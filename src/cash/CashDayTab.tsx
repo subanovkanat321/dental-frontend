@@ -16,6 +16,7 @@ type Day = Schemas['CashDaysView']
 type Kind = NonNullable<Schemas['CashDaysMovement']['kind']>
 
 const METHODS: [string, string][] = [['CASH', 'Наличные'], ['TRANSFER', 'Перевод'], ['CARD', 'Карта']]
+const METHOD_TEXT: Record<string, string> = { TRANSFER: 'переводом', CARD: 'на карту' }
 
 function errorText(e: ApiError | null): string | null {
   return e ? Object.values(e.fieldErrors)[0] ?? e.message : null
@@ -78,29 +79,35 @@ export function CashDayTab({ me }: { me: Me }) {
         <>
           <dl className="cash-day-sum" aria-label="Итог кассы дня">
             <div>
-              <dt>Остаток на начало</dt>
+              <dt><span className="cash-sign" aria-hidden="true" />Остаток на начало</dt>
               <dd>{d.openingSom != null ? signed(d.openingSom) : <span className="tone-wait">не указан</span>}
                 <span className="hint small">{d.openingSource === 'MANUAL' ? 'вписан' : d.openingSource === 'PREVIOUS' && d.openingFrom
                   ? `с ${shortDate(`${d.openingFrom}T12:00:00Z`)}` : ''}</span></dd>
             </div>
             <div>
-              <dt>＋ Приход наличными</dt>
+              <dt><span className="cash-sign" aria-hidden="true">+</span>Приход наличными</dt>
               <dd>{somText(d.cashInSom)}</dd>
             </div>
             <div>
-              <dt>− Расходы из кассы</dt>
+              <dt><span className="cash-sign" aria-hidden="true">−</span>Расходы из кассы</dt>
               <dd>{somText(d.expensesSom)}</dd>
             </div>
+            {d.cashRefundsSom > 0 && (
+              <div>
+                <dt><span className="cash-sign" aria-hidden="true">−</span>Возвраты аванса</dt>
+                <dd>{somText(d.cashRefundsSom)}</dd>
+              </div>
+            )}
             <div>
-              <dt>＋ Внесения</dt>
+              <dt><span className="cash-sign" aria-hidden="true">+</span>Внесения</dt>
               <dd>{somText(d.depositsSom)}</dd>
             </div>
             <div>
-              <dt>− Изъятия</dt>
+              <dt><span className="cash-sign" aria-hidden="true">−</span>Изъятия</dt>
               <dd>{somText(d.withdrawalsSom)}</dd>
             </div>
             <div className={`cash-day-total${d.closingSom < 0 ? ' tone-bad' : ''}`}>
-              <dt>Остаток на конец</dt>
+              <dt><span className="cash-sign" aria-hidden="true">=</span>Остаток на конец</dt>
               <dd aria-label="Остаток на конец">{signed(d.closingSom)}</dd>
             </div>
           </dl>
@@ -130,9 +137,9 @@ export function CashDayTab({ me }: { me: Me }) {
             </div>
           ) : admin && (
             <div className="cash-day-actions" role="group" aria-label="Действия с кассой">
-              <button type="button" className="btn small" onClick={() => setForm('IN')}>＋ Внесение</button>
+              <button type="button" className="btn small" onClick={() => setForm('IN')}>+ Внесение</button>
               <button type="button" className="btn small" onClick={() => setForm('OUT')}>− Изъятие</button>
-              <button type="button" className="btn small" onClick={() => setExpense(true)}>＋ Расход из кассы</button>
+              <button type="button" className="btn small" onClick={() => setExpense(true)}>+ Расход из кассы</button>
               <button type="button" className="btn small" onClick={() => setForm('OPENING')}>
                 {d.openingSource === 'MANUAL' ? 'Изменить остаток на начало' : 'Вписать остаток на начало'}</button>
               <button type="button" className="btn primary small" disabled={close.isPending} onClick={() => void ask(
@@ -173,6 +180,23 @@ export function CashDayTab({ me }: { me: Me }) {
               ))}
             </ul>
           ) : <p className="hint small">Не было. Расход наличными из ящика — отметка «Из кассы наличными» в форме расхода.</p>}
+
+          {/* Возвраты аванса пациентам (V243): наличные — из ящика, перевод и карта — только для сведения */}
+          {(d.refunds?.length ?? 0) > 0 && (
+            <>
+              <h3>Возвраты аванса</h3>
+              <ul className="cash-day-list" aria-label="Возвраты аванса">
+                {d.refunds!.map((r) => (
+                  <li key={r.id}>
+                    <span className="when num">{r.at ? timeOf(r.at) : ''}</span>
+                    <span className="what">{r.patient} · {r.reason}{r.method !== 'CASH' ? <span className="hint"> · {METHOD_TEXT[r.method ?? ''] ?? r.method}, не из ящика</span> : null}
+                      {r.by ? <span className="hint"> · {r.by}</span> : null}</span>
+                    <span className="sum num tone-bad">−{somText(r.amountSom)}</span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
 
           <button type="button" className="link" onClick={() => setPrinting(true)}>🖨 Печать отчёта</button>
           {printing && (
@@ -249,6 +273,7 @@ function CashDaySheet({ d }: { d: Day }) {
           <tr><td>Остаток на начало</td><td className="r">{d.openingSom != null ? signed(d.openingSom) : 'не указан'}</td></tr>
           {METHODS.map(([k, t]) => <tr key={k}><td>Приход: {t.toLowerCase()}</td><td className="r">{somText(d.inByMethod?.[k] ?? 0)}</td></tr>)}
           <tr><td>Расходы из кассы</td><td className="r">−{somText(d.expensesSom)}</td></tr>
+          {d.cashRefundsSom > 0 && <tr><td>Возвраты аванса наличными</td><td className="r">−{somText(d.cashRefundsSom)}</td></tr>}
           <tr><td>Внесения</td><td className="r">{somText(d.depositsSom)}</td></tr>
           <tr><td>Изъятия</td><td className="r">−{somText(d.withdrawalsSom)}</td></tr>
           <tr><td><b>Остаток на конец (наличные)</b></td><td className="r"><b>{signed(d.closingSom)}</b></td></tr>

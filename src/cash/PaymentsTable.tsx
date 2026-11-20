@@ -17,7 +17,7 @@ const DAY = new Intl.DateTimeFormat('en-CA', { timeZone: ZONE })
 const dayOfInstant = (instant: string) => DAY.format(new Date(instant))
 
 // У оплаты 0 сом сервер вместо способа пишет, почему ноль: бесплатно или оплачено заранее
-const METHOD_TEXT: Record<string, string> = { CASH: 'Наличные', TRANSFER: 'Перевод', CARD: 'Карта', FREE: 'Бесплатно', PREPAID: 'Оплачено заранее' }
+const METHOD_TEXT: Record<string, string> = { CASH: 'Наличные', TRANSFER: 'Перевод', CARD: 'Карта', ADVANCE: 'С аванса', FREE: 'Бесплатно', PREPAID: 'Оплачено заранее' }
 const STATUS_TEXT: Record<string, [string, string]> = {
   DONE: ['Состоялся', 's-done'], NO_SHOW: ['Неявка', 's-bad'], CANCELLED: ['Отменён', 's-quiet'],
   SCHEDULED: ['Записан', 's-ok'], REQUESTED: ['Заявка', 's-request'],
