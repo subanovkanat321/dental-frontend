@@ -3,7 +3,6 @@ import { useState, type FormEvent } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { dateOf, minutesOf, slotInstant, somText, timeOf, todayIn } from '../lib/time'
-import { Dictation } from './Dictation'
 import { DurationField } from './DurationField'
 import { TimePicker } from './TimePicker'
 import { ChairTimeHint } from './ChairTimeHint'
@@ -391,55 +390,4 @@ export function Remind({ appointment: a, nowhere }: { appointment: Appointment; 
   )
 }
 
-/**
- * «Заметка о приёме»: что сделали, что дальше — медданные. Пишут врач приёма и админ; ассистент и
- * другие врачи пациента только читают (`editable: false` — без поля и диктовки, с «Врач: …»);
- * регистратуре сервер не отдаёт (403 — нет блока). В медкарте пациента — в «Заметках о визитах».
- */
-export function VisitNote({ appointment: a }: { appointment: Appointment }) {
-  const client = useQueryClient()
-  const note = useQuery({
-    queryKey: ['note', a.id],
-    queryFn: () => unwrap(api.GET('/api/appointments/{id}/note', { params: { path: { id: a.id } } })),
-    retry: false,
-  })
-  const [text, setText] = useState<string | null>(null)
-  const save = useMutation<Schemas['ChartControllerNoteView'], ApiError>({
-    mutationFn: () => unwrap(api.PUT('/api/appointments/{id}/note', { params: { path: { id: a.id } }, body: { note: (text ?? '').trim() } })),
-    onSuccess: (saved) => {
-      client.setQueryData(['note', a.id], saved)
-      void client.invalidateQueries({ queryKey: ['notes'] })
-      setText(null)
-    },
-  })
-  // Пока идёт диктовка, поле заметки прячем: заметка — в экране «Проверьте», чтобы не было двух полей
-  const [dictating, setDictating] = useState(false)
-  if (note.isPending || note.error) return null
-  if (note.data.editable === false) {
-    // Чужой приём: только прочитать — менять заметку может врач приёма или админ (сервер ответит 403)
-    if (!note.data.note) return null
-    return (
-      <section className="form" aria-label="Заметка о приёме">
-        <span className="hint">Заметка о приёме{note.data.doctorName ? ` · Врач: ${note.data.doctorName}` : ''}</span>
-        <p className="continue-note">{note.data.note}</p>
-      </section>
-    )
-  }
-  const value = text ?? note.data.note ?? ''
-  const changed = text != null && text.trim() !== (note.data.note ?? '')
-  return (
-    <>
-    {/* Диктовка — первой: врач говорит, ИИ раскладывает по зубам, плану и заметке */}
-    {a.patient.id != null && <Dictation appointment={a} note={value} onActive={setDictating} />}
-    {!dictating && <form className="form" aria-label="Заметка о приёме" onSubmit={(e) => { e.preventDefault(); save.mutate() }}>
-      <label className="field"><span>Заметка о приёме</span>
-        <textarea rows={3} maxLength={2000} value={value} placeholder="Что сделали, что дальше — видят врач и руководитель"
-          onChange={(e) => setText(e.target.value)} />
-      </label>
-      {changed && <button type="submit" className="btn" disabled={save.isPending}>Сохранить заметку</button>}
-      {save.isSuccess && !changed && <p className="tone-ok small" role="status">Сохранено</p>}
-      {save.error && <p className="error" role="alert">{errorText(save.error)}</p>}
-    </form>}
-    </>
-  )
-}
+export { VisitNote } from './VisitNote'

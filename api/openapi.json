@@ -10,6 +10,61 @@
     "description" : "Generated server url"
   } ],
   "paths" : {
+    "/api/visit-templates/{id}" : {
+      "put" : {
+        "tags" : [ "visit-template-controller" ],
+        "operationId" : "update",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/VisitTemplatesFields"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/VisitTemplatesView"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "visit-template-controller" ],
+        "operationId" : "delete",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        }
+      }
+    },
     "/api/tasks/{id}" : {
       "get" : {
         "tags" : [ "task-controller" ],
@@ -38,7 +93,7 @@
       },
       "put" : {
         "tags" : [ "task-controller" ],
-        "operationId" : "update",
+        "operationId" : "update_1",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -73,7 +128,7 @@
       },
       "delete" : {
         "tags" : [ "task-controller" ],
-        "operationId" : "delete",
+        "operationId" : "delete_1",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -93,7 +148,7 @@
     "/api/supplies/{id}" : {
       "put" : {
         "tags" : [ "supply-controller" ],
-        "operationId" : "update_1",
+        "operationId" : "update_2",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -128,7 +183,7 @@
       },
       "delete" : {
         "tags" : [ "supply-controller" ],
-        "operationId" : "delete_1",
+        "operationId" : "delete_2",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -298,7 +353,7 @@
     "/api/shifts/{id}" : {
       "put" : {
         "tags" : [ "shift-controller" ],
-        "operationId" : "update_2",
+        "operationId" : "update_3",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -333,7 +388,7 @@
       },
       "delete" : {
         "tags" : [ "shift-controller" ],
-        "operationId" : "delete_2",
+        "operationId" : "delete_3",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -415,7 +470,7 @@
     "/api/service-types/{id}" : {
       "put" : {
         "tags" : [ "service-type-controller" ],
-        "operationId" : "update_3",
+        "operationId" : "update_4",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -450,7 +505,7 @@
       },
       "delete" : {
         "tags" : [ "service-type-controller" ],
-        "operationId" : "delete_3",
+        "operationId" : "delete_4",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -717,7 +772,7 @@
     "/api/promo-codes/{id}" : {
       "put" : {
         "tags" : [ "promo-code-controller" ],
-        "operationId" : "update_4",
+        "operationId" : "update_5",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -755,7 +810,7 @@
       },
       "delete" : {
         "tags" : [ "promo-code-controller" ],
-        "operationId" : "delete_4",
+        "operationId" : "delete_5",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -838,7 +893,7 @@
       },
       "put" : {
         "tags" : [ "survey-controller" ],
-        "operationId" : "update_5",
+        "operationId" : "update_6",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -873,7 +928,7 @@
       },
       "delete" : {
         "tags" : [ "survey-controller" ],
-        "operationId" : "delete_5",
+        "operationId" : "delete_6",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -937,7 +992,7 @@
     "/api/platform/outreach/{id}" : {
       "put" : {
         "tags" : [ "outreach-controller" ],
-        "operationId" : "update_6",
+        "operationId" : "update_7",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -972,7 +1027,7 @@
       },
       "delete" : {
         "tags" : [ "outreach-controller" ],
-        "operationId" : "delete_6",
+        "operationId" : "delete_7",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1217,7 +1272,7 @@
     "/api/platform/finance/expenses/{id}" : {
       "put" : {
         "tags" : [ "platform-finance-controller" ],
-        "operationId" : "update_7",
+        "operationId" : "update_8",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1252,7 +1307,7 @@
       },
       "delete" : {
         "tags" : [ "platform-finance-controller" ],
-        "operationId" : "delete_7",
+        "operationId" : "delete_8",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1341,7 +1396,7 @@
     "/api/platform/content/{id}" : {
       "put" : {
         "tags" : [ "content-controller" ],
-        "operationId" : "update_8",
+        "operationId" : "update_9",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1376,7 +1431,7 @@
       },
       "delete" : {
         "tags" : [ "content-controller" ],
-        "operationId" : "delete_8",
+        "operationId" : "delete_9",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1653,7 +1708,7 @@
     "/api/platform/agreements/{id}" : {
       "put" : {
         "tags" : [ "agreement-controller" ],
-        "operationId" : "update_9",
+        "operationId" : "update_10",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1688,7 +1743,7 @@
       },
       "delete" : {
         "tags" : [ "agreement-controller" ],
-        "operationId" : "delete_9",
+        "operationId" : "delete_10",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1745,7 +1800,7 @@
     "/api/patients/{patientId}/teeth/{number}" : {
       "put" : {
         "tags" : [ "chart-controller" ],
-        "operationId" : "update_10",
+        "operationId" : "update_11",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "path",
@@ -2203,7 +2258,7 @@
     "/api/patients/{id}" : {
       "put" : {
         "tags" : [ "patient-controller" ],
-        "operationId" : "update_11",
+        "operationId" : "update_12",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -2409,7 +2464,7 @@
     "/api/patient-sources/{id}" : {
       "put" : {
         "tags" : [ "patient-sources-controller" ],
-        "operationId" : "update_12",
+        "operationId" : "update_13",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -2968,7 +3023,7 @@
       },
       "put" : {
         "tags" : [ "lab-controller" ],
-        "operationId" : "update_13",
+        "operationId" : "update_14",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -3003,7 +3058,7 @@
       },
       "delete" : {
         "tags" : [ "lab-controller" ],
-        "operationId" : "delete_10",
+        "operationId" : "delete_11",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -3060,7 +3115,7 @@
     "/api/expenses/{id}" : {
       "put" : {
         "tags" : [ "expense-controller" ],
-        "operationId" : "update_14",
+        "operationId" : "update_15",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -3095,7 +3150,7 @@
       },
       "delete" : {
         "tags" : [ "expense-controller" ],
-        "operationId" : "delete_11",
+        "operationId" : "delete_12",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -3276,7 +3331,7 @@
       },
       "put" : {
         "tags" : [ "doctor-hours-controller" ],
-        "operationId" : "update_15",
+        "operationId" : "update_16",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -3436,7 +3491,7 @@
       },
       "put" : {
         "tags" : [ "clinic-controller" ],
-        "operationId" : "update_16",
+        "operationId" : "update_17",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -3524,7 +3579,7 @@
       },
       "put" : {
         "tags" : [ "review-settings-controller" ],
-        "operationId" : "update_17",
+        "operationId" : "update_18",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -3670,6 +3725,50 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ClinicControllerPatientContracts"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clinic/note-sections" : {
+      "get" : {
+        "tags" : [ "chart-controller" ],
+        "operationId" : "noteSections",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ChartControllerSectionsSetting"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "chart-controller" ],
+        "operationId" : "setNoteSections",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ChartControllerSectionsSetting"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ChartControllerSectionsSetting"
                 }
               }
             }
@@ -3963,7 +4062,7 @@
       },
       "delete" : {
         "tags" : [ "chair-controller" ],
-        "operationId" : "delete_12",
+        "operationId" : "delete_13",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -4020,7 +4119,7 @@
     "/api/care-memos/{id}" : {
       "put" : {
         "tags" : [ "care-memo-controller" ],
-        "operationId" : "update_18",
+        "operationId" : "update_19",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -5321,6 +5420,53 @@
         }
       }
     },
+    "/api/visit-templates" : {
+      "get" : {
+        "tags" : [ "visit-template-controller" ],
+        "operationId" : "list_1",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/VisitTemplatesView"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "visit-template-controller" ],
+        "operationId" : "create",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/VisitTemplatesFields"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Created",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/VisitTemplatesView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/time-off" : {
       "get" : {
         "tags" : [ "time-off-controller" ],
@@ -5343,7 +5489,7 @@
       },
       "post" : {
         "tags" : [ "time-off-controller" ],
-        "operationId" : "create",
+        "operationId" : "create_1",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -5371,7 +5517,7 @@
     "/api/tasks" : {
       "get" : {
         "tags" : [ "task-controller" ],
-        "operationId" : "list_1",
+        "operationId" : "list_2",
         "parameters" : [ {
           "name" : "status",
           "in" : "query",
@@ -5423,7 +5569,7 @@
       },
       "post" : {
         "tags" : [ "task-controller" ],
-        "operationId" : "create_1",
+        "operationId" : "create_2",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -5562,7 +5708,7 @@
     "/api/support/tickets" : {
       "get" : {
         "tags" : [ "support-controller" ],
-        "operationId" : "list_2",
+        "operationId" : "list_3",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -5581,7 +5727,7 @@
       },
       "post" : {
         "tags" : [ "support-controller" ],
-        "operationId" : "create_2",
+        "operationId" : "create_3",
         "parameters" : [ {
           "name" : "kind",
           "in" : "query",
@@ -5702,7 +5848,7 @@
       },
       "post" : {
         "tags" : [ "supply-controller" ],
-        "operationId" : "create_3",
+        "operationId" : "create_4",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -5922,7 +6068,7 @@
     "/api/shifts" : {
       "get" : {
         "tags" : [ "shift-controller" ],
-        "operationId" : "list_3",
+        "operationId" : "list_4",
         "parameters" : [ {
           "name" : "from",
           "in" : "query",
@@ -5955,7 +6101,7 @@
       },
       "post" : {
         "tags" : [ "shift-controller" ],
-        "operationId" : "create_4",
+        "operationId" : "create_5",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -6030,7 +6176,7 @@
       },
       "post" : {
         "tags" : [ "service-type-controller" ],
-        "operationId" : "create_5",
+        "operationId" : "create_6",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -6365,7 +6511,7 @@
     "/api/purchases" : {
       "get" : {
         "tags" : [ "purchase-controller" ],
-        "operationId" : "list_4",
+        "operationId" : "list_5",
         "parameters" : [ {
           "name" : "doctorId",
           "in" : "query",
@@ -6505,7 +6651,7 @@
     "/api/platform/surveys" : {
       "get" : {
         "tags" : [ "survey-controller" ],
-        "operationId" : "list_5",
+        "operationId" : "list_6",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -6524,7 +6670,7 @@
       },
       "post" : {
         "tags" : [ "survey-controller" ],
-        "operationId" : "create_6",
+        "operationId" : "create_7",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -7231,7 +7377,7 @@
     "/api/platform/finance/expenses" : {
       "post" : {
         "tags" : [ "platform-finance-controller" ],
-        "operationId" : "create_7",
+        "operationId" : "create_8",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -7259,7 +7405,7 @@
     "/api/platform/content" : {
       "get" : {
         "tags" : [ "content-controller" ],
-        "operationId" : "list_6",
+        "operationId" : "list_7",
         "parameters" : [ {
           "name" : "from",
           "in" : "query",
@@ -7295,7 +7441,7 @@
       },
       "post" : {
         "tags" : [ "content-controller" ],
-        "operationId" : "create_8",
+        "operationId" : "create_9",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -7573,7 +7719,7 @@
       },
       "post" : {
         "tags" : [ "platform-controller" ],
-        "operationId" : "create_9",
+        "operationId" : "create_10",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -7929,7 +8075,7 @@
       },
       "post" : {
         "tags" : [ "agreement-controller" ],
-        "operationId" : "create_10",
+        "operationId" : "create_11",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -8031,7 +8177,7 @@
     "/api/patients" : {
       "post" : {
         "tags" : [ "patient-controller" ],
-        "operationId" : "create_11",
+        "operationId" : "create_12",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -9257,7 +9403,7 @@
     "/api/news" : {
       "get" : {
         "tags" : [ "news-controller" ],
-        "operationId" : "list_7",
+        "operationId" : "list_8",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -9656,7 +9802,7 @@
     "/api/lab-orders" : {
       "get" : {
         "tags" : [ "lab-controller" ],
-        "operationId" : "list_8",
+        "operationId" : "list_9",
         "parameters" : [ {
           "name" : "fitted",
           "in" : "query",
@@ -9715,7 +9861,7 @@
       },
       "post" : {
         "tags" : [ "lab-controller" ],
-        "operationId" : "create_12",
+        "operationId" : "create_13",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -9878,7 +10024,7 @@
     "/api/expenses" : {
       "get" : {
         "tags" : [ "expense-controller" ],
-        "operationId" : "list_9",
+        "operationId" : "list_10",
         "parameters" : [ {
           "name" : "from",
           "in" : "query",
@@ -10009,7 +10155,7 @@
       },
       "post" : {
         "tags" : [ "doctor-controller" ],
-        "operationId" : "create_13",
+        "operationId" : "create_14",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -10464,7 +10610,7 @@
     "/api/clinic/pay/requests" : {
       "post" : {
         "tags" : [ "pay-controller" ],
-        "operationId" : "create_14",
+        "operationId" : "create_15",
         "parameters" : [ {
           "name" : "months",
           "in" : "query",
@@ -11032,7 +11178,7 @@
     "/api/chairs" : {
       "get" : {
         "tags" : [ "chair-assignment-controller" ],
-        "operationId" : "list_10",
+        "operationId" : "list_11",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -11051,7 +11197,7 @@
       },
       "post" : {
         "tags" : [ "chair-controller" ],
-        "operationId" : "create_15",
+        "operationId" : "create_16",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -11079,7 +11225,7 @@
     "/api/care-memos" : {
       "get" : {
         "tags" : [ "care-memo-controller" ],
-        "operationId" : "list_11",
+        "operationId" : "list_12",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -11098,7 +11244,7 @@
       },
       "post" : {
         "tags" : [ "care-memo-controller" ],
-        "operationId" : "create_16",
+        "operationId" : "create_17",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -11223,7 +11369,7 @@
       },
       "delete" : {
         "tags" : [ "calendar-feed-controller" ],
-        "operationId" : "delete_13",
+        "operationId" : "delete_14",
         "responses" : {
           "204" : {
             "description" : "No Content"
@@ -11306,7 +11452,7 @@
       },
       "post" : {
         "tags" : [ "appointment-controller" ],
-        "operationId" : "create_17",
+        "operationId" : "create_18",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -11324,6 +11470,50 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/AppointmentView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appointments/{id}/visit-templates/{templateId}/proposal" : {
+      "post" : {
+        "tags" : [ "visit-template-controller" ],
+        "operationId" : "proposal",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "templateId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/VisitTemplateControllerTeeth"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/VisitDictationProposal"
                 }
               }
             }
@@ -13539,7 +13729,7 @@
     "/api/salaries" : {
       "get" : {
         "tags" : [ "salary-controller" ],
-        "operationId" : "list_12",
+        "operationId" : "list_13",
         "parameters" : [ {
           "name" : "month",
           "in" : "query",
@@ -13932,7 +14122,7 @@
     "/api/platform/outreach" : {
       "get" : {
         "tags" : [ "outreach-controller" ],
-        "operationId" : "list_13",
+        "operationId" : "list_14",
         "parameters" : [ {
           "name" : "group",
           "in" : "query",
@@ -14022,7 +14212,7 @@
     "/api/platform/materials" : {
       "get" : {
         "tags" : [ "materials-controller" ],
-        "operationId" : "list_14",
+        "operationId" : "list_15",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -14646,7 +14836,7 @@
       },
       "delete" : {
         "tags" : [ "medical-record-controller" ],
-        "operationId" : "delete_14",
+        "operationId" : "delete_15",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "path",
@@ -15082,7 +15272,7 @@
     "/api/patient-questions" : {
       "get" : {
         "tags" : [ "question-controller" ],
-        "operationId" : "list_15",
+        "operationId" : "list_16",
         "parameters" : [ {
           "name" : "done",
           "in" : "query",
@@ -15154,7 +15344,7 @@
     "/api/opening-debts" : {
       "get" : {
         "tags" : [ "opening-debt-controller" ],
-        "operationId" : "list_16",
+        "operationId" : "list_17",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "query",
@@ -15184,7 +15374,7 @@
     "/api/members" : {
       "get" : {
         "tags" : [ "staff-members-controller" ],
-        "operationId" : "list_17",
+        "operationId" : "list_18",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -15973,7 +16163,7 @@
       },
       "delete" : {
         "tags" : [ "appointment-controller" ],
-        "operationId" : "delete_15",
+        "operationId" : "delete_16",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -16028,7 +16218,7 @@
     "/api/appointments/{id}/teeth" : {
       "get" : {
         "tags" : [ "visit-teeth-controller" ],
-        "operationId" : "list_18",
+        "operationId" : "list_19",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -17026,7 +17216,7 @@
     "/api/time-off/{id}" : {
       "delete" : {
         "tags" : [ "time-off-controller" ],
-        "operationId" : "delete_16",
+        "operationId" : "delete_17",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -17066,7 +17256,7 @@
     "/api/platform/clinics/{id}" : {
       "delete" : {
         "tags" : [ "platform-controller" ],
-        "operationId" : "delete_17",
+        "operationId" : "delete_18",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -17123,7 +17313,7 @@
     "/api/news/{id}" : {
       "delete" : {
         "tags" : [ "news-controller" ],
-        "operationId" : "delete_18",
+        "operationId" : "delete_19",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -17182,7 +17372,7 @@
     "/api/doctors/{id}" : {
       "delete" : {
         "tags" : [ "doctor-controller" ],
-        "operationId" : "delete_19",
+        "operationId" : "delete_20",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -17242,6 +17432,102 @@
   },
   "components" : {
     "schemas" : {
+      "NoteSections" : {
+        "properties" : {
+          "complaints" : {
+            "type" : "string"
+          },
+          "objective" : {
+            "type" : "string"
+          },
+          "diagnosis" : {
+            "type" : "string"
+          },
+          "treatment" : {
+            "type" : "string"
+          },
+          "recommendations" : {
+            "type" : "string"
+          },
+          "other" : {
+            "type" : "string"
+          }
+        }
+      },
+      "VisitTemplatesFields" : {
+        "properties" : {
+          "title" : {
+            "type" : "string"
+          },
+          "note" : {
+            "type" : "string"
+          },
+          "sections" : {
+            "$ref" : "#/components/schemas/NoteSections"
+          },
+          "serviceTypeId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "toothState" : {
+            "type" : "string",
+            "enum" : [ "HEALTHY", "CARIES", "TREATING", "FILLING", "CROWN", "IMPLANT", "MISSING" ]
+          },
+          "plan" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "shared" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "VisitTemplatesView" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "shared" : {
+            "type" : "boolean"
+          },
+          "editable" : {
+            "type" : "boolean"
+          },
+          "note" : {
+            "type" : "string"
+          },
+          "sections" : {
+            "$ref" : "#/components/schemas/NoteSections"
+          },
+          "serviceTypeId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "serviceName" : {
+            "type" : "string"
+          },
+          "toothState" : {
+            "type" : "string",
+            "enum" : [ "HEALTHY", "CARIES", "TREATING", "FILLING", "CROWN", "IMPLANT", "MISSING" ]
+          },
+          "plan" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "usesTeeth" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "editable", "id", "shared", "title", "usesTeeth" ]
+      },
       "NewTask" : {
         "properties" : {
           "title" : {
@@ -21021,6 +21307,14 @@
           }
         }
       },
+      "ChartControllerSectionsSetting" : {
+        "properties" : {
+          "on" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "on" ]
+      },
       "DepositControllerSettingsRequest" : {
         "properties" : {
           "mode" : {
@@ -21511,6 +21805,9 @@
         "properties" : {
           "note" : {
             "type" : "string"
+          },
+          "sections" : {
+            "$ref" : "#/components/schemas/NoteSections"
           }
         }
       },
@@ -21524,9 +21821,15 @@
           },
           "doctorName" : {
             "type" : "string"
+          },
+          "sections" : {
+            "$ref" : "#/components/schemas/NoteSections"
+          },
+          "sectionsOn" : {
+            "type" : "boolean"
           }
         },
-        "required" : [ "editable" ]
+        "required" : [ "editable", "sectionsOn" ]
       },
       "AppointmentRequestsComment" : {
         "properties" : {
@@ -24600,6 +24903,106 @@
         },
         "required" : [ "doctorId", "durationMinutes", "patientId", "startAt" ]
       },
+      "VisitTemplateControllerTeeth" : {
+        "properties" : {
+          "teeth" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int32"
+            }
+          }
+        }
+      },
+      "VisitDictationNextVisit" : {
+        "properties" : {
+          "inDays" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "text" : {
+            "type" : "string"
+          }
+        }
+      },
+      "VisitDictationPlanStep" : {
+        "properties" : {
+          "tooth" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "title" : {
+            "type" : "string"
+          }
+        }
+      },
+      "VisitDictationProposal" : {
+        "properties" : {
+          "teeth" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/VisitDictationToothChange"
+            }
+          },
+          "plan" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/VisitDictationPlanStep"
+            }
+          },
+          "note" : {
+            "type" : "string"
+          },
+          "next" : {
+            "$ref" : "#/components/schemas/VisitDictationNextVisit"
+          },
+          "sections" : {
+            "$ref" : "#/components/schemas/NoteSections"
+          },
+          "service" : {
+            "$ref" : "#/components/schemas/VisitDictationServiceRef"
+          }
+        }
+      },
+      "VisitDictationServiceRef" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "id" ]
+      },
+      "VisitDictationToothChange" : {
+        "properties" : {
+          "tooth" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "state" : {
+            "type" : "string",
+            "enum" : [ "HEALTHY", "CARIES", "TREATING", "FILLING", "CROWN", "IMPLANT", "MISSING" ]
+          },
+          "surfaces" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "M", "O", "D", "B", "L" ]
+            }
+          },
+          "note" : {
+            "type" : "string"
+          },
+          "was" : {
+            "type" : "string",
+            "enum" : [ "HEALTHY", "CARIES", "TREATING", "FILLING", "CROWN", "IMPLANT", "MISSING" ]
+          }
+        },
+        "required" : [ "tooth" ]
+      },
       "VisitReportControllerSend" : {
         "properties" : {
           "text" : {
@@ -24983,77 +25386,6 @@
           }
         }
       },
-      "VisitDictationNextVisit" : {
-        "properties" : {
-          "inDays" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "text" : {
-            "type" : "string"
-          }
-        }
-      },
-      "VisitDictationPlanStep" : {
-        "properties" : {
-          "tooth" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "title" : {
-            "type" : "string"
-          }
-        }
-      },
-      "VisitDictationProposal" : {
-        "properties" : {
-          "teeth" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/VisitDictationToothChange"
-            }
-          },
-          "plan" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/VisitDictationPlanStep"
-            }
-          },
-          "note" : {
-            "type" : "string"
-          },
-          "next" : {
-            "$ref" : "#/components/schemas/VisitDictationNextVisit"
-          }
-        }
-      },
-      "VisitDictationToothChange" : {
-        "properties" : {
-          "tooth" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "state" : {
-            "type" : "string",
-            "enum" : [ "HEALTHY", "CARIES", "TREATING", "FILLING", "CROWN", "IMPLANT", "MISSING" ]
-          },
-          "surfaces" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string",
-              "enum" : [ "M", "O", "D", "B", "L" ]
-            }
-          },
-          "note" : {
-            "type" : "string"
-          },
-          "was" : {
-            "type" : "string",
-            "enum" : [ "HEALTHY", "CARIES", "TREATING", "FILLING", "CROWN", "IMPLANT", "MISSING" ]
-          }
-        },
-        "required" : [ "tooth" ]
-      },
       "VisitDictationApply" : {
         "properties" : {
           "teeth" : {
@@ -25070,6 +25402,13 @@
           },
           "note" : {
             "type" : "string"
+          },
+          "sections" : {
+            "$ref" : "#/components/schemas/NoteSections"
+          },
+          "serviceTypeId" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         }
       },
@@ -25089,6 +25428,9 @@
           },
           "note" : {
             "type" : "string"
+          },
+          "sections" : {
+            "$ref" : "#/components/schemas/NoteSections"
           }
         }
       },
@@ -28328,6 +28670,9 @@
           },
           "note" : {
             "type" : "string"
+          },
+          "sections" : {
+            "$ref" : "#/components/schemas/NoteSections"
           },
           "updatedAt" : {
             "type" : "string",

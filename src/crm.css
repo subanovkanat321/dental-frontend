@@ -2983,3 +2983,39 @@ button.cash-entry:hover, button.cash-entry.active { background: var(--sunken); }
 .plan-status-actions { display: inline-flex; flex-wrap: wrap; gap: 4px 12px; margin-left: auto; }
 .plan-meta { display: inline-flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 4px 6px; font-variant-numeric: tabular-nums; }
 .fold-meta:has(.plan-meta) { white-space: normal; overflow: visible; text-align: right; }
+
+/* Заметка о приёме (шаг 2): подпись и инструменты одной строкой, разделы — только с текстом, пустые — чипами */
+.visit-note { gap: 8px; }
+.note-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 8px; }
+.note-head-title { font-size: .85rem; color: var(--hint); }
+.note-tools { display: flex; flex-wrap: wrap; gap: 4px; }
+.note-tools .btn.small { min-height: 32px; padding: 0 10px; font-size: .85rem; }
+.note-sections { display: grid; gap: 8px; }
+.note-section > span { font-size: .8rem; font-weight: 600; color: var(--hint); }
+.note-add { display: flex; flex-wrap: wrap; gap: 6px; }
+.note-add .chip { cursor: pointer; border: 1px dashed var(--line-strong); background: var(--card); color: var(--hint); font: inherit; font-size: .82rem; min-height: 30px; padding: 0 10px; }
+.note-add .chip:hover { border-color: var(--accent); color: var(--accent-ink); }
+.note-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.note-foot:empty { display: none; }
+.dictation-service { display: flex; gap: 8px; align-items: center; }
+.past-visits { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.past-visit-date { display: flex; width: 100%; justify-content: space-between; gap: 8px; align-items: baseline; min-height: 40px; padding: 6px 4px; border: 0; border-bottom: 1px solid var(--separator); background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.past-visit-date[aria-expanded="true"] { color: var(--accent-ink); font-weight: 500; }
+.past-visit-note { margin: 6px 0 8px; padding: 8px 10px; border-radius: var(--r-md); background: var(--sunken); white-space: pre-line; font-size: .92rem; }
+
+/* Окна инструментов заметки: шаблоны, «Из прошлого визита», «Сохранить как шаблон» */
+.tool-sheet { gap: 12px; outline: none; }
+@media (min-width: 641px) { .tool-sheet.wide { width: min(560px, calc(100vw - 32px)); } }
+.tool-sheet-title { margin: 0; font-family: var(--display); font-size: 1.1rem; font-weight: 600; }
+.tool-sheet .form { gap: 12px; }
+.template-list { display: grid; gap: 10px; }
+.template-list .menu-group { padding: 0 2px 4px; font-size: .8rem; font-weight: 600; color: var(--hint); }
+.template-item { display: grid; gap: 2px; width: 100%; min-height: 48px; padding: 8px 12px; margin-bottom: 6px; border: 1px solid var(--separator); border-radius: var(--r-md); background: var(--card); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.template-item:hover { border-color: var(--accent); background: var(--accent-soft); }
+.previous-bulk { justify-content: flex-start; }
+.previous-list { display: grid; gap: 12px; }
+.previous-visit { display: grid; gap: 6px; margin: 0; padding: 0; border: 0; }
+.previous-visit legend { padding: 0; margin-bottom: 4px; font-weight: 600; font-size: .9rem; }
+.previous-part { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border-radius: var(--r-md); background: var(--sunken); }
+.previous-part > span { display: grid; gap: 2px; min-width: 0; }
+.previous-text { white-space: pre-line; font-size: .9rem; color: var(--hint); display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }

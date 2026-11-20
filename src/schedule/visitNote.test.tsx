@@ -15,7 +15,7 @@ function renderNote(note: Schemas['ChartControllerNoteView']) {
 }
 
 test('заметка чужого приёма (editable: false) — только читать: текст и «Врач: …», без поля и «Сохранить»', async () => {
-  renderNote({ note: 'Пульпит 46, временная пломба', editable: false, doctorName: 'Бекболот Асанов' })
+  renderNote({ note: 'Пульпит 46, временная пломба', editable: false, doctorName: 'Бекболот Асанов', sectionsOn: false })
   expect(await screen.findByText('Пульпит 46, временная пломба')).toBeInTheDocument()
   expect(screen.getByRole('region', { name: 'Заметка о приёме' })).toHaveTextContent('Врач: Бекболот Асанов')
   expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
