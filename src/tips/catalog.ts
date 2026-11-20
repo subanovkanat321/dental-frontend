@@ -71,6 +71,13 @@ export const TIPS: Tip[] = [
     show: (me) => me.doctorId != null,
   },
   {
+    id: 'discount',
+    title: '🏷 Скидка в оплате и «Касса дня»',
+    text: 'В форме оплаты «＋ Скидка» — процент или сумма и причина: итог посчитает Tish. А «Касса → Касса дня» покажет, сколько наличных должно быть в ящике.',
+    action: { guide: 'raspisanie/skidka' },
+    show: (me) => Boolean(me.admin),
+  },
+  {
     id: 'visit-templates',
     title: '📄 Шаблон приёма — заметка одной кнопкой',
     text: 'В карточке приёма «📄 Шаблон» заполнит заметку, зубы и план. Свой шаблон — «Сохранить как шаблон» под заметкой.',
@@ -83,6 +90,13 @@ export const TIPS: Tip[] = [
     text: 'В плане лечения «📄 Из шаблона» — «Имплант под ключ» или «Санация» одним нажатием; «👤» у этапа — врач и срок, просроченный подсветится.',
     action: { guide: 'pacienty/plan-vrach-srok-shablony' },
     show: (me) => me.doctorId != null || Boolean(me.admin),
+  },
+  {
+    id: 'diagnosis-icd',
+    title: '🩺 Диагноз по МКБ-10 — с подсказками',
+    text: 'В заметке «＋ Диагноз»: печатайте «K02» или «пульп» — Tish подскажет код МКБ-10 и частые формулировки вашей клиники.',
+    action: { guide: 'raspisanie/diagnoz-mkb' },
+    show: (me) => me.doctorId != null,
   },
   {
     id: 'remind',

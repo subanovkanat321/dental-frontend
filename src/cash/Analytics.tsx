@@ -96,6 +96,8 @@ export function AnalyticsTab({ me, doctorId, seesAll }: { me: Me; doctorId: numb
       </div>
       <PromoChart period={period} scope={scope} />
       <CancelReasonsChart period={period} scope={scope} />
+      {/* Диагнозы МКБ-10 (шаг 3) — врачам и руководителю: числа по кодам, без пациентов */}
+      {(me.admin || me.doctorId != null) && <DiagnosesChart period={period} scope={scope} />}
       <NoShowChart scope={scope} />
     </>
   )
@@ -539,6 +541,34 @@ function CancelReasonsChart({ period, scope }: { period: Period; scope: { doctor
                 <p className="chart-headline"><b className="num">{cancelled + noShow}</b> не состоялось<span className="hint"> · отмен {cancelled}, неявок {noShow}</span></p>
                 <HBars rows={rows} label="Отмены и неявки по причинам" format={(n) => String(n)} />
                 <p className="hint small">Причину выбирают в карточке приёма при «Отменён» и «Неявка». Пациент отменил в боте — «Пациент отменил сам».</p>
+              </>
+            )}
+    </section>
+  )
+}
+
+/**
+ * «Диагнозы за период» (шаг 3): какие диагнозы МКБ-10 ставили в разделе «Диагноз» заметки — сколько раз и скольким
+ * пациентам. Врач видит свои приёмы, руководитель — всю клинику (решает сервер).
+ */
+function DiagnosesChart({ period, scope }: { period: Period; scope: { doctorId?: number } }) {
+  const data = useQuery({
+    queryKey: ['diagnoses-report', period.from, period.to, scope.doctorId ?? null],
+    queryFn: () => unwrap(api.GET('/api/diagnoses/report', { params: { query: { from: period.from, to: period.to, ...scope } } })),
+  })
+  const list = data.data ?? []
+  const rows = list.slice(0, 12).map((r) => ({ name: `${r.code} ${r.title}`, value: r.count, note: `пациентов: ${r.patients}` }))
+  const total = list.reduce((s, r) => s + r.count, 0)
+  return (
+    <section className="card-block chart" aria-label="Диагнозы за период">
+      <h2>Диагнозы {period.label}</h2>
+      {data.isPending ? <Loading />
+        : data.error ? <p className="error">{data.error.message}</p>
+          : !rows.length ? <EmptyState compact title="Диагнозов по МКБ-10 за этот период нет">Диагноз ставят в заметке о приёме: раздел «Диагноз» → поиск по МКБ-10.</EmptyState>
+            : (
+              <>
+                <p className="chart-headline"><b className="num">{total}</b> диагнозов<span className="hint"> · кодов {list.length}</span></p>
+                <HBars rows={rows} label="Диагнозы по МКБ-10" format={(n) => String(n)} />
               </>
             )}
     </section>

@@ -12,7 +12,14 @@ type Me = Schemas['BookingViewsMe']
  * «＋ Расход» из «Касса → Деньги»: та же форма, что в «Расходах», окном — записать расход, не уходя из
  * кассы. Компьютер — окно по центру, телефон — лист снизу (как окно подтверждения, layout/Confirm.tsx).
  */
-export function ExpenseDialog({ me, doctorId, onClose }: { me: Me; doctorId?: number | null; onClose: () => void }) {
+export function ExpenseDialog({ me, doctorId, fromCash, day, onClose }: {
+  me: Me
+  doctorId?: number | null
+  /** «＋ Расход из кассы» из «Кассы дня»: отметка «Из кассы наличными» и дата — этот день */
+  fromCash?: boolean
+  day?: string
+  onClose: () => void
+}) {
   useBack(onClose)
   const box = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -33,10 +40,10 @@ export function ExpenseDialog({ me, doctorId, onClose }: { me: Me; doctorId?: nu
           }
         }}>
         <div className="block-head">
-          <h2 id="expense-dialog-title">Новый расход</h2>
+          <h2 id="expense-dialog-title">{fromCash ? 'Расход из кассы' : 'Новый расход'}</h2>
           <button type="button" className="btn ghost small" aria-label="Закрыть" onClick={onClose}>✕</button>
         </div>
-        <ExpenseForm me={me} doctorId={doctorId} onDone={onClose} />
+        <ExpenseForm me={me} doctorId={doctorId} fromCash={fromCash} day={day} onDone={onClose} />
         <p className="hint small">Все расходы и общие расходы клиники с долями врачей — в «Касса» → «Расходы».</p>
       </div>
     </div>,

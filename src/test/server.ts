@@ -20,6 +20,12 @@ export const server = setupServer(
   // Отчёты об ошибках приложения (lib/clientErrors): сервер всегда отвечает 204
   http.post('*/web/client-error', () => new HttpResponse(null, { status: 204 })),
   http.get('*/api/supplies', () => HttpResponse.json([])),
+  // «Кто может давать скидку» (форма оплаты): по умолчанию — только руководитель, и он же вошёл (fixtures.me — админ)
+  http.get('*/api/clinic/discounts', () => HttpResponse.json(
+    { who: 'ADMIN', maxPercent: 10, canGive: true, myMaxPercent: 100 } satisfies Schemas['DiscountPoliciesPolicy'])),
+  // Диагнозы (шаг 3): подсказки в «Диагнозе» и «Аналитика → Диагнозы за период» — по умолчанию пусто
+  http.get('*/api/diagnoses/suggest', () => HttpResponse.json({ codes: [], own: [] } satisfies Schemas['DiagnosesSuggestions'])),
+  http.get('*/api/diagnoses/report', () => HttpResponse.json([] satisfies Schemas['DiagnosesCodeCount'][])),
   // Долги (полоса «Сегодня», карточка приёма): по умолчанию нет. Без обработчика запрос падал бы обрывом
   // сети — а это плашка «Tish обновляется» (api/updating.ts) поверх того, что проверяет тест
   http.get('*/api/appointments/debts', () => HttpResponse.json([] satisfies Schemas['PaymentQueryDebt'][])),
@@ -128,6 +134,9 @@ export const server = setupServer(
   http.get('*/api/patient-questions/new-count', () => HttpResponse.json({ count: 0 } satisfies Schemas['QuestionControllerNewCount'])),
   // Кресла (V185): по умолчанию у клиники их нет — значков и штриховки «кресло занято» нет
   http.get('*/api/chairs', () => HttpResponse.json([] satisfies Schemas['ChairOverview'][])),
+  // Новый врач в «＋ Добавить сотрудника» по умолчанию получает новое кресло: создать и назначить
+  http.post('*/api/chairs', () => HttpResponse.json({ id: 1, name: 'Кресло 1' } satisfies Schemas['ChairsChair'], { status: 201 })),
+  http.put('*/api/doctors/:id/chair', () => HttpResponse.json([] satisfies Schemas['ChairOverview'][])),
   // «Персонал»: по умолчанию сотрудников без кресла и приглашений нет — только врачи
   http.get('*/api/members', () => HttpResponse.json([] satisfies Schemas['StaffMembersMemberView'][])),
   http.get('*/api/members/invites', () => HttpResponse.json([] satisfies Schemas['StaffMembersInviteView'][])),

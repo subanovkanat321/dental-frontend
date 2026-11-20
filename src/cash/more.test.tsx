@@ -28,8 +28,8 @@ test('подпись недели: в одном месяце и на стыке
 test('расходы: список по статьям, прибыль, добавить свою статью и удалить', async () => {
   const month = todayIn().slice(0, 7)
   let expenses: Schemas['ExpensesExpense'][] = [
-    { id: 1, spentOn: `${month}-01`, amountSom: 30000, category: 'Аренда', repeatMonthly: false },
-    { id: 2, spentOn: `${month}-02`, amountSom: 5000, category: 'Техник', comment: 'коронка', repeatMonthly: false },
+    { id: 1, spentOn: `${month}-01`, amountSom: 30000, category: 'Аренда', repeatMonthly: false, fromCash: false },
+    { id: 2, spentOn: `${month}-02`, amountSom: 5000, category: 'Техник', comment: 'коронка', repeatMonthly: false, fromCash: false },
   ]
   const posted: unknown[] = []
   server.use(
@@ -40,7 +40,7 @@ test('расходы: список по статьям, прибыль, доба
     http.post('*/api/expenses', async ({ request }) => {
       const body = await request.json() as Record<string, unknown>
       posted.push(body)
-      expenses = [...expenses, { id: 3, spentOn: body.spentOn as string, amountSom: body.amountSom as number, category: body.category as string, repeatMonthly: false }]
+      expenses = [...expenses, { id: 3, spentOn: body.spentOn as string, amountSom: body.amountSom as number, category: body.category as string, repeatMonthly: false, fromCash: false }]
       return HttpResponse.json(expenses[2])
     }),
     http.delete('*/api/expenses/:id', ({ params }) => {

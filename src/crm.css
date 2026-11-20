@@ -3003,6 +3003,42 @@ button.cash-entry:hover, button.cash-entry.active { background: var(--sunken); }
 .past-visit-date[aria-expanded="true"] { color: var(--accent-ink); font-weight: 500; }
 .past-visit-note { margin: 6px 0 8px; padding: 8px 10px; border-radius: var(--r-md); background: var(--sunken); white-space: pre-line; font-size: .92rem; }
 
+/* Диагноз (шаг 3): чипы МКБ-10 с зубом, поиск с подсказками прямо под полем (не всплывает — в карточке своя прокрутка) */
+.dx { display: grid; gap: 6px; }
+.dx-chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.dx-chip { max-width: 100%; min-height: 32px; padding: 2px 4px 2px 10px; border: 1px solid var(--accent); background: var(--accent-soft); color: var(--accent-ink); font-size: .88rem; }
+.dx-chip .dx-title { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
+.dx-code { font-weight: 600; }
+/* Сильнее «.field input { width: 100% }»: номер зуба в чипе — узкое поле на две цифры */
+.dx-chip input.dx-tooth, .field .dx-chip input.dx-tooth { flex: none; width: 3.4em; height: 28px; min-height: 26px; padding: 0 6px; border: 1px solid var(--line-strong); border-radius: var(--r-sm); background: var(--card); color: var(--text); font: inherit; font-size: .85rem; text-align: center; }
+.dx-remove { display: grid; place-items: center; min-width: 28px; min-height: 28px; border: 0; border-radius: var(--r-sm); background: none; color: var(--hint); font: inherit; cursor: pointer; }
+.dx-remove:hover { color: var(--bad-ink); }
+.dx-search input { width: 100%; }
+.dx-list { display: grid; gap: 1px; margin-top: 4px; padding: 4px; max-height: 300px; overflow-y: auto; overscroll-behavior: contain;
+  border: 1px solid var(--separator); border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow); }
+.dx-group { padding: 6px 8px 2px; font-size: .75rem; font-weight: 600; color: var(--faint); }
+.dx-option { display: flex; align-items: baseline; gap: 8px; width: 100%; min-height: 40px; padding: 8px; border: 0; border-radius: var(--r-md);
+  background: none; color: var(--text); font: inherit; font-size: .92rem; text-align: left; cursor: pointer; }
+.dx-option:hover, .dx-option:focus-visible { background: var(--accent-soft); }
+.dx-option .dx-code { flex: none; }
+.dx-opt-text { flex: 1 1 auto; min-width: 0; }
+.dx-option .hint { flex: none; margin-left: auto; }
+
+/* Карточка приёма, шаг 3. Телефон: нижняя панель — следующий шаг и «⋯» внизу карточки (она на весь экран и выше нижнего
+   меню разделов, z-index 40). Низ видимой части экрана (--vv-*, lib/visualViewport.ts) — над клавиатурой iPhone и в Telegram;
+   свой нижний отступ — на безопасную зону iPhone (полоска «домой»). Карточка снизу получает запас на высоту панели:
+   последний блок докручивается над ней. Короткая карточка — панель всё равно у низа экрана. */
+.appt-card .appt-bar { position: fixed; left: 0; right: 0; top: calc(var(--vv-top, 0px) + var(--vv-height, 100dvh)); transform: translateY(-100%);
+  z-index: 5; display: flex; gap: 8px; align-items: center; padding: 8px 14px calc(8px + env(safe-area-inset-bottom));
+  background: var(--card); border-top: 1px solid var(--separator); box-shadow: 0 -4px 12px rgba(15, 42, 48, .06); }
+.appt-card:has(> .appt-bar) { padding-bottom: calc(84px + env(safe-area-inset-bottom)); scroll-padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+.appt-card .appt-bar-main { flex: 1 1 auto; min-height: 48px; font-size: 1rem; }
+.appt-card .appt-bar .action-menu-wrap { flex: none; margin-left: auto; }
+.appt-card .appt-bar-more { min-width: 48px; min-height: 48px; padding: 0 12px; font-size: 1.2rem; }
+.appt-card .appt-bar:not(:has(.appt-bar-main)) { justify-content: flex-end; }
+/* Врачу на приёме — «О записи» внизу: услуга, комментарий, промокод, откуда узнал, задачи */
+.appt-card .appt-about { display: grid; gap: 8px; padding-bottom: 6px; }
+
 /* Окна инструментов заметки: шаблоны, «Из прошлого визита», «Сохранить как шаблон» */
 .tool-sheet { gap: 12px; outline: none; }
 @media (min-width: 641px) { .tool-sheet.wide { width: min(560px, calc(100vw - 32px)); } }
@@ -3078,6 +3114,44 @@ button.cash-entry:hover, button.cash-entry.active { background: var(--sunken); }
 .tag-actions .danger { color: var(--destructive); }
 .pop-menu .menu-title { padding: 4px 10px 6px; font-weight: 600; font-size: .9rem; color: var(--text); border-bottom: 1px solid var(--separator); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
+/* Скидка в оплате (шаг 3Б): «＋ Скидка» под стоимостью, % / сом, причина кнопками и итог «К оплате» */
+.pay-discount-add { justify-self: start; margin-top: 4px; }
+.pay-discount { display: grid; gap: 8px; margin-top: 8px; padding: 10px; border: 1px solid var(--separator); border-radius: var(--r-md); }
+.pay-discount-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.pay-discount input { font: inherit; padding: 7px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); min-width: 0; }
+.pay-discount-value { width: 6.5em; }
+.pay-discount-row .segments { flex: 0 0 auto; }
+.pay-form .pay-discount-row .segments button { flex: 0 0 auto; padding-inline: 14px; white-space: nowrap; }
+.pay-discount-reasons button { font-size: .86rem; }
+.pay-discount-sum { margin: 0; font-size: .92rem; }
+.payment-discount { margin: 0; font-size: .9rem; }
+.discount-mark { color: var(--hint); font-size: .82rem; white-space: nowrap; }
+
+/* «Касса дня»: итог столбиком (начало ± движение = конец), действия, внесения/изъятия и расходы списком */
+.cash-day h3 { margin: 16px 0 4px; font-size: .95rem; }
+.day-step { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.cash-day-sum { display: grid; gap: 0; max-width: 460px; margin: 0; }
+.cash-day-sum > div { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; padding: 6px 2px; border-bottom: 1px solid var(--separator); }
+.cash-day-sum dt { color: var(--hint); }
+.cash-day-sum dd { margin: 0; font-variant-numeric: tabular-nums; text-align: right; display: grid; justify-items: end; }
+.cash-day-sum .cash-day-total { border-bottom: 0; padding-top: 10px; font-weight: 600; font-size: 1.05rem; }
+.cash-day-methods { margin: 6px 0 0; }
+.cash-day-note { margin: 10px 0 0; padding: 8px 10px; border-radius: var(--r-md); background: color-mix(in srgb, var(--wait-bg) 45%, var(--card)); font-size: .9rem; }
+.cash-day-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.cash-day-closed { display: grid; gap: 6px; justify-items: start; margin-top: 12px; padding: 8px 10px; border-radius: var(--r-md); background: var(--sunken); }
+.cash-day-closed p { margin: 0; }
+.cash-day-form { margin-top: 12px; max-width: 460px; }
+.cash-day-list { list-style: none; margin: 0; padding: 0; max-width: 560px; }
+.cash-day-list li { display: grid; grid-template-columns: auto 1fr auto auto; gap: 8px; align-items: baseline; padding: 6px 2px; border-bottom: 1px solid var(--separator); }
+.cash-day-list .when { color: var(--hint); }
+.cash-day-list .what { min-width: 0; overflow-wrap: anywhere; grid-column: 2; }
+.cash-day-list .sum { white-space: nowrap; text-align: right; }
+
+/* «Настройки → Скидки» */
+.discount-form { display: grid; gap: 10px; max-width: 560px; }
+.radio-list { display: grid; gap: 6px; }
+.radio-row { display: flex; gap: 8px; align-items: baseline; cursor: pointer; }
+.discount-form .field.narrow input { max-width: 8em; }
 /* Приглашение в бот (2026-11-20): окно с текстом и плитка «Пациенты в боте» в «Касса → Аналитика» */
 .bot-invite { display: grid; gap: 10px; }
 .bot-invite .segments { max-width: 280px; }

@@ -28,7 +28,7 @@ test('аналитика: выручка по месяцам, по врачам,
       const cash = total + 5000
       return HttpResponse.json({
         totalSom: total, paidCount: 5, unpaidCount: 0, byMethod: doctor ? {} : { CASH: total * 0.6, TRANSFER: total * 0.4 }, days: [],
-        cash: { totalSom: cash, paymentsCount: 6, depositsSom: 0, byMethod: doctor ? {} : { CASH: cash * 0.6, TRANSFER: cash * 0.4 }, days: [], openingDebtsSom: 0 }, freeCount: 0, prepaidCount: 0, debtCount: 0, debtSom: 0, partialCount: 0, partialDebtSom: 0
+        cash: { totalSom: cash, paymentsCount: 6, depositsSom: 0, byMethod: doctor ? {} : { CASH: cash * 0.6, TRANSFER: cash * 0.4 }, days: [], openingDebtsSom: 0 }, freeCount: 0, prepaidCount: 0, debtCount: 0, debtSom: 0, partialCount: 0, partialDebtSom: 0, discountCount: 0, discountSom: 0
       } satisfies Schemas['RevenueView'])
     }),
     // Отчёт — по месяцам: строки только за запрошенный месяц (30 дней могут захватить два)
@@ -124,6 +124,29 @@ test('аналитика: отмены и неявки по причинам —
   expect(asked!.get('from')).toBe(addDays(todayIn(), -29))
 })
 
+test('аналитика: «Диагнозы за период» — коды МКБ-10 по числу, скольким пациентам', async () => {
+  let asked: URLSearchParams | null = null
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/diagnoses/report', ({ request }) => {
+      asked = new URL(request.url).searchParams
+      return HttpResponse.json([
+        { code: 'K02.1', title: 'Кариес дентина', count: 12, patients: 9 },
+        { code: 'K04.0', title: 'Пульпит', count: 3, patients: 3 },
+      ] satisfies Schemas['DiagnosesCodeCount'][])
+    }),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await findSub('Аналитика'))
+  const block = await screen.findByRole('region', { name: 'Диагнозы за период' })
+  expect(await within(block).findByText(/диагнозов/)).toHaveTextContent('15 диагнозов · кодов 2')
+  const rows = within(block).getAllByRole('listitem')
+  expect(rows.map((r) => r.querySelector('.hbar-name')?.textContent)).toEqual(['K02.1 Кариес дентина', 'K04.0 Пульпит'])
+  expect(rows[0]).toHaveAttribute('title', 'K02.1 Кариес дентина: 12 · пациентов: 9')
+  expect(asked!.get('from')).toBe(addDays(todayIn(), -29))
+})
+
 test('аналитика: ошибка сервера — сообщение, а не «0 сом» и «оплат нет»', async () => {
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
@@ -151,7 +174,7 @@ test('аналитика: выручка по дням — среднее, лу�
     // Сервер отдаёт только дни с оплатами (вымышленные суммы)
     http.get('*/api/appointments/revenue', () => HttpResponse.json({
       totalSom: 17000, paidCount: 4, unpaidCount: 0, byMethod: { CASH: 17000 },
-      days: [{ date: best, totalSom: 12000 }, { date: addDays(today, -1), totalSom: 5000 }], freeCount: 0, prepaidCount: 0, debtCount: 0, debtSom: 0, partialCount: 0, partialDebtSom: 0
+      days: [{ date: best, totalSom: 12000 }, { date: addDays(today, -1), totalSom: 5000 }], freeCount: 0, prepaidCount: 0, debtCount: 0, debtSom: 0, partialCount: 0, partialDebtSom: 0, discountCount: 0, discountSom: 0
     } satisfies Schemas['RevenueView'])),
   )
   const user = userEvent.setup()

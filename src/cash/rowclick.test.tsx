@@ -106,10 +106,10 @@ test('«Расходы»: строка открывает «Исправить»
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.get('*/api/expenses', () => HttpResponse.json([
-      { id: 1, spentOn: `${month}-01`, amountSom: 30000, category: 'Аренда', comment: 'кабинет', repeatMonthly: false },
+      { id: 1, spentOn: `${month}-01`, amountSom: 30000, category: 'Аренда', comment: 'кабинет', repeatMonthly: false, fromCash: false },
     ] satisfies Schemas['ExpensesExpense'][])),
     http.get('*/api/expenses/shared', () => HttpResponse.json([
-      { id: 5, spentOn: `${month}-01`, amountSom: 9000, category: 'Уборка', splitKey: 'EQUAL', repeatMonthly: true,
+      { id: 5, spentOn: `${month}-01`, amountSom: 9000, category: 'Уборка', splitKey: 'EQUAL', repeatMonthly: true, fromCash: false,
         shares: [{ doctorId: 1, doctor: 'Айгерим Садыкова', amountSom: 9000 }] },
     ] satisfies Schemas['ExpensesExpense'][])),
     http.put('*/api/expenses/5', () => { stopped++; return HttpResponse.json({}) }),

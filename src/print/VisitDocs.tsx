@@ -3,6 +3,7 @@ import { contactPhone } from '../lib/guardian'
 import { useState } from 'react'
 
 import { api, unwrap, type Schemas } from '../api/client'
+import { discountText } from '../lib/discount'
 import { seesMoneyOf } from '../lib/roles'
 import { somText, timeOf } from '../lib/time'
 import { docDate } from './paper'
@@ -152,7 +153,7 @@ function ReceiptDocs({ appointment: a }: { appointment: Appointment }) {
   const [printing, setPrinting] = useState(false)
   const receipt = useQuery({
     // Ключ — по деньгам приёма: доплатили — квитанция перечитается
-    queryKey: ['receipt', id, a.paidSom, a.chargeSom, a.debtSom],
+    queryKey: ['receipt', id, a.paidSom, a.chargeSom, a.debtSom, a.discount?.som],
     queryFn: () => unwrap(api.GET('/api/appointments/{id}/receipt', { params: { path: { id } } })),
     retry: false,
   })
@@ -182,7 +183,12 @@ function ReceiptSheet({ r, narrow }: { r: Receipt; narrow: boolean }) {
         <dt>Приём</dt><dd>{docDate(r.startAt!)}, {timeOf(r.startAt!)}</dd>
         <dt>Врач</dt><dd>{r.doctor}</dd>
         {r.service && <><dt>Услуга</dt><dd>{r.service}</dd></>}
-        {r.chargeSom != null && <><dt>Стоимость</dt><dd>{somText(r.chargeSom)}</dd></>}
+        {r.discount ? <>
+          {/* Скидка (шаг 3Б): цена, скидка и к оплате; причину пациенту не печатаем */}
+          <dt>Стоимость</dt><dd>{somText(r.discount.priceSom)}</dd>
+          <dt>Скидка</dt><dd>{discountText(r.discount).replace(/^Скидка /, '')}</dd>
+          <dt>К оплате</dt><dd>{somText(r.chargeSom ?? 0)}</dd>
+        </> : r.chargeSom != null && <><dt>Стоимость</dt><dd>{somText(r.chargeSom)}</dd></>}
       </dl>
       {/* Чек 80 мм — платежи строками: таблица в четыре колонки там не помещается */}
       {/* «Всё в долг» — платежей ещё нет: пустой таблицы не рисуем */}

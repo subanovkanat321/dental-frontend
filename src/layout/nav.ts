@@ -41,11 +41,12 @@ export function subsOf(page: Page, me: Me): Sub[] {
     case 'cash': {
       // Без денег (регистратура без кресла) у «Кассы» один экран — «К оплате на кассе»
       if (!seesAllMoney(me) && me.doctorId == null) return []
-      const subs: Sub[] = [{ key: 'money', title: 'Деньги' }, { key: 'earnings', title: 'Мой заработок' }, { key: 'analytics', title: 'Аналитика' },
+      // «Касса дня» (шаг 3Б) — наличные в ящике за день: деньги всей клиники, как выручка клиники (сервер: seesAllDoctors)
+      const subs: Sub[] = [{ key: 'money', title: 'Деньги' }, { key: 'day', title: 'Касса дня' }, { key: 'earnings', title: 'Мой заработок' }, { key: 'analytics', title: 'Аналитика' },
         { key: 'expenses', title: 'Расходы' }, { key: 'debtors', title: 'Должники' }, { key: 'salary', title: 'Зарплата' },
         { key: 'stats', title: 'Статистика' }, { key: 'report', title: 'Отчёт' }]
       // «Мой заработок» — только у врача со своим креслом
-      return subs.filter((s) => s.key !== 'earnings' || seesOwnEarnings(me))
+      return subs.filter((s) => (s.key !== 'earnings' || seesOwnEarnings(me)) && (s.key !== 'day' || seesAllMoney(me)))
     }
     case 'stock':
       // «Расходы на склад» (покупки по месяцам) — тому, кто видит деньги всех врачей (сервер: seesAllDoctors):

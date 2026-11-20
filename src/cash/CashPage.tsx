@@ -13,6 +13,7 @@ import { SalaryTab } from './SalaryTab'
 import { ExpensesTab, ReportTab, StatsTab } from './MoreTabs'
 import { PaymentsTable } from './PaymentsTable'
 import { CashEntries } from './CashEntries'
+import { CashDayTab } from './CashDayTab'
 import { SortTh } from '../layout/SortTh'
 import { useSort } from '../lib/useSort'
 import { HeadSlotProvider, HeadTools, PageHead } from '../layout/PageHead'
@@ -45,7 +46,7 @@ function monthsOf(from: string, to: string): string[] {
 const METHODS: Record<string, string> = { CASH: 'Наличные', TRANSFER: 'Перевод', CARD: 'Карта' }
 
 type Period = 'day' | 'week' | 'month' | 'custom'
-type Tab = 'money' | 'earnings' | 'analytics' | 'expenses' | 'debtors' | 'salary' | 'stats' | 'report'
+type Tab = 'money' | 'day' | 'earnings' | 'analytics' | 'expenses' | 'debtors' | 'salary' | 'stats' | 'report'
 
 
 /**
@@ -145,7 +146,7 @@ export function CashPage({ me, onOpenPatient }: { me: Me; onOpenPatient?: (patie
       <section className="schedule-main cash">
         <PageHead slotRef={setSlot} title={<SectionTitle page="cash" title="Касса" subTitle={subTitle} hint={<HelpHint hint="cash" />} />}>
           {/* «Мой заработок» и «Зарплата» от выбора врача не зависят — там выбора нет, а не пустой список в шапке */}
-          {seesAll && doctors.length > 1 && tab !== 'earnings' && tab !== 'salary' && (
+          {seesAll && doctors.length > 1 && tab !== 'earnings' && tab !== 'salary' && tab !== 'day' && (
             <Select aria-label="Чья касса" value={doctorId ?? ''} onChange={(e) => setDoctorId(e.target.value ? Number(e.target.value) : null)}>
               <option value="">Вся клиника</option>
               {doctors.map((d) => <option key={d.id} value={d.id}>{d.fullName}</option>)}
@@ -156,6 +157,7 @@ export function CashPage({ me, onOpenPatient }: { me: Me; onOpenPatient?: (patie
           )}
         </PageHead>
 
+        {tab === 'day' && <CashDayTab me={me} />}
         {tab === 'earnings' && <EarningsTab me={me} />}
         {tab === 'analytics' && <AnalyticsTab me={me} doctorId={doctorId} seesAll={seesAll} />}
         {tab === 'expenses' && <ExpensesTab me={me} doctorId={doctorId} seesAll={seesAll} />}
@@ -234,6 +236,7 @@ export function CashPage({ me, onOpenPatient }: { me: Me; onOpenPatient?: (patie
                       {r.unpaidCount ? <span className="tone-wait"> · без оплаты: {r.unpaidCount}</span> : null}
                       {r.freeCount ? ` · бесплатно: ${r.freeCount}` : ''}
                       {r.prepaidCount ? ` · оплачено заранее: ${r.prepaidCount}` : ''}
+                      {r.discountCount ? ` · со скидкой: ${r.discountCount} (${somText(r.discountSom)})` : ''}
                       {Object.entries(r.byMethod ?? {}).filter(([, v]) => v).map(([k, v]) => ` · ${METHODS[k] ?? k}: ${somText(v)}`).join('')}
                     </p>
                   </div>

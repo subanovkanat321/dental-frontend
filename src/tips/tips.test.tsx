@@ -130,9 +130,10 @@ test('перетаскивание — только на компьютере, �
   expect(tipsFor(me, DESKTOP, [], []).map((t) => t.id)).toEqual(expect.arrayContaining(['drag', 'install']))
 })
 
-test('у каждого совета id для сервера, «Подробнее» ведёт в существующий раздел руководства, советов 20–40', () => {
+test('у каждого совета id для сервера, «Подробнее» ведёт в существующий раздел руководства, советов 20–45', () => {
   expect(TIPS.length).toBeGreaterThanOrEqual(20)
-  expect(TIPS.length).toBeLessThanOrEqual(40)
+  // 2026-11-20: шаг 3 плана Dentist Plus добавил советы (диагноз, приглашение в бот, скидка) — предел 45
+  expect(TIPS.length).toBeLessThanOrEqual(45)
   expect(new Set(TIPS.map((t) => t.id)).size).toBe(TIPS.length)
   for (const t of TIPS) {
     expect(t.id).toMatch(/^[a-z0-9-]{1,40}$/)
