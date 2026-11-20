@@ -178,7 +178,7 @@ function ToothChart({ patient, teeth, error, onPlan, readOnly }: {
       <div className="chart-head">
         <h2>Карта зубов</h2>
         {!readOnly && (
-          <button type="button" className="btn" aria-pressed={multi} onClick={toggleMulti}>{multi ? '☑' : '☐'} Несколько</button>
+          <button type="button" className="btn" aria-pressed={multi} onClick={toggleMulti} title="Отметить несколько зубов и поставить им одно состояние или добавить в план одним действием">{multi ? '☑' : '☐'} Несколько зубов</button>
         )}
         <button type="button" className="btn" onClick={() => setFull(true)} disabled={!teeth}>⛶ На весь экран</button>
       </div>
