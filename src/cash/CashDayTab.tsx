@@ -3,9 +3,8 @@ import { useState, type FormEvent } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { ask } from '../lib/confirm'
-import { addDays, shortDate, somText, timeOf, todayIn } from '../lib/time'
-import { DateInput } from '../layout/DateInput'
-import { HeadTools } from '../layout/PageHead'
+import { shortDate, somText, timeOf, todayIn } from '../lib/time'
+import { DateBar } from '../layout/DateBar'
 import { Loading } from '../layout/Loading'
 import { PrintSheet } from '../print/PrintSheet'
 import { docDate } from '../print/paper'
@@ -31,7 +30,8 @@ const signed = (n: number) => (n < 0 ? `−${somText(-n)}` : somText(n))
  * руководитель вписывает остаток, записывает внесение/изъятие с причиной, закрывает и открывает день.
  */
 export function CashDayTab({ me }: { me: Me }) {
-  const [day, setDay] = useState(todayIn())
+  const today = todayIn()
+  const [day, setDay] = useState(today)
   const client = useQueryClient()
   const cash = useQuery({
     queryKey: ['cash-day', day],
@@ -60,21 +60,13 @@ export function CashDayTab({ me }: { me: Me }) {
     mutationFn: (id) => unwrap(api.DELETE('/api/cash-day/movements/{id}', { params: { path: { id } } })),
     onSuccess: done,
   })
-  const today = todayIn()
   const d = cash.data
   const error = errorText(close.error ?? reopen.error ?? remove.error)
 
   return (
     <section className="card-block cash-day" aria-label="Касса дня">
-      <HeadTools>
-        <div className="day-step" role="group" aria-label="День кассы">
-          <button type="button" className="btn ghost small" aria-label="Предыдущий день" onClick={() => setDay(addDays(day, -1))}>‹</button>
-          <DateInput weekday aria-label="День" value={day} max={today} onChange={(e) => e.target.value && setDay(e.target.value)} />
-          <button type="button" className="btn ghost small" aria-label="Следующий день" disabled={day >= today}
-            onClick={() => setDay(addDays(day, 1))}>›</button>
-          {day !== today && <button type="button" className="chip" onClick={() => setDay(today)}>Сегодня</button>}
-        </div>
-      </HeadTools>
+      {/* Дата крупно, как на главной: ‹ «Сегодня ▾ / пятница, 20 ноября» › */}
+      <DateBar date={day} today={today} max={today} onDate={setDay} label="День кассы" />
       {cash.isPending ? <Loading /> : cash.error ? <p className="error" role="alert">{cash.error.message}</p> : d && (
         <>
           <dl className="cash-day-sum" aria-label="Итог кассы дня">
