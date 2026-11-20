@@ -9,6 +9,7 @@ import { agoText, recallText, recentlyInvited, whatsappUrl } from '../lib/texts'
 import { formatPhone, shortDate } from '../lib/time'
 import { openLink } from '../lib/telegram'
 import { isAssistant } from '../lib/roles'
+import { DateInput } from '../layout/DateInput'
 import { EmptyState } from '../layout/EmptyState'
 import { Select } from '../layout/Select'
 import { dueText, monthsText } from '../clinic/services'
@@ -247,8 +248,8 @@ function WishFormBox({ me, initial, defaultMinutes, busy, error, submit, onSubmi
             ))}
           </div>
           <span className="wish-row">
-            <label>с <input type="date" aria-label="Удобно с даты" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} /></label>
-            <label>по <input type="date" aria-label="Удобно по дату" value={dateTo} min={dateFrom || undefined} onChange={(e) => setDateTo(e.target.value)} /></label>
+            <label>с <DateInput aria-label="Удобно с даты" placeholder="любой день" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} /></label>
+            <label>по <DateInput aria-label="Удобно по дату" placeholder="без конца" value={dateTo} min={dateFrom || undefined} onChange={(e) => setDateTo(e.target.value)} /></label>
           </span>
           {fieldError('desiredTo') && <p className="error small">{fieldError('desiredTo')}</p>}
           {(services.data?.length ?? 0) > 0 && (

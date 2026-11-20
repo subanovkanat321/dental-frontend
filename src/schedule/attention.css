@@ -28,3 +28,11 @@
 .wish-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .wish-row label { display: inline-flex; align-items: center; gap: 6px; }
 .wish-row input { width: auto; }
+.wish-fields .segments > button { white-space: nowrap; padding-inline: 10px; }
+.wish-fields .wish-days > button { min-width: 40px; padding-inline: 6px; }
+.wish-fields .segments > button { flex: 0 0 auto; }
+/* Телефон: общее правило делит переключатель поровну и переносит слова («Любо/е») — здесь пунктов много, переносим ряд */
+@media (max-width: 760px) {
+  html .wish-fields .segments.segments { flex-wrap: wrap; }
+  html .wish-fields .segments.segments > button { flex: 1 0 auto; white-space: nowrap; overflow-wrap: normal; padding-inline: 8px; }
+}

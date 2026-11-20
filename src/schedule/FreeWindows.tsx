@@ -76,7 +76,7 @@ export function WindowCard({ w, doctorName, onBook }: { w: FreeWindow; doctorNam
     <section className="fw-window" aria-label={windowTitle(w)}>
       <span className="fw-window-head">
         <strong className="num">{windowTitle(w)}</strong>
-        <span className="hint small">{doctorName(w.doctorId)} · {fitsText(waitingCount(w))}</span>
+        <span className="hint small">{doctorName(w.doctorId)} · {waitingCount(w) ? fitsText(waitingCount(w)) : 'все из листа отказались'}</span>
       </span>
       <ul className="fw-list">
         {w.matches.map((m) => <MatchRow key={m.entryId} m={m} doctorId={w.doctorId} />)}
