@@ -94,7 +94,7 @@ export function CashDayTab({ me }: { me: Me }) {
             </div>
             {d.cashRefundsSom > 0 && (
               <div>
-                <dt>− Возвраты аванса</dt>
+                <dt><span className="cash-sign" aria-hidden="true">−</span>Возвраты аванса</dt>
                 <dd>{somText(d.cashRefundsSom)}</dd>
               </div>
             )}

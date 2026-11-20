@@ -106,3 +106,23 @@ test('«Касса дня» — только тому, кто видит ден�
   expect(subsOf('cash', { ...me, admin: false, doctorId: 1 }).map((s) => s.key)).not.toContain('day')
   expect(subsOf('cash', { ...me, admin: false, reception: true, doctorId: undefined })).toEqual([])
 })
+
+test('касса дня: возврат аванса наличными — расход ящика, переводом — только для сведения', async () => {
+  const current = view({
+    cashRefundsSom: 3000,
+    refunds: [
+      { id: 1, amountSom: 3000, method: 'CASH', reason: 'Лечение отменили', patient: 'Айгуль Т.', by: 'Айгерим', at: new Date().toISOString() },
+      { id: 2, amountSom: 1000, method: 'TRANSFER', reason: 'Переехали', patient: 'Нурлан Т.', at: new Date().toISOString() },
+    ],
+  })
+  server.use(http.get('*/api/cash-day', () => HttpResponse.json(current)))
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await findSub('Касса дня'))
+  const block = await screen.findByRole('region', { name: 'Касса дня' })
+  // 2 000 + 4 000 − 400 − 3 000
+  expect(await within(block).findByRole('definition', { name: 'Остаток на конец' })).toHaveTextContent(/2\s600 сом/)
+  const list = within(block).getByRole('list', { name: 'Возвраты аванса' })
+  expect(list).toHaveTextContent(/Айгуль Т\. · Лечение отменили · Айгерим−3\s000 сом/)
+  expect(list).toHaveTextContent(/Нурлан Т\. · Переехали · переводом, не из ящика−1\s000 сом/)
+})
