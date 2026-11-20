@@ -56,9 +56,16 @@ export function useNavGap(menu: RefObject<HTMLElement | null>, phone: boolean) {
       if (lift) root.style.setProperty('--nav-gap', `${lift}px`)
       else clear()
     }
-    const later = () => { if (!frame) frame = requestAnimationFrame(fit) }
-    // После клавиатуры iOS отдаёт размеры не сразу — перемерить ещё раз чуть позже
-    const settle = () => { later(); window.setTimeout(later, 350) }
+    let gone = false
+    const later = () => { if (!frame && !gone) frame = requestAnimationFrame(fit) }
+    // После клавиатуры iOS отдаёт размеры не сразу — перемерить ещё раз чуть позже; таймеры снимаем при уходе,
+    // иначе поздний вызов падал после размонтирования (в тестах — «requestAnimationFrame is not defined»)
+    const timers = new Set<number>()
+    const settle = () => {
+      later()
+      const id = window.setTimeout(() => { timers.delete(id); later() }, 350)
+      timers.add(id)
+    }
     fit()
     settle()
     const vv = window.visualViewport
@@ -75,6 +82,8 @@ export function useNavGap(menu: RefObject<HTMLElement | null>, phone: boolean) {
       window.removeEventListener('orientationchange', settle)
       document.removeEventListener('focusout', settle)
       document.removeEventListener('visibilitychange', settle)
+      gone = true
+      timers.forEach((id) => window.clearTimeout(id))
       cancelAnimationFrame(frame)
       clear()
     }
