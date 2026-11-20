@@ -7,6 +7,7 @@ import { CategoryPick, ExpenseOwner } from '../cash/ExpenseForm'
 import { ownerDoctorId, useExpenseOwner } from '../cash/expenses'
 import { shortDate, somText, todayIn } from '../lib/time'
 import { Fold } from '../layout/Fold'
+import { EditButton } from '../layout/EditButton'
 
 type Me = Schemas['BookingViewsMe']
 type Patient = Schemas['PatientView']
@@ -90,7 +91,7 @@ export function PatientExpenses({ patient, me, doctorId }: {
                   <>
                     <span>{x.category} · <b className="num">{somText(x.amountSom)}</b>
                       <span className="hint"> · {x.spentOn ? shortDate(`${x.spentOn}T12:00:00Z`) : ''}{x.comment ? ` · ${x.comment}` : ''}</span></span>
-                    <button type="button" className="link" onClick={() => setEditing(x.id)}>изменить</button>
+                    <EditButton label={`Изменить расход: ${x.category}`} onClick={() => setEditing(x.id)} />
                   </>
                 )}
               </li>

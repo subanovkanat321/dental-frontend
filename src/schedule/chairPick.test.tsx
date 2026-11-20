@@ -273,7 +273,7 @@ test('карточка: кресло приёма видно, «сменить»
 
   expect(await within(panel).findByText(/Кресло 2/, { selector: '.appt-chair span' })).toBeInTheDocument()
   expect(within(panel).getByText('· не кресло врача')).toBeInTheDocument()
-  await userEvent.click(within(panel).getByRole('button', { name: 'сменить' }))
+  await userEvent.click(within(panel).getByRole('button', { name: 'Сменить кресло' }))
   const form = within(panel).getByRole('form', { name: 'Кресло приёма' })
   await choose(within(form).getByRole('combobox', { name: /Кресло/ }), 'Кресло 1 (кресло врача) — свободно')
   await userEvent.click(within(form).getByRole('button', { name: 'Сохранить' }))

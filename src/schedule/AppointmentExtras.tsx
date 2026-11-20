@@ -10,7 +10,6 @@ import { ChairSelect } from './ChairSelect'
 import { useChairChoice } from './chairChoice'
 import { isChairError } from './chairTime'
 import { useAppointmentAction } from './useAppointmentAction'
-import { NOWHERE_TEXT } from './useRemind'
 import { canEditServices, editableDoctors } from '../lib/roles'
 import { openServiceLater } from '../lib/openService'
 import { servicesOfDoctor } from '../lib/doctorServices'
@@ -362,31 +361,6 @@ function SuggestedSupplies({ appointment: a }: { appointment: Appointment }) {
         <button type="button" className="btn ghost" onClick={() => setHidden(true)}>Не нужно</button>
       </div>
     </div>
-  )
-}
-
-const REPLIES = [['CONFIRMED', 'Подтвердил'], ['RESCHEDULE', 'Перенос'], ['NO_ANSWER', 'Нет ответа']] as const
-
-/**
- * Ответ пациента на напоминание — «Подтвердил / Перенос / Нет ответа» (то же «Подтвердил», что в статусе карточки):
- * ответил по телефону или в WhatsApp — отметьте, коллеги увидят; повторное нажатие снимает. Сами напоминания
- * (бот, WhatsApp, SMS) — в «📞 Связаться ▾» (useAppointmentContacts). Ни бота, ни номера — подсказка.
- */
-export function Remind({ appointment: a, nowhere }: { appointment: Appointment; nowhere?: boolean }) {
-  const action = useAppointmentAction(a)
-  return (
-    <section className="remind" aria-label="Напоминание">
-      {nowhere && <p className="hint small" role="note">{NOWHERE_TEXT}</p>}
-      <div className="segments" role="group" aria-label="Ответ пациента">
-        {REPLIES.map(([reply, title]) => (
-          <button key={reply} type="button" aria-pressed={a.reply === reply} disabled={action.isPending}
-            onClick={() => action.mutate({ kind: 'reply', body: { version: a.version, reply: a.reply === reply ? 'NONE' : reply } })}>
-            {title}
-          </button>
-        ))}
-      </div>
-      {action.error && <p className="error" role="alert">{errorText(action.error)}</p>}
-    </section>
   )
 }
 

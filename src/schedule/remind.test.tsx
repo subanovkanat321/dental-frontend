@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { appointment, contactMenu, me, pickContact, renderApp } from '../test/fixtures'
+import { appointment, contactMenu, me, pickContact, pickStatus, renderApp, statusMenu } from '../test/fixtures'
 import { server } from '../test/server'
 import { waitForSlow } from '../test/wait'
 import { todayIn } from '../lib/time'
@@ -46,7 +46,7 @@ test('напомнить в Telegram (пациент записан через �
   expect(calls).toEqual(['telegram'])
 })
 
-test('напомнить в WhatsApp — текст с подписью клиники; ответ «Подтвердил», повторно — снять', async () => {
+test('напомнить в WhatsApp — текст с подписью клиники; ответ «Подтвердил» — в списке статуса, «Записан» — снять', async () => {
   const calls = backend(appointment(10, 1, '23:30', 'Бакыт М.'))
   const opened: string[] = []
   vi.spyOn(window, 'open').mockImplementation((url) => { opened.push(String(url)); return null })
@@ -57,11 +57,41 @@ test('напомнить в WhatsApp — текст с подписью клин
   expect(decodeURIComponent(opened[0]!)).toContain('Ответьте 1 — приду, 2 — перенести')
   expect(decodeURIComponent(opened[0]!)).toContain('Стоматология «Тест»')
 
-  const replies = within(panel).getByRole('group', { name: 'Ответ пациента' })
-  await userEvent.click(within(replies).getByRole('button', { name: 'Подтвердил' }))
-  expect(await within(replies).findByRole('button', { name: 'Подтвердил', pressed: true })).toBeInTheDocument()
-  await userEvent.click(within(replies).getByRole('button', { name: 'Подтвердил' }))
+  // Отдельного ряда «Подтвердил / Перенос / Нет ответа» нет — ответ в списке статуса
+  expect(within(panel).queryByRole('group', { name: 'Ответ пациента' })).not.toBeInTheDocument()
+  await pickStatus(panel, 'Подтвердил')
+  await waitForSlow(() => expect(statusMenu(panel)).toHaveAccessibleName('Статус: Подтвердил'))
+  await pickStatus(panel, 'Записан')
   await waitForSlow(() => expect(calls).toEqual(['opened', 'reply:CONFIRMED:v0', 'reply:NONE:v1']))
+  vi.restoreAllMocks()
+})
+
+test('«Просит перенести» в списке статуса — пилюля «🔁 Просит перенести», сразу «Перенести сейчас?» — форма переноса', async () => {
+  const calls = backend(appointment(10, 1, '23:30', 'Бакыт М.'))
+  const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true)
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: /Бакыт М\./ }))
+  const panel = screen.getByRole('complementary', { name: 'Карточка приёма' })
+  await pickStatus(panel, 'Просит перенести')
+  await waitForSlow(() => expect(statusMenu(panel)).toHaveAccessibleName('Статус: Просит перенести'))
+  expect(statusMenu(panel)).toHaveTextContent('🔁')
+  await waitForSlow(() => expect(confirm).toHaveBeenCalledWith('Пациент просит перенести. Перенести сейчас?'))
+  await waitForSlow(() => expect(panel.querySelector('.appt-move')).not.toBeNull())
+  expect(calls).toEqual(['reply:RESCHEDULE:v0'])
+  vi.restoreAllMocks()
+})
+
+test('«Нет ответа» в списке статуса — переноса не предлагает', async () => {
+  const calls = backend(appointment(10, 1, '23:30', 'Бакыт М.'))
+  const confirm = vi.spyOn(window, 'confirm')
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: /Бакыт М\./ }))
+  const panel = screen.getByRole('complementary', { name: 'Карточка приёма' })
+  await pickStatus(panel, 'Нет ответа')
+  await waitForSlow(() => expect(statusMenu(panel)).toHaveAccessibleName('Статус: Нет ответа'))
+  expect(calls).toEqual(['reply:NO_ANSWER:v0'])
+  expect(confirm).not.toHaveBeenCalled()
+  expect(panel.querySelector('.appt-move')).toBeNull()
   vi.restoreAllMocks()
 })
 

@@ -3,6 +3,7 @@ import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { sourceChoices, sourceText, useSources } from '../lib/sources'
+import { EditButton } from '../layout/EditButton'
 
 /**
  * «Откуда узнал о клинике» — отдельной строкой: не указано — видно сразу, выбрать — одним нажатием
@@ -51,7 +52,8 @@ export function SourceLine({ patient: p, canEdit, compact = false, admin = false
         <span className="hint">Откуда узнал о клинике{chosen ? '' : '?'}</span>
         {chosen && <strong>{sourceText(sources.data, p.sourceId)}</strong>}
         {canEdit && (chosen || compact) && (
-          <button type="button" className="link" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? 'свернуть' : chosen ? 'изменить' : 'выбрать'}</button>
+          chosen && !open ? <EditButton label="Изменить, откуда узнал" aria-expanded={false} onClick={() => setOpen(true)} />
+            : <button type="button" className="link" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? 'свернуть' : 'выбрать'}</button>
         )}
         {!chosen && !canEdit && <strong>Не указано</strong>}
       </div>

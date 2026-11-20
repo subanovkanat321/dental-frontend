@@ -10,6 +10,7 @@ import { dentitionOf } from '../medical/dentition'
 import { ToothFullscreen } from '../medical/ToothFullscreen'
 import { ToothFigure } from '../medical/ToothGlyph'
 import { TOOTH_STATES, hasSurfaces, stateText, visitToothText, type Surface, type ToothState } from '../medical/toothStates'
+import { EditButton } from '../layout/EditButton'
 
 type Appointment = Schemas['AppointmentView']
 type VisitTooth = Schemas['VisitToothView']
@@ -112,8 +113,7 @@ export function VisitTeeth({ appointment: a, readOnly, onMedical }: { appointmen
             <li key={t.number} className="line-edit">
               <span>{visitToothText(t)}</span>
               {!readOnly && (
-                <button type="button" className="link" aria-label={`Изменить зуб ${t.number}`}
-                  onClick={() => { setPicking(true); setOpen(t.number) }}>изменить</button>
+                <EditButton label={`Изменить зуб ${t.number}`} onClick={() => { setPicking(true); setOpen(t.number) }} />
               )}
               {!readOnly && (
                 <button type="button" className="link" aria-label={`Убрать зуб ${t.number} из приёма`} disabled={unmark.isPending}

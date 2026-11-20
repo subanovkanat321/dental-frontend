@@ -24,23 +24,26 @@ export function statusOf(a: Appointment, now = new Date()): Status {
   if (a.arrivedAt) return { label: CARD_STATUS.arrived.label, icon: CARD_STATUS.arrived.icon, tone: 'ok', kind: 'here' }
   if (a.endAt && new Date(a.endAt) < now) return { label: 'Отметьте: явка или неявка?', icon: '❓', tone: 'wait', kind: 'wait' }
   if (a.reply === 'CONFIRMED') return { label: CARD_STATUS.confirmed.label, icon: CARD_STATUS.confirmed.icon, tone: 'ok', kind: 'ok' }
-  if (a.reply === 'RESCHEDULE') return { label: 'Перенос', icon: '🔄', tone: 'wait', kind: 'wait' }
-  if (a.reply === 'NO_ANSWER') return { label: 'Нет ответа', icon: '📵', tone: 'wait', kind: 'wait' }
+  if (a.reply === 'RESCHEDULE') return { label: CARD_STATUS.reschedule.label, icon: CARD_STATUS.reschedule.icon, tone: 'wait', kind: 'wait' }
+  if (a.reply === 'NO_ANSWER') return { label: CARD_STATUS.noanswer.label, icon: CARD_STATUS.noanswer.icon, tone: 'wait', kind: 'wait' }
   if (a.reminderOpenedAt) return { label: 'Ждём ответа', icon: '⏳', tone: 'wait', kind: 'wait' }
   return { label: 'Не напомнили', icon: '🔔', tone: 'hint', kind: 'quiet' }
 }
 
 /**
- * Статус приёма в карточке — пилюля «🟢 Пришёл ▾» (2026-11-19): семь слов, одни и те же в карточке,
- * сетке и руководстве. На сервере это статус (REQUESTED…NO_SHOW) и две отметки у запланированного:
- * «Пришёл» — arrivedAt (V234), «В кресле» — inChairAt (V235, приём начался), «Подтвердил» — ответ пациента reply = CONFIRMED.
+ * Статус приёма в карточке — пилюля «🟢 Пришёл ▾» (2026-11-19): одни и те же слова в карточке, сетке и руководстве.
+ * На сервере это статус (REQUESTED…NO_SHOW), ответ пациента reply и две отметки у запланированного: «Пришёл» — arrivedAt
+ * (V234), «В кресле» — inChairAt (V235, приём начался). Ответ пациента (2026-11-20, вместо отдельного ряда «Подтвердил /
+ * Перенос / Нет ответа»): «Подтвердил» — CONFIRMED, «Просит перенести» — RESCHEDULE, «Нет ответа» — NO_ANSWER; «Записан» — NONE.
  */
-export type CardStatus = 'request' | 'scheduled' | 'confirmed' | 'arrived' | 'chair' | 'done' | 'noshow' | 'cancelled'
+export type CardStatus = 'request' | 'scheduled' | 'confirmed' | 'reschedule' | 'noanswer' | 'arrived' | 'chair' | 'done' | 'noshow' | 'cancelled'
 
 export const CARD_STATUS: Record<CardStatus, { label: string; menu: string; icon: string; kind: Kind }> = {
   request: { label: 'Заявка', menu: 'Заявка', icon: '🆕', kind: 'request' },
   scheduled: { label: 'Записан', menu: 'Записан', icon: '📅', kind: 'quiet' },
   confirmed: { label: 'Подтвердил', menu: 'Подтвердил (придёт)', icon: '👍', kind: 'ok' },
+  reschedule: { label: 'Просит перенести', menu: 'Просит перенести', icon: '🔁', kind: 'wait' },
+  noanswer: { label: 'Нет ответа', menu: 'Нет ответа', icon: '📵', kind: 'wait' },
   arrived: { label: 'Пришёл', menu: 'Пришёл', icon: '🟢', kind: 'here' },
   chair: { label: 'В кресле', menu: 'В кресле', icon: '💺', kind: 'chair' },
   done: { label: 'Приём состоялся', menu: 'Приём состоялся', icon: '✅', kind: 'done' },
@@ -48,7 +51,7 @@ export const CARD_STATUS: Record<CardStatus, { label: string; menu: string; icon
   cancelled: { label: 'Отменён', menu: 'Отменён', icon: '❌', kind: 'quiet' },
 }
 
-export const CARD_ORDER: CardStatus[] = ['request', 'scheduled', 'confirmed', 'arrived', 'chair', 'done', 'noshow', 'cancelled']
+export const CARD_ORDER: CardStatus[] = ['request', 'scheduled', 'confirmed', 'reschedule', 'noanswer', 'arrived', 'chair', 'done', 'noshow', 'cancelled']
 
 export function cardStatusOf(a: Appointment): CardStatus {
   switch (a.status) {
@@ -56,6 +59,7 @@ export function cardStatusOf(a: Appointment): CardStatus {
     case 'DONE': return 'done'
     case 'NO_SHOW': return 'noshow'
     case 'CANCELLED': return 'cancelled'
-    default: return a.inChairAt ? 'chair' : a.arrivedAt ? 'arrived' : a.reply === 'CONFIRMED' ? 'confirmed' : 'scheduled'
+    default: return a.inChairAt ? 'chair' : a.arrivedAt ? 'arrived' : a.reply === 'CONFIRMED' ? 'confirmed'
+      : a.reply === 'RESCHEDULE' ? 'reschedule' : a.reply === 'NO_ANSWER' ? 'noanswer' : 'scheduled'
   }
 }

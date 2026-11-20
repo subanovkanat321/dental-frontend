@@ -7,6 +7,7 @@ import { Loading } from '../layout/Loading'
 import { SubHelp } from '../layout/PageHead'
 import { MAX_NAME, MAX_TAGS, TAG_COLORS, usePatientTags, VIP, type Tag } from '../tags/tags'
 import { SubHeader } from './SubHeader'
+import { EditButton } from '../layout/EditButton'
 
 type Me = Schemas['BookingViewsMe']
 
@@ -142,7 +143,7 @@ function TagRow({ tag, admin }: { tag: Tag; admin: boolean }) {
       <span className="hint num">{count}</span>
       {admin && (
         <span className="tag-actions">
-          <button type="button" className="link small" onClick={() => setEditing(true)} aria-label={`Изменить метку ${tag.name}`}>изменить</button>
+          <EditButton label={`Изменить метку ${tag.name}`} onClick={() => setEditing(true)} />
           {!vip && (
             <button type="button" className="link small danger" disabled={remove.isPending} aria-label={`Удалить метку ${tag.name}`}
               onClick={async () => {

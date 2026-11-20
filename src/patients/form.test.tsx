@@ -104,8 +104,8 @@ test('карточка пациента: «откуда узнал» — во в
   expect(source).toHaveTextContent('Откуда узнал о клинике?')
   await user.click(within(source).getByRole('button', { name: '📱 Instagram' }))
   await waitForSlow(() => expect(saved).toMatchObject({ fullName: 'Бакыт М.', phone: '+996700555666', workplace: 'школа №5', sourceId: 11 }))
-  // Указано — коротко и «изменить», кнопки-варианты спрятаны
-  expect(await within(panel).findByRole('button', { name: 'изменить' })).toBeInTheDocument()
+  // Указано — коротко и карандаш «Изменить», кнопки-варианты спрятаны
+  expect(await within(panel).findByRole('button', { name: 'Изменить, откуда узнал' })).toBeInTheDocument()
   expect(within(panel).getByRole('group', { name: 'Откуда узнал о клинике' })).toHaveTextContent('📱 Instagram')
 })
 

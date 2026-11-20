@@ -20,9 +20,15 @@ const STATUS: Record<string, [string, string]> = {
  * уйдёт сообщение с суммой и QR); ждём или пациент сообщил — чек, «Получена» (как) и «Не нужна»;
  * получена — строкой: после приёма станет первым платежом.
  */
-export function DepositBox({ appointment: a }: { appointment: Appointment }) {
+export function DepositBox({ appointment: a, asking: startAsking = false, onCancel }: {
+  appointment: Appointment
+  /** Сразу форма «Сколько предоплаты» (ссылка «＋ Предоплата» в карточке приёма) */
+  asking?: boolean
+  /** «Отмена» в форме — закрыть её (карточка уберёт форму и снова покажет ссылку) */
+  onCancel?: () => void
+}) {
   const action = useAppointmentAction(a)
-  const [asking, setAsking] = useState(false)
+  const [asking, setAsking] = useState(startAsking)
   const [method, setMethod] = useState<Method>('TRANSFER')
   const settings = useQuery({
     queryKey: ['deposit-settings'],
@@ -46,7 +52,7 @@ export function DepositBox({ appointment: a }: { appointment: Appointment }) {
         <div className="actions">
           <button type="button" className="btn primary" disabled={action.isPending || !Number(shownAmount)}
             onClick={() => action.mutate({ kind: 'deposit', body: { action: 'REQUEST', amountSom: Number(shownAmount) } })}>Попросить предоплату</button>
-          <button type="button" className="btn ghost" onClick={() => setAsking(false)}>Отмена</button>
+          <button type="button" className="btn ghost" onClick={() => { setAsking(false); onCancel?.() }}>Отмена</button>
         </div>
       </div>
     )

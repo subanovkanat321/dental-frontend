@@ -55,7 +55,7 @@ test('свой приём у врача — форма оплаты есть; у
   renderApp()
   expect(await openPay(await card(/Бакыт М\./))).toBeInTheDocument()
   const other = await card(/Нурлан К\./)
-  expect(within(other).queryByRole('button', { name: 'Попросить предоплату' })).not.toBeInTheDocument()
+  expect(within(other).queryByRole('button', { name: '＋ Предоплата' })).not.toBeInTheDocument()
 })
 
 test('владелец удаляет и приём с оплатой или заметкой — после второго вопроса, что пропадёт (force)', async () => {
@@ -100,7 +100,7 @@ test('есть доплаты — «Изменить» оплату не пре�
   renderApp()
   const panel = await card(/Бакыт М\./)
   expect(await within(panel).findByText(/Есть доплаты/)).toBeInTheDocument()
-  expect(within(panel).queryByRole('button', { name: 'Изменить' })).not.toBeInTheDocument()
+  expect(within(panel).queryByRole('button', { name: 'Изменить оплату' })).not.toBeInTheDocument()
   expect(within(panel).getByRole('button', { name: 'Принять доплату' })).toBeInTheDocument()
 })
 

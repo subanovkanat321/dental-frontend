@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { appointment, me, renderApp } from '../test/fixtures'
+import { appointment, me, meArrivals, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 import { waitForSlow } from '../test/wait'
 import { LONG_MS, swipeClock } from './useRowSwipe'
@@ -56,8 +56,20 @@ const labels = (menu: HTMLElement) => within(menu).getAllByRole('menuitem').map(
 })
 
 describe('компьютер: сетка «Дня»', () => {
-  test('«⋯» у записи сегодня: следующий шаг «Пришёл» уходит на сервер, меню закрывается', async () => {
+  test('«⋯» у записи сегодня (по умолчанию приход не отмечают): следующий шаг «Приём состоялся», «Неявка» — в меню', async () => {
     const sent = backend([appointment(10, 1, '23:30', 'Бакыт М.')])
+    renderApp()
+    const { more } = await moreOf('Бакыт М.')
+    await userEvent.click(more)
+    const menu = screen.getByRole('menu', { name: 'Действия: Бакыт М.' })
+    expect(labels(menu)).toEqual(['Приём состоялся', 'Позвонить', 'Написать в WhatsApp', 'Напомнить о приёме в WhatsApp', 'Перенести', 'Записать повторно',
+      'Открыть карточку пациента', 'Открыть запись', 'Неявка', 'Отменить запись'])
+    await userEvent.click(within(menu).getByRole('menuitem', { name: 'Приём состоялся' }))
+    await waitForSlow(() => expect(sent).toEqual([{ path: 'status', body: { version: 0, status: 'DONE' } }]))
+  })
+
+  test('клиника отмечает приход — «⋯» у записи сегодня: следующий шаг «Пришёл» уходит на сервер, меню закрывается', async () => {
+    const sent = backend([appointment(10, 1, '23:30', 'Бакыт М.')], meArrivals)
     renderApp()
     const { more } = await moreOf('Бакыт М.')
     await userEvent.click(more)
@@ -71,12 +83,12 @@ describe('компьютер: сетка «Дня»', () => {
     expect(screen.queryByRole('complementary', { name: 'Карточка приёма' })).not.toBeInTheDocument()
   })
 
-  test('правая кнопка: пришёл → «Начать приём» (в кресле); в кресле → «Приём состоялся»', async () => {
+  test('клиника отмечает приход — правая кнопка: пришёл → «Начать приём» (в кресле); в кресле → «Приём состоялся»', async () => {
     const arrivedAt = new Date().toISOString()
     const sent = backend([
       appointment(10, 1, '23:00', 'Бакыт М.', { arrivedAt }),
       appointment(11, 2, '23:00', 'Айпери К.', { arrivedAt, inChairAt: arrivedAt }),
-    ])
+    ], meArrivals)
     renderApp()
     fireEvent.contextMenu((await moreOf('Бакыт М.')).block, { clientX: 300, clientY: 200 })
     await userEvent.click(within(screen.getByRole('menu', { name: 'Действия: Бакыт М.' })).getByRole('menuitem', { name: 'Начать приём' }))
@@ -141,7 +153,7 @@ describe('компьютер: сетка «Дня»', () => {
   })
 
   test('ошибка сервера остаётся плашкой, пока её не закрыли', async () => {
-    backend([appointment(10, 1, '23:30', 'Бакыт М.')])
+    backend([appointment(10, 1, '23:30', 'Бакыт М.')], meArrivals)
     server.use(http.post('*/api/appointments/:id/arrived', () => HttpResponse.json({ status: 409, code: 'stale', detail: 'Запись изменили с другого устройства — проверьте и повторите' }, { status: 409 })))
     renderApp()
     await userEvent.click((await moreOf('Бакыт М.')).more)
@@ -184,7 +196,7 @@ describe('телефон: список дня', () => {
     fireEvent.click(within(row).getByRole('button', { name: /Бакыт М\.:/ }))
     const menu = screen.getByRole('menu', { name: 'Действия: Бакыт М.' })
     expect(menu).toHaveClass('sheet')
-    expect(within(menu).getByRole('menuitem', { name: 'Пришёл' })).toBeInTheDocument()
+    expect(within(menu).getByRole('menuitem', { name: 'Приём состоялся' })).toBeInTheDocument()
     expect(screen.queryByRole('complementary', { name: 'Карточка приёма' })).not.toBeInTheDocument()
   })
 

@@ -3779,6 +3779,50 @@
         }
       }
     },
+    "/api/clinic/visit-settings" : {
+      "get" : {
+        "tags" : [ "visit-settings-controller" ],
+        "operationId" : "visitSettings",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/VisitSettingsControllerVisitSettingsView"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "visit-settings-controller" ],
+        "operationId" : "updateVisitSettings",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/VisitSettingsControllerVisitSettingsView"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/VisitSettingsControllerVisitSettingsView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/clinic/visit-report-ai" : {
       "get" : {
         "tags" : [ "visit-report-controller" ],
@@ -22932,9 +22976,19 @@
           },
           "googleReviewUrl" : {
             "type" : "string"
+          },
+          "markArrival" : {
+            "type" : "boolean"
           }
         },
         "required" : [ "independentDoctors", "listed", "ownHours", "recallMonths", "separateSupplies", "settingUp" ]
+      },
+      "VisitSettingsControllerVisitSettingsView" : {
+        "properties" : {
+          "markArrival" : {
+            "type" : "boolean"
+          }
+        }
       },
       "VisitReportControllerAiChange" : {
         "properties" : {

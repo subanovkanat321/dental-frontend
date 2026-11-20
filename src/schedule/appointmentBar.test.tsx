@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { appointment, me } from '../test/fixtures'
+import { appointment, me, meArrivals } from '../test/fixtures'
 import { server } from '../test/server'
 import { waitForSlow } from '../test/wait'
 import { AppointmentPanel } from './AppointmentPanel'
@@ -60,7 +60,7 @@ test('телефон: следующий шаг — внизу закреплё�
 test('телефон: «⋯» внизу — перенести, задача, лаборатория, показать пациенту; «Перенести» открывает форму', async () => {
   phoneScreen(true)
   backend()
-  const panel = renderPanel(currentVisit())
+  const panel = renderPanel(currentVisit(), meArrivals)
   const bar = within(panel).getByRole('toolbar', { name: 'Действия с приёмом' })
   expect(within(bar).getByRole('button', { name: 'Пришёл' })).toBeInTheDocument()
   // Кнопки «Перенести» внизу ленты на телефоне нет — она в «⋯»
@@ -70,6 +70,18 @@ test('телефон: «⋯» внизу — перенести, задача, �
     expect.arrayContaining(['Перенести или передать врачу', '＋ Задача', '＋ В лабораторию', '📖 Показать пациенту']))
   await userEvent.click(screen.getByRole('menuitem', { name: 'Перенести или передать врачу' }))
   expect(panel.querySelector('.appt-move')).not.toBeNull()
+})
+
+test('телефон, приход не отмечают (по умолчанию): внизу «Приём состоялся», рядом ссылка «🚷 Неявка» и «⋯»', async () => {
+  phoneScreen(true)
+  backend()
+  const panel = renderPanel(currentVisit())
+  const bar = within(panel).getByRole('toolbar', { name: 'Действия с приёмом' })
+  expect(within(bar).getByRole('button', { name: 'Приём состоялся' })).toHaveClass('primary')
+  expect(within(bar).getByRole('button', { name: '🚷 Неявка' })).toHaveClass('link')
+  expect(within(bar).getByRole('button', { name: 'Ещё действия' })).toBeInTheDocument()
+  expect(within(panel).queryByRole('button', { name: 'Пришёл' })).not.toBeInTheDocument()
+  expect(panel.querySelectorAll('.btn.primary')).toHaveLength(1)
 })
 
 test('телефон: после приёма без оплаты — «Принять оплату» внизу открывает форму оплаты; кнопка на экране одна', async () => {
@@ -104,7 +116,7 @@ test('компьютер: после приёма без оплаты — одн
 
 test('компьютер: панели внизу нет, следующий шаг — рядом со статусом, «Перенести» — внизу ленты', () => {
   backend()
-  const panel = renderPanel(currentVisit())
+  const panel = renderPanel(currentVisit(), meArrivals)
   expect(within(panel).queryByRole('toolbar', { name: 'Действия с приёмом' })).not.toBeInTheDocument()
   expect(within(panel).getByRole('button', { name: 'Пришёл' })).toBeInTheDocument()
   expect(within(panel).getByRole('button', { name: 'Перенести или передать врачу' })).toBeInTheDocument()
