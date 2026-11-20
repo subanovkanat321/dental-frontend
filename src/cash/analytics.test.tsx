@@ -99,6 +99,31 @@ test('аналитика: выручка по месяцам, по врачам,
   expect(await within(noShow).findByText('20%')).toBeInTheDocument() // 4 неявки из 20
 })
 
+test('аналитика: отмены и неявки по причинам — больше всего первыми, «Не указана» последней', async () => {
+  let asked: URLSearchParams | null = null
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/appointments/cancel-reasons', ({ request }) => {
+      asked = new URL(request.url).searchParams
+      return HttpResponse.json([
+        { reason: 'DUPLICATE', cancelled: 3, noShow: 0 },
+        { reason: 'ILL', cancelled: 1, noShow: 1 },
+        { reason: 'PATIENT', cancelled: 1, noShow: 0 },
+        { cancelled: 1, noShow: 1 },
+      ] satisfies Schemas['CancelReasonsControllerReasonCount'][])
+    }),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await findSub('Аналитика'))
+  const block = await screen.findByRole('region', { name: 'Отмены и неявки по причинам' })
+  expect(await within(block).findByText(/не состоялось/)).toHaveTextContent('8 не состоялось · отмен 6, неявок 2')
+  const rows = within(block).getAllByRole('listitem')
+  expect(rows.map((r) => r.querySelector('.hbar-name')?.textContent)).toEqual(['Дубль записи', 'Заболел', 'Пациент отменил сам', 'Не указана'])
+  expect(rows[1]).toHaveAttribute('title', 'Заболел: 2 · отмен 1, неявок 1')
+  expect(asked!.get('from')).toBe(addDays(todayIn(), -29))
+})
+
 test('аналитика: ошибка сервера — сообщение, а не «0 сом» и «оплат нет»', async () => {
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),

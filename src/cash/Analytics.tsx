@@ -14,6 +14,7 @@ import { DroppedTile } from './DroppedTile'
 import { Loading } from '../layout/Loading'
 import { EmptyState } from '../layout/EmptyState'
 import { HeadTools } from '../layout/PageHead'
+import { REASON_TEXT } from '../schedule/cancelReasons'
 
 type Me = Schemas['BookingViewsMe']
 
@@ -91,6 +92,7 @@ export function AnalyticsTab({ me, doctorId, seesAll }: { me: Me; doctorId: numb
         <VisitsChart period={period} scope={scope} />
       </div>
       <PromoChart period={period} scope={scope} />
+      <CancelReasonsChart period={period} scope={scope} />
       <NoShowChart scope={scope} />
     </>
   )
@@ -502,6 +504,40 @@ function PromoChart({ period, scope }: { period: Period; scope: { doctorId?: num
               </tbody>
             </table>
           )}
+    </section>
+  )
+}
+
+/**
+ * Почему приёмы не состоялись (V235): отмены и неявки периода по причинам из карточки приёма. Полосы — сколько
+ * всего, в подсказке строки — сколько из них отмен и неявок. «Не указана» — старые отмены и кнопки бота.
+ */
+function CancelReasonsChart({ period, scope }: { period: Period; scope: { doctorId?: number } }) {
+  const data = useQuery({
+    queryKey: ['cancel-reasons', period.from, period.to, scope.doctorId ?? null],
+    queryFn: () => unwrap(api.GET('/api/appointments/cancel-reasons', { params: { query: { from: period.from, to: period.to, ...scope } } })),
+  })
+  const list = data.data ?? []
+  const rows = list.map((r) => ({
+    name: r.reason ? REASON_TEXT[r.reason] : 'Не указана',
+    value: r.cancelled + r.noShow,
+    note: `отмен ${r.cancelled}, неявок ${r.noShow}`,
+  }))
+  const cancelled = list.reduce((s, r) => s + r.cancelled, 0)
+  const noShow = list.reduce((s, r) => s + r.noShow, 0)
+  return (
+    <section className="card-block chart" aria-label="Отмены и неявки по причинам">
+      <h2>Почему не пришли {period.label}</h2>
+      {data.isPending ? <Loading />
+        : data.error ? <p className="error">{data.error.message}</p>
+          : !rows.length ? <EmptyState compact title="Отмен и неявок за этот период нет" />
+            : (
+              <>
+                <p className="chart-headline"><b className="num">{cancelled + noShow}</b> не состоялось<span className="hint"> · отмен {cancelled}, неявок {noShow}</span></p>
+                <HBars rows={rows} label="Отмены и неявки по причинам" format={(n) => String(n)} />
+                <p className="hint small">Причину выбирают в карточке приёма при «Отменён» и «Неявка». Пациент отменил в боте — «Пациент отменил сам».</p>
+              </>
+            )}
     </section>
   )
 }

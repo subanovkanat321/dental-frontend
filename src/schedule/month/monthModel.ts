@@ -108,9 +108,9 @@ export function monthStats(days: string[], doctors: { id: number; hours?: Hours 
     const list = byDay.get(date) ?? []
     const kinds: Partial<Record<MonthKind, number>> = {}
     for (const a of list) {
-      // «Пришёл» в месяце — вместе с «придут»: своих чисел у дня для него нет
+      // «Пришёл» и «В кресле» в месяце — вместе с «придут»: своих чисел у дня для них нет
       const raw = statusOf(a, now).kind
-      const k = raw === 'here' ? 'ok' : raw
+      const k = raw === 'here' || raw === 'chair' ? 'ok' : raw
       kinds[k] = (kinds[k] ?? 0) + 1
     }
     const work = doctors.map((d) => workDayOf(date, d.id, d.hours, timeOff))

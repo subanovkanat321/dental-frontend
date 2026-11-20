@@ -58,7 +58,7 @@ test('медкарта: анкета с плашкой — отметить бо
   ] })
 })
 
-test('карточка приёма: плашка из анкеты врачу приёма; регистратуре анкету не запрашиваем', async () => {
+test('карточка приёма: важное из анкеты — жёлтой пилюлей у времени; нажать — весь список и «Анкета в медкарте ›»', async () => {
   const asked: string[] = []
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
@@ -72,6 +72,18 @@ test('карточка приёма: плашка из анкеты врачу �
   renderApp()
   await user.click(await screen.findByRole('button', { name: /Бакыт М\./ }))
   const panel = screen.getByRole('complementary', { name: 'Карточка приёма' })
-  expect(await within(panel).findByRole('note', { name: 'Важно перед лечением' })).toHaveTextContent('Аллергия: лидокаин')
-  expect(asked).toEqual(['10'])
+  const pill = await within(panel).findByRole('button', { name: /^Важно перед лечением/ })
+  expect(pill).toHaveTextContent('⚠Аллергия: лидокаин')
+  expect(pill).toHaveClass('med-pill', 'danger')
+  // В шапке карточки, у времени; отдельной плашки ниже и чипа «❗ Важно для врача» нет — карточка короче
+  expect(pill.closest('.appt-when')).not.toBeNull()
+  expect(within(panel).queryByRole('note', { name: 'Важно перед лечением' })).toBeNull()
+  expect(within(panel).queryByText('Важно для врача')).toBeNull()
+  await user.click(pill)
+  expect(pill).toHaveAttribute('aria-expanded', 'true')
+  const full = within(panel).getByRole('note', { name: 'Важно перед лечением' })
+  expect(full).toHaveTextContent('Аллергия: лидокаин')
+  await user.click(within(full).getByRole('button', { name: 'Анкета в медкарте ›' }))
+  expect(await screen.findByRole('form', { name: 'Анкета пациента' })).toBeInTheDocument()
+  expect(asked).toContain('10')
 })

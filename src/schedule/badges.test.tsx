@@ -110,3 +110,44 @@ test('календарь: зелёные дни — есть свободное 
   await within(dialog).findByRole('button', { name: /5 июня.*свободно 7 ч/ })
   expect(months).toEqual(['2099-06 1 30', '2099-07 1 30'])
 })
+
+test('оплата состоявшегося приёма: 🧾 долг, ½ частично, ✓ оплачено — только тому, кто видит деньги', () => {
+  const done = (extra: Partial<Schemas['AppointmentView']>) => appointment(30, 1, '10:00', 'Бакыт Тестов', { status: 'DONE', ...extra })
+  const debt = badgesOf(done({ paidSom: 0, chargeSom: 3000, debtSom: 3000 }), true, undefined, null)
+  expect(debt.map((b) => b.icon)).toEqual(['🧾'])
+  const partial = badgesOf(done({ paidSom: 1000, chargeSom: 3000, debtSom: 2000 }), true, undefined, null)
+  expect(partial).toEqual([expect.objectContaining({ icon: '½', tone: 'part', short: 'Частично' })])
+  expect(partial[0]!.text).toMatch(/^Частично оплачено: 1\s000 сом, долг 2\s000 сом$/)
+  const paid = badgesOf(done({ paidSom: 3000, comment: 'Позвонить' }), true, undefined, null)
+  // ✓ — последним: самое спокойное, не вытесняет важное
+  expect(paid.map((b) => b.icon)).toEqual(['💬', '✓'])
+  expect(paid[1]).toEqual(expect.objectContaining({ tone: 'ok', long: 'Оплачено' }))
+  // Без прав на деньги, до «Приём состоялся» и пока оплату не отмечали — ничего
+  expect(badgesOf(done({ paidSom: 3000 }), false, undefined, null)).toEqual([])
+  expect(badgesOf(appointment(31, 1, '10:00', 'Бакыт Тестов', { paidSom: 3000 }), true, undefined, null)).toEqual([])
+  expect(badgesOf(done({}), true, undefined, null)).toEqual([])
+})
+
+test('сетка: «✓ оплачено» и «½ частично» у состоявшихся приёмов, «🦷 В кресле» — своим цветом', async () => {
+  const today = todayIn()
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/appointments', ({ request }) => {
+      if (Number(new URL(request.url).searchParams.get('doctorId')) !== 1) return HttpResponse.json([])
+      return HttpResponse.json([
+        appointment(40, 1, '09:00', 'Бакыт Тестов', { startAt: slotInstant(today, 540), endAt: slotInstant(today, 600), status: 'DONE', paidSom: 3000 }),
+        appointment(41, 1, '10:00', 'Айпери Тестова', { startAt: slotInstant(today, 600), endAt: slotInstant(today, 660), status: 'DONE', paidSom: 1000, chargeSom: 3000, debtSom: 2000 }),
+        appointment(42, 1, '11:00', 'Нурлан Тестов', { startAt: slotInstant(today, 660), endAt: slotInstant(today, 720), arrivedAt: `${today}T05:00:00Z`, inChairAt: `${today}T05:01:00Z` }),
+      ])
+    }),
+    http.get('*/api/slots', () => HttpResponse.json({ workingDay: true, workStart: '09:00:00', workEnd: '18:00:00', breaks: [], free: [] })),
+  )
+  renderApp()
+  const paid = await screen.findByRole('button', { name: /^09:00–10:00, Бакыт Тестов/ })
+  expect(within(paid).getByRole('img', { name: /^Оплачено 3\s000 сом$/ })).toHaveClass('pay-ok')
+  const partial = screen.getByRole('button', { name: /^10:00–11:00, Айпери Тестова/ })
+  expect(within(partial).getByRole('img', { name: /^Частично оплачено/ })).toHaveClass('pay-part')
+  const chair = screen.getByRole('button', { name: /^11:00–12:00, Нурлан Тестов/ })
+  expect(chair).toHaveClass('s-chair')
+  expect(chair).toHaveTextContent('В кресле')
+})

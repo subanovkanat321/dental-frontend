@@ -26,6 +26,36 @@ export function MedAlerts({ an, compact = false }: { an?: Anamnesis; compact?: b
   )
 }
 
+/**
+ * Важное из анкеты пилюлей в шапке карточки приёма, у времени: «⚠ Аллергия: лидокаин · +1» (жёлтая, аллергия — красная).
+ * Нажать — раскрыть весь список (как плашка) и «Анкета в медкарте ›». Только тому, кто видит медкарту: остальным в
+ * карточке — нейтральный «❗ Важно для врача» без текста. Отметок нет — ничего.
+ */
+export function MedAlertPill({ an, onOpen }: { an?: Anamnesis; onOpen?: () => void }) {
+  const [open, setOpen] = useState(false)
+  const shown = (an?.items ?? []).filter((i) => i.alert && (i.yes || i.text) && i.kind !== 'TEXT')
+  if (!shown.length) return null
+  const text = (i: Item) => `${i.label || (i.title ?? '').replace(/\?$/, '')}${i.text ? `: ${i.text}` : ''}`
+  const allergy = shown.find((i) => i.code === 'ALLERGY')
+  const first = allergy ?? shown[0]!
+  const more = shown.length - 1
+  const all = shown.map(text).join(', ')
+  return (
+    <>
+      <button type="button" className={allergy ? 'med-pill danger' : 'med-pill'} aria-expanded={open}
+        aria-label={`Важно перед лечением: ${all}`} title={all} onClick={() => setOpen(!open)}>
+        <span aria-hidden="true">⚠</span><span className="med-pill-text">{text(first)}</span>{more > 0 && <span className="med-pill-more">+{more}</span>}
+      </button>
+      {open && (
+        <div className={allergy ? 'med-alert danger' : 'med-alert'} role="note" aria-label="Важно перед лечением">
+          {shown.map((i) => <div key={i.questionId}>{text(i)}</div>)}
+          {onOpen && <button type="button" className="link med-alert-open" onClick={onOpen}>Анкета в медкарте ›</button>}
+        </div>
+      )}
+    </>
+  )
+}
+
 type Answer = { yes: boolean; text: string }
 
 /**

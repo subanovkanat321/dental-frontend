@@ -515,6 +515,15 @@ p.hours-off { margin: 4px 0 0; font-size: .9rem; }
 /* Анкета пациента и плашка «важно перед лечением» */
 .med-alert { display: grid; gap: 2px; padding: 8px 12px; border-radius: var(--r-md); background: var(--wait-bg); color: var(--wait-ink); font-weight: 600; font-size: .9rem; border-left: 3px solid currentColor; }
 .med-alert.danger { background: var(--bad-bg); color: var(--bad-ink); }
+/* Важное из анкеты пилюлей у времени приёма (2026-11-20): жёлтая, аллергия — красная; длинный текст — с многоточием */
+.med-pill { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; min-height: 28px; margin-top: 4px; padding: 2px 10px; border: 0; border-radius: 999px;
+  background: var(--wait-bg); color: var(--wait-ink); font: inherit; font-size: .88rem; font-weight: 600; cursor: pointer; justify-self: start; text-align: left; }
+.med-pill.danger { background: var(--bad-bg); color: var(--bad-ink); }
+.med-pill-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.med-pill-more { flex: none; opacity: .8; }
+.appt-when { display: grid; justify-items: start; min-width: 0; }
+.appt-when .med-alert { margin-top: 6px; }
+.med-alert-open { justify-self: start; color: inherit; text-decoration: underline; font-weight: 500; }
 .anamnesis { display: grid; gap: 12px; }
 .anamnesis > .btn { justify-self: start; }
 .anamnesis-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
@@ -949,6 +958,7 @@ button.timesheet-day:hover { border-color: var(--accent); }
 .day-list .row.s-request { background: color-mix(in srgb, var(--req-bg) 45%, var(--card)); }
 .day-list .row.s-ok { background: color-mix(in srgb, var(--ok-bg) 45%, var(--card)); }
 .day-list .row.s-here { background: color-mix(in srgb, var(--accent-soft) 60%, var(--card)); }
+.day-list .row.s-chair { background: color-mix(in srgb, var(--chair-bg) 60%, var(--card)); }
 .day-list .row.s-wait { background: color-mix(in srgb, var(--wait-bg) 45%, var(--card)); }
 .day-list .row.s-cashier { background: color-mix(in srgb, var(--cash-bg) 45%, var(--card)); }
 .day-list .row.s-bad { background: color-mix(in srgb, var(--bad-bg) 45%, var(--card)); }
@@ -1747,6 +1757,7 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
 .appt.s-wait { --stripe: var(--wait-ink); }
 .appt.s-ok { --stripe: var(--ok-ink); }
 .appt.s-here { --stripe: var(--accent); }
+.appt.s-chair { --stripe: var(--chair-ink); }
 .appt.s-done { --stripe: color-mix(in srgb, var(--done-ink) 55%, transparent); }
 .appt.s-cashier { --stripe: var(--cash-ink); }
 .appt.s-bad { --stripe: var(--bad-ink); }
@@ -1782,6 +1793,9 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
 .appt-body { display: contents; }
 .appt .wide-only { display: none; }
 .appt-badge { display: inline-flex; align-items: center; gap: 3px; }
+/* Оплата состоявшегося приёма (2026-11-20): ✓ оплачено — зелёным, ½ частично — янтарным; 🧾 долг — как был */
+.appt-badge.pay-ok { color: var(--ok-ink); font-weight: 700; }
+.appt-badge.pay-part { color: var(--wait-ink); font-weight: 800; }
 @container appt (min-width: 240px) {
   .appt .appt-badge[data-short] { padding: 1px 5px 1px 3px; border-radius: 4px; background: color-mix(in srgb, var(--card) 60%, transparent); }
   .appt .appt-badge[data-short]::after { content: attr(data-short); font-weight: 600; }
@@ -1892,6 +1906,13 @@ html:has(.pwa-toast) .workspace { padding-bottom: 76px; }
 .confirm { display: grid; gap: 18px; width: min(440px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow-y: auto; overscroll-behavior: contain; padding: 22px; border-radius: var(--radius); background: var(--card); color: var(--text); box-shadow: var(--panel-shadow); }
 .confirm p { margin: 0; font-size: 1.02rem; line-height: 1.5; white-space: pre-line; }
 .confirm-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
+/* Причина отмены и неявки (V235): чипы-варианты в окне вопроса, выбранный — бирюзовой рамкой */
+.cancel-reason { margin: 0; font-weight: 500; }
+.reason-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.reason-chip { min-height: 36px; padding: 0 12px; border: 1px solid var(--line-strong); border-radius: 999px; background: var(--card); color: var(--text); font: inherit; font-size: .93rem; cursor: pointer; }
+.reason-chip[aria-checked=true] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; }
+.reason-sheet .field input { font-size: 1rem; }
+@media (max-width: 640px) { .reason-chip { min-height: 44px; } }
 .confirm .btn.danger { background: var(--destructive); border-color: var(--destructive); color: #fff; }
 @media (max-width: 640px) {
   .confirm-backdrop { align-items: flex-end; }

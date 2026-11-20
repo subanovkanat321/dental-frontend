@@ -105,10 +105,10 @@ test('компьютер: часы врача в шапке колонки, зн
   // Часовой блок: комментарий в DOM есть, но показывается только в широком блоке (в одну строку с услугой)
   expect(within(first).getByText('Болит справа')).toHaveClass('wide-only')
   const debt = screen.getByRole('button', { name: /^12:00–13:00, Мээрим П\./ })
-  expect(within(debt).getByRole('img', { name: /Долг 3\s000 сом/ })).toHaveAttribute('data-long', expect.stringMatching(/^Долг 3\s000 сом$/))
+  expect(within(debt).getByRole('img', { name: /^Частично оплачено: 2\s000 сом, долг 3\s000 сом$/ })).toHaveAttribute('data-long', expect.stringMatching(/^Долг 3\s000 сом$/))
   expect(within(debt).queryByRole('img', { name: 'Первый визит в клинике' })).not.toBeInTheDocument()
   expect(screen.getAllByText('09:00–18:00').length).toBeGreaterThan(0)
-  expect(screen.getByText(/❗ важно для врача · 🧾 долг · ⭐ ВИП · 🆕 первый визит · 💬 комментарий/)).toBeInTheDocument()
+  expect(screen.getByText(/❗ важно для врача · 🧾 долг · ½ частично · ✓ оплачено · ⭐ ВИП · 🆕 первый визит · 💬 комментарий/)).toBeInTheDocument()
 })
 
 test('компьютер: дата в заголовке «Расписания» — кнопка, открывает календарь', async () => {

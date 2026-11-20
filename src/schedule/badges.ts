@@ -9,8 +9,10 @@ type Appointment = Schemas['AppointmentView']
  * Значки на записи — то, что важно увидеть, не открывая карточку. По важности:
  * ❗ важно для врача (аллергия, давление… — «в плашке» анкеты; расшифровка — только тем, кто видит медкарту),
  * 🧾 долг по приёму (кто видит деньги этого врача) или долг пациента за прошлые визиты (кто видит «Должников»),
+ * ½ частично оплачено (состоялся, оплатили часть — остаток в долге),
  * ⭐ ВИП — особое внимание (отметка в карточке пациента), 🆕 первый визит в клинике,
- * 🪑 кресло не врача или часы коллеги по креслу, 💬 есть комментарий.
+ * 🪑 кресло не врача или часы коллеги по креслу, 💬 есть комментарий, ✓ оплачено полностью (последним — самое спокойное).
+ * Оплата (🧾 / ½ / ✓) — только у состоявшегося приёма и только тому, кто видит деньги этого врача.
  * Показываем не больше трёх самых важных, а на узкой записи (15–30 минут в сетке) — один: остальное в подсказке при
  * наведении и в карточке. Подтверждение («Подтвердил 👍») уже в статусе — здесь не дублируем.
  *
@@ -18,7 +20,7 @@ type Appointment = Schemas['AppointmentView']
  * чип «⭐ ВИП», в среднем — «⭐ ВИП» коротко, в узком (неделя, телефон) — голый значок. Подпись
  * рисует CSS из data-атрибутов: текст в DOM и имя для скринридера (aria-label) не меняются.
  */
-export type Badge = { icon: string; text: string; short?: string; long: string }
+export type Badge = { icon: string; text: string; short?: string; long: string; tone?: 'ok' | 'part' }
 type ChairTime = Schemas['SlotsViewChairTime']
 
 /** Сколько значков у записи: больше — шум (владелец: «не шумно»). */
@@ -29,7 +31,11 @@ export function badgesOf(a: Appointment, money: boolean, chair: ChairTime | unde
   const list: Badge[] = []
   // ❗ Важно для врача: текст ответа анкеты — только с доступом к медкарте (сервер прислал text), иначе — общий
   if (alert) list.push({ icon: '❗', text: alert.text ? `Важно для врача: ${alert.text}` : 'Важно для врача — есть отметки в анкете (аллергия, болезни)', short: 'Важно', long: 'Важно' })
-  if (money && a.debtSom > 0) list.push({ icon: '🧾', text: `Долг ${somText(a.debtSom)}`, long: `Долг ${somText(a.debtSom)}` })
+  const pay = payStateOf(a, money)
+  if (pay === 'partial') {
+    list.push({ icon: '½', text: `Частично оплачено: ${somText(a.paidSom ?? 0)}, долг ${somText(a.debtSom)}`, short: 'Частично', long: `Долг ${somText(a.debtSom)}`, tone: 'part' })
+  }
+  else if (money && a.debtSom > 0) list.push({ icon: '🧾', text: `Долг ${somText(a.debtSom)}`, long: `Долг ${somText(a.debtSom)}` })
   // Записан или ждём — а за прошлые визиты должен: напомнить, когда придёт
   else if (money && patientDebt > 0 && (a.status === 'SCHEDULED' || a.status === 'REQUESTED')) {
     list.push({ icon: '🧾', text: `Долг пациента ${somText(patientDebt)} — напомнить при оплате`, short: somText(patientDebt), long: `Долг ${somText(patientDebt)}` })
@@ -44,7 +50,19 @@ export function badgesOf(a: Appointment, money: boolean, chair: ChairTime | unde
     list.push({ icon: '🪑', text: colleagueMarkText(chair), short: firstName(name), long: `время ${name}` })
   }
   if (a.comment?.trim()) list.push({ icon: '💬', text: `Комментарий: ${a.comment.trim()}`, long: 'Комментарий' })
+  if (pay === 'paid') list.push({ icon: '✓', text: a.paidSom ? `Оплачено ${somText(a.paidSom)}` : 'Оплачено', short: 'Оплачено', long: 'Оплачено', tone: 'ok' })
   return list
+}
+
+/**
+ * Оплата состоявшегося приёма — тому, кто видит деньги этого врача: долг (ничего не внесли из счёта), частично
+ * (внесли часть) или оплачено (внесли всё, в том числе «бесплатно» 0 сом). Оплату ещё не отмечали — null:
+ * это и так видно по статусу («Ждёт оплаты на кассе») и кнопке «Принять оплату» в карточке.
+ */
+export function payStateOf(a: Appointment, money: boolean): 'debt' | 'partial' | 'paid' | null {
+  if (!money || a.status !== 'DONE' || a.paidSom == null) return null
+  if (a.debtSom > 0) return a.paidSom > 0 ? 'partial' : 'debt'
+  return 'paid'
 }
 
 /** Запись в сетке на 15–30 минут — узкая: один значок, иначе он налезает на имя. */

@@ -34,8 +34,9 @@ function denied(error: unknown): string | null {
  * приложении, но на большом экране. Права проверяет сервер.
  */
 /** @param readOnly ассистент: смотрит анкету, зубы, план и заметки, загружает снимки; править — врач */
-export function MedicalRecord({ patient, onBack, backLabel = '← К списку', readOnly = false }: {
-  patient: Patient; onBack: () => void; backLabel?: string; readOnly?: boolean
+/** @param tab какую вкладку открыть сразу: «⚠ Аллергия…» в карточке приёма → «📋 Анкета» */
+export function MedicalRecord({ patient, onBack, backLabel = '← К списку', readOnly = false, tab: initialTab = 'teeth' }: {
+  patient: Patient; onBack: () => void; backLabel?: string; readOnly?: boolean; tab?: MedTab
 }) {
   const id = patient.id
   // Стрелка Telegram — туда же, откуда пришли (к приёму или к списку пациентов)
@@ -48,7 +49,7 @@ export function MedicalRecord({ patient, onBack, backLabel = '← К списк�
   // «В план лечения» из зуба: номер подставится в новый этап; счётчик — чтобы тот же зуб можно было ещё раз
   const [planTooth, setPlanTooth] = useState<{ tooth: number; n: number } | null>(null)
   // Медкарта — вкладками, а не простынёй: зубы (что есть) отдельно от плана (что сделать)
-  const [tab, setTab] = useState<MedTab>('teeth')
+  const [tab, setTab] = useState<MedTab>(initialTab)
   const plan = useQuery({
     queryKey: ['plan', id],
     queryFn: () => unwrap(api.GET('/api/patients/{patientId}/plan', { params: { path: { patientId: id } } })),

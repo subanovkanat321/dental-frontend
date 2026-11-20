@@ -137,7 +137,7 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
   const [date, setDate] = useState(() => (openAppointment?.startAt
     ? new Intl.DateTimeFormat('en-CA', { timeZone: ZONE }).format(new Date(openAppointment.startAt)) : initialDate ?? today))
   // Медкарта пациента во всю рабочую область — открыта с приёма; «Назад» вернёт к этому приёму
-  const [medical, setMedical] = useState<{ patient: Schemas['PatientView']; from: number } | null>(null)
+  const [medical, setMedical] = useState<{ patient: Schemas['PatientView']; from: number; tab?: 'anamnesis' } | null>(null)
   const [side, setSide] = useState<Side>(() => {
     if (openAppointment) return { kind: 'appointment', id: openAppointment.id, fallback: openAppointment }
     // Врач отменённой записи (если к нему можно записать), иначе — свой
@@ -433,7 +433,7 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
   if (medical) {
     return (
       <div className="schedule">
-        <MedicalRecord patient={medical.patient} backLabel="← К приёму" readOnly={isAssistant(me)}
+        <MedicalRecord patient={medical.patient} backLabel="← К приёму" readOnly={isAssistant(me)} tab={medical.tab}
           onBack={() => { setSide({ kind: 'appointment', id: medical.from }); setMedical(null) }} />
       </div>
     )
@@ -736,7 +736,7 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
       )}
       {/* key: другой приём — новая карточка, формы и «Вернуть» прежнего не переносятся */}
       {selected && <AppointmentPanel key={selected.id} appointment={selected} me={me} onClose={close} onOpenPatient={onOpenPatient}
-        onMedical={(patient) => setMedical({ patient, from: selected.id })}
+        onMedical={(patient, tab) => setMedical({ patient, from: selected.id, tab })}
         onBook={(slot, patient) => setSide({ kind: 'new', slot, patient })} />}
       {side?.kind === 'new' && (
         <NewAppointmentPanel slot={side.slot} me={me} initialPatient={side.patient} initialContact={side.contact} nowDoctorId={firstBookable()?.id} onClose={close}
