@@ -147,7 +147,9 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
       ?? (me.doctors ?? []).find((d) => d.active !== false && canEditDoctor(me, d.id))
     if (!doctor || (!bookPatient && !bookContact && !bookPreset?.open)) return null
     // Время — только из черновика помощника (его выбрали в боте); иначе сетка свободного покажет, что есть
-    const slot = { doctorId: doctor.id, date: bookPreset?.date ?? today, minutes: bookPreset?.minutes ?? null, duration: bookPreset?.duration, serviceId: bookPreset?.serviceId }
+    // Врач не задан пресетом — по умолчанию (soft): выбран пациент — станет его лечащий врач
+    const slot = { doctorId: doctor.id, date: bookPreset?.date ?? today, minutes: bookPreset?.minutes ?? null, duration: bookPreset?.duration, serviceId: bookPreset?.serviceId,
+      soft: bookPreset?.doctorId == null }
     if (bookPatient) return { kind: 'new', patient: bookPatient, slot }
     return bookContact ? { kind: 'new', contact: bookContact, slot } : { kind: 'new', slot }
   })
@@ -368,7 +370,8 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
   const newHere = () => {
     const first = firstBookable()
     // Без времени: в форме — сетка свободного, а не 09:00, которое могло пройти или быть занято
-    if (first) setSide({ kind: 'new', slot: { doctorId: first.id, date, minutes: null } })
+    // На «Все врачи» врач — по умолчанию: выберут пациента — подставим лечащего
+    if (first) setSide({ kind: 'new', slot: { doctorId: first.id, date, minutes: null, soft: view === 'all' } })
   }
 
   // Широкий экран: справа от сетки — сводка дня (кто следующий, что требует внимания, свободное время).
@@ -744,15 +747,16 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
       {selected && <AppointmentPanel key={`${selected.id}-${side?.kind === 'appointment' ? side.intent ?? '' : ''}`} appointment={selected} me={me} onClose={close} onOpenPatient={onOpenPatient}
         intent={side?.kind === 'appointment' ? side.intent : undefined}
         onMedical={(patient, tab) => setMedical({ patient, from: selected.id, tab })}
-        onBook={(slot, patient) => setSide({ kind: 'new', slot, patient })} />}
+        onBook={(slot, patient) => setSide({ kind: 'new', slot: { ...slot, next: true }, patient })} />}
+      {/* «Записать на следующий визит» / «снова» из карточки приёма (next): этап плана и ближайшее свободное время */}
       {side?.kind === 'new' && (
         <NewAppointmentPanel slot={side.slot} me={me} initialPatient={side.patient} initialContact={side.contact} nowDoctorId={firstBookable()?.id} onClose={close}
-          onCreated={(a) => setSide({ kind: 'appointment', id: a.id, fallback: a })} />
+          onCreated={(a) => setSide({ kind: 'appointment', id: a.id, fallback: a })} onOpenAppointment={(a) => setSide({ kind: 'appointment', id: a.id, fallback: a })} />
       )}
       {quick && (
         <QuickMenu key={quick.a.id} appointment={withCarried.find((x) => x.id === quick.a.id) ?? quick.a} me={me} at={quick.at} onClose={closeQuick}
           onOpen={(a, intent) => setSide({ kind: 'appointment', id: a.id, fallback: a, intent })}
-          onOpenPatient={onOpenPatient} onBook={(slot, patient) => setSide({ kind: 'new', slot, patient })} />
+          onOpenPatient={onOpenPatient} onBook={(slot, patient) => setSide({ kind: 'new', slot: { ...slot, next: true }, patient })} />
       )}
       {reviewAsksOpen && <ReviewAsksDialog doctorName={doctorName} onClose={() => setReviewAsksOpen(false)} />}
     </div>

@@ -113,10 +113,13 @@ test('карточка пациента: визиты, неявки, долг; �
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: 'Айгуль Т.' }))
   const panel = await screen.findByRole('complementary', { name: 'Карточка пациента' })
-  // Сводка: визиты и неявки, следующий приём, долг — сразу, без вкладок
-  expect(await within(panel).findByText('Визитов')).toBeInTheDocument()
-  expect(panel).toHaveTextContent(/не пришёл 1/)
+  // Шапка: долг и неявки строкой, «Следующий визит ›» — ссылкой; плиток «Визитов / Следующий» нет (повторяли вкладку)
+  expect(await within(panel).findByText('1 неявка')).toBeInTheDocument()
   expect(panel).toHaveTextContent(/Долг\s*1\s500 сом/)
+  expect(within(panel).getByRole('button', { name: /^Следующий визит: .*12:00 ›$/ })).toBeInTheDocument()
+  expect(within(panel).queryByText('Визитов')).not.toBeInTheDocument()
+  expect(within(panel).getByRole('heading', { name: 'Предстоящие' })).toBeInTheDocument()
+  expect(within(panel).getByRole('heading', { name: 'Прошлые визиты' })).toBeInTheDocument()
   // «Визиты» — вкладка по умолчанию: история с заметкой врача
   expect(within(panel).getByRole('tab', { name: 'Визиты' })).toHaveAttribute('aria-selected', 'true')
   expect(panel).toHaveTextContent('Пломба')
@@ -131,11 +134,6 @@ test('карточка пациента: визиты, неявки, долг; �
   expect(await within(panel).findByRole('button', { name: /Долг 1\s500 сом — приём/ })).toBeInTheDocument()
   expect(await within(panel).findByText(/Расходы по пациенту/)).toHaveTextContent(/2\s000 сом/)
   expect(within(panel).getByRole('list', { name: 'Расходы по пациенту' })).toHaveTextContent(/Зуботехническая лаборатория · 2\s000 сом/)
-  // «Медкарта» — одна точка входа: карта зубов и план лечения, анкета, снимки
-  await userEvent.click(within(panel).getByRole('tab', { name: 'Медкарта' }))
-  expect(within(panel).getByRole('button', { name: 'Открыть медкарту' })).toBeInTheDocument()
-  expect(panel).toHaveTextContent('Карта зубов и план лечения')
-
   await userEvent.click(within(panel).getByRole('button', { name: '＋ Записать' }))
   const form = await screen.findByRole('complementary', { name: 'Новая запись' })
   expect(within(form).getByText('Айгуль Т.')).toBeInTheDocument()

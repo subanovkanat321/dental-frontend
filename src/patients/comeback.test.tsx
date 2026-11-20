@@ -68,9 +68,9 @@ test('«Позвать снова»: деньги на столе, «Tish вер
   expect(first).toHaveTextContent('Лечение не закончено · зуб 36 — Коронка · Чистка')
   expect(first).toHaveTextContent(/18\s000 сом/)
   // В строке одно действие — «Пригласить»; «Записать» — в «⋯»
-  expect(within(first).queryByRole('button', { name: 'Записать' })).toBeNull()
+  expect(within(first).queryByRole('button', { name: /^Записать( ·|$)/ })).toBeNull()
   await userEvent.click(within(first).getByRole('button', { name: 'Ещё: Айгуль Т.' }))
-  expect(within(first).getByRole('menuitem', { name: 'Записать' })).toBeInTheDocument()
+  expect(within(first).getByRole('menuitem', { name: /^Записать( ·|$)/ })).toBeInTheDocument()
   await userEvent.keyboard('{Escape}')
   expect(within(first).queryByRole('menu')).toBeNull()
 
@@ -259,7 +259,7 @@ test('«Отменили»: «Записать» — «Новая запись»
   await userEvent.click(await findSub('Позвать снова'))
   const list = await screen.findByRole('list', { name: 'Кого вернуть' })
   await userEvent.click(within(list).getByRole('button', { name: 'Ещё: Динара Ж.' }))
-  await userEvent.click(within(list).getByRole('menuitem', { name: 'Записать' }))
+  await userEvent.click(within(list).getByRole('menuitem', { name: /^Записать( ·|$)/ }))
   const form = await screen.findByRole('complementary', { name: 'Новая запись' })
   expect(form).toHaveTextContent('Динара Ж.')
   expect(within(form).getByRole('combobox', { name: 'Врач' })).toHaveTextContent('Дастан Т.')

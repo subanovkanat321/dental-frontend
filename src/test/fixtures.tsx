@@ -65,10 +65,9 @@ export function openItem(item: string) {
   })
 }
 
-/** Карточка пациента → вкладка «Медкарта» → «Открыть медкарту» (карта зубов и план лечения, анкета, снимки). */
+/** Карточка пациента → «Медкарта»: вкладка сразу открывает медкарту (карта зубов и план лечения, анкета, снимки). */
 export async function openMedicalTab() {
   await userEvent.click(await screen.findByRole('tab', { name: 'Медкарта' }))
-  await userEvent.click(screen.getByRole('button', { name: 'Открыть медкарту' }))
 }
 
 /** Карточка приёма → оплата: не оплачено — строка «Принять оплату», раскрыть её и вернуть форму. */

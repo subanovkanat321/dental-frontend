@@ -162,7 +162,8 @@ test('помощник в боте, «✏️ Изменить» записи: п
 
   const panel = await screen.findByRole('complementary', { name: 'Новая запись' })
   expect(await within(panel).findByText('Нурлан К.')).toBeInTheDocument()
-  expect(within(panel).getByText(/15:00/)).toBeInTheDocument()
+  // Время из черновика — и в шапке формы, и на кнопке «Записать · пт 13 нояб, 15:00»
+  expect(within(panel).getByRole('button', { name: /^Записать · .*15:00$/ })).toBeInTheDocument()
 })
 
 test('«＋ Новый пациент» открыт — «📇 Из контактов телефона» не пропадает: имя и номер в форму', async () => {

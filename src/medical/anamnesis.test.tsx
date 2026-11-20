@@ -41,8 +41,10 @@ test('медкарта: анкета с плашкой — отметить бо
   const user = userEvent.setup()
   renderApp()
   await user.click(await screen.findByRole('button', { name: 'Айгуль Т.' }))
-  // Плашка — уже в карточке пациента
-  expect(await screen.findByRole('note', { name: 'Важно перед лечением' })).toHaveTextContent('Аллергия: лидокаин')
+  // Пилюля «⚠ Аллергия…» — уже в шапке карточки пациента, как в карточке приёма (не плашка с полоской слева)
+  const pill = await screen.findByRole('button', { name: /^Важно перед лечением/ })
+  expect(pill).toHaveTextContent('⚠Аллергия: лидокаин')
+  expect(pill.closest('.panel-head')).not.toBeNull()
   await openMedicalTab()
   await medTab('Анкета')
   const form = await screen.findByRole('form', { name: 'Анкета пациента' })

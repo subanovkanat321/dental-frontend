@@ -3,14 +3,14 @@ import { useEffect, useRef, useState } from 'react'
 
 import { api, unwrap, type Schemas } from '../api/client'
 import { useAnamnesis } from '../api/anamnesis'
-import { MedAlerts } from '../medical/Anamnesis'
+import { MedAlertPill } from '../medical/Anamnesis'
 import { useClose } from '../lib/useClose'
 import { useBack } from '../lib/back'
 import { canEditDoctor, isAssistant, seesAdvance, seesMoneyOf, seesAllMoney } from '../lib/roles'
 import { debtLine, remindedText, seesDebts } from '../lib/debt'
 import { DebtPromiseForm, DebtRemindForm } from '../cash/DebtRemind'
 import { formatPhone, shortDate, somText } from '../lib/time'
-import { ageYears, yearsText } from '../lib/age'
+import { ageYears, childText, yearsText } from '../lib/age'
 import { ContactMenu } from '../schedule/ContactMenu'
 import { talkItems, type ContactItem } from '../schedule/contactItems'
 import { invitedHint } from '../schedule/botInvite'
@@ -45,17 +45,27 @@ const PAST = 5
 
 type Tab = 'visits' | 'medical' | 'money' | 'more'
 
+/** «1 неявка», «3 неявки» — в строке денег шапки. */
+function noShowText(n: number | undefined): string {
+  const k = n ?? 0
+  const m10 = k % 10
+  const m100 = k % 100
+  const word = m10 === 1 && m100 !== 11 ? 'неявка' : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? 'неявки' : 'неявок'
+  return `${k} ${word}`
+}
+
 /** «34 года»: полных лет на сегодня по дате рождения 'YYYY-MM-DD'. */
 function ageText(birth: string): string {
   return yearsText(ageYears(birth) ?? 0)
 }
 
 /**
- * Карточка пациента справа — сверху вниз: шапка (имя, телефон, возраст, бот или WhatsApp) → аллергии
- * → «＋ Записать» и связаться → сводка (визиты, неявки, следующий приём, долг) → вкладки: «Визиты»
- * (записан, история — первые 5 и «Показать все»), «Медкарта» (карта зубов и план лечения, анкета,
- * снимки — во всю ширину), «Деньги» (долги, расходы), «Прочее» (данные, откуда узнал, представитель, лист
- * ожидания, семья, договор). Ребёнок — бейдж «Ребёнок, 7 лет» и строка представителя в шапке.
+ * Карточка пациента справа — сверху вниз: шапка (имя, телефон, возраст, бот или WhatsApp; ⚠ аллергия пилюлей, как в
+ * карточке приёма; метки; деньги и неявки строкой; лечащий врач; «Следующий визит ›») → «＋ Записать» и связаться →
+ * прогресс плана → вкладки: «Визиты» (предстоящие, прошлые — первые 5 и «Показать все»), «Медкарта» (нажатие сразу
+ * открывает её во всю ширину), «Деньги» (долги, расходы), «Прочее» (данные, откуда узнал, представитель, лист ожидания,
+ * семья, договор). Ребёнок — бейдж «Ребёнок, 7 лет» и строка представителя в шапке. Редкое (задача, лаборатория,
+ * договор) — в «⋯». Плиток «Визитов / Следующий» нет: они повторяли вкладку «Визиты» (UX-аудит 2026-11-20).
  */
 export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpenAppointment, onOpenPatient }: {
   patientId: number
@@ -149,7 +159,7 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
       </aside>
     )
   }
-  const { patient, done, noShow, upcoming = [], past = [] } = card.data
+  const { patient, noShow, upcoming = [], past = [] } = card.data
   // Ассистент меняет пациента и лист ожидания только у пациентов своих врачей (или ещё ни разу не
   // записанных) — как сервер (PatientAccess); чужого он только смотрит
   const visits = [...upcoming, ...past]
@@ -183,7 +193,10 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
     ...(staff || debtRows.length || seesAdvance(me) ? [['money', 'Деньги'] as [Tab, string]] : []),
     ['more', 'Прочее'],
   ]
-  const shown = tabs.some(([key]) => key === tab) ? tab : 'visits'
+  const shown = tabs.some(([key]) => key === tab) && tab !== 'medical' ? tab : 'visits'
+  const child = childText(patient?.birthDate)
+  // «＋ Заказ в лабораторию» — тем, кто лечит (регистратуре не нужен)
+  const labs = Boolean(me.admin || me.doctorId != null || isAssistant(me))
   const about = [
     patient?.birthDate ? `${shortDate(`${patient.birthDate}T12:00:00Z`)} (${ageText(patient.birthDate)})` : null,
     patient?.workplace ? `💼 ${patient.workplace}` : null,
@@ -195,15 +208,21 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
       <header className="panel-head">
         <div>
           <h2>{patient?.fullName}{patient?.vip && <span className="patient-vip" role="img" aria-label="ВИП — особое внимание" title="ВИП — особое внимание"> ⭐</span>}</h2>
+          {/* «+996 … · 38 лет · в боте»; без телефона — без «·» в начале; у ребёнка возраст — в бейдже «Ребёнок, 7 лет» */}
           <span className="hint">
-            {patient?.phone && <span className="num">{formatPhone(patient.phone)}</span>}
-            {patient?.birthDate && ` · ${ageText(patient.birthDate)}`}
-            {patient?.telegram ? <> · <span className="tone-ok">в боте</span></> : ` · без бота — WhatsApp${patient?.botInvitedAt ? ` · ${invitedHint(patient.botInvitedAt)}` : ''}`}
+            {[
+              patient?.phone ? <span key="phone" className="num">{formatPhone(patient.phone)}</span> : null,
+              patient?.birthDate && !child ? <span key="age" className="nowrap">{ageText(patient.birthDate)}</span> : null,
+              patient?.telegram ? <span key="bot" className="tone-ok nowrap">в боте</span>
+                : <span key="bot">без бота — WhatsApp{patient?.botInvitedAt ? ` · ${invitedHint(patient.botInvitedAt)}` : ''}</span>,
+            ].filter(Boolean).flatMap((part, i) => (i ? [' · ', part] : [part]))}
           </span>
+          {/* Важное из анкеты — той же пилюлей, что в карточке приёма (один вид предупреждения во всём продукте) */}
+          <MedAlertPill an={anamnesis.data} onOpen={patient ? () => onMedical(patient) : undefined} />
           <KidInfo patient={patient} />
           {/* Свои метки клиники (V239): чипы; руководитель и регистратура нажимают — список с ✓ */}
           {patient && <PatientTagsLine patient={patient} me={me} />}
-          {(moneyLine || treatingName) && (
+          {(moneyLine || treatingName || next || (noShow ?? 0) > 0) && (
             <div className="patient-facts">
               {moneyLine && (
                 <p className="patient-money-line num">
@@ -218,24 +237,30 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
                     <button type="button" className="link patient-advance" onClick={() => setTab('money')}
                       aria-label={`${advanceText(advance.data!)} — открыть «Деньги»`}>{advanceText(advance.data!)}</button>
                   )}
+                  {(noShow ?? 0) > 0 && <><span className="hint"> · </span><span className="summary-bad">{noShowText(noShow)}</span></>}
                 </p>
               )}
+              {!moneyLine && (noShow ?? 0) > 0 && <p className="patient-money-line"><span className="summary-bad">{noShowText(noShow)}</span></p>}
               {treatingName && <p className="hint patient-treating">Лечащий врач: {treatingName}</p>}
+              {/* Ближайшая запись — строкой-ссылкой: нажать — карточка приёма */}
+              {next && (onOpenAppointment
+                ? <button type="button" className="link patient-next" onClick={() => onOpenAppointment(next.id)}>Следующий визит: <span className="num">{shortDate(next.startAt, true)}</span> ›</button>
+                : <p className="hint patient-next">Следующий визит: <span className="num">{shortDate(next.startAt, true)}</span></p>)}
             </div>
           )}
         </div>
         <div className="panel-head-actions">
           {/* Редкие действия — в «⋯»: договор с пациентом (по желанию клиники, V209) */}
-          {patient && mine && !isAssistant(me) && (
-            <MoreActions onContract={() => {
-              setTab('more')
-              setContractAsked((a) => ({ id: patient.id, n: a?.id === patient.id ? a.n + 1 : 1 }))
-            }} />
+          {patient && (
+            <MoreActions onTask={() => setAdding('task')} onLab={labs ? () => setAdding('lab') : undefined}
+              onContract={mine && !isAssistant(me) ? () => {
+                setTab('more')
+                setContractAsked((a) => ({ id: patient.id, n: a?.id === patient.id ? a.n + 1 : 1 }))
+              } : undefined} />
           )}
           <button type="button" className="btn ghost" aria-label="Закрыть" onClick={onClose}>✕</button>
         </div>
       </header>
-      <MedAlerts an={anamnesis.data} />
       <div className="patient-actions">
         <button type="button" className="btn primary" onClick={() => patient && onBook(patient)}>＋ Записать</button>
         {/* Есть представитель — звоним и пишем ему */}
@@ -243,52 +268,40 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
       </div>
       {botInviteOf.sheet}
 
-      {/* Сводка: визиты (и неявки), ближайшая запись; долг — строкой денег в шапке */}
-      <dl className="patient-summary">
-        <div><dt>Визитов</dt><dd><span className="num">{done ?? 0}</span>
-          {(noShow ?? 0) > 0 && <span className="summary-bad">не пришёл <span className="num">{noShow}</span></span>}</dd></div>
-        <div><dt>Следующий</dt><dd>{next ? <span className="num">{shortDate(next.startAt, true)}</span> : 'не записан'}</dd></div>
-      </dl>
       {/* Прогресс плана лечения — тем, кто видит медкарту (сервер: ChartService); суммы — не ассистенту */}
       {patient && <PlanProgressLine patientId={patient.id} enabled={clinical} />}
 
-      {/* «＋ Задача» и «＋ Заказ в лабораторию» — одной строкой ссылок, как в карточке приёма (раньше — две кнопки
-          справа, каждая на своей строке); ниже — открытые задачи и работы техника, если есть */}
-      {patient && (
-        <div className="patient-adds">
-          <button type="button" className="link" onClick={() => setAdding('task')}>＋ Задача</button>
-          <button type="button" className="link" onClick={() => setAdding('lab')}>＋ Заказ в лабораторию</button>
-        </div>
-      )}
+      {/* «＋ Задача» и «＋ Заказ в лабораторию» — в «⋯» шапки; здесь — открытые задачи и работы техника, если есть */}
       {patient && <PatientTasks patient={{ id: patient.id, fullName: patient.fullName }} adding={adding === 'task'} onAdding={(on) => setAdding(on ? 'task' : null)} />}
       {patient && <PatientLab me={me} patient={{ id: patient.id, fullName: patient.fullName }} adding={adding === 'lab'} onAdding={(on) => setAdding(on ? 'lab' : null)} />}
 
       <div className="segments tabs" role="tablist" aria-label="Разделы карточки пациента">
+        {/* «Медкарта» — сразу открывает медкарту во всю ширину: вкладка-заглушка с одной кнопкой была лишним нажатием */}
         {tabs.map(([key, title]) => (
-          <button key={key} type="button" role="tab" aria-selected={shown === key} aria-pressed={shown === key} onClick={() => setTab(key)}>{title}</button>
+          <button key={key} type="button" role="tab" aria-selected={shown === key} aria-pressed={shown === key}
+            onClick={() => (key === 'medical' ? patient && onMedical(patient) : setTab(key))}>{title}</button>
         ))}
       </div>
 
-      {shown === 'visits' && (
+      {/* Новый пациент — одно спокойное пустое состояние вместо трёх («0 / не записан», «Нет будущих», «Визитов не было») */}
+      {shown === 'visits' && visits.length === 0 && (
+        <EmptyState compact title="Ещё не был в клинике"
+          action={botInviteOf.item ? <button type="button" className="link" onClick={botInviteOf.item.onSelect}>📲 Пригласить в бот</button> : undefined} />
+      )}
+      {shown === 'visits' && visits.length > 0 && (
         <>
           <section>
-            <h3>Записан</h3>
-            {upcoming.length ? <ul className="visits">{upcoming.map(line)}</ul> : <p className="hint">Нет будущих записей</p>}
+            <h3>Предстоящие</h3>
+            {upcoming.length ? <ul className="visits">{upcoming.map(line)}</ul> : <p className="hint">Не записан</p>}
           </section>
-          <section>
-            <h3>История</h3>
-            {past.length ? <ul className="visits">{shownPast.map(line)}</ul> : <EmptyState compact title="Визитов ещё не было" />}
-            {past.length > shownPast.length && <button type="button" className="link" onClick={() => setAllPast(true)}>Показать все ({past.length})</button>}
-          </section>
+          {past.length > 0 && (
+            <section>
+              <h3>Прошлые визиты</h3>
+              <ul className="visits">{shownPast.map(line)}</ul>
+              {past.length > shownPast.length && <button type="button" className="link" onClick={() => setAllPast(true)}>Показать все ({past.length})</button>}
+            </section>
+          )}
         </>
-      )}
-
-      {/* Медкарта — одна точка входа: карта зубов и план лечения, анкета, заметки, снимки */}
-      {shown === 'medical' && (
-        <section className="patient-medical">
-          <p>Карта зубов и план лечения, анкета, заметки о визитах, снимки.</p>
-          <button type="button" className="btn" onClick={() => patient && onMedical(patient)}>Открыть медкарту</button>
-        </section>
       )}
 
       {shown === 'money' && (
@@ -334,11 +347,11 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
 }
 
 /**
- * «⋯» в шапке карточки, рядом с ✕: редкие действия с пациентом — пока одно, «📄 Оформить договор»
- * (договор по желанию: строки договора у каждого пациента нет). Карточка под кнопкой; закрывается
+ * «⋯» в шапке карточки, рядом с ✕: редкие действия с пациентом — «＋ Задача», «＋ Заказ в лабораторию» (не регистратуре)
+ * и «📄 Оформить договор» (договор по желанию: строки договора у каждого пациента нет; не ассистенту). Карточка под кнопкой; закрывается
  * нажатием мимо, Esc и «назад» телефона — карточка пациента при этом остаётся.
  */
-function MoreActions({ onContract }: { onContract: () => void }) {
+function MoreActions({ onTask, onLab, onContract }: { onTask: () => void; onLab?: () => void; onContract?: () => void }) {
   const [open, setOpen] = useState(false)
   const wrap = useRef<HTMLDivElement>(null)
   useBack(open ? () => setOpen(false) : null)
@@ -368,9 +381,13 @@ function MoreActions({ onContract }: { onContract: () => void }) {
         onClick={() => setOpen(!open)}>⋯</button>
       {open && (
         <div className="pop-menu more-actions-menu" role="menu" aria-label="Ещё действия">
-          <button type="button" role="menuitem" className="menu-item" onClick={() => { setOpen(false); onContract() }}>
-            📄 Оформить договор
-          </button>
+          <button type="button" role="menuitem" className="menu-item" onClick={() => { setOpen(false); onTask() }}>＋ Задача</button>
+          {onLab && <button type="button" role="menuitem" className="menu-item" onClick={() => { setOpen(false); onLab() }}>＋ Заказ в лабораторию</button>}
+          {onContract && (
+            <button type="button" role="menuitem" className="menu-item" onClick={() => { setOpen(false); onContract() }}>
+              📄 Оформить договор
+            </button>
+          )}
         </div>
       )}
     </div>

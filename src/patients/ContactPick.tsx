@@ -1,5 +1,6 @@
 import { useState } from 'react'
 
+import { HelpHint } from '../help/HelpHint'
 import { matches } from '../lib/useMedia'
 import { COPY_HINT, nameFromText } from '../schedule/contactText'
 
@@ -52,11 +53,11 @@ export function ContactPick({ onContact }: { onContact: (name: string, raw: stri
   return (
     <div className="paste-number">
       <button type="button" className="link" onClick={() => void pasteNumber()}>📋 Вставить номер</button>
-      {hint
-        ? <p className="hint small" role="status">{hint}</p>
-        : matches('(pointer: coarse)') && (
-          <p className="hint small">В Контактах удерживайте номер → «Скопировать». Ещё удобнее: Контакты → «Поделиться контактом» → бот Tish.</p>
-        )}
+      {/* Как скопировать номер — в «?», а не тремя строками под кнопкой (UX-аудит 2026-11-20) */}
+      {!hint && matches('(pointer: coarse)') && (
+        <HelpHint title="Как вставить номер">В Контактах удерживайте номер → «Скопировать». Ещё удобнее: Контакты → «Поделиться контактом» → бот Tish.</HelpHint>
+      )}
+      {hint && <p className="hint small" role="status">{hint}</p>}
     </div>
   )
 }

@@ -96,6 +96,24 @@
 .price-hints { display: flex; flex-wrap: wrap; gap: 6px; }
 /* «⚡ Сейчас» в «Новой записи»: чип и пояснение одной строкой (тесно — пояснение строкой ниже) */
 .now-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.now-pick > span:first-child { margin-right: 2px; }
+.now-pick .help-hint { margin-left: 0; }
+/* «Новая запись» (UX-аудит 2026-11-20): о выбранном пациенте — под его именем; «Записать · пт 20 нояб, 13:00» прилипает
+   к низу панели — видна без прокрутки и на компьютере 1440×900. bottom/margin — минус отступ панели: Chrome держит
+   липкий блок внутри отступов прокручиваемой панели */
+.booking-context { display: grid; gap: 4px; justify-items: start; margin-top: 6px; font-size: .9rem; }
+.booking-context p { margin: 0; }
+.booking-context .booking-already.tone-wait { padding: 4px 10px; border-radius: var(--r-md); background: var(--wait-bg); color: var(--wait-ink); font-weight: 500; }
+.booking-context .tone-bad { color: var(--bad-ink); font-weight: 500; }
+.booking-context .med-pill { margin-top: 0; }
+.new-appt-bar { position: sticky; bottom: -18px; z-index: 3; display: grid; gap: 6px; margin: 4px -18px -18px; padding: 10px 18px 18px;
+  background: var(--card); border-top: 1px solid var(--separator); }
+.new-appt-bar .btn { width: 100%; min-height: 44px; }
+.new-appt-when { font-weight: 500; }
+@media (max-width: 760px) {
+  .new-appt-bar { bottom: calc(-14px - env(safe-area-inset-bottom)); margin: 4px -14px calc(-14px - env(safe-area-inset-bottom));
+    padding: 10px 14px calc(14px + env(safe-area-inset-bottom)); }
+}
 .price-hints .chip { cursor: pointer; border: 1px solid var(--line-strong); background: var(--card); color: var(--text); font: inherit; font-size: .85rem; }
 .payment-part, .payment-extra-row, .payment-split { display: grid; gap: 8px; padding: 8px 10px; border-radius: var(--r-sm); background: var(--sunken); }
 /* Оплата по шагам (PaymentBox): номер шага слева — «сколько стоит → сколько заплатил → чем» */
@@ -513,7 +531,7 @@ p.hours-off { margin: 4px 0 0; font-size: .9rem; }
 .news-item p { margin: 0; white-space: pre-wrap; }
 
 /* Анкета пациента и плашка «важно перед лечением» */
-.med-alert { display: grid; gap: 2px; padding: 8px 12px; border-radius: var(--r-md); background: var(--wait-bg); color: var(--wait-ink); font-weight: 600; font-size: .9rem; border-left: 3px solid currentColor; }
+.med-alert { display: grid; gap: 2px; padding: 8px 12px; border-radius: var(--r-md); background: var(--wait-bg); color: var(--wait-ink); font-weight: 600; font-size: .9rem; }
 .med-alert.danger { background: var(--bad-bg); color: var(--bad-ink); }
 /* Важное из анкеты пилюлей у времени приёма (2026-11-20): жёлтая, аллергия — красная; длинный текст — с многоточием */
 .med-pill { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; min-height: 28px; margin-top: 4px; padding: 2px 10px; border: 0; border-radius: 999px;
@@ -2136,16 +2154,6 @@ button.status-pill:focus-visible { outline: 2px solid var(--accent); outline-off
 .patient-actions .action-menu-wrap { flex: 2 1 0; }
 .patient-actions .action-menu-wrap > .btn { width: 100%; justify-content: center; }
 /* «＋ Задача   ＋ Заказ в лабораторию» — одной строкой ссылок под сводкой, как в карточке приёма */
-.patient-adds { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: -4px; }
-.patient-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: 6px; margin: 0; }
-.patient-summary .summary-bad { display: block; color: var(--bad-ink); font-size: .85rem; font-weight: 400; }
-.patient-summary > div { display: grid; align-content: start; gap: 0; padding: 6px 10px; border-radius: var(--r-md); background: var(--sunken); min-width: 0; }
-.patient-summary dt { font-size: .8rem; color: var(--hint); }
-.patient-summary dd { margin: 0; font-weight: 500; font-size: .95rem; overflow-wrap: anywhere; }
-.patient-summary .tone-bad { background: var(--bad-bg); }
-.patient-summary .tone-bad dt, .patient-summary .tone-bad dd { color: var(--bad-ink); }
-.patient-summary .tone-wait { background: var(--wait-bg); }
-.patient-summary .tone-wait dt, .patient-summary .tone-wait dd { color: var(--wait-ink); }
 .patient-card .segments.tabs { justify-self: stretch; flex-wrap: nowrap; overflow: visible; }
 .patient-card .segments.tabs button { flex: 1 1 0; min-width: 0; padding-inline: 6px; }
 .patient-card .patient-medical, .patient-card .patient-money, .patient-card .patient-more { gap: 10px; }
@@ -3087,6 +3095,10 @@ button.cash-entry:hover, button.cash-entry.active { background: var(--sunken); }
 .patient-money-line .patient-debt:hover { text-decoration: underline; }
 .patient-money-line .patient-advance { color: var(--ok-ink); font-weight: 600; text-decoration: none; }
 .patient-money-line .patient-advance:hover { text-decoration: underline; }
+.patient-money-line .summary-bad { color: var(--bad-ink); }
+.patient-facts .patient-next { justify-self: start; padding: 0; text-align: left; font-size: inherit; }
+.patient-card .panel-head > div:first-child { min-width: 0; }
+.patient-card .panel-head .med-pill { display: flex; width: fit-content; max-width: 100%; }
 /* Аванс пациента (V243) во вкладке «Деньги»: остаток, кнопки, история списком кассы дня */
 .advance-box { margin: 0 0 16px; padding-bottom: 12px; border-bottom: 1px solid var(--separator); }
 .advance-box h3 { margin: 0 0 6px; }

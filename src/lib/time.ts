@@ -74,6 +74,13 @@ export function dayTitle(date: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1)
 }
 
+const SHORT_DAY = new Intl.DateTimeFormat('ru-RU', { timeZone: 'UTC', weekday: 'short', day: 'numeric', month: 'short' })
+
+/** '2026-11-20' → «пт 20 нояб» — коротко, для кнопки «Записать · пт 20 нояб, 13:00». */
+export function shortDay(date: string): string {
+  return SHORT_DAY.format(new Date(`${date}T00:00:00Z`)).replace(/\./g, '').replace(',', '')
+}
+
 /**
  * Пустой день для пустого состояния: «На сегодня записей нет», «На завтра…», «На 12 ноября…»;
  * прошедший день — «Вчера записей не было», «3 ноября записей не было».

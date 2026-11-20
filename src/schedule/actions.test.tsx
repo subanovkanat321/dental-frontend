@@ -132,7 +132,7 @@ test('нажать на пустое место у врача — «Новая �
   await userEvent.click(within(within(panel).getByRole('group', { name: 'Услуга' })).getByRole('button', { name: /Чистка/ }))
   expect(within(panel).getByLabelText('Длительность')).toHaveAttribute('data-value', '60')
   await userEvent.click(within(panel).getByLabelText(/Хочет раньше/))
-  await userEvent.click(within(panel).getByRole('button', { name: 'Записать' }))
+  await userEvent.click(within(panel).getByRole('button', { name: /^Записать( ·|$)/ }))
 
   // После записи справа — карточка нового приёма
   expect(await screen.findByRole('complementary', { name: 'Карточка приёма' })).toHaveTextContent('Нурлан К.')
@@ -173,16 +173,16 @@ test('новый пациент с номером, который уже ест�
   // Время не подставлено — выбрать в сетке свободного
   await userEvent.click(await within(panel).findByRole('button', { name: '23:00' }))
   // Выбрали время — фокус на «Записать» (с телефона дальше сам прокрутит к ней)
-  expect(within(panel).getByRole('button', { name: 'Записать' })).toHaveFocus()
+  expect(within(panel).getByRole('button', { name: /^Записать( ·|$)/ })).toHaveFocus()
   // Услуга — до времени: от неё длительность, а от длительности — свободное время
   const service = within(panel).queryByRole('group', { name: 'Услуга' })
   if (service) expect(service.compareDocumentPosition(within(panel).getByRole('button', { name: '23:00' })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-  await userEvent.click(within(panel).getByRole('button', { name: 'Записать' }))
+  await userEvent.click(within(panel).getByRole('button', { name: /^Записать( ·|$)/ }))
 
   expect(await within(panel).findByText(/Пациент с этим номером уже есть: Айжан Б\./)).toBeInTheDocument()
   expect(phone).toBe('+996555000111')
   await userEvent.click(within(panel).getByRole('button', { name: 'Выбрать его' }))
-  await userEvent.click(within(panel).getByRole('button', { name: 'Записать' }))
+  await userEvent.click(within(panel).getByRole('button', { name: /^Записать( ·|$)/ }))
   expect(await screen.findByRole('complementary', { name: 'Карточка приёма' })).toHaveTextContent('Айжан Б.')
   expect(created.patientId).toBe(8)
 })
@@ -239,7 +239,7 @@ test('время успели занять (409 time-taken) — «Время з�
   await userEvent.type(within(panel).getByLabelText('Найти пациента'), 'Нур')
   await userEvent.click(await within(panel).findByRole('button', { name: /Нурлан К\./ }))
   const before = slotCalls
-  await userEvent.click(within(panel).getByRole('button', { name: 'Записать' }))
+  await userEvent.click(within(panel).getByRole('button', { name: /^Записать( ·|$)/ }))
 
   await waitFor(() => expect(within(panel).getAllByRole('alert')).toHaveLength(1))
   expect(within(panel).getByRole('alert')).toHaveTextContent('Время занято')

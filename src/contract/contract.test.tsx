@@ -271,7 +271,10 @@ test('ассистенту «⋯ → Оформить договор» нет: �
   renderApp()
   await user.click(await screen.findByRole('button', { name: 'Айжан Вымышленная' }))
   await screen.findByRole('button', { name: '＋ Записать' })
-  expect(screen.queryByRole('button', { name: 'Ещё действия' })).not.toBeInTheDocument()
+  // В «⋯» у ассистента — задача и лаборатория, а договора нет
+  await user.click(screen.getByRole('button', { name: 'Ещё действия' }))
+  expect(screen.getByRole('menuitem', { name: '＋ Задача' })).toBeInTheDocument()
+  expect(screen.queryByRole('menuitem', { name: '📄 Оформить договор' })).not.toBeInTheDocument()
 })
 
 test('«Настройки → Договор с пациентом»: «Предлагать договор всем пациентам» — сохраняется сразу', async () => {

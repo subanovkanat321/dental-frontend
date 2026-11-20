@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw'
 import { useRef, useState } from 'react'
 
 import type { Schemas } from '../api/client'
-import { addDays, dayTitle, slotInstant, todayIn, weekStart } from '../lib/time'
+import { addDays, dayTitle, shortDay, slotInstant, todayIn, weekStart } from '../lib/time'
 import { me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 import { waitForSlow } from '../test/wait'
@@ -89,7 +89,7 @@ test('дневной врач, приём 23:45–00:45: сетка продле
   column.getBoundingClientRect = () => ({ top: 0, bottom: 3000, left: 0, right: 300, width: 300, height: 3000, x: 0, y: 0, toJSON: () => ({}) })
   fireEvent.click(column, { clientY: PAD + (24 * 60 + 30 - 9 * 60) * PX + 2 })
   const panel = await screen.findByRole('complementary', { name: 'Новая запись' })
-  expect(panel).toHaveTextContent(dayTitle(addDays(day, 1)))
+  expect(panel).toHaveTextContent(`00:30 · ${shortDay(addDays(day, 1))}`)
 
   // Следующий день: тот же приём с 00:00 «со вчера», сетка с полуночи и без продления
   await userEvent.click(screen.getByRole('button', { name: 'Следующий день' }))

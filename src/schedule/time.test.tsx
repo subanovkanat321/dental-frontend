@@ -46,7 +46,9 @@ test('пришёл без записи: «⚡ Сейчас» в 10:47 — вре
   const time = within(panel).getByLabelText('Время')
   expect(time).toHaveValue('10:45')
   expect((time as HTMLInputElement).checkValidity()).toBe(true)
-  expect(within(panel).getByText('Пациент пришёл без записи: приём с этой минуты, без напоминаний.')).toBeInTheDocument()
+  // Пояснение к «⚡ Сейчас» — в «?», а не строкой под чипом (UX-аудит 2026-11-20)
+  expect(within(panel).getByRole('button', { name: '⚡ Сейчас' })).toHaveAttribute('aria-pressed', 'true')
+  expect(within(panel).getByRole('button', { name: 'Подсказка: Сейчас' })).toBeInTheDocument()
   await userEvent.type(within(panel).getByLabelText('Найти пациента'), 'Нур')
   await userEvent.click(await within(panel).findByRole('button', { name: /Нурлан К\./ }))
   await userEvent.click(within(panel).getByRole('button', { name: 'Начать приём' }))
@@ -74,7 +76,7 @@ test('«⚡ Сейчас» подставляет сегодня и время, 
   await userEvent.click(now)
   expect(now).toHaveAttribute('aria-pressed', 'false')
   expect(await within(panel).findByRole('group', { name: 'Свободное время' })).toBeInTheDocument()
-  expect(within(panel).getByRole('button', { name: 'Записать' })).toBeInTheDocument()
+  expect(within(panel).getByRole('button', { name: /^Записать( ·|$)/ })).toBeInTheDocument()
 })
 
 test('«＋ Новая запись» — время не подставлено (не 09:00, которое прошло): сетка свободного', async () => {
@@ -87,7 +89,7 @@ test('«＋ Новая запись» — время не подставлено
   expect(within(panel).queryByLabelText('Время', { selector: 'input' })).not.toBeInTheDocument()
   await userEvent.type(within(panel).getByLabelText('Найти пациента'), 'Нур')
   await userEvent.click(await within(panel).findByRole('button', { name: /Нурлан К\./ }))
-  await userEvent.click(within(panel).getByRole('button', { name: 'Записать' }))
+  await userEvent.click(within(panel).getByRole('button', { name: /^Записать( ·|$)/ }))
   expect(within(panel).getByRole('alert')).toHaveTextContent('Выберите время')
 })
 

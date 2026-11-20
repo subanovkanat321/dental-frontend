@@ -104,7 +104,7 @@ test('«Хочет раньше»: запись создана, а в лист �
   await userEvent.type(within(panel).getByLabelText('Найти пациента'), 'Айг')
   await userEvent.click(await within(panel).findByRole('button', { name: /Айгуль Т\./ }))
   await userEvent.click(within(panel).getByLabelText(/Хочет раньше/))
-  await userEvent.click(within(panel).getByRole('button', { name: 'Записать' }))
+  await userEvent.click(within(panel).getByRole('button', { name: /^Записать( ·|$)/ }))
   expect(await screen.findByRole('complementary', { name: 'Карточка приёма' })).toBeInTheDocument()
   // Своё окно (lib/confirm notify), не системный alert
   const message = await screen.findByRole('alertdialog')
@@ -135,7 +135,7 @@ test('ассистент — «Профосмотр»: WhatsApp — отметк
   expect(table).toHaveTextContent('ещё не звали')
   // Строка: последний визит · услуга, с какого дня пора и какой срок применён (считает сервер); одна кнопка — WhatsApp
   expect(table).toHaveTextContent(/был 10 янв 2026 · Коррекция брекетов · пора с 10 февраля( 2026)? \(через 1 мес\.\)/)
-  expect(within(table).queryByRole('button', { name: 'Записать' })).toBeNull()
+  expect(within(table).queryByRole('button', { name: /^Записать( ·|$)/ })).toBeNull()
   await userEvent.click(within(table).getByRole('button', { name: 'WhatsApp' }))
   expect(opened[0]).toContain('https://api.whatsapp.com/send/?phone=996700333444&text=')
   expect(decodeURIComponent(opened[0]!)).toContain('Прошло больше месяца с вашего визита')
@@ -153,7 +153,7 @@ test('ассистент — «Профосмотр»: WhatsApp — отметк
   server.use(http.get('*/api/service-types', () => HttpResponse.json([])))
   // «Записать» — в «⋯» строки (и «＋ Записать» в карточке)
   await userEvent.click(within(table).getByRole('button', { name: 'Ещё: Айгуль Т.' }))
-  await userEvent.click(within(table).getByRole('menuitem', { name: 'Записать' }))
+  await userEvent.click(within(table).getByRole('menuitem', { name: /^Записать( ·|$)/ }))
   expect(await screen.findByRole('complementary', { name: 'Новая запись' })).toHaveTextContent('Айгуль Т.')
   vi.restoreAllMocks()
 })

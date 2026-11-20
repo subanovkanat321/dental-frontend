@@ -115,7 +115,7 @@ test('одно кресло — про кресла ничего: ни поля,
   const posts = backend(ok, [TWO[0]!], [], () => NONE)
   const panel = await openNew()
 
-  await userEvent.click(within(panel).getByRole('button', { name: 'Записать' }))
+  await userEvent.click(within(panel).getByRole('button', { name: /^Записать( ·|$)/ }))
   await waitFor(() => expect(posts).toHaveLength(1))
   expect(posts[0]!.chairId).toBeUndefined()
   expect(within(panel).queryByRole('combobox', { name: /Кресло/ })).not.toBeInTheDocument()
@@ -128,7 +128,7 @@ test('несколько кресел, кресло врача свободно 
 
   expect(within(panel).queryByRole('combobox', { name: /Кресло/ })).not.toBeInTheDocument()
   expect(within(panel).queryByText(/кресло врача/i)).not.toBeInTheDocument()
-  await userEvent.click(within(panel).getByRole('button', { name: 'Записать' }))
+  await userEvent.click(within(panel).getByRole('button', { name: /^Записать( ·|$)/ }))
   await waitFor(() => expect(posts).toHaveLength(1))
   expect(posts[0]!.chairId).toBeUndefined()
   expect(within(panel).queryByText(/Свободно:/)).not.toBeInTheDocument()
@@ -156,7 +156,7 @@ test('кресло врача занято — «Кресло 1 в это вре
   await userEvent.click(within(again.closest('.chair-conflict') as HTMLElement).getByRole('button', { name: 'Записать в «Кресло 2»' }))
   await within(panel).findByText(/Запишем в «Кресло 2»/)
 
-  await userEvent.click(within(panel).getByRole('button', { name: 'Записать' }))
+  await userEvent.click(within(panel).getByRole('button', { name: /^Записать( ·|$)/ }))
   await waitFor(() => expect(posts).toHaveLength(1))
   expect(posts[0]!.chairId).toBe(6)
 })
@@ -179,7 +179,7 @@ const busy409 = (extra: Record<string, unknown> = {}) => HttpResponse.json({
 test('ничего не выбрали и нажали «Записать» — 409 «кресло занято»: окно «Свободно «Кресло 2» — записать туда?» и повтор в свободное', async () => {
   const posts = backend((body) => body.chairId === 6 ? ok(body) : busy409())
   await openNew()
-  await userEvent.click(screen.getByRole('button', { name: 'Записать' }))
+  await userEvent.click(screen.getByRole('button', { name: /^Записать( ·|$)/ }))
 
   const dialog = await screen.findByRole('alertdialog')
   expect(dialog).toHaveTextContent('«Кресло 1» занято: приём Айгерим Садыкова 09:00–09:30. Свободно «Кресло 2» — записать туда?'
@@ -197,7 +197,7 @@ test('ничего не выбрали и нажали «Записать» — 
 test('свободное кресло — в часы его врача: согласились в одном окне — без второго «Коллега предупреждён?»', async () => {
   const posts = backend((body) => body.chairId === 6 ? ok(body) : busy409({ freeChairColleague: 'Бакыт Осмонов' }))
   await openNew()
-  await userEvent.click(screen.getByRole('button', { name: 'Записать' }))
+  await userEvent.click(screen.getByRole('button', { name: /^Записать( ·|$)/ }))
 
   const dialog = await screen.findByRole('alertdialog')
   expect(dialog).toHaveTextContent('Свободно «Кресло 2» (часы врача Бакыт Осмонов) — записать туда? Врачу кресла (Бакыт Осмонов) придёт уведомление.')
@@ -212,7 +212,7 @@ test('отказались от свободного кресла — ответ
   backend(() => busy409())
   const panel = await openNew()
   await within(panel).findByText(/Кресло 1 в это время занято/)
-  await userEvent.click(within(panel).getByRole('button', { name: 'Записать' }))
+  await userEvent.click(within(panel).getByRole('button', { name: /^Записать( ·|$)/ }))
   await userEvent.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Отмена' }))
 
   expect(await within(panel).findByText('Кресло занято: «Кресло 1» в это время у врача Айгерим Садыкова')).toBeInTheDocument()

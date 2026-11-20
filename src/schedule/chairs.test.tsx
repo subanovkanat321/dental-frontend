@@ -76,7 +76,7 @@ test('сервер ответил «кресло занято» (409) — тек
   await within(panel).findByRole('group', { name: 'Свободное время' })
   await userEvent.type(within(panel).getByLabelText('Найти пациента'), 'Нур')
   await userEvent.click(await within(panel).findByRole('button', { name: /Нурлан К\./ }))
-  await userEvent.click(within(panel).getByRole('button', { name: 'Записать' }))
+  await userEvent.click(within(panel).getByRole('button', { name: /^Записать( ·|$)/ }))
 
   await waitFor(() => expect(within(panel).getByRole('alert')).toHaveTextContent(detail))
 })

@@ -93,7 +93,7 @@ async function bookAtThree() {
   await within(panel).findByRole('group', { name: 'Свободное время' })
   await userEvent.type(within(panel).getByLabelText('Найти пациента'), 'Нур')
   await userEvent.click(await within(panel).findByRole('button', { name: /Нурлан К\./ }))
-  await userEvent.click(within(panel).getByRole('button', { name: 'Записать' }))
+  await userEvent.click(within(panel).getByRole('button', { name: /^Записать( ·|$)/ }))
   return panel
 }
 
@@ -189,7 +189,7 @@ test('«Предупреждать»: окно «Коллега предупре
   const dialog = await screen.findByRole('alertdialog')
   expect(dialog).toHaveTextContent(detail)
   expect(within(dialog).getByRole('button', { name: 'Отмена' })).toBeInTheDocument()
-  await userEvent.click(within(dialog).getByRole('button', { name: 'Записать' }))
+  await userEvent.click(within(dialog).getByRole('button', { name: /^Записать( ·|$)/ }))
 
   await waitFor(() => expect(posts).toHaveLength(2))
   expect(posts[0]!.confirmChairTime).toBeUndefined()
@@ -214,7 +214,7 @@ test('«Запрещать»: окно без кнопки «Записать»,
 
   const dialog = await screen.findByRole('alertdialog')
   expect(dialog).toHaveTextContent(detail)
-  expect(within(dialog).queryByRole('button', { name: 'Записать' })).not.toBeInTheDocument()
+  expect(within(dialog).queryByRole('button', { name: /^Записать( ·|$)/ })).not.toBeInTheDocument()
   expect(within(dialog).queryByRole('button', { name: 'Отмена' })).not.toBeInTheDocument()
   await userEvent.click(within(dialog).getByRole('button', { name: 'Понятно' }))
 
