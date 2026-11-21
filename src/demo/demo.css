@@ -14,7 +14,11 @@
 .demo-banner select { min-height: 32px; padding: 2px 8px; font: inherit; font-size: .85rem; border: 1px solid var(--line-strong); border-radius: var(--r-sm); background: var(--card); color: var(--text); }
 @media (max-width: 760px) {
   .demo-banner { font-size: .8125rem; padding: 6px 10px; }
-  .demo-banner-tools { width: 100%; justify-content: space-between; }
+  .demo-banner-tools { width: 100%; justify-content: space-between; flex-wrap: nowrap; }
+  /* Телефон: подпись «Смотреть как» — только для экранного диктора (aria-label у списка), плашка в две строки */
+  .demo-banner-tools label > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .demo-banner select { max-width: 60vw; min-height: 30px; font-size: .8125rem; }
+  .demo-banner .btn.small { padding: 4px 8px; }
 }
 .demo-enter { max-width: 420px; margin: 0 auto; padding: 48px 16px; text-align: center; }
 .demo-enter h1 { font-family: Geologica, sans-serif; font-weight: 600; font-size: 1.25rem; margin: 0 0 8px; }
