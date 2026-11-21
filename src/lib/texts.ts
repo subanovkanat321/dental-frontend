@@ -158,7 +158,23 @@ export const REPLY_LINE = 'Ответьте 1 — приду, 2 — перене
 /** Что из /api/settings нужно для напоминания: подпись, бот и свой текст клиники с её данными. */
 export type ReminderSettings = Partial<Pick<Schemas['SettingsControllerSettings'],
   'clinicSignature' | 'botUrl' | 'reminderTemplate' | 'clinicName' | 'clinicAddress' | 'clinicPhone' | 'paymentDetails'
-  | 'depositPayUrl'>>
+  | 'depositPayUrl' | 'reminderContact' | 'doctorPhones'>>
+
+/**
+ * Чей телефон в сообщении о приёме — то же правило, что ClinicLinks.contactFor бэкенда (V252): «Номер в напоминаниях» =
+ * DOCTOR и у врача приёма есть «Телефон для пациентов» — его номер, иначе — телефон клиники. doctor — номер врача.
+ */
+export function appointmentPhone(settings: ReminderSettings | null | undefined, doctorId?: number | null):
+  { phone: string | null; doctor: boolean } {
+  const own = settings?.reminderContact === 'DOCTOR' && doctorId != null ? settings.doctorPhones?.[String(doctorId)]?.trim() : null
+  if (own) return { phone: own, doctor: true }
+  return { phone: settings?.clinicPhone?.trim() || null, doctor: false }
+}
+
+/** Настройки для текста о приёме этого врача: {телефон} и «позвоните» — по {@link appointmentPhone}. */
+export function forAppointment<T extends ReminderSettings>(settings: T, doctorId?: number | null): T {
+  return { ...settings, clinicPhone: appointmentPhone(settings, doctorId).phone ?? undefined }
+}
 
 type ReminderAppointment = {
   startAt: string; serviceName?: string | null; patient: { fullName?: string; telegram?: boolean; guardian?: { fullName?: string } | null }

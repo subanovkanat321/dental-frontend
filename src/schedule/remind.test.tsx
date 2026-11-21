@@ -199,7 +199,7 @@ test('свой текст напоминания клиники — в WhatsApp:
   backend(appointment(10, 1, '23:30', 'Бакыт М.', { serviceName: 'Чистка' }))
   server.use(http.get('*/api/settings', () => HttpResponse.json({
     clinicSignature: 'Стоматология «Тест»', botUrl: 'https://t.me/test_bot?start=c_test', clinicName: 'Стоматология «Тест»',
-    reminderTemplate: '{имя}, ждём вас {когда}: {врач}, {услуга}. {клиника}',
+    reminderTemplate: '{имя}, ждём вас {когда}: {врач}, {услуга}. {клиника}', reminderContact: 'CLINIC', doctorPhones: {},
   } satisfies Schemas['SettingsControllerSettings'])))
   const opened: string[] = []
   vi.spyOn(window, 'open').mockImplementation((url) => { opened.push(String(url)); return null })
@@ -212,5 +212,21 @@ test('свой текст напоминания клиники — в WhatsApp:
   // {клиника} в тексте — подпись второй раз не ставим
   expect(text.split('Стоматология «Тест»')).toHaveLength(2)
   expect(text).toContain('📲 Записываться самим и получать напоминания можно в Telegram: https://t.me/test_bot?start=c_test')
+  vi.restoreAllMocks()
+})
+
+test('«Номер в напоминаниях» = врача: {телефон} в WhatsApp — номер врача приёма', async () => {
+  backend(appointment(10, 1, '23:30', 'Бакыт М.'))
+  server.use(http.get('*/api/settings', () => HttpResponse.json({
+    clinicSignature: 'Стоматология «Тест»', clinicName: 'Стоматология «Тест»', clinicPhone: '+996 555 000 000',
+    reminderTemplate: '{имя}, ждём вас {когда}. Телефон: {телефон}. {клиника}', reminderContact: 'DOCTOR',
+    doctorPhones: { 1: '+996 700 123 456' },
+  } satisfies Schemas['SettingsControllerSettings'])))
+  const opened: string[] = []
+  vi.spyOn(window, 'open').mockImplementation((url) => { opened.push(String(url)); return null })
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: /Бакыт М\./ }))
+  await pickContact(screen.getByRole('complementary', { name: 'Карточка приёма' }), 'Напомнить о приёме в WhatsApp')
+  expect(decodeURIComponent(opened[0]!)).toContain('Телефон: +996 700 123 456.')
   vi.restoreAllMocks()
 })

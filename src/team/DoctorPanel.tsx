@@ -9,6 +9,7 @@ import { useDirty } from '../lib/unsaved'
 import { useClose } from '../lib/useClose'
 import { ChairField, ChairHoursHint } from './ChairField'
 import { HoursLink } from './HoursLink'
+import { DoctorPatientPhone } from './DoctorPatientPhone'
 import { DoctorPay } from './DoctorPay'
 import { DoctorServices } from './DoctorServices'
 import { InviteLink } from './InviteLink'
@@ -44,7 +45,8 @@ export const SELF_PROFILE_HINT = 'Фото, имя и «о себе» врач �
  * <ul>
  * <li>«Для пациентов» — фото, имя, «Кратко»: их видят пациенты в боте, ведёт сам врач. Админ у чужого
  * вошедшего врача видит их только для чтения; пока врач не вошёл («ждём входа») — заполняет черновик,
- * иначе бот покажет пациентам пустую карточку;</li>
+ * иначе бот покажет пациентам пустую карточку. Под ними «Телефон для пациентов» ({@link DoctorPatientPhone}, сам врач или
+ * админ — и после входа врача): его номер в напоминаниях, если клиника выбрала «Номер врача приёма»;</li>
  * <li>«Работа» — услуги (админ или сам врач), часы работы строкой-ссылкой в «Рабочее время → График» (менять — там), кресло,
  * «Как оплатить мне» — реквизиты и QR врача ({@link DoctorPay}, админ или сам врач);</li>
  * <li>«Вход» — Telegram подключён или «ждём входа», приглашение, телефон.</li>
@@ -79,9 +81,13 @@ export function DoctorPanel({ doctor: d, me, onClose, inline = false, afterProfi
   // а у чужих врачей в «Персонале»
   const own = inline && self
 
-  const forPatients = editsProfile
+  const profile = editsProfile
     ? <ProfileForm key={d.id} doctor={d} draft={!self} onSaved={refresh} who={inline ? <><strong>{d.fullName}</strong><span className="hint">{who}</span></> : undefined} />
     : <ProfileView doctor={d} />
+  // «Телефон для пациентов» — сам врач и руководитель (и после входа врача), регистратуре сервер ответит 403
+  const forPatients = editsWork
+    ? <>{profile}<DoctorPatientPhone key={`phone-${d.id}`} doctorId={d.id} self={self} /></>
+    : profile
   const work = (
     <>
       {!own && <ActiveSwitch doctor={d} admin={admin} />}

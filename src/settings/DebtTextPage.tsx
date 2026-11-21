@@ -45,7 +45,7 @@ function Editor({ settings }: { settings: Settings }) {
     mutationFn: () => unwrap(api.PUT('/api/clinic/debt-template', { body: { debtTemplate: own ?? undefined } })),
     onSuccess: (saved) => {
       commit()
-      client.setQueryData<Settings>(['settings'], (old) => ({ ...old, debtTemplate: saved.debtTemplate }))
+      client.setQueryData<Settings>(['settings'], (old) => old && ({ ...old, debtTemplate: saved.debtTemplate }))
     },
   })
   const change = (value: string) => {

@@ -1,6 +1,6 @@
 import { howToPay, STANDARD_DEBT } from './debt'
 import { applyTemplate, DEBT_VARIABLES, unknownVariables, usesVariable } from './reminderTemplate'
-import { reminderText, whenAt } from './texts'
+import { appointmentPhone, forAppointment, reminderText, soonText, whenAt } from './texts'
 
 /**
  * Те же примеры, что ReminderTemplateTests бэкенда: бот и WhatsApp из CRM собирают текст одинаково.
@@ -93,4 +93,17 @@ test('напоминание о долге: стандартный текст, �
   expect(howToPay('MBANK 0555 123 456')).toBe('Оплатить можно в клинике или переводом: MBANK 0555 123 456.')
   expect(howToPay('MBANK 0555 123 456.')).toBe('Оплатить можно в клинике или переводом: MBANK 0555 123 456.')
   expect(howToPay('MBANK 0555 123 456\nО!Деньги 0700 000 111,')).toBe('Оплатить можно в клинике или переводом: MBANK 0555 123 456, О!Деньги 0700 000 111.')
+})
+
+test('«Номер в напоминаниях»: клиники по умолчанию; врача — если указал, иначе клиники; «Ждём вас» — тот же номер', () => {
+  const clinic = { clinicPhone: '+996 555 000 000', doctorPhones: { 1: '+996 700 123 456' } }
+  expect(appointmentPhone({ ...clinic, reminderContact: 'CLINIC' }, 1)).toEqual({ phone: '+996 555 000 000', doctor: false })
+  expect(appointmentPhone({ ...clinic, reminderContact: 'DOCTOR' }, 1)).toEqual({ phone: '+996 700 123 456', doctor: true })
+  expect(appointmentPhone({ ...clinic, reminderContact: 'DOCTOR' }, 2)).toEqual({ phone: '+996 555 000 000', doctor: false })
+  expect(appointmentPhone({ reminderContact: 'DOCTOR' }, 2)).toEqual({ phone: null, doctor: false })
+  expect(soonText('2026-10-23T06:00:00Z', forAppointment({ ...clinic, reminderContact: 'DOCTOR' }, 1), new Date('2026-10-23T03:00:00Z')))
+    .toContain('позвоните, пожалуйста: +996 700 123 456')
+  const a = { startAt: '2026-10-24T04:00:00Z', patient: { fullName: 'Айгуль', telegram: true } }
+  expect(reminderText(a, forAppointment({ ...clinic, reminderContact: 'DOCTOR', reminderTemplate: 'Ждём {когда}. {телефон}' }, 1), null,
+    new Date('2026-10-23T03:00:00Z'))).toContain('Ждём завтра в 10:00. +996 700 123 456')
 })

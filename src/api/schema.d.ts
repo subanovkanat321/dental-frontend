@@ -1284,6 +1284,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/doctors/{id}/patient-phone": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["patientPhone"];
+        put: operations["setPatientPhone"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/doctors/{id}/hours": {
         parameters: {
             query?: never;
@@ -1437,6 +1453,22 @@ export interface paths {
         };
         get?: never;
         put: operations["reminderTemplate"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/clinic/reminder-contact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["reminderContact"];
         post?: never;
         delete?: never;
         options?: never;
@@ -10244,6 +10276,13 @@ export interface components {
             payUrl?: string;
             ownRevenue: boolean;
         };
+        DoctorControllerPatientPhoneRequest: {
+            phone?: string;
+        };
+        DoctorServicePatientPhone: {
+            phone?: string;
+            text?: string;
+        };
         DoctorHoursControllerRequest: {
             days?: components["schemas"]["DoctorHoursViewDay"][];
         };
@@ -10377,6 +10416,10 @@ export interface components {
         ClinicServiceReminderTemplates: {
             ru?: string;
             ky?: string;
+        };
+        ClinicControllerReminderContactRequest: {
+            /** @enum {string} */
+            reminderContact?: "CLINIC" | "DOCTOR";
         };
         ClinicControllerRecallRequest: {
             /** Format: int32 */
@@ -12740,6 +12783,11 @@ export interface components {
             debtTemplate?: string;
             paymentDetails?: string;
             depositPayUrl?: string;
+            /** @enum {string} */
+            reminderContact: "CLINIC" | "DOCTOR";
+            doctorPhones: {
+                [key: string]: string;
+            };
         };
         ServiceTypeControllerPopular: {
             ids?: number[];
@@ -17653,6 +17701,54 @@ export interface operations {
             };
         };
     };
+    patientPhone: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DoctorServicePatientPhone"];
+                };
+            };
+        };
+    };
+    setPatientPhone: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DoctorControllerPatientPhoneRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DoctorServicePatientPhone"];
+                };
+            };
+        };
+    };
     view: {
         parameters: {
             query?: never;
@@ -18017,6 +18113,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ClinicServiceReminderTemplates"];
+                };
+            };
+        };
+    };
+    reminderContact: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClinicControllerReminderContactRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClinicControllerReminderContactRequest"];
                 };
             };
         };

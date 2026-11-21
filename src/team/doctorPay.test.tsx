@@ -71,3 +71,27 @@ test('врач на проценте: подсказка — пациенту у
   const group = await screen.findByRole('group', { name: 'Как оплатить мне' })
   expect(group).toHaveTextContent('Выручку собирает клиника, поэтому в напоминании о долге — реквизиты клиники')
 })
+
+test('«Телефон для пациентов» в «Моём профиле»: номер сохраняется цифрами с кодом, пусто — убрать', async () => {
+  let phone: Schemas['DoctorServicePatientPhone'] = {}
+  const sent: unknown[] = []
+  server.use(
+    http.get('*/api/doctors/1/patient-phone', () => HttpResponse.json(phone)),
+    http.put('*/api/doctors/1/patient-phone', async ({ request }) => {
+      const body = await request.json() as { phone: string }
+      sent.push(body)
+      phone = body.phone ? { phone: body.phone.replace('+', ''), text: '+996 700 123 456' } : {}
+      return HttpResponse.json(phone)
+    }),
+  )
+  window.location.hash = '/settings/profile'
+  const user = userEvent.setup()
+  renderApp()
+  const card = await screen.findByRole('complementary', { name: 'Врач' })
+  const group = await within(card).findByRole('group', { name: 'Телефон для пациентов' })
+  expect(group).toHaveTextContent('Номер для входа пациенты не видят')
+  await user.type(within(group).getByRole('textbox', { name: 'Телефон для пациентов' }), '0700123456')
+  await user.click(within(group).getByRole('button', { name: 'Сохранить телефон' }))
+  expect(await within(group).findByText('Телефон сохранён')).toBeInTheDocument()
+  expect(sent).toEqual([{ phone: '0700123456' }])
+})

@@ -3646,6 +3646,68 @@
         }
       }
     },
+    "/api/doctors/{id}/patient-phone" : {
+      "get" : {
+        "tags" : [ "doctor-controller" ],
+        "operationId" : "patientPhone",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DoctorServicePatientPhone"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "doctor-controller" ],
+        "operationId" : "setPatientPhone",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DoctorControllerPatientPhoneRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DoctorServicePatientPhone"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/doctors/{id}/hours" : {
       "get" : {
         "tags" : [ "doctor-hours-controller" ],
@@ -4056,6 +4118,34 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ClinicServiceReminderTemplates"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clinic/reminder-contact" : {
+      "put" : {
+        "tags" : [ "clinic-controller" ],
+        "operationId" : "reminderContact",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ClinicControllerReminderContactRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ClinicControllerReminderContactRequest"
                 }
               }
             }
@@ -23586,6 +23676,23 @@
         },
         "required" : [ "hasQr", "ownRevenue" ]
       },
+      "DoctorControllerPatientPhoneRequest" : {
+        "properties" : {
+          "phone" : {
+            "type" : "string"
+          }
+        }
+      },
+      "DoctorServicePatientPhone" : {
+        "properties" : {
+          "phone" : {
+            "type" : "string"
+          },
+          "text" : {
+            "type" : "string"
+          }
+        }
+      },
       "DoctorHoursControllerRequest" : {
         "properties" : {
           "days" : {
@@ -23942,6 +24049,14 @@
           },
           "ky" : {
             "type" : "string"
+          }
+        }
+      },
+      "ClinicControllerReminderContactRequest" : {
+        "properties" : {
+          "reminderContact" : {
+            "type" : "string",
+            "enum" : [ "CLINIC", "DOCTOR" ]
           }
         }
       },
@@ -29873,8 +29988,19 @@
           },
           "depositPayUrl" : {
             "type" : "string"
+          },
+          "reminderContact" : {
+            "type" : "string",
+            "enum" : [ "CLINIC", "DOCTOR" ]
+          },
+          "doctorPhones" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "string"
+            }
           }
-        }
+        },
+        "required" : [ "doctorPhones", "reminderContact" ]
       },
       "ServiceTypeControllerPopular" : {
         "properties" : {

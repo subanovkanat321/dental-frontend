@@ -198,9 +198,11 @@ export const server = setupServer(
   http.get('*/api/time-off', () => HttpResponse.json([])),
   // «Как оплатить мне» в карточке врача (V225): по умолчанию не заполнено, выручку собирает клиника
   http.get('*/api/doctors/:id/pay', () => HttpResponse.json({ hasQr: false, ownRevenue: false } satisfies Schemas['PayRequisitesDoctorPay'])),
+  // «Телефон для пациентов» врача (V252): по умолчанию не указан
+  http.get('*/api/doctors/:id/patient-phone', () => HttpResponse.json({} satisfies Schemas['DoctorServicePatientPhone'])),
   http.get('*/api/doctors/:id/hours', () => HttpResponse.json({ custom: false, days: (['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'] as const)
     .map((weekday) => ({ weekday, start: '09:00:00', end: '18:00:00' })) } satisfies Schemas['DoctorHoursView'])),
-  http.get('*/api/settings', () => HttpResponse.json({ clinicSignature: 'Стоматология «Тест»' })),
+  http.get('*/api/settings', () => HttpResponse.json({ clinicSignature: 'Стоматология «Тест»', reminderContact: 'CLINIC', doctorPhones: {} })),
   // Документы приёма и плана (src/print): по умолчанию у услуги памятки нет, квитанция пустая
   http.get('*/api/appointments/:id/care-memo', () => HttpResponse.json({ telegram: false, ky: false } satisfies Schemas['CareMemosAppointmentMemo'])),
   http.get('*/api/care-memos', () => HttpResponse.json([] satisfies Schemas['CareMemosCareMemoView'][])),

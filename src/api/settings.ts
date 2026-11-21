@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 
-import { reminderText, repeatReminderText } from '../lib/texts'
+import { forAppointment, reminderText, repeatReminderText } from '../lib/texts'
 import { api, unwrap, type Schemas } from './client'
 import { useMe } from './me'
 
@@ -15,15 +15,16 @@ export function useSettings() {
 
 /**
  * Текст напоминания о приёме для WhatsApp/SMS: свой текст клиники или стандартный, ссылка на бота,
- * {врач} — из врачей клиники (/api/patient/me, уже в кэше). null — настройки ещё грузятся.
+ * {врач} — из врачей клиники (/api/patient/me, уже в кэше), {телефон} — клиники или врача приёма («Номер в
+ * напоминаниях», forAppointment). null — настройки ещё грузятся.
  */
 export function useReminderText(): ((a: Schemas['AppointmentView']) => string) | null {
   const settings = useSettings()
   const me = useMe()
   const data = settings.data
   if (!data) return null
-  return (a) => reminderText({ startAt: a.startAt, serviceName: a.serviceName, patient: a.patient, depositSom: a.depositSom, depositStatus: a.depositStatus }, data,
-    me.data?.doctors?.find((d) => d.id === a.doctorId)?.fullName)
+  return (a) => reminderText({ startAt: a.startAt, serviceName: a.serviceName, patient: a.patient, depositSom: a.depositSom, depositStatus: a.depositStatus },
+    forAppointment(data, a.doctorId), me.data?.doctors?.find((d) => d.id === a.doctorId)?.fullName)
 }
 
 /** Текст повторного напоминания для WhatsApp/SMS (уже напоминали) — системный, без своего шаблона клиники. */
@@ -32,8 +33,8 @@ export function useRepeatReminderText(): ((a: Schemas['AppointmentView']) => str
   const me = useMe()
   const data = settings.data
   if (!data) return null
-  return (a) => repeatReminderText({ startAt: a.startAt, serviceName: a.serviceName, patient: a.patient, depositSom: a.depositSom, depositStatus: a.depositStatus }, data,
-    me.data?.doctors?.find((d) => d.id === a.doctorId)?.fullName)
+  return (a) => repeatReminderText({ startAt: a.startAt, serviceName: a.serviceName, patient: a.patient, depositSom: a.depositSom, depositStatus: a.depositStatus },
+    forAppointment(data, a.doctorId), me.data?.doctors?.find((d) => d.id === a.doctorId)?.fullName)
 }
 
 /** Лист ожидания клиники — им пользуются «Пациенты», карточка пациента и «Новая запись». */

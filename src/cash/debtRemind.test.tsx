@@ -176,6 +176,7 @@ test('«Настройки → Напоминание о долге»: стан�
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.get('*/api/settings', () => HttpResponse.json({
       clinicSignature: 'Стоматология «Тест»', clinicName: 'Стоматология «Тест»', paymentDetails: 'Мбанк 0555 000 111 (Тест)',
+      reminderContact: 'CLINIC', doctorPhones: {},
     } satisfies Schemas['SettingsControllerSettings'])),
     http.put('*/api/clinic/debt-template', async ({ request }) => {
       const body = await request.json() as Schemas['ClinicControllerDebtTemplate']

@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
@@ -11,7 +11,7 @@ type Templates = Schemas['ClinicControllerReminderRequest']
 
 const SETTINGS: Settings = {
   clinicSignature: 'Стоматология «Тест»', botUrl: 'https://t.me/test_bot?start=c_test', clinicName: 'Стоматология «Тест»',
-  clinicAddress: 'Бишкек, ул. Тестовая 1', clinicPhone: '+996 555 000 000',
+  clinicAddress: 'Бишкек, ул. Тестовая 1', clinicPhone: '+996 555 000 000', reminderContact: 'CLINIC', doctorPhones: {},
 }
 
 function backend(settings: Settings = SETTINGS, who: Schemas['BookingViewsMe'] = me) {
@@ -111,4 +111,29 @@ test('не админ пункта не видит', async () => {
   const tabs = await screen.findByRole('navigation', { name: 'Подразделы: Настройки' })
   expect(within(tabs).getByRole('link', { name: 'Памятки после процедур' })).toBeInTheDocument()
   expect(within(tabs).queryByRole('link', { name: /Напоминание о приёме/ })).not.toBeInTheDocument()
+})
+
+test('«Номер в напоминаниях»: по умолчанию клиники; «Номер врача приёма» сохраняется сразу, предпросмотр — с номером врача', async () => {
+  const sent: unknown[] = []
+  backend({ ...SETTINGS, reminderTemplate: 'Ждём {когда}. Телефон: {телефон}', doctorPhones: { 1: '+996 700 123 456' } })
+  server.use(http.put('*/api/clinic/reminder-contact', async ({ request }) => {
+    const body = await request.json() as Schemas['ClinicControllerReminderContactRequest']
+    sent.push(body)
+    return HttpResponse.json(body)
+  }))
+  renderApp()
+  openItem('reminder')
+  const box = await screen.findByRole('region', { name: 'Номер в напоминаниях' })
+  expect(within(box).getByRole('radio', { name: /Номер клиники/ })).toBeChecked()
+  expect(within(box).getByRole('status')).toHaveTextContent('В напоминание уйдёт: +996 555 000 000 — номер клиники.')
+  expect(screen.getByRole('figure', { name: 'Telegram' })).toHaveTextContent('Телефон: +996 555 000 000')
+
+  await userEvent.click(within(box).getByRole('radio', { name: /Номер врача приёма/ }))
+  expect(sent).toEqual([{ reminderContact: 'DOCTOR' }])
+  await waitFor(() => expect(within(box).getByRole('status')).toHaveTextContent('+996 700 123 456 — номер врача Айгерим Садыкова.'))
+  expect(screen.getByRole('figure', { name: 'Telegram' })).toHaveTextContent('Телефон: +996 700 123 456')
+  expect(screen.getByRole('figure', { name: 'WhatsApp и SMS' })).toHaveTextContent('Телефон: +996 700 123 456')
+  expect(screen.getByRole('figure', { name: 'За 2 часа до приёма' })).toHaveTextContent('позвоните, пожалуйста: +996 700 123 456')
+  // У второго врача номера нет — подсказка, что его пациентам уйдёт номер клиники
+  expect(box).toHaveTextContent('Без «Телефона для пациентов»: Дастан Т. — их пациентам уйдёт номер клиники.')
 })

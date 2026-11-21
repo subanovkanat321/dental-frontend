@@ -107,7 +107,9 @@ test('админ: у вошедшего врача фото, имя и «о се
   const panel = await screen.findByRole('complementary', { name: 'Врач' })
 
   const patients = within(panel).getByRole('region', { name: 'Для пациентов' })
-  expect(within(patients).queryByRole('textbox')).not.toBeInTheDocument()
+  // Фото, имя и «о себе» — только посмотреть; править руководитель может лишь «Телефон для пациентов» (V252)
+  expect(await within(patients).findByRole('group', { name: 'Телефон для пациентов' })).toBeInTheDocument()
+  expect(within(patients).getAllByRole('textbox').map((e) => e.getAttribute('aria-label'))).toEqual(['Телефон для пациентов'])
   expect(within(patients).getByRole('img', { name: 'Фото врача' })).toBeInTheDocument()
   // Пояснение — в «?», а не абзацем
   expect(patients).toHaveTextContent('Ведёт сам врач')

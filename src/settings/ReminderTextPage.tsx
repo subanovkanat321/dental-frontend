@@ -5,7 +5,7 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { useSettings } from '../api/settings'
 import { SaveBar } from '../layout/SaveBar'
 import { applyTemplate, MAX_LENGTH, unknownVariables, usesVariable, VARIABLES, type Variable } from '../lib/reminderTemplate'
-import { reminderText, repeatReminderText, soonText, type ReminderSettings } from '../lib/texts'
+import { appointmentPhone, forAppointment, reminderText, repeatReminderText, soonText, type ReminderSettings } from '../lib/texts'
 import { addDays, todayIn } from '../lib/time'
 import { useDirty } from '../lib/unsaved'
 import { SubHeader } from './SubHeader'
@@ -94,7 +94,7 @@ function Editor({ me, settings }: { me: Me; settings: Settings }) {
     mutationFn: () => unwrap(api.PUT('/api/clinic/reminder-template', { body: { reminderTemplate: ru ?? undefined, reminderTemplateKy: ky ?? undefined } })),
     onSuccess: (saved) => {
       commit()
-      client.setQueryData<Settings>(['settings'], (old) => ({ ...old, reminderTemplate: saved.ru, reminderTemplateKy: saved.ky }))
+      client.setQueryData<Settings>(['settings'], (old) => old && ({ ...old, reminderTemplate: saved.ru, reminderTemplateKy: saved.ky }))
     },
   })
   const text = texts[lang]
@@ -117,13 +117,17 @@ function Editor({ me, settings }: { me: Me; settings: Settings }) {
   const unknown = unknownVariables(text)
   const tooLong = text.trim().length > MAX_LENGTH
   const noWhen = text.trim() !== '' && !usesVariable(text, 'когда')
-  const doctor = (me.doctors ?? []).find((d) => d.active !== false)?.fullName ?? 'Айгерим Садыкова'
+  const active = (me.doctors ?? []).filter((d) => d.active !== false)
+  // Предпросмотр «номер врача» — на враче, который указал «Телефон для пациентов» (если такой есть)
+  const sample = (settings.reminderContact === 'DOCTOR' ? active.find((d) => settings.doctorPhones?.[String(d.id)]) : null) ?? active[0]
+  const doctor = sample?.fullName ?? 'Айгерим Садыкова'
+  const preview = forAppointment(settings, sample?.id)
   // Неизвестная переменная в любом из двух текстов: сервер всё равно не сохранит (422)
   const invalid = tooLong || unknownVariables(texts.ru).length > 0 || unknownVariables(texts.ky).length > 0
   const serverError = save.error && (save.error.fieldErrors.reminderTemplate ?? save.error.fieldErrors.reminderTemplateKy ?? save.error.message)
   const tomorrow10 = `${addDays(todayIn(), 1)}T04:00:00Z` // 10:00 по Бишкеку
   const whatsapp = reminderText({ startAt: tomorrow10, serviceName: SAMPLE.service, patient: { fullName: SAMPLE.name, telegram: false } },
-    { ...settings, reminderTemplate: ru ?? undefined }, doctor)
+    { ...preview, reminderTemplate: ru ?? undefined }, doctor)
 
   return (
     <form className="form reminder-text" aria-label="Текст напоминания" onSubmit={(e) => { e.preventDefault(); save.mutate() }}>
@@ -166,13 +170,14 @@ function Editor({ me, settings }: { me: Me; settings: Settings }) {
             onClick={() => change(lang === 'ru' ? STANDARD_RU : '')}>Вернуть стандартный текст</button>
         </div>
       </section>
+      <ReminderContact settings={settings} doctors={active} sample={sample} />
       <section className="card-block" aria-label="Предпросмотр">
         <h2>Предпросмотр</h2>
         <p className="hint">Вымышленный пациент «{SAMPLE.name}», приём завтра в 10:00.</p>
         <div className="reminder-previews">
           <figure className="reminder-preview" aria-label="Telegram">
             <figcaption>Telegram</figcaption>
-            <p className="reminder-bubble">{botPreview(lang, ru, ky, settings, doctor)}</p>
+            <p className="reminder-bubble">{botPreview(lang, ru, ky, preview, doctor)}</p>
             <div className="reminder-buttons" aria-hidden="true">
               {BUTTONS[lang].map((b) => <span key={b}>{b}</span>)}
             </div>
@@ -195,12 +200,67 @@ function Editor({ me, settings }: { me: Me; settings: Settings }) {
           </figure>
           <figure className="reminder-preview" aria-label="За 2 часа до приёма">
             <figcaption>За 2 часа до приёма — в Telegram</figcaption>
-            <p className="reminder-bubble">{soonText(`${todayIn()}T06:00:00Z`, settings)}</p>
+            <p className="reminder-bubble">{soonText(`${todayIn()}T06:00:00Z`, preview)}</p>
           </figure>
         </div>
       </section>
       <SaveBar dirty={dirty} saving={save.isPending} saved={save.isSuccess} savedText="Текст напоминания сохранён"
         disabled={invalid} error={serverError} />
     </form>
+  )
+}
+
+type Doctor = NonNullable<Me['doctors']>[number]
+type Contact = Settings['reminderContact']
+
+const CONTACTS: [Contact, string, string][] = [
+  ['CLINIC', 'Номер клиники', 'телефоны из «О клинике» — как было всегда.'],
+  ['DOCTOR', 'Номер врача приёма', 'его «Телефон для пациентов»; врач номер не указал — уйдёт номер клиники.'],
+]
+
+/**
+ * «Номер в напоминаниях» (V252 бэкенда): чей телефон получает пациент в сообщениях о своём приёме — напоминание и
+ * {телефон}, «Нужно перенести», «⏰ Ждём вас», «Запись подтверждена», WhatsApp-напоминание из CRM. Сохраняется сразу,
+ * как «Оценка приёма»; сервер разрешает только руководителю. Ниже — какой номер уйдёт и у кого из врачей номера нет.
+ */
+function ReminderContact({ settings, doctors, sample }: { settings: Settings; doctors: Doctor[]; sample?: Doctor }) {
+  const client = useQueryClient()
+  const change = useMutation<Schemas['ClinicControllerReminderContactRequest'], ApiError, Contact>({
+    mutationFn: (reminderContact) => unwrap(api.PUT('/api/clinic/reminder-contact', { body: { reminderContact } })),
+    onSuccess: (saved) => client.setQueryData<Settings>(['settings'], (old) => old && ({ ...old, reminderContact: saved.reminderContact ?? old.reminderContact })),
+  })
+  const value = change.isPending ? change.variables : settings.reminderContact
+  const phones = settings.doctorPhones ?? {}
+  const shown = appointmentPhone({ ...settings, reminderContact: value }, sample?.id)
+  const without = doctors.filter((d) => !phones[String(d.id)]).map((d) => d.fullName)
+  return (
+    <section className="card-block form" aria-label="Номер в напоминаниях">
+      <fieldset>
+        <legend>Номер в напоминаниях</legend>
+        {CONTACTS.map(([contact, title, hint]) => (
+          <label key={contact} className="check">
+            <input type="radio" name="reminder-contact" value={contact} checked={value === contact} disabled={change.isPending}
+              onChange={() => change.mutate(contact)} />
+            <span><strong>{title}</strong><span className="hint"> — {hint}</span></span>
+          </label>
+        ))}
+      </fieldset>
+      <p className="reminder-phone" role="status">
+        {shown.phone
+          ? <>В напоминание уйдёт: <strong className="num">{shown.phone}</strong> — {shown.doctor ? `номер врача ${sample?.fullName ?? ''}` : 'номер клиники'}.</>
+          : 'Номера нет: заполните телефоны в «О клинике».'}
+      </p>
+      {value === 'DOCTOR' && without.length > 0 && (
+        <p className="hint small">
+          Без «Телефона для пациентов»: {without.join(', ')} — их пациентам уйдёт номер клиники. Номер врач указывает в «Моём
+          профиле» → «Для пациентов», руководитель — в карточке врача в «Персонале».
+        </p>
+      )}
+      <p className="hint small">
+        Номер врача уходит только в сообщениях о его приёме: напоминание ({'{телефон}'}), ответ на «Нужно перенести», «⏰ Ждём
+        вас» и «Запись подтверждена». Помощь бота, памятки и напоминание о долге — всегда с номером клиники.
+      </p>
+      {change.error && <p className="error" role="alert">{change.error.fieldErrors.reminderContact ?? change.error.message}</p>}
+    </section>
   )
 }
