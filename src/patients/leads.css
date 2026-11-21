@@ -1,0 +1,31 @@
+/*
+ * «Пациенты → Обращения» (patients/LeadsTab.tsx): спокойный список (calm.css) группами; просроченное «перезвонить» —
+ * красным временем, «Перезвонить сегодня» — заголовком цвета действия. Итог разговора — под строкой, чипами.
+ */
+.lead-group.g-due h3 { color: var(--text); }
+.lead-callback { color: var(--text); font-weight: 500; }
+.lead-callback.overdue { color: var(--bad-ink); font-weight: 600; }
+.lead-booked { color: var(--ok-ink); }
+.lead-resp { color: var(--hint); }
+.lead-card-link { font-size: .8rem; }
+.leads .calm-act { gap: 2px; }
+/* Итог разговора: заголовок и ✕ в строку, чипы — с переносом */
+.lead-result { display: grid; gap: 8px; padding: 10px 12px; border-radius: var(--r-md); background: var(--sunken); }
+.lead-result-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.lead-result-head strong { font-weight: 600; font-size: .95rem; }
+.lead-result-pick { margin: 0; }
+.lead-result-pick .chip { min-height: 36px; padding: 0 12px; }
+.lead-result-pick .chip.lead-book { border-color: var(--accent); color: var(--link); font-weight: 600; }
+.lead-reason { display: flex; gap: 8px; }
+.lead-reason input { flex: 1; min-width: 0; }
+/* Окно «Новое обращение» */
+.lead-dialog { max-height: calc(100dvh - 32px); overflow-y: auto; }
+.lead-dialog-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.lead-dialog .chips-pick { margin: 0; }
+.lead-match { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: -4px; }
+.lead-match .chip { cursor: pointer; border: 1px solid var(--accent); background: var(--accent-soft); color: var(--link); font: inherit; font-size: .85rem; }
+.lead-same { margin: -4px 0 0; color: var(--wait-ink); }
+@media (max-width: 760px) {
+  .lead-reason { flex-wrap: wrap; }
+  .lead-reason .btn { width: 100%; }
+}

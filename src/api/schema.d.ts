@@ -1156,6 +1156,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/leads/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_4"];
+        put: operations["update_17"];
+        post?: never;
+        delete: operations["delete_13"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/labs/{id}": {
         parameters: {
             query?: never;
@@ -1179,10 +1195,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_4"];
-        put: operations["update_17"];
+        get: operations["get_5"];
+        put: operations["update_18"];
         post?: never;
-        delete: operations["delete_13"];
+        delete: operations["delete_14"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1212,9 +1228,9 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_18"];
+        put: operations["update_19"];
         post?: never;
-        delete: operations["delete_14"];
+        delete: operations["delete_15"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1259,7 +1275,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_5"];
+        get: operations["get_6"];
         put: operations["setDetails"];
         post?: never;
         delete?: never;
@@ -1276,7 +1292,7 @@ export interface paths {
             cookie?: never;
         };
         get: operations["view"];
-        put: operations["update_19"];
+        put: operations["update_20"];
         post?: never;
         delete?: never;
         options?: never;
@@ -1340,7 +1356,7 @@ export interface paths {
             cookie?: never;
         };
         get: operations["view_1"];
-        put: operations["update_20"];
+        put: operations["update_21"];
         post?: never;
         delete?: never;
         options?: never;
@@ -1387,7 +1403,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_6"];
+        get: operations["get_7"];
         put: operations["set_7"];
         post?: never;
         delete?: never;
@@ -1404,7 +1420,7 @@ export interface paths {
             cookie?: never;
         };
         get: operations["timing"];
-        put: operations["update_21"];
+        put: operations["update_22"];
         post?: never;
         delete?: never;
         options?: never;
@@ -1499,7 +1515,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_7"];
+        get: operations["get_8"];
         put: operations["set_8"];
         post?: never;
         delete?: never;
@@ -1596,7 +1612,7 @@ export interface paths {
             cookie?: never;
         };
         get: operations["settings_4"];
-        put: operations["update_22"];
+        put: operations["update_23"];
         post?: never;
         delete?: never;
         options?: never;
@@ -1630,7 +1646,7 @@ export interface paths {
         get?: never;
         put: operations["rename_2"];
         post?: never;
-        delete: operations["delete_15"];
+        delete: operations["delete_16"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1676,7 +1692,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_23"];
+        put: operations["update_24"];
         post?: never;
         delete?: never;
         options?: never;
@@ -1740,7 +1756,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_24"];
+        put: operations["update_25"];
         post?: never;
         delete: operations["remove_3"];
         options?: never;
@@ -4324,6 +4340,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/leads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_10"];
+        put?: never;
+        post: operations["create_14"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/leads/{id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["status_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/labs": {
         parameters: {
             query?: never;
@@ -4347,9 +4395,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_10"];
+        get: operations["list_11"];
         put?: never;
-        post: operations["create_14"];
+        post: operations["create_15"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4365,7 +4413,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["status_1"];
+        post: operations["status_2"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4411,7 +4459,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_11"];
+        get: operations["list_12"];
         put?: never;
         post: operations["add_6"];
         delete?: never;
@@ -4461,7 +4509,7 @@ export interface paths {
         };
         get: operations["all_6"];
         put?: never;
-        post: operations["create_15"];
+        post: operations["create_16"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4653,7 +4701,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["create_16"];
+        post: operations["create_17"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4843,9 +4891,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_12"];
+        get: operations["list_13"];
         put?: never;
-        post: operations["create_17"];
+        post: operations["create_18"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4907,9 +4955,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_13"];
+        get: operations["list_14"];
         put?: never;
-        post: operations["create_18"];
+        post: operations["create_19"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4955,10 +5003,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_8"];
+        get: operations["get_9"];
         put?: never;
         post: operations["rotate"];
-        delete: operations["delete_16"];
+        delete: operations["delete_17"];
         options?: never;
         head?: never;
         patch?: never;
@@ -5005,7 +5053,7 @@ export interface paths {
         };
         get: operations["day_1"];
         put?: never;
-        post: operations["create_19"];
+        post: operations["create_20"];
         delete?: never;
         options?: never;
         head?: never;
@@ -5547,7 +5595,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["status_2"];
+        get: operations["status_3"];
         put?: never;
         post?: never;
         delete?: never;
@@ -5771,7 +5819,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["status_3"];
+        get: operations["status_4"];
         put?: never;
         post?: never;
         delete?: never;
@@ -5915,7 +5963,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_9"];
+        get: operations["get_10"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6187,7 +6235,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_14"];
+        get: operations["list_15"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6203,7 +6251,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_10"];
+        get: operations["get_11"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6331,7 +6379,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_11"];
+        get: operations["get_12"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6347,7 +6395,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_12"];
+        get: operations["get_13"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6411,7 +6459,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_15"];
+        get: operations["list_16"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6459,7 +6507,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_16"];
+        get: operations["list_17"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6507,7 +6555,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_13"];
+        get: operations["get_14"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6715,7 +6763,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_14"];
+        get: operations["get_15"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6830,7 +6878,7 @@ export interface paths {
         get: operations["content"];
         put?: never;
         post?: never;
-        delete: operations["delete_17"];
+        delete: operations["delete_18"];
         options?: never;
         head?: never;
         patch?: never;
@@ -6859,7 +6907,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_15"];
+        get: operations["get_16"];
         put?: never;
         post?: never;
         delete: operations["unsign"];
@@ -7099,7 +7147,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_17"];
+        get: operations["list_18"];
         put?: never;
         post?: never;
         delete?: never;
@@ -7115,7 +7163,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_16"];
+        get: operations["get_17"];
         put?: never;
         post?: never;
         delete?: never;
@@ -7147,7 +7195,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_18"];
+        get: operations["list_19"];
         put?: never;
         post?: never;
         delete?: never;
@@ -7163,7 +7211,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_19"];
+        get: operations["list_20"];
         put?: never;
         post?: never;
         delete?: never;
@@ -7227,7 +7275,39 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_17"];
+        get: operations["get_18"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/leads/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["summary_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/leads/conversion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["conversion"];
         put?: never;
         post?: never;
         delete?: never;
@@ -7723,10 +7803,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_18"];
+        get: operations["get_19"];
         put?: never;
         post?: never;
-        delete: operations["delete_18"];
+        delete: operations["delete_19"];
         options?: never;
         head?: never;
         patch?: never;
@@ -7755,7 +7835,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_20"];
+        get: operations["list_21"];
         put?: never;
         post?: never;
         delete?: never;
@@ -8075,7 +8155,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["conversion"];
+        get: operations["conversion_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -8222,7 +8302,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["delete_19"];
+        delete: operations["delete_20"];
         options?: never;
         head?: never;
         patch?: never;
@@ -8254,7 +8334,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["delete_20"];
+        delete: operations["delete_21"];
         options?: never;
         head?: never;
         patch?: never;
@@ -8286,7 +8366,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["delete_21"];
+        delete: operations["delete_22"];
         options?: never;
         head?: never;
         patch?: never;
@@ -8334,7 +8414,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["delete_22"];
+        delete: operations["delete_23"];
         options?: never;
         head?: never;
         patch?: never;
@@ -8382,7 +8462,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["delete_23"];
+        delete: operations["delete_24"];
         options?: never;
         head?: never;
         patch?: never;
@@ -9835,6 +9915,54 @@ export interface components {
         };
         EarningsControllerEvening: {
             eveningSummary?: boolean;
+        };
+        NewLead: {
+            phone: string;
+            fullName?: string;
+            /** @enum {string} */
+            channel?: "CALL" | "WHATSAPP" | "INSTAGRAM" | "TELEGRAM" | "SITE" | "WALK_IN" | "RECOMMENDATION" | "OTHER";
+            wish?: string;
+            /** Format: date-time */
+            callbackAt?: string;
+            /** Format: int64 */
+            responsibleId?: number;
+            /** Format: int64 */
+            patientId?: number;
+        };
+        LeadView: {
+            /** Format: int64 */
+            id: number;
+            phone: string;
+            fullName?: string;
+            /** @enum {string} */
+            channel: "CALL" | "WHATSAPP" | "INSTAGRAM" | "TELEGRAM" | "SITE" | "WALK_IN" | "RECOMMENDATION" | "OTHER";
+            wish?: string;
+            /** @enum {string} */
+            status: "NEW" | "NO_ANSWER" | "THINKING" | "BOOKED" | "REFUSED";
+            refuseReason?: string;
+            /** Format: date-time */
+            callbackAt?: string;
+            due: boolean;
+            overdue: boolean;
+            /** Format: int64 */
+            responsibleId: number;
+            responsibleName: string;
+            createdByName: string;
+            /** Format: int64 */
+            patientId?: number;
+            patientName?: string;
+            /** Format: int64 */
+            appointmentId?: number;
+            /** Format: date-time */
+            appointmentAt?: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            /** Format: date-time */
+            closedAt?: string;
+            statusTitle: string;
+            mine: boolean;
         };
         LabDraft: {
             name: string;
@@ -11520,6 +11648,13 @@ export interface components {
         MyEmailControllerEmailCode: {
             email: string;
         };
+        LeadControllerStatusChange: {
+            /** @enum {string} */
+            status?: "NEW" | "NO_ANSWER" | "THINKING" | "BOOKED" | "REFUSED";
+            /** Format: date-time */
+            callbackAt?: string;
+            reason?: string;
+        };
         LabControllerStatusChange: {
             /** @enum {string} */
             status: "SENT" | "READY" | "FITTED" | "REWORK";
@@ -11770,6 +11905,8 @@ export interface components {
             /** Format: int64 */
             chairId?: number;
             serviceTypeIds?: number[];
+            /** Format: int64 */
+            fromLeadId?: number;
         };
         VisitTemplateControllerTeeth: {
             teeth?: number[];
@@ -13585,6 +13722,33 @@ export interface components {
             /** Format: int64 */
             clinicAfterSharedSom?: number;
             rentTwice: boolean;
+        };
+        LeadControllerSummary: {
+            /** Format: int32 */
+            attention: number;
+        };
+        LeadServiceChannelConversion: {
+            /** @enum {string} */
+            channel: "CALL" | "WHATSAPP" | "INSTAGRAM" | "TELEGRAM" | "SITE" | "WALK_IN" | "RECOMMENDATION" | "OTHER";
+            /** Format: int32 */
+            total: number;
+            /** Format: int32 */
+            booked: number;
+            /** Format: int32 */
+            refused: number;
+        };
+        LeadServiceConversion: {
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            /** Format: int32 */
+            total: number;
+            /** Format: int32 */
+            booked: number;
+            /** Format: int32 */
+            refused: number;
+            channels: components["schemas"]["LeadServiceChannelConversion"][];
         };
         LabControllerVisit: {
             /** Format: int64 */
@@ -16959,6 +17123,74 @@ export interface operations {
             };
         };
     };
+    get_4: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadView"];
+                };
+            };
+        };
+    };
+    update_17: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewLead"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadView"];
+                };
+            };
+        };
+    };
+    delete_13: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     updateLab: {
         parameters: {
             query?: never;
@@ -17005,7 +17237,7 @@ export interface operations {
             };
         };
     };
-    get_4: {
+    get_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -17027,7 +17259,7 @@ export interface operations {
             };
         };
     };
-    update_17: {
+    update_18: {
         parameters: {
             query?: never;
             header?: never;
@@ -17053,7 +17285,7 @@ export interface operations {
             };
         };
     };
-    delete_13: {
+    delete_14: {
         parameters: {
             query?: never;
             header?: never;
@@ -17099,7 +17331,7 @@ export interface operations {
             };
         };
     };
-    update_18: {
+    update_19: {
         parameters: {
             query?: never;
             header?: never;
@@ -17125,7 +17357,7 @@ export interface operations {
             };
         };
     };
-    delete_14: {
+    delete_15: {
         parameters: {
             query?: never;
             header?: never;
@@ -17197,7 +17429,7 @@ export interface operations {
             };
         };
     };
-    get_5: {
+    get_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -17267,7 +17499,7 @@ export interface operations {
             };
         };
     };
-    update_19: {
+    update_20: {
         parameters: {
             query?: never;
             header?: never;
@@ -17389,7 +17621,7 @@ export interface operations {
             };
         };
     };
-    update_20: {
+    update_21: {
         parameters: {
             query?: never;
             header?: never;
@@ -17501,7 +17733,7 @@ export interface operations {
             };
         };
     };
-    get_6: {
+    get_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -17565,7 +17797,7 @@ export interface operations {
             };
         };
     };
-    update_21: {
+    update_22: {
         parameters: {
             query?: never;
             header?: never;
@@ -17749,7 +17981,7 @@ export interface operations {
             };
         };
     };
-    get_7: {
+    get_8: {
         parameters: {
             query?: never;
             header?: never;
@@ -18013,7 +18245,7 @@ export interface operations {
             };
         };
     };
-    update_22: {
+    update_23: {
         parameters: {
             query?: never;
             header?: never;
@@ -18107,7 +18339,7 @@ export interface operations {
             };
         };
     };
-    delete_15: {
+    delete_16: {
         parameters: {
             query?: never;
             header?: never;
@@ -18177,7 +18409,7 @@ export interface operations {
             };
         };
     };
-    update_23: {
+    update_24: {
         parameters: {
             query?: never;
             header?: never;
@@ -18303,7 +18535,7 @@ export interface operations {
             };
         };
     };
-    update_24: {
+    update_25: {
         parameters: {
             query?: never;
             header?: never;
@@ -23139,6 +23371,76 @@ export interface operations {
             };
         };
     };
+    list_10: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadView"][];
+                };
+            };
+        };
+    };
+    create_14: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewLead"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadView"];
+                };
+            };
+        };
+    };
+    status_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeadControllerStatusChange"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadView"];
+                };
+            };
+        };
+    };
     labs: {
         parameters: {
             query?: {
@@ -23185,7 +23487,7 @@ export interface operations {
             };
         };
     };
-    list_10: {
+    list_11: {
         parameters: {
             query?: {
                 fitted?: boolean;
@@ -23211,7 +23513,7 @@ export interface operations {
             };
         };
     };
-    create_14: {
+    create_15: {
         parameters: {
             query?: never;
             header?: never;
@@ -23235,7 +23537,7 @@ export interface operations {
             };
         };
     };
-    status_1: {
+    status_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -23335,7 +23637,7 @@ export interface operations {
             };
         };
     };
-    list_11: {
+    list_12: {
         parameters: {
             query: {
                 from: string;
@@ -23443,7 +23745,7 @@ export interface operations {
             };
         };
     };
-    create_15: {
+    create_16: {
         parameters: {
             query?: never;
             header?: never;
@@ -23859,7 +24161,7 @@ export interface operations {
             };
         };
     };
-    create_16: {
+    create_17: {
         parameters: {
             query?: {
                 months?: number;
@@ -24218,7 +24520,7 @@ export interface operations {
             };
         };
     };
-    list_12: {
+    list_13: {
         parameters: {
             query?: never;
             header?: never;
@@ -24238,7 +24540,7 @@ export interface operations {
             };
         };
     };
-    create_17: {
+    create_18: {
         parameters: {
             query?: never;
             header?: never;
@@ -24334,7 +24636,7 @@ export interface operations {
             };
         };
     };
-    list_13: {
+    list_14: {
         parameters: {
             query?: never;
             header?: never;
@@ -24354,7 +24656,7 @@ export interface operations {
             };
         };
     };
-    create_18: {
+    create_19: {
         parameters: {
             query?: never;
             header?: never;
@@ -24442,7 +24744,7 @@ export interface operations {
             };
         };
     };
-    get_8: {
+    get_9: {
         parameters: {
             query?: never;
             header?: never;
@@ -24482,7 +24784,7 @@ export interface operations {
             };
         };
     };
-    delete_16: {
+    delete_17: {
         parameters: {
             query?: never;
             header?: never;
@@ -24574,7 +24876,7 @@ export interface operations {
             };
         };
     };
-    create_19: {
+    create_20: {
         parameters: {
             query?: never;
             header?: never;
@@ -25532,7 +25834,7 @@ export interface operations {
             };
         };
     };
-    status_2: {
+    status_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -25836,7 +26138,7 @@ export interface operations {
             };
         };
     };
-    status_3: {
+    status_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -26040,7 +26342,7 @@ export interface operations {
             };
         };
     };
-    get_9: {
+    get_10: {
         parameters: {
             query?: never;
             header?: never;
@@ -26412,7 +26714,7 @@ export interface operations {
             };
         };
     };
-    list_14: {
+    list_15: {
         parameters: {
             query: {
                 month: string;
@@ -26434,7 +26736,7 @@ export interface operations {
             };
         };
     };
-    get_10: {
+    get_11: {
         parameters: {
             query: {
                 month: string;
@@ -26627,7 +26929,7 @@ export interface operations {
             };
         };
     };
-    get_11: {
+    get_12: {
         parameters: {
             query?: never;
             header?: never;
@@ -26649,7 +26951,7 @@ export interface operations {
             };
         };
     };
-    get_12: {
+    get_13: {
         parameters: {
             query?: never;
             header?: never;
@@ -26735,7 +27037,7 @@ export interface operations {
             };
         };
     };
-    list_15: {
+    list_16: {
         parameters: {
             query?: {
                 group?: "FRESH" | "SENT" | "FURTHER" | "DECLINED";
@@ -26802,7 +27104,7 @@ export interface operations {
             };
         };
     };
-    list_16: {
+    list_17: {
         parameters: {
             query?: never;
             header?: never;
@@ -26865,7 +27167,7 @@ export interface operations {
             };
         };
     };
-    get_13: {
+    get_14: {
         parameters: {
             query?: never;
             header?: never;
@@ -27171,7 +27473,7 @@ export interface operations {
             };
         };
     };
-    get_14: {
+    get_15: {
         parameters: {
             query?: never;
             header?: never;
@@ -27348,7 +27650,7 @@ export interface operations {
             };
         };
     };
-    delete_17: {
+    delete_18: {
         parameters: {
             query?: never;
             header?: never;
@@ -27391,7 +27693,7 @@ export interface operations {
             };
         };
     };
-    get_15: {
+    get_16: {
         parameters: {
             query?: {
                 doctorId?: number;
@@ -27735,7 +28037,7 @@ export interface operations {
             };
         };
     };
-    list_17: {
+    list_18: {
         parameters: {
             query?: {
                 done?: boolean;
@@ -27757,7 +28059,7 @@ export interface operations {
             };
         };
     };
-    get_16: {
+    get_17: {
         parameters: {
             query?: never;
             header?: never;
@@ -27799,7 +28101,7 @@ export interface operations {
             };
         };
     };
-    list_18: {
+    list_19: {
         parameters: {
             query?: {
                 patientId?: number;
@@ -27821,7 +28123,7 @@ export interface operations {
             };
         };
     };
-    list_19: {
+    list_20: {
         parameters: {
             query?: never;
             header?: never;
@@ -27901,7 +28203,7 @@ export interface operations {
             };
         };
     };
-    get_17: {
+    get_18: {
         parameters: {
             query?: never;
             header?: never;
@@ -27917,6 +28219,49 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EarningsView"];
+                };
+            };
+        };
+    };
+    summary_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadControllerSummary"];
+                };
+            };
+        };
+    };
+    conversion: {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadServiceConversion"];
                 };
             };
         };
@@ -28561,7 +28906,7 @@ export interface operations {
             };
         };
     };
-    get_18: {
+    get_19: {
         parameters: {
             query?: never;
             header?: never;
@@ -28583,7 +28928,7 @@ export interface operations {
             };
         };
     };
-    delete_18: {
+    delete_19: {
         parameters: {
             query?: {
                 force?: boolean;
@@ -28627,7 +28972,7 @@ export interface operations {
             };
         };
     };
-    list_20: {
+    list_21: {
         parameters: {
             query?: never;
             header?: never;
@@ -29086,7 +29431,7 @@ export interface operations {
             };
         };
     };
-    conversion: {
+    conversion_1: {
         parameters: {
             query: {
                 from: string;
@@ -29291,7 +29636,7 @@ export interface operations {
             };
         };
     };
-    delete_19: {
+    delete_20: {
         parameters: {
             query?: never;
             header?: never;
@@ -29331,7 +29676,7 @@ export interface operations {
             };
         };
     };
-    delete_20: {
+    delete_21: {
         parameters: {
             query?: never;
             header?: never;
@@ -29377,7 +29722,7 @@ export interface operations {
             };
         };
     };
-    delete_21: {
+    delete_22: {
         parameters: {
             query?: never;
             header?: never;
@@ -29437,7 +29782,7 @@ export interface operations {
             };
         };
     };
-    delete_22: {
+    delete_23: {
         parameters: {
             query?: never;
             header?: never;
@@ -29497,7 +29842,7 @@ export interface operations {
             };
         };
     };
-    delete_23: {
+    delete_24: {
         parameters: {
             query?: never;
             header?: never;

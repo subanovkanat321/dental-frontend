@@ -7,7 +7,7 @@ import type { Schemas } from '../api/client'
  * бэкенда): ?appointment=ID — карточка приёма, ?day=tomorrow — завтра, ?patient=ID — новая запись
  * на этого пациента, ?patientCard=ID — карточка пациента, ?question=ID — вопрос пациента, ?supply=ID — материал на складе,
  * ?screen=cash|stats|earnings|support|support-tickets|pay-requests|survey|shifts|learn|agreement — раздел;
- * ?screen=tasks&task=ID — «Пациенты → Задачи» (напоминание о задаче); ?screen=lab&order=ID — «Склад → Лаборатория»,
+ * ?screen=tasks&task=ID — «Пациенты → Задачи» (напоминание о задаче); ?screen=leads — «Пациенты → Обращения» («перезвонить»); ?screen=lab&order=ID — «Склад → Лаборатория»,
  * этот заказ (предупреждение «завтра примерка»); ?doctor=ID — «День»
  * этого врача (уведомление о приёмах коллеги), можно вместе с ?day=tomorrow;
  * ?screen=booked&day=today|tomorrow&unconfirmed=1&doctor=ID — «Пациенты → Записаны» на этот день, только
@@ -40,6 +40,8 @@ export type DeepLink = {
   date?: string
   appointmentId?: number
   bookPatientId?: number
+  /** «Записать» из «Пациенты → Обращения»: «Новая запись» с именем и номером обращения (или его карточкой) */
+  bookLeadId?: number
   /** Токен контакта из бота (?contact=…) */
   contactToken?: string
   /** Токен черновика помощника в боте (?assist=…) */
@@ -93,6 +95,8 @@ export function readDeepLink(search: string, today = todayIn()): DeepLink | null
   if (screen === 'shifts') return { page: 'clinic', tab: 'shifts' }
   // «Для пациента»: 3D-атлас и презентации
   if (screen === 'learn') return { page: 'learn' }
+  // «📞 Пора перезвонить по обращению» (бот или push): «Пациенты → Обращения»
+  if (screen === 'leads') return { page: 'patients', tab: 'leads' }
   // Напоминание о задаче (бот или push): «Пациенты → Задачи»
   if (screen === 'tasks') return { page: 'patients', tab: 'tasks', taskId: num('task') }
   // Предупреждение «завтра примерка, а работа не пришла» (бот или push): «Склад → Лаборатория»

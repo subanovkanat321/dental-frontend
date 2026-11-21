@@ -291,3 +291,24 @@ test('аналитика: конверсия без права на деньги
   expect(within(conv).queryByLabelText('Средний чек')).not.toBeInTheDocument()
   expect(within(conv).queryByText('Ещё ждут')).not.toBeInTheDocument()
 })
+
+test('аналитика: «Обращения → записаны» по источникам — руководителю', async () => {
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/leads/conversion', ({ request }) => {
+      const q = new URL(request.url).searchParams
+      return HttpResponse.json({
+        from: q.get('from')!, to: q.get('to')!, total: 10, booked: 4, refused: 2,
+        channels: [{ channel: 'INSTAGRAM', total: 6, booked: 3, refused: 1 }, { channel: 'CALL', total: 4, booked: 1, refused: 1 }],
+      } satisfies Schemas['LeadServiceConversion'])
+    }),
+  )
+  renderApp()
+  await userEvent.click(await findSub('Аналитика'))
+  const box = await screen.findByRole('region', { name: 'Обращения → записаны' })
+  expect(await within(box).findByText('40%')).toBeInTheDocument()
+  expect(box).toHaveTextContent('4 из 10 обращений · отказались 2')
+  const rows = within(within(box).getByRole('list', { name: 'Обращения по источникам' })).getAllByRole('listitem')
+  expect(rows[0]).toHaveTextContent(/Instagram.*3 из 6.*50%/)
+  expect(rows[1]).toHaveTextContent(/Звонок.*1 из 4.*25%/)
+})

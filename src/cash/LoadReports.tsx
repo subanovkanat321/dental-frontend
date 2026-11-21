@@ -7,6 +7,7 @@ import { percents } from '../lib/parts'
 import { addDays, monthRange, somText, todayIn, weekStart } from '../lib/time'
 import { Loading } from '../layout/Loading'
 import { EmptyState } from '../layout/EmptyState'
+import { CHANNEL_TITLE } from '../patients/leadsApi'
 
 type Kind = 'week' | 'month' | 'custom'
 type Range = { from: string; to: string }
@@ -36,7 +37,11 @@ function rangeOf(kind: Kind, custom: Range, today = todayIn()): Range {
  * неделю, месяц или свои даты: хватает ли записей на рабочие часы и доходят ли пациенты до лечения. Всё считает
  * сервер (часы, перерывы, выходные, кто что видит); здесь — только рисуем. doctorId — врач из шапки «Кассы».
  */
-export function LoadReports({ doctorId }: { doctorId: number | null }) {
+export function LoadReports({ doctorId, leads = false }: {
+  doctorId: number | null
+  /** «Обращения → записаны» (шаг 8Б) — руководителю и регистратуре, по всей клинике (обращения ещё ничьи — без врача) */
+  leads?: boolean
+}) {
   const [kind, setKind] = useState<Kind>('week')
   const today = todayIn()
   const [custom, setCustom] = useState<Range>({ from: addDays(today, -29), to: today })
@@ -64,6 +69,7 @@ export function LoadReports({ doctorId }: { doctorId: number | null }) {
         <div className="chart-pair">
           <LoadChart range={range} scope={scope} />
           <ConversionChart range={range} scope={scope} />
+          {leads && doctorId == null && <LeadConversionChart range={range} />}
         </div>
       )}
     </>
@@ -197,3 +203,44 @@ function ConversionBody({ c }: { c: Schemas['OwnerReportsConversionView'] }) {
     </>
   )
 }
+
+/**
+ * «Обращения → записаны» (шаг 8Б): обращения за период (по дню обращения) по каналу — сколько всего и сколько дошли до
+ * записи. Только числа; больше обращений — выше.
+ */
+function LeadConversionChart({ range }: { range: Range }) {
+  const data = useQuery({
+    queryKey: ['leads', 'conversion', range.from, range.to],
+    queryFn: () => unwrap(api.GET('/api/leads/conversion', { params: { query: range } })),
+  })
+  const c = data.data
+  return (
+    <section className="card-block chart" aria-label="Обращения → записаны">
+      <h2>Обращения → записаны</h2>
+      {data.isPending ? <Loading />
+        : data.error ? <p className="error">{data.error.message}</p>
+          : !c || c.total === 0 ? <EmptyState compact title="Обращений за этот период нет">Добавляют в «Пациенты» → «Обращения».</EmptyState>
+            : (
+              <>
+                <p className="chart-headline"><b className="num">{Math.round((c.booked / c.total) * 100)}%</b> записались
+                  <span className="hint"> · {c.booked} из {c.total} обращений{c.refused ? ` · отказались ${c.refused}` : ''}</span></p>
+                <ul className="hbars funnel" aria-label="Обращения по источникам">
+                  {c.channels.map((ch) => {
+                    const share = Math.round((ch.booked / ch.total) * 100)
+                    const name = CHANNEL_TITLE[ch.channel]
+                    return (
+                      <li key={ch.channel} title={`${name}: записались ${ch.booked} из ${ch.total}`}>
+                        <span className="hbar-name">{name}</span>
+                        <span className="hbar-track" aria-hidden="true"><span className="hbar-fill" style={{ width: `${share}%` }} /></span>
+                        <span className="hbar-value num">{ch.booked} из {ch.total}<span className="hint"> · {share}%</span></span>
+                      </li>
+                    )
+                  })}
+                </ul>
+                <p className="hint small">По дню обращения. Полоса — какая доля обращений из этого источника дошла до записи.</p>
+              </>
+            )}
+    </section>
+  )
+}
+

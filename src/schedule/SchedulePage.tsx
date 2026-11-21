@@ -64,7 +64,7 @@ type Appointment = Schemas['AppointmentView']
 /** Расписание само перечитывается раз в минуту: кто-то записал с телефона — видно без F5. */
 const REFRESH_MS = 60_000
 
-type Side = { kind: 'appointment'; id: number; fallback?: Appointment; intent?: 'move' | 'pay' } | { kind: 'new'; slot: Slot; patient?: Schemas['PatientView']; contact?: SharedContact } | null
+type Side = { kind: 'appointment'; id: number; fallback?: Appointment; intent?: 'move' | 'pay' } | { kind: 'new'; slot: Slot; patient?: Schemas['PatientView']; contact?: SharedContact; leadId?: number } | null
 
 /** Имя и номер контакта, присланного боту (кнопка «📅 Записать», ?contact=токен). */
 export type SharedContact = Schemas['SharedContactsContact']
@@ -120,7 +120,7 @@ function useNarrow(): boolean {
 /** Сводка дня справа открыта или скрыта — на этом устройстве (не персональные данные). */
 const SUMMARY_KEY = 'crm.daySummary'
 
-export function SchedulePage({ me, bookPatient = null, bookContact = null, bookPreset, onBookingShown, onNavigate, onOpenEarnings, initialDate, initialDoctor, openAppointment, onOpenPatient }: {
+export function SchedulePage({ me, bookPatient = null, bookContact = null, bookPreset, bookLeadId, onBookingShown, onNavigate, onOpenEarnings, initialDate, initialDoctor, openAppointment, onOpenPatient }: {
   /** Кнопка бота «приёмы коллеги» (?doctor=ID): сразу этот врач. */
   initialDoctor?: number
   me: Me
@@ -140,6 +140,8 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
   /** Вместе с bookPatient: врач, услуга и длительность (из «Позвать снова → Отменили»); день и время — из
    * черновика помощника в боте (?assist=…; open — открыть «Новую запись» и без пациента) */
   bookPreset?: { doctorId?: number; serviceId?: number; duration?: number; date?: string; minutes?: number; open?: boolean }
+  /** «Записать» из «Пациенты → Обращения»: после записи обращение станет «Записан» (fromLeadId) */
+  bookLeadId?: number
   onBookingShown?: () => void
 }) {
   const today = todayIn()
@@ -158,8 +160,8 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
     // Врач не задан пресетом — по умолчанию (soft): выбран пациент — станет его лечащий врач
     const slot = { doctorId: doctor.id, date: bookPreset?.date ?? today, minutes: bookPreset?.minutes ?? null, duration: bookPreset?.duration, serviceId: bookPreset?.serviceId,
       soft: bookPreset?.doctorId == null }
-    if (bookPatient) return { kind: 'new', patient: bookPatient, slot }
-    return bookContact ? { kind: 'new', contact: bookContact, slot } : { kind: 'new', slot }
+    if (bookPatient) return { kind: 'new', patient: bookPatient, slot, leadId: bookLeadId }
+    return bookContact ? { kind: 'new', contact: bookContact, slot, leadId: bookLeadId } : { kind: 'new', slot }
   })
   // Пациента для записи взяли — забыть, чтобы при следующем заходе «Расписание» открылось как обычно
   useEffect(() => {
@@ -796,7 +798,7 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
         onBook={(slot, patient) => setSide({ kind: 'new', slot: { ...slot, next: true }, patient })} />}
       {/* «Записать на следующий визит» / «снова» из карточки приёма (next): этап плана и ближайшее свободное время */}
       {side?.kind === 'new' && (
-        <NewAppointmentPanel slot={side.slot} me={me} initialPatient={side.patient} initialContact={side.contact} nowDoctorId={firstBookable()?.id} onClose={close}
+        <NewAppointmentPanel slot={side.slot} me={me} initialPatient={side.patient} initialContact={side.contact} fromLeadId={side.leadId} nowDoctorId={firstBookable()?.id} onClose={close}
           onCreated={(a, how) => {
             // «⚡ Сейчас» — приём начинается: карточку сразу; обычная запись — форма закрывается, внизу тост с «Открыть»
             if (how?.walkIn) setSide({ kind: 'appointment', id: a.id, fallback: a })
