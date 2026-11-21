@@ -33707,6 +33707,23 @@
         },
         "required" : [ "qty" ]
       },
+      "ReceiptsPay" : {
+        "properties" : {
+          "details" : {
+            "type" : "string"
+          },
+          "qrToken" : {
+            "type" : "string"
+          },
+          "payUrl" : {
+            "type" : "string"
+          },
+          "doctor" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "doctor" ]
+      },
       "ReceiptsPayment" : {
         "properties" : {
           "paidAt" : {
@@ -33786,6 +33803,12 @@
             "items" : {
               "$ref" : "#/components/schemas/ReceiptsLine"
             }
+          },
+          "pay" : {
+            "$ref" : "#/components/schemas/ReceiptsPay"
+          },
+          "telegramText" : {
+            "type" : "string"
           }
         },
         "required" : [ "appointmentId", "debtSom", "paidSom", "telegram" ]

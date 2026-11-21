@@ -1,13 +1,15 @@
 import { useMutation } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 
 import { ApiError, type Schemas } from '../api/client'
 import { haptic, openLink } from '../lib/telegram'
 import { whatsappUrl } from '../lib/texts'
 import { DocPreview, type Paper } from './DocPreview'
+import type { Channel } from './MessagePreview'
 import type { PaperFormat } from './paper'
 
-type Message = Pick<Schemas['PatientMessage'], 'text' | 'telegram'>
+/** telegramText — текст для бота, если он другой (квитанция: QR в Telegram картинкой, а не ссылкой); нет — тот же */
+type Message = Pick<Schemas['PatientMessage'], 'text' | 'telegram'> & { telegramText?: string | null }
 
 /**
  * Документ пациенту (памятка, квитанция, план без цен): одна кнопка «👁 Просмотр» — под ней ровно то, что он получит
@@ -19,14 +21,16 @@ type Message = Pick<Schemas['PatientMessage'], 'text' | 'telegram'>
  * @param send отправить в бот (POST …/send)
  * @param paper лист печати для вкладки «📄 Лист»; нет — «🖨 Печать» сразу открывает окно печати
  * @param onPrint открыть окно печати (в выбранном в просмотре формате)
+ * @param note подсказка под сообщением для канала (квитанция: «следом — картинка QR»)
  */
-export function DocActions({ label, phone, message, send, onPrint, paper }: {
+export function DocActions({ label, phone, message, send, onPrint, paper, note }: {
   label: string
   phone?: string | null
   message?: Message
   send: () => Promise<unknown>
   onPrint: (format: PaperFormat) => void
   paper?: Paper
+  note?: (channel: Channel) => ReactNode
 }) {
   const [open, setOpen] = useState(false)
   const [sent, setSent] = useState('')
@@ -55,7 +59,7 @@ export function DocActions({ label, phone, message, send, onPrint, paper }: {
         </div>
       )}
       {open && message && (
-        <DocPreview label={label} text={message.text ?? ''} telegram={Boolean(message.telegram)} phone={phone} paper={paper}
+        <DocPreview label={label} text={message.text ?? ''} telegramText={message.telegramText} note={note} telegram={Boolean(message.telegram)} phone={phone} paper={paper}
           busy={bot.isPending} onClose={() => setOpen(false)} onPrint={onPrint}
           sendLabel={(c) => `Отправить пациенту в ${c === 'TELEGRAM' ? 'Telegram' : 'WhatsApp'}: ${label}`}
           onTelegram={() => { setSent(''); bot.mutate() }} onWhatsapp={whatsapp}>
