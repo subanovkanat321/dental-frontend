@@ -26,7 +26,8 @@ function unitPrice(costSom: number, delta: number, unit?: string): string {
 
 /**
  * Карточка материала справа: списать или принять поставку (с ценой — она пойдёт в расходы),
- * поменять название, единицу и минимум, чей склад, история движений. Удалить — только админ.
+ * поменять название, единицу и минимум, чей склад, история движений. Удалить — руководитель любой, врач — свой
+ * материал своего склада (общий клиники — только руководитель, 2026-11-21).
  */
 export function SupplyPanel({ supply: s, me, onClose, onMoved }: {
   supply: Supply
@@ -141,7 +142,7 @@ export function SupplyPanel({ supply: s, me, onClose, onMoved }: {
         ) : history.isPending ? <Loading /> : <EmptyState compact title="Движений ещё не было" />}
       </section>
 
-      {me.admin && (
+      {(me.admin || (!isAssistant(me) && me.doctorId != null && s.doctorId === me.doctorId)) && (
         <div className="danger-zone">
           <button type="button" className="btn danger" disabled={remove.isPending}
             onClick={() => void ask(`Удалить «${s.name}» со склада? История тоже пропадёт.`).then((ok) => ok && remove.mutate())}>Удалить материал</button>

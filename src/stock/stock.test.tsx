@@ -276,3 +276,25 @@ test('нажимается вся строка: выделение текста 
   await userEvent.keyboard('{Enter}')
   expect(await screen.findByRole('complementary', { name: 'Материал' })).toHaveTextContent('Перчатки')
 })
+
+test('«Удалить материал»: врач — только свой (своего склада), общий клиники — руководитель', async () => {
+  const doctor = { ...me, admin: false, clinic: { ...me.clinic!, separateSupplies: true } }
+  const own: Supply = { ...glove, doctorId: me.doctorId!, doctorName: 'Айгерим С.' }
+  backend([own, anesthetic], doctor)
+  const removed: string[] = []
+  server.use(http.delete('*/api/supplies/:id', ({ params }) => { removed.push(String(params.id)); return new HttpResponse(null, { status: 204 }) }))
+  vi.spyOn(window, 'confirm').mockReturnValue(true)
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: 'Анестетик' }))
+  const panel = () => screen.getByRole('complementary', { name: 'Материал' })
+  const settings = within(panel()).queryByRole('button', { name: /^Настройки/ })
+  if (settings) await userEvent.click(settings)
+  expect(within(panel()).queryByRole('button', { name: 'Удалить материал' })).not.toBeInTheDocument()
+
+  await userEvent.click(screen.getByRole('button', { name: 'Перчатки' }))
+  const settings2 = within(panel()).queryByRole('button', { name: /^Настройки/ })
+  if (settings2 && settings2.getAttribute('aria-expanded') !== 'true') await userEvent.click(settings2)
+  await userEvent.click(within(panel()).getByRole('button', { name: 'Удалить материал' }))
+  await waitForSlow(() => expect(removed).toEqual([String(own.id)]))
+  vi.restoreAllMocks()
+})
