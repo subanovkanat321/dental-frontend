@@ -168,6 +168,10 @@ export const server = setupServer(
   http.post('*/api/anamnesis/alerts', () => HttpResponse.json([] satisfies Schemas['AnamnesisAlert'][])),
   http.get('*/api/appointments/:id/note', () => HttpResponse.json({ note: '' })),
   http.get('*/api/patients/:id/notes', () => HttpResponse.json([])),
+  // Шаг 8А: похожих карточек и событий ленты по умолчанию нет
+  http.get('*/api/patients/duplicates', () => HttpResponse.json([] satisfies Schemas['PatientDuplicatesPair'][])),
+  http.get('*/api/patients/:id/duplicates', () => HttpResponse.json([] satisfies Schemas['PatientDuplicatesMatch'][])),
+  http.get('*/api/patients/:id/timeline', () => HttpResponse.json({ items: [] } satisfies Schemas['PatientTimelinePage'])),
   // «Зубы этого приёма» и история зубов по визитам (V155): по умолчанию ничего не отмечено
   http.get('*/api/appointments/:id/teeth', () => HttpResponse.json([] satisfies Schemas['VisitToothView'][])),
   http.get('*/api/patients/:id/teeth/history', () => HttpResponse.json([] satisfies Schemas['VisitTeethView'][])),

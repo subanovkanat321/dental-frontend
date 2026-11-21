@@ -2218,6 +2218,8 @@ button.status-pill:focus-visible { outline: 2px solid var(--accent); outline-off
 /* «＋ Задача   ＋ Заказ в лабораторию» — одной строкой ссылок под сводкой, как в карточке приёма */
 .patient-card .segments.tabs { justify-self: stretch; flex-wrap: nowrap; overflow: visible; }
 .patient-card .segments.tabs button { flex: 1 1 0; min-width: 0; padding-inline: 6px; }
+/* Пять вкладок с «Историей» (шаг 8А): ширина по слову, а не поровну — на телефоне «Медкарта» и «Деньги» не слипаются */
+.patient-card .segments.tabs button { flex-basis: auto; padding-inline: 4px; font-size: .88rem; }
 .patient-card .patient-medical, .patient-card .patient-money, .patient-card .patient-more { gap: 10px; }
 .patient-medical .btn, .patient-more > .link { justify-self: start; }
 .price-pick { display: grid; gap: 4px; margin-top: 6px; }
@@ -3425,3 +3427,42 @@ button.cash-entry:hover, button.cash-entry.active { background: var(--sunken); }
 .waitlist-wish .wish-main .field > span { font-size: .85rem; color: var(--hint); }
 .waitlist-wish .wish-actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 @media (max-width: 760px) { .waitlist-wish .wish-actions .btn.primary { flex: 1 1 auto; } }
+
+/* Шаг 8А: «История» пациента — живая лента по дням (спокойно: значок, текст, серым услуга и врач, справа время и кто) */
+.patient-history { display: grid; gap: 12px; }
+.history-day { display: grid; gap: 2px; }
+.history-date { margin: 0 0 2px; font-size: .78rem; font-weight: 500; color: var(--faint); text-transform: none; letter-spacing: 0; }
+.history-list { list-style: none; margin: 0; padding: 0; display: grid; }
+.history-row + .history-row { border-top: 1px solid var(--separator); }
+.history-link { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; align-items: start; gap: 8px; width: 100%; padding: 7px 0;
+  border: 0; background: none; color: inherit; font: inherit; text-align: left; }
+button.history-link { cursor: pointer; }
+button.history-link:hover .history-text { color: var(--link); }
+.history-ico { font-size: .95rem; line-height: 1.35; text-align: center; }
+.history-main { display: grid; min-width: 0; }
+.history-text { font-size: .9rem; line-height: 1.35; overflow-wrap: anywhere; }
+.history-sub { font-size: .8rem; color: var(--hint); overflow-wrap: anywhere; }
+.history-meta { display: grid; justify-items: end; font-size: .8rem; color: var(--hint); line-height: 1.35; }
+.history-who { color: var(--faint); max-width: 9em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.history-row.k-cancelled .history-text, .history-row.k-no-show .history-text { color: var(--bad-ink); }
+.history-more { justify-self: start; }
+
+/* Похожие карточки и объединение (шаг 8А) */
+.patient-duplicates { display: inline-block; margin-top: 4px; padding: 0; font-size: .88rem; color: var(--wait-ink); text-align: left; }
+.merge-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 8px 0 12px; }
+.merge-card { display: grid; gap: 2px; align-content: start; padding: 10px 12px; border: 1px solid var(--line-strong); border-radius: var(--r-md);
+  background: var(--card); color: var(--text); font: inherit; text-align: left; cursor: pointer; min-width: 0; }
+.merge-card strong { overflow-wrap: anywhere; }
+.merge-card.keep { border-color: var(--accent); background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent); }
+.merge-card-tag { font-size: .75rem; font-weight: 500; color: var(--faint); }
+.merge-card.keep .merge-card-tag { color: var(--accent-ink); }
+.merge-section h4 { margin: 0 0 4px; font-size: .88rem; }
+.merge-moves { list-style: none; margin: 0; padding: 0; display: grid; }
+.merge-moves li { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; font-size: .9rem; }
+.merge-moves li + li { border-top: 1px solid var(--separator); }
+.merge-moves .num { color: var(--hint); }
+.merge-note { margin: 10px 0 0; font-size: .88rem; }
+.merge-blocked { margin-top: 10px; }
+.merge-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-top: 14px; }
+.merge-back { padding: 0; margin-bottom: 4px; }
+@media (max-width: 420px) { .merge-cards { grid-template-columns: 1fr; } }

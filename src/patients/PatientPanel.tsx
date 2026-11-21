@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 
-import { api, unwrap, type Schemas } from '../api/client'
+import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { useAnamnesis } from '../api/anamnesis'
 import { MedAlertPill } from '../medical/Anamnesis'
 import { useClose } from '../lib/useClose'
@@ -36,6 +36,8 @@ import { CloseButton } from '../layout/SheetHead'
 import { PlanProgressLine } from '../medical/PlanProgress'
 import { PatientTagsLine } from '../tags/TagDots'
 import { serviceLabel } from '../schedule/lineLabel'
+import { PatientHistory } from './PatientHistory'
+import { DuplicatesLine } from './Duplicates'
 
 type Me = Schemas['BookingViewsMe']
 type Patient = Schemas['PatientView']
@@ -44,7 +46,7 @@ type Appointment = Schemas['AppointmentView']
 /** Сколько прошлых визитов показать сразу: остальные — «Показать все». */
 const PAST = 5
 
-type Tab = 'visits' | 'medical' | 'money' | 'more'
+type Tab = 'visits' | 'medical' | 'money' | 'history' | 'more'
 
 /** «1 неявка», «3 неявки» — в строке денег шапки. */
 function noShowText(n: number | undefined): string {
@@ -64,7 +66,7 @@ function ageText(birth: string): string {
  * Карточка пациента справа — сверху вниз: шапка (имя, телефон, возраст, бот или WhatsApp; ⚠ аллергия пилюлей, как в
  * карточке приёма; метки; деньги и неявки строкой; лечащий врач; «Следующий визит ›») → «＋ Записать» и связаться →
  * прогресс плана → вкладки: «Визиты» (предстоящие, прошлые — первые 5 и «Показать все»), «Медкарта» (нажатие сразу
- * открывает её во всю ширину), «Деньги» (долги, расходы), «Прочее» (данные, откуда узнал, представитель, лист ожидания,
+ * открывает её во всю ширину), «Деньги» (долги, расходы), «История» (живая лента, шаг 8А), «Прочее» (данные, откуда узнал, представитель, лист ожидания,
  * семья, договор). Ребёнок — бейдж «Ребёнок, 7 лет» и строка представителя в шапке. Редкое (задача, лаборатория,
  * договор) — в «⋯». Плиток «Визитов / Следующий» нет: они повторяли вкладку «Визиты» (UX-аудит 2026-11-20).
  */
@@ -155,10 +157,15 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
     return <aside className="panel" aria-label="Карточка пациента"><Loading /></aside>
   }
   if (card.error) {
+    // Карточку объединили с другой (шаг 8А): старая ссылка ведёт на основную
+    const merged = card.error instanceof ApiError && card.error.code === 'patient-merged' ? Number(card.error.problem.patientId) : null
     return (
       <aside className="panel" aria-label="Карточка пациента">
         <div className="panel-head-actions panel-x-only"><CloseButton onClick={onClose} /></div>
-        <p className="error">{card.error.message}</p>
+        {merged && onOpenPatient
+          ? <EmptyState compact title="Эта карточка объединена с другой"
+              action={<button type="button" className="btn primary" onClick={() => onOpenPatient(merged)}>Открыть основную карточку</button>} />
+          : <p className="error">{card.error.message}</p>}
       </aside>
     )
   }
@@ -194,6 +201,7 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
     ['visits', 'Визиты'],
     ...(clinical ? [['medical', 'Медкарта'] as [Tab, string]] : []),
     ...(staff || debtRows.length || seesAdvance(me) ? [['money', 'Деньги'] as [Tab, string]] : []),
+    ['history', 'История'],
     ['more', 'Прочее'],
   ]
   const shown = tabs.some(([key]) => key === tab) && tab !== 'medical' ? tab : 'visits'
@@ -231,6 +239,8 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
           <KidInfo patient={patient} />
           {/* Свои метки клиники (V239): чипы; руководитель и регистратура нажимают — список с ✓ */}
           {patient && <PatientTagsLine patient={patient} me={me} />}
+          {/* «Похожие карточки: 1» — возможный дубль (шаг 8А); руководитель объединяет из окна */}
+          {patient && <DuplicatesLine patient={patient} me={me} onOpenPatient={onOpenPatient} />}
           {(moneyLine || treatingName || next || (noShow ?? 0) > 0) && (
             <div className="patient-facts">
               {moneyLine && (
@@ -331,6 +341,9 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
           {staff && patient && <PatientExpenses patient={patient} me={me} />}
         </section>
       )}
+
+      {/* «История» — живая лента пациента (шаг 8А): записи, приёмы, оплаты, напоминания, отзывы, план, бот, задачи */}
+      {shown === 'history' && patient && <PatientHistory patientId={patient.id} onOpenAppointment={onOpenAppointment} />}
 
       {shown === 'more' && (
         <section className="patient-more">

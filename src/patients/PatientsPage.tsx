@@ -28,6 +28,8 @@ import { TasksTab } from '../tasks/TasksTab'
 import { RatingsTab } from './RatingsTab'
 import { DroppedTab } from './DroppedTab'
 import { NoBotTab } from './NoBotTab'
+import { DuplicatePairs } from './Duplicates'
+import { useDuplicatePairs } from './duplicatesModel'
 
 type Me = Schemas['BookingViewsMe']
 type Row = Schemas['PatientListControllerPatientRow']
@@ -82,6 +84,10 @@ export function PatientsPage({ me, onBook, initialPatient, initialQuestion, init
   const [birthdaysOnly, setBirthdaysOnly] = useState(false)
   const birthdays = useBirthdays(tab === 'all')
   const birthdayCount = birthdays.data?.items.length ?? 0
+  // «Похожие карточки» (шаг 8А): дубли клиники — руководителю; кнопка — только когда они есть
+  const [dupsOnly, setDupsOnly] = useState(false)
+  const pairs = useDuplicatePairs(tab === 'all' && Boolean(me.admin))
+  const pairCount = pairs.data?.length ?? 0
   const recent = useQuery({
     queryKey: ['patients', 'recent', doctorId],
     queryFn: () => unwrap(api.GET('/api/patients/recent', { params: { query: { doctorId: doctorId ?? undefined } } })),
@@ -149,8 +155,12 @@ export function PatientsPage({ me, onBook, initialPatient, initialQuestion, init
                   </Select>
                 )}
                 {(birthdayCount > 0 || birthdaysOnly) && (
-                  <button type="button" className="btn small" aria-pressed={birthdaysOnly} onClick={() => setBirthdaysOnly(!birthdaysOnly)}
+                  <button type="button" className="btn small" aria-pressed={birthdaysOnly} onClick={() => { setBirthdaysOnly(!birthdaysOnly); setDupsOnly(false) }}
                     title="Сегодня день рождения — поздравить">🎂 Сегодня{birthdayCount ? ` · ${birthdayCount}` : ''}</button>
+                )}
+                {(pairCount > 0 || dupsOnly) && (
+                  <button type="button" className="btn small" aria-pressed={dupsOnly} onClick={() => { setDupsOnly(!dupsOnly); setBirthdaysOnly(false) }}
+                    title="Возможно, пациента завели дважды — объединить">👥 Похожие карточки{pairCount ? ` · ${pairCount}` : ''}</button>
                 )}
                 <Select aria-label="Порядок" value={sort} onChange={(e) => setSort(e.target.value as SortKey)}>
                   {SORTS.map(([key, title]) => <option key={key} value={key}>{title}</option>)}
@@ -175,14 +185,15 @@ export function PatientsPage({ me, onBook, initialPatient, initialQuestion, init
         {tab === 'dropped' && <DroppedTab me={me} onOpen={setSelected} onBook={onBook} />}
         {tab === 'nobot' && <NoBotTab onOpen={setSelected} />}
         {tab === 'comeback' && <ComebackTab onOpen={setSelected} onBook={onBook} canEditServices={canEditServices(me)} />}
-        {tab === 'all' && birthdaysOnly && <section className="card-block" aria-label="Дни рождения сегодня"><BirthdayList onOpen={setSelected} /></section>}
-        {tab === 'all' && !birthdaysOnly && recent.error && <p className="error">{recent.error.message}</p>}
-        {tab === 'all' && !birthdaysOnly && recent.isSuccess && sorted.length === 0 && (
+        {tab === 'all' && dupsOnly && <DuplicatePairs onOpen={setSelected} />}
+        {tab === 'all' && birthdaysOnly && !dupsOnly && <section className="card-block" aria-label="Дни рождения сегодня"><BirthdayList onOpen={setSelected} /></section>}
+        {tab === 'all' && !birthdaysOnly && !dupsOnly && recent.error && <p className="error">{recent.error.message}</p>}
+        {tab === 'all' && !birthdaysOnly && !dupsOnly && recent.isSuccess && sorted.length === 0 && (
           <EmptyState fill title={text ? (remote.isFetching ? 'Ищем по всей клинике…' : `Никого не нашли по «${query.trim()}»`) : doctorId != null ? 'У этого врача пока не было пациентов' : 'Пациентов пока нет'}>
             {text ? (remote.isFetching ? undefined : 'Попробуйте последние цифры телефона.') : doctorId == null ? 'Появятся с первой записью.' : undefined}
           </EmptyState>
         )}
-        {tab === 'all' && !birthdaysOnly && sorted.length > 0 && (
+        {tab === 'all' && !birthdaysOnly && !dupsOnly && sorted.length > 0 && (
           <ul className="calm-list" aria-label="Пациенты">
             {sorted.map((p) => (
               <CalmRow key={p.id} open={() => setSelected(p.id)} active={p.id === selected} name={p.fullName}
