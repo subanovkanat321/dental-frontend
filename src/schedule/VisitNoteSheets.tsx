@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
+import { useMe } from '../api/me'
 import { Sheet } from '../layout/Sheet'
 import { whenHistorySettled } from '../lib/back'
 import { openSettings } from '../lib/route'
@@ -66,7 +67,7 @@ export function TemplateSheet({ appointment: a, onProposal, onClose }: {
         </form>
       ) : list.isSuccess && (
         list.data.length === 0 ? (
-          <p className="hint">Шаблонов пока нет. Напишите заметку и нажмите «Сохранить как шаблон» — или заведите их в «Настройки → Шаблоны и заметка».</p>
+          <NoVisitTemplates />
         ) : (
           <div className="template-list">
             {[['Мои', mine], ['Общие клиники', shared]].map(([title, items]) => (items as Template[]).length > 0 && (
@@ -92,6 +93,46 @@ export function TemplateSheet({ appointment: a, onProposal, onClose }: {
         whenHistorySettled(() => openSettings('visit-templates'))
       }}>Настроить шаблоны</a></p>}
     </Sheet>
+  )
+}
+
+/**
+ * «＋ Добавить готовые» (V251): готовые шаблоны приёма — «Осмотр и консультация», «Кариес — пломба», «Пульпит — каналы»
+ * (1-й визит и завершение), «Удаление зуба», «Профгигиена», «Брекеты — коррекция», «Детский приём — герметизация
+ * фиссур». Новая клиника получает их сразу; кнопка возвращает недостающие по названию (удалили — вернутся, свои и
+ * переделанные не трогаем). Услуги подбирает сервер — из прайса клиники по названию. Руководителю — общие клиники,
+ * врачу — свои. Как «Добавить готовые» у шаблонов плана.
+ *
+ * @param empty шаблонов нет совсем — объяснение крупнее; иначе — одна строка «вернуть недостающие»
+ */
+export function NoVisitTemplates({ empty = true }: { empty?: boolean }) {
+  const me = useMe().data
+  const client = useQueryClient()
+  const shared = Boolean(me?.admin)
+  const [done, setDone] = useState('')
+  const add = useMutation<Template[], ApiError>({
+    mutationFn: () => unwrap(api.POST('/api/visit-templates/defaults')),
+    onSuccess: (list) => {
+      const before = client.getQueryData<Template[]>(['visit-templates'])?.length ?? 0
+      const added = list.length - before
+      setDone(added > 0 ? `Добавлено готовых: ${added}` : 'Все готовые шаблоны уже есть')
+      client.setQueryData(['visit-templates'], list)
+    },
+  })
+  return (
+    <div className={empty ? 'visit-templates-empty' : 'visit-templates-defaults'}>
+      {empty ? (
+        <p className="hint">Шаблонов пока нет. Добавьте готовые — «Кариес — пломба», «Пульпит — каналы», «Удаление зуба» и другие:
+          текст по разделам, зубы и услуги из вашего прайса — и поправьте под себя. Или напишите заметку и нажмите «Сохранить как шаблон».</p>
+      ) : (
+        <p className="hint small">Удалили готовый шаблон — его можно вернуть: добавятся только недостающие, ваши не изменятся.</p>
+      )}
+      <button type="button" className={empty ? 'btn' : 'btn small'} disabled={add.isPending} onClick={() => { setDone(''); add.mutate() }}>
+        ＋ Добавить готовые{shared ? ' (общие для клиники)' : ''}
+      </button>
+      {done && <p className="tone-ok small" role="status">{done}</p>}
+      {add.error && <p className="error small" role="alert">{add.error.message}</p>}
+    </div>
   )
 }
 

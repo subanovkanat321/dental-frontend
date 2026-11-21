@@ -3476,3 +3476,9 @@ button.history-link:hover .history-text { color: var(--link); }
 .merge-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-top: 14px; }
 .merge-back { padding: 0; margin-bottom: 4px; }
 @media (max-width: 420px) { .merge-cards { grid-template-columns: 1fr; } }
+
+/* «＋ Добавить готовые» шаблоны приёма (V251) — как у шаблонов плана */
+.visit-templates-empty { display: grid; gap: 8px; justify-items: start; }
+.visit-templates-empty p { margin: 0; }
+.visit-templates-defaults { display: grid; gap: 6px; justify-items: start; margin-top: 12px; }
+.visit-templates-defaults p { margin: 0; }

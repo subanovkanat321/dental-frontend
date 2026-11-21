@@ -2340,6 +2340,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/visit-templates/defaults": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["addDefaults"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/time-off": {
         parameters: {
             query?: never;
@@ -3533,7 +3549,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["addDefaults"];
+        post: operations["addDefaults_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -19738,6 +19754,26 @@ export interface operations {
             };
         };
     };
+    addDefaults: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VisitTemplatesView"][];
+                };
+            };
+        };
+    };
     all: {
         parameters: {
             query?: never;
@@ -21986,7 +22022,7 @@ export interface operations {
             };
         };
     };
-    addDefaults: {
+    addDefaults_1: {
         parameters: {
             query?: never;
             header?: never;

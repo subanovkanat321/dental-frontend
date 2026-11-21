@@ -9,6 +9,7 @@ import { ask } from '../lib/confirm'
 import { TOOTH_STATES, type ToothState } from '../medical/toothStates'
 import { cleanSections, hasText, SECTIONS, type Sections } from '../schedule/noteSections'
 import { templateSummary } from '../schedule/templates'
+import { NoVisitTemplates } from '../schedule/VisitNoteSheets'
 import { SubHeader } from './SubHeader'
 
 type Me = Schemas['BookingViewsMe']
@@ -22,7 +23,8 @@ function errorText(e: ApiError | null): string | null {
 /**
  * «Настройки → Шаблоны и заметка» (шаг 2, опыт Dentist Plus): переключатель «Разделы заметки» (руководитель) и шаблоны
  * приёма — свои (врач) и общие клиники (заводит руководитель): изменить, переименовать, удалить. Применяют шаблон в
- * карточке приёма («📄 Шаблон»), сохраняют туда же — «Сохранить как шаблон».
+ * карточке приёма («📄 Шаблон»), сохраняют туда же — «Сохранить как шаблон». Готовые («Кариес — пломба», «Пульпит —
+ * каналы»…) у клиники уже есть (V251); «＋ Добавить готовые» внизу возвращает удалённые.
  */
 export function VisitTemplatesPage({ me, onBack }: { me: Me; onBack: () => void }) {
   const list = useQuery({ queryKey: ['visit-templates'], queryFn: () => unwrap(api.GET('/api/visit-templates')) })
@@ -40,9 +42,7 @@ export function VisitTemplatesPage({ me, onBack }: { me: Me; onBack: () => void 
         {list.error && <p className="error" role="alert">{list.error.message}</p>}
         {editing === 'new' ? <TemplateForm me={me} onDone={() => setEditing(null)} />
           : <button type="button" className="btn" onClick={() => setEditing('new')}>＋ Новый шаблон</button>}
-        {list.isSuccess && list.data.length === 0 && editing !== 'new' && (
-          <p className="hint">Шаблонов пока нет. Проще всего — в карточке приёма: напишите заметку и нажмите «Сохранить как шаблон».</p>
-        )}
+        {list.isSuccess && list.data.length === 0 && editing !== 'new' && <NoVisitTemplates />}
         {[['Мои', mine], ['Общие клиники', shared]].map(([title, items]) => (items as Template[]).length > 0 && (
           <div key={title as string} className="template-group" role="group" aria-label={title as string}>
             <h3>{title as string}</h3>
@@ -60,6 +60,7 @@ export function VisitTemplatesPage({ me, onBack }: { me: Me; onBack: () => void 
             </ul>
           </div>
         ))}
+        {list.isSuccess && list.data.length > 0 && editing == null && <NoVisitTemplates empty={false} />}
       </section>
     </section>
   )

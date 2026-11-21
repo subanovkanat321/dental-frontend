@@ -6149,6 +6149,27 @@
         }
       }
     },
+    "/api/visit-templates/defaults" : {
+      "post" : {
+        "tags" : [ "visit-template-controller" ],
+        "operationId" : "addDefaults",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/VisitTemplatesView"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/time-off" : {
       "get" : {
         "tags" : [ "time-off-controller" ],
@@ -8906,7 +8927,7 @@
     "/api/plan-templates/defaults" : {
       "post" : {
         "tags" : [ "plan-template-controller" ],
-        "operationId" : "addDefaults",
+        "operationId" : "addDefaults_1",
         "responses" : {
           "200" : {
             "description" : "OK",
