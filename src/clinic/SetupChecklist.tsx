@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
+import { isDemoSession } from '../lib/demo'
 import { openSettings } from '../lib/route'
 import { clinicRequest } from '../settings/clinicUpdate'
 import { SETUP_HINT_CLOSED, useSetupSteps, type Step } from './setupSteps'
@@ -39,7 +40,7 @@ export function SetupHint({ me }: { me: Me }) {
   const { shown, steps, done } = useSetupSteps(me)
   const [closed, setClosed] = useState(readClosed)
   const settingUp = Boolean(me.clinic?.settingUp)
-  if (!shown || closed || (done === steps.length && !settingUp)) return null
+  if (isDemoSession() || !shown || closed || (done === steps.length && !settingUp)) return null
   const close = () => {
     try {
       localStorage.setItem(SETUP_HINT_CLOSED, '1')
@@ -76,7 +77,8 @@ export function SetupChecklist({ me }: { me: Me }) {
       void client.invalidateQueries({ queryKey: ['me'] })
     },
   })
-  if (!shown || (done === steps.length && !settingUp)) return null
+  // Гостю демо-клиники настраивать нечего — клиника уже заполнена и каждую ночь перезаливается
+  if (isDemoSession() || !shown || (done === steps.length && !settingUp)) return null
   const error = open.error ? Object.values(open.error.fieldErrors)[0] ?? open.error.message : null
   return (
     <section className="card-block setup-checklist" aria-label="Настройка клиники">

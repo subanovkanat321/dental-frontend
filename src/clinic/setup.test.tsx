@@ -118,3 +118,15 @@ test('без работающего врача — пункт «Врачи», «
   await screen.findByRole('group', { name: 'Требует внимания' })
   expect(screen.queryByRole('region', { name: 'Что настроить' })).not.toBeInTheDocument()
 })
+
+test('демо-клиника: «Что настроить» гостю не показываем — клиника уже заполнена', async () => {
+  backend(fresh)
+  document.cookie = 'tish_demo=owner; path=/'
+  try {
+    renderApp()
+    await screen.findByRole('group', { name: 'Требует внимания' })
+    expect(screen.queryByRole('region', { name: 'Что настроить' })).not.toBeInTheDocument()
+  } finally {
+    document.cookie = 'tish_demo=; path=/; max-age=0'
+  }
+})
