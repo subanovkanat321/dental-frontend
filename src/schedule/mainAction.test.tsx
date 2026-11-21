@@ -87,16 +87,17 @@ describe('телефон: внизу — главное действие каж�
     expect(onBook).toHaveBeenCalledWith(expect.objectContaining({ date: addDays(todayIn(), 7) }), base.patient)
   })
 
-  test('долг — «Принять доплату» внизу (открывает форму), «Записать на следующий визит» — обычной кнопкой; залитая одна', async () => {
+  test('долг — «Принять доплату» в блоке оплаты (внизу её нет), «Записать на следующий визит» — обычной кнопкой; залитая одна', async () => {
     backend()
     const { panel } = renderPanel({ ...base, status: 'DONE', paidSom: 2000, chargeSom: 6000, debtSom: 4000, paymentMethod: 'CASH' }, reception)
-    expect(main(panel)).toBe('Принять доплату')
-    expect(within(panel).getAllByRole('button', { name: 'Принять доплату' })).toHaveLength(1)
+    const extra = within(panel).getAllByRole('button', { name: /Принять доплату/ })
+    expect(extra).toHaveLength(1)
+    expect(panel.querySelector('.appt-pay')).toContainElement(extra[0]!)
+    expect(within(bar(panel)).queryByRole('button', { name: /Принять доплату/ })).not.toBeInTheDocument()
     const next = within(panel).getByRole('button', { name: 'Записать на следующий визит' })
     expect(next).not.toHaveClass('primary')
     expect(panel.querySelectorAll('.btn.primary')).toHaveLength(1)
-    Element.prototype.scrollIntoView = vi.fn()
-    await userEvent.click(within(bar(panel)).getByRole('button', { name: 'Принять доплату' }))
+    await userEvent.click(extra[0]!)
     expect(await within(panel).findByRole('button', { name: 'Сохранить доплату' })).toBeInTheDocument()
   })
 

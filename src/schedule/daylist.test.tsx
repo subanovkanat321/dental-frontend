@@ -168,24 +168,23 @@ test('телефон: «WA» — WhatsApp с подписью клиники, з
   vi.restoreAllMocks()
 })
 
-test('телефон: «✓ отправлено», а сообщение не ушло — спросить и снять отметку, снова кнопка «WA»', async () => {
-  const calls = remindBackend(appointment(10, 1, '23:30', 'Бакыт М.', { reminderOpenedAt: new Date().toISOString() }))
+test('телефон: «✓ отправлено», а отправить ещё некуда (нет бота и номера) — спросить «не ушло?» и снять отметку', async () => {
+  const calls = remindBackend(appointment(10, 1, '23:30', 'Бакыт М.', { reminderOpenedAt: new Date().toISOString(), patient: { id: 10, fullName: 'Бакыт М.', phone: '', telegram: false } }))
   const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true)
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: /Напоминание отправлено: Бакыт М\..*Не ушло/ }))
   expect(confirm.mock.calls[0]![0]).toContain('не ушло')
-  expect(await screen.findByRole('button', { name: /Напомнить в WhatsApp: Бакыт М\./ })).toBeInTheDocument()
-  expect(calls).toEqual(['not-sent'])
+  await waitForSlow(() => expect(calls).toEqual(['not-sent']))
   vi.restoreAllMocks()
 })
 
-test('телефон: «↻ ещё раз» у «✓ отправлено» — после вопроса повтор в WhatsApp другим текстом, отметку снимать не нужно', async () => {
+test('телефон: нажали «✓ отправлено» — «Отправить ещё?», повтор в WhatsApp другим текстом, отметка остаётся', async () => {
   const calls = remindBackend(appointment(10, 1, '23:30', 'Бакыт М.', { reminderOpenedAt: new Date().toISOString() }))
   const opened: string[] = []
   vi.spyOn(window, 'open').mockImplementation((url) => { opened.push(String(url)); return null })
   const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true)
   renderApp()
-  const again = await screen.findByRole('button', { name: 'Напомнить ещё раз: Бакыт М.' })
+  const again = await screen.findByRole('button', { name: 'Напоминание отправлено: Бакыт М.. Отправить ещё' })
   await waitForSlow(() => expect(again).toBeEnabled())
   await userEvent.click(again)
   expect(confirm.mock.calls[0]![0]).toMatch(/^Уже напоминали в \d\d:\d\d\. Отправить ещё раз\?$/)

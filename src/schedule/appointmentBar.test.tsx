@@ -84,28 +84,29 @@ test('телефон, приход не отмечают (по умолчани�
   expect(panel.querySelectorAll('.btn.primary')).toHaveLength(1)
 })
 
-test('телефон: после приёма без оплаты — «Принять оплату» внизу открывает форму оплаты; кнопка на экране одна', async () => {
+test('телефон: после приёма без оплаты — всё про оплату в одном блоке: «💰 Принять оплату», под ней «Бесплатно» и «Оплачено заранее»; внизу её нет', async () => {
   phoneScreen(true)
   backend()
-  const scroll = vi.fn()
-  Element.prototype.scrollIntoView = scroll
   const panel = renderPanel({ ...base, status: 'DONE' })
   const bar = within(panel).getByRole('toolbar', { name: 'Действия с приёмом' })
-  // Блок оплаты в ленте — сводка «Оплата не отмечена» без второй кнопки; редкое — ссылками
-  expect(within(panel).getAllByRole('button', { name: /^Принять оплату/ })).toHaveLength(1)
-  expect(within(panel.querySelector<HTMLElement>('.appt-pay')!).getByRole('button', { name: 'Бесплатно' })).toHaveClass('link')
-  await userEvent.click(within(bar).getByRole('button', { name: 'Принять оплату' }))
-  await waitForSlow(() => expect(scroll.mock.contexts).toContain(panel.querySelector('.appt-pay')))
-  // Открылась форма: действие теперь — её «Сохранить оплату», нижней «Принять оплату» больше нет
+  const box = panel.querySelector<HTMLElement>('.appt-pay')!
+  const pay = within(panel).getAllByRole('button', { name: /Принять оплату/ })
+  expect(pay).toHaveLength(1)
+  expect(box).toContainElement(pay[0]!)
+  expect(pay[0]).toHaveClass('primary')
+  expect(within(bar).queryByRole('button', { name: /Принять оплату/ })).not.toBeInTheDocument()
+  expect(within(box).getByRole('button', { name: 'Бесплатно' })).toHaveClass('link')
+  expect(before(pay[0]!, within(box).getByRole('button', { name: 'Оплачено заранее' }))).toBe(true)
+  await userEvent.click(pay[0]!)
   const form = await within(panel).findByRole('form', { name: 'Оплата' })
   expect(within(form).getByRole('button', { name: /^Сохранить оплату/ })).toBeInTheDocument()
-  expect(within(panel).queryAllByRole('button', { name: /^Принять оплату/ })).toHaveLength(0)
+  expect(within(panel).queryAllByRole('button', { name: /Принять оплату/ })).toHaveLength(0)
 })
 
 test('компьютер: после приёма без оплаты — одна залитая «Принять оплату» в блоке оплаты, «Бесплатно» и «Оплачено заранее» — ссылками ниже', () => {
   backend()
   const panel = renderPanel({ ...base, status: 'DONE' })
-  const pay = within(panel).getAllByRole('button', { name: /^Принять оплату/ })
+  const pay = within(panel).getAllByRole('button', { name: /Принять оплату/ })
   expect(pay).toHaveLength(1)
   expect(pay[0]).toHaveClass('primary')
   expect(panel.querySelector('.appt-pay')).toContainElement(pay[0]!)

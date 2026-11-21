@@ -34,7 +34,6 @@ import { VisitTeeth } from './VisitTeeth'
 import { DepositBox } from './DepositBox'
 import { useWaitlist } from '../api/settings'
 import { PaymentBox } from './PaymentBox'
-import { initialPayView, PAY_FORMS, type PayView } from './payView'
 import { seesDebts, seesPatientDebts, usePatientDebts } from '../lib/debt'
 import { mainActionKind, type MainKind } from './mainAction'
 import { shortName } from '../lab/text'
@@ -318,10 +317,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
   // пока форма открыта, нижней кнопки нет — её «Сохранить» и есть «Принять оплату»
   const payKey = [a.id, a.version, a.paidSom, a.chargeSom, a.debtSom, a.dueOn, a.depositStatus].join('-')
   const [payOpen, setPayOpen] = useState<{ at: string; view: 'edit' | 'extra' } | null>(null)
-  const [payViewAt, setPayViewAt] = useState<{ at: string; view: PayView } | null>(null)
   const openNow = payOpen?.at === payKey ? payOpen.view : undefined
-  const payView = payViewAt?.at === payKey ? payViewAt.view : openNow ?? initialPayView(a, me)
-  const payFormOpen = a.status === 'DONE' && PAY_FORMS.includes(payView)
   const payMain = kind === 'pay' || kind === 'extra'
   const nextVisitDay = () => addDays(date > todayIn() ? date : todayIn(), 7)
   const sourceHint = a.bookedBy ? bookedByText(a.bookedBy) : a.source === 'PATIENT' ? 'Запись через бота'
@@ -444,7 +440,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
           {a.status === 'DONE' && seesMoney && (
             <div ref={payRef} className="appt-pay appt-pay-anchor">
               <PaymentBox key={`${payKey}-${openNow ?? ''}`} appointment={a} me={me} open={openNow}
-                mainOutside={phone && payMain} quiet={phone || !payMain} onView={(view) => setPayViewAt({ at: payKey, view })} />
+                quiet={!payMain} />
             </div>
           )}
           {/* Квитанция — строкой сразу под оплатой: «Печать» и «Отправить пациенту» (раньше — под «Ещё») */}
@@ -513,8 +509,9 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
     'next-visit': { label: 'Записать на следующий визит', run: () => bookAgain(nextVisitDay()) },
     'book-again': { label: 'Записать снова', run: () => bookAgain(todayIn()) },
   }[kind]
-  // Пока форма оплаты открыта, нижней «Принять оплату» нет: кнопка формы — та же «Принять оплату»
-  const barMain = main && !(payMain && payFormOpen) ? main : null
+  // Оплата — вся в своём блоке и на телефоне (2026-11-21, владелец: «Принять оплату» внизу казалась последней кнопкой,
+  // а «Бесплатно» — отдельно сверху): в нижней панели её нет, там следующий шаг и «⋯»
+  const barMain = main && !payMain ? main : null
   // Компьютер: шаг, «Напомнить», «Подтвердил», «Записать снова» — у пилюли; оплата и следующий визит — в ленте
   const statusMain = !phone && main && kind !== 'pay' && kind !== 'extra' && kind !== 'next-visit' ? main : null
   const noShowButton = (

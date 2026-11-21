@@ -31,7 +31,7 @@ export function confirmRemind(a: Appointment, now = new Date()): Promise<boolean
   }
   if (a.reminderOpenedAt) {
     const when = remindedText(a.reminderOpenedAt, now).replace(/^сегодня /, '')
-    return ask(`Уже напоминали ${when}. Отправить ещё раз?`, { ok: 'Отправить ещё раз' })
+    return ask(`Уже напоминали ${when}. Отправить ещё раз?`, { ok: 'Отправить ещё' })
   }
   return Promise.resolve(true)
 }

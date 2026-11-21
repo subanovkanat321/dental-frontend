@@ -322,7 +322,7 @@ function Row({ a, me, color, paint, chair, next, active, canEdit, money, onOpen,
   const fallbackWhatsapp = () => {
     if (r.whatsapp()) setNotice({ text: 'WhatsApp открыт', tone: 'ok' })
   }
-  // «↻ ещё раз» у «✓ отправлено»: тем же путём, с вопросом «Уже напоминали в 10:15. Отправить ещё раз?» и текстом
+  // Нажатие на «✓ отправлено»: тем же путём, с вопросом «Уже напоминали в 10:15. Отправить ещё раз?» и текстом
   // повтора (бот выбирает его сам по отметке; WhatsApp — useRepeatReminderText). Отметку «не ушло» снимать не нужно
   const canAgain = canRemind && sent && (viaBot || Boolean(r.phone))
   const remindAgain = async () => {
@@ -398,13 +398,12 @@ function Row({ a, me, color, paint, chair, next, active, canEdit, money, onOpen,
         </button>
         {canRemind && (sent ? (
           <span className="remind-sent-box">
-            <button type="button" className="remind-sent tone-ok" disabled={notSent.undo.isPending} onClick={notSent.run}
-              aria-label={`Напоминание отправлено: ${a.patient.fullName}. Не ушло? Снять отметку`}
+            {/* Нажали «✓ отправлено» — «Отправить ещё?» (2026-11-21: «Не ушло? Снять отметку» путало). Отправить некуда
+                (нет бота и номера) — тогда только снять отметку */}
+            <button type="button" className="remind-sent tone-ok" disabled={notSent.undo.isPending || action.isPending || opened.isPending}
+              onClick={canAgain ? () => void remindAgain() : notSent.run}
+              aria-label={canAgain ? `Напоминание отправлено: ${a.patient.fullName}. Отправить ещё` : `Напоминание отправлено: ${a.patient.fullName}. Не ушло? Снять отметку`}
               title={a.reminderOpenedAt ? `Напоминали ${remindedText(a.reminderOpenedAt)}` : undefined}>✓ отправлено</button>
-            {canAgain && (
-              <button type="button" className="remind-again" disabled={action.isPending || opened.isPending}
-                aria-label={`Напомнить ещё раз: ${a.patient.fullName}`} onClick={() => void remindAgain()}>↻ ещё раз</button>
-            )}
           </span>
         ) : (
           <button type="button" className={viaBot ? 'remind-quick tg' : 'remind-quick'} disabled={busy}

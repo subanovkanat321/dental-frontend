@@ -291,9 +291,11 @@ function Unpaid({ a, onPay, primary }: { a: Appointment; onPay?: () => void; pri
       <span className="payment-unpaid-text"><span aria-hidden="true">💳</span> Оплата не отмечена</span>
       {!prepaid && (
         <>
-          {/* Частое — первым: «Принять оплату» (на телефоне — в нижней панели), редкое — ссылками ниже */}
-          {onPay && <button type="button" className={primary ? 'btn primary' : 'btn'} data-pay-main disabled={action.isPending} onClick={onPay}>Принять оплату</button>}
+          {/* Всё про оплату — в одном месте (2026-11-21): «Принять оплату» (вся сумма, частями, в долг — в форме),
+              под ней — без оплаты: «Бесплатно» и «Оплачено заранее» */}
+          {onPay && <button type="button" className={primary ? 'btn primary' : 'btn'} data-pay-main disabled={action.isPending} onClick={onPay}><span aria-hidden="true">💰</span> Принять оплату</button>}
           <span className="payment-unpaid-links">
+            <span className="hint small">Без оплаты:</span>
             <button type="button" className="link" disabled={action.isPending} onClick={free}>Бесплатно</button>
             <button type="button" className="link" disabled={action.isPending} onClick={() => setPrepaid(true)}>Оплачено заранее</button>
           </span>
