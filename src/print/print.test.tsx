@@ -254,3 +254,64 @@ test('квитанция с аванса: строка «с аванса», «О
   expect(sheet).toHaveTextContent(/Остаток аванса: 17\s000 сом/)
   expect(sheet).toHaveTextContent('Оплачено полностью')
 })
+
+const TOKEN = 'a'.repeat(43)
+
+test('квитанция с долгом: «Как оплатить» с реквизитами и QR на листе, в бот — без ссылки, следом картинка QR', async () => {
+  backend(done())
+  server.use(http.get('*/api/appointments/:id/receipt', () => HttpResponse.json({
+    ...RECEIPT, telegram: true,
+    pay: { details: 'MBANK 0555 000 111\n(Стоматология «Тест»)', qrToken: TOKEN, payUrl: `https://tish.kg/pay/${TOKEN}`, doctor: false },
+    text: `🧾 Квитанция об оплате\n\nОсталось оплатить: 2 000 сом\nКак оплатить: MBANK 0555 000 111, (Стоматология «Тест»)\nQR для оплаты: https://tish.kg/pay/${TOKEN}`,
+    telegramText: '🧾 Квитанция об оплате\n\nОсталось оплатить: 2 000 сом\nКак оплатить: MBANK 0555 000 111, (Стоматология «Тест»)',
+  } satisfies Schemas['ReceiptsReceiptView'])))
+  renderApp()
+  const panel = await card(/Бакыт М\./)
+  await userEvent.click(await within(panel).findByRole('button', { name: 'Просмотр: квитанция' }))
+  // Реквизиты есть — подсказки добавить их нет
+  expect(within(panel).queryByText(/Добавьте реквизиты и QR/)).not.toBeInTheDocument()
+  // Telegram: текст для бота (без ссылки) и подсказка про картинку QR
+  const bubble = within(panel).getByRole('document', { name: 'Предпросмотр: квитанция' })
+  expect(bubble).toHaveTextContent('Как оплатить: MBANK 0555 000 111')
+  expect(bubble.textContent).not.toContain('/pay/')
+  expect(within(panel).getByText('📎 Следом бот пришлёт картинку QR для оплаты.')).toBeInTheDocument()
+  // WhatsApp — со ссылкой на страницу QR
+  await userEvent.click(within(panel).getByRole('button', { name: /WhatsApp/ }))
+  expect(within(panel).getByRole('document', { name: 'Предпросмотр: квитанция' })).toHaveTextContent(`QR для оплаты: https://tish.kg/pay/${TOKEN}`)
+
+  // Лист: блок «Как оплатить» с реквизитами и QR
+  await userEvent.click(within(panel).getByRole('button', { name: '📄 Лист' }))
+  const paper = within(panel).getByRole('document', { name: 'Лист: квитанция' })
+  const pay = within(paper).getByRole('region', { name: 'Как оплатить' })
+  expect(pay).toHaveTextContent('MBANK 0555 000 111')
+  expect(within(pay).getByRole('img', { name: 'QR для оплаты' })).toHaveAttribute('src', `/web/pay/${TOKEN}/qr`)
+  // Чек 80 мм — тот же блок
+  await userEvent.click(within(panel).getByRole('button', { name: 'Чек 80 мм' }))
+  expect(within(within(panel).getByRole('document', { name: 'Лист: квитанция' })).getByRole('region', { name: 'Как оплатить' })).toBeInTheDocument()
+})
+
+test('квитанция с долгом без реквизитов: подсказка руководителю, где добавить реквизиты и QR', async () => {
+  backend(done())
+  renderApp()
+  const panel = await card(/Бакыт М\./)
+  const hint = await within(panel).findByText(/Добавьте реквизиты и QR для оплаты/)
+  expect(within(hint).getByRole('link', { name: 'Клиника → О клинике → Предоплата за запись' })).toHaveAttribute('href', '#/clinic/about')
+  await userEvent.click(within(panel).getByRole('button', { name: 'Просмотр: квитанция' }))
+  await userEvent.click(within(panel).getByRole('button', { name: '📄 Лист' }))
+  expect(within(within(panel).getByRole('document', { name: 'Лист: квитанция' })).queryByRole('region', { name: 'Как оплатить' })).not.toBeInTheDocument()
+})
+
+test('оплачено полностью: ни «Как оплатить», ни подсказки про реквизиты', async () => {
+  backend(done({ paidSom: 5000, debtSom: 0 }))
+  server.use(http.get('*/api/appointments/:id/receipt', () => HttpResponse.json({
+    ...RECEIPT, paidSom: 5000, debtSom: 0,
+  } satisfies Schemas['ReceiptsReceiptView'])))
+  renderApp()
+  const panel = await card(/Бакыт М\./)
+  await userEvent.click(await within(panel).findByRole('button', { name: 'Просмотр: квитанция' }))
+  expect(within(panel).queryByText(/Добавьте реквизиты и QR/)).not.toBeInTheDocument()
+  await userEvent.click(within(panel).getByRole('button', { name: '📄 Лист' }))
+  const paper = within(panel).getByRole('document', { name: 'Лист: квитанция' })
+  expect(paper).toHaveTextContent('Оплачено полностью')
+  expect(within(paper).queryByRole('region', { name: 'Как оплатить' })).not.toBeInTheDocument()
+})

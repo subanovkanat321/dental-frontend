@@ -14246,6 +14246,12 @@ export interface components {
             /** Format: int32 */
             amountSom?: number;
         };
+        ReceiptsPay: {
+            details?: string;
+            qrToken?: string;
+            payUrl?: string;
+            doctor: boolean;
+        };
         ReceiptsPayment: {
             /** Format: date-time */
             paidAt?: string;
@@ -14278,6 +14284,8 @@ export interface components {
             /** Format: int32 */
             advanceLeftSom?: number;
             lines?: components["schemas"]["ReceiptsLine"][];
+            pay?: components["schemas"]["ReceiptsPay"];
+            telegramText?: string;
         };
         PaymentQueryEntry: {
             /** Format: int64 */

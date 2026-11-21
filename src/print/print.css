@@ -167,6 +167,51 @@
   color: #444;
 }
 
+/* Квитанция с долгом: «Как оплатить» — реквизиты слева, QR ~3 см справа; на чеке 80 мм — QR под реквизитами по центру */
+.print-sheet .receipt-pay {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  margin: 12px 0 4px;
+  padding: 8px 10px;
+  border: 1px solid #111;
+  break-inside: avoid;
+}
+
+.print-sheet .receipt-pay h2 {
+  margin: 0 0 4px;
+  font: 600 1em/1.3 Geologica, 'Golos Text', sans-serif;
+}
+
+.print-sheet .receipt-pay p {
+  margin: 0;
+}
+
+.print-sheet .receipt-pay-details {
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.print-sheet .receipt-pay-qr {
+  flex: none;
+  width: 30mm;
+  height: 30mm;
+  object-fit: contain;
+}
+
+.print-sheet.narrow .receipt-pay {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  padding: 6px;
+  text-align: center;
+}
+
+.print-sheet.narrow .receipt-pay-qr {
+  align-self: center;
+}
+
 .print-sheet .fiscal {
   margin-top: 10px;
   font-weight: 600;

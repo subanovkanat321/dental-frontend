@@ -25,16 +25,18 @@ export type Paper = {
  *
  * @param label что за документ — в подписях кнопок для экранного диктора («Печать: квитанция»)
  * @param telegram пациент пишет боту — можно отправить в Telegram
+ * @param telegramText текст для бота, если он не такой, как для WhatsApp (квитанция: QR в Telegram — картинкой следом)
  * @param phone телефон для WhatsApp (ссылку wa.me соберёт вызывающий: на сервер телефон не уходит)
  * @param paper лист печати; нет — только сообщение, «🖨 Печать» откроет окно печати сразу (план лечения)
  * @param note подсказка под сообщением, свой текст для канала (оценка приёма)
  * @param messageLabel имя пузыря сообщения для диктора; нет — «Предпросмотр: <label>»
  * @param sendLabel подпись кнопки отправки для диктора; нет — видимый текст
  */
-export function DocPreview({ label, text, telegram, phone, parts, paper, initialTab = 'message', busy = false, note, sendLabel, messageLabel,
+export function DocPreview({ label, text, telegramText, telegram, phone, parts, paper, initialTab = 'message', busy = false, note, sendLabel, messageLabel,
   onTelegram, onWhatsapp, onPrint, onClose, closeText = 'Закрыть', hint, children }: {
   label: string
   text: string
+  telegramText?: string | null
   telegram: boolean
   phone?: string | null
   parts?: number
@@ -71,7 +73,7 @@ export function DocPreview({ label, text, telegram, phone, parts, paper, initial
           <ChannelSwitch value={channel} telegram={telegram} whatsapp={Boolean(phone)} onChange={setChannel} />
           {nowhere
             ? <p className="hint small">Пациент не в Telegram и без телефона — отправить некуда{paper ? ', можно распечатать' : ''}.</p>
-            : <MessagePreview text={text} channel={toTelegram ? 'TELEGRAM' : 'WHATSAPP'} parts={parts}
+            : <MessagePreview text={toTelegram ? telegramText ?? text : text} channel={toTelegram ? 'TELEGRAM' : 'WHATSAPP'} parts={parts}
                 label={messageLabel ?? `Предпросмотр: ${label}`} />}
           {!nowhere && note?.(toTelegram ? 'TELEGRAM' : 'WHATSAPP')}
         </>

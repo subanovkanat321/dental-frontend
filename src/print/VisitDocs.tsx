@@ -32,7 +32,7 @@ export function VisitDocs({ appointment: a, me, memo = true }: { appointment: Ap
   return (
     <section className="visit-docs" aria-label="Документы приёма">
       {memo && <MemoDocs appointment={a} />}
-      {money && <ReceiptDocs appointment={a} />}
+      {money && <ReceiptDocs appointment={a} me={me} />}
     </section>
   )
 }
@@ -153,7 +153,11 @@ export function MemoPaper({ appointment: a, memo: m }: { appointment: Appointmen
   )
 }
 
-function ReceiptDocs({ appointment: a }: { appointment: Appointment }) {
+/**
+ * Квитанция об оплате. Остался долг — в ней «Как оплатить» (реквизиты и QR клиники или врача, который берёт оплату сам —
+ * выбирает сервер, как в напоминании о долге). Долг есть, а реквизитов нигде нет — подсказка, где их добавить.
+ */
+function ReceiptDocs({ appointment: a, me }: { appointment: Appointment; me: Me }) {
   const id = a.id
   const [printing, setPrinting] = useState<PaperFormat | null>(null)
   const receipt = useQuery({
@@ -167,7 +171,10 @@ function ReceiptDocs({ appointment: a }: { appointment: Appointment }) {
   return (
     <div className="doc-box">
       <p>🧾 Квитанция об оплате</p>
+      {r.debtSom > 0 && !r.pay && <NoPayHint admin={Boolean(me.admin)} />}
       <DocActions label="квитанция" phone={contactPhone(a.patient)} message={r}
+        note={(channel) => channel === 'TELEGRAM' && r.pay?.qrToken
+          ? <p className="hint small">📎 Следом бот пришлёт картинку QR для оплаты.</p> : null}
         send={() => unwrap(api.POST('/api/appointments/{id}/receipt/send', { params: { path: { id } } }))}
         paper={{ formats: true, render: (format) => <ReceiptSheet r={r} narrow={format === 'receipt'} /> }}
         onPrint={(format) => setPrinting(format)} />
@@ -177,6 +184,30 @@ function ReceiptDocs({ appointment: a }: { appointment: Appointment }) {
         </PrintSheet>
       )}
     </div>
+  )
+}
+
+/** Долг есть, реквизитов и QR нет ни у клиники, ни у врача: пациент не узнает из квитанции, куда платить. */
+function NoPayHint({ admin }: { admin: boolean }) {
+  const where = 'Клиника → О клинике → Предоплата за запись'
+  return (
+    <p className="hint small receipt-no-pay">
+      💳 Добавьте реквизиты и QR для оплаты — «{admin ? <a href="#/clinic/about">{where}</a> : where}», чтобы пациент знал, куда
+      оплатить долг. {admin ? '' : 'Заполняет руководитель. '}Врач на аренде кресла — свои в «Моём профиле» → «Как оплатить мне».
+    </p>
+  )
+}
+
+/** «Как оплатить» на листе квитанции: реквизиты и QR (картинка — открытая страница QR /web/pay/<токен>/qr, как у /pay). */
+function PayBlock({ pay }: { pay: NonNullable<Receipt['pay']> }) {
+  return (
+    <section className="receipt-pay" aria-label="Как оплатить">
+      <div>
+        <h2>Как оплатить</h2>
+        {pay.details ? <p className="receipt-pay-details">{pay.details}</p> : <p>Отсканируйте QR в приложении банка</p>}
+      </div>
+      {pay.qrToken && <img className="receipt-pay-qr" src={`/web/pay/${pay.qrToken}/qr`} alt="QR для оплаты" />}
+    </section>
   )
 }
 
@@ -235,6 +266,7 @@ function ReceiptSheet({ r, narrow }: { r: Receipt; narrow: boolean }) {
       {r.advanceSom != null && <p className="total">Оплачено с аванса: {somText(r.advanceSom)}</p>}
       {r.advanceSom != null && r.advanceLeftSom != null && <p className="total">Остаток аванса: {somText(r.advanceLeftSom)}</p>}
       <p className="total">{r.debtSom ? `Осталось оплатить: ${somText(r.debtSom)}` : 'Оплачено полностью'}</p>
+      {r.debtSom > 0 && r.pay && <PayBlock pay={r.pay} />}
       <div className="signatures"><span>Принял ____________________</span></div>
       <p className="fiscal">Не является фискальным чеком</p>
     </>
