@@ -238,11 +238,11 @@ function RiskBlock({ a }: { a: Analytics }) {
 
 /**
  * Откуда пришли клиники, зарегистрировавшиеся сами (V237): метка из ссылки /start?from=… — tish.kg/ig из шапки
- * Instagram даёт INSTAGRAM; NONE — без метки.
+ * Instagram даёт INSTAGRAM, «Тур по Tish» (/tour) — TOUR; NONE — без метки.
  */
 const SOURCE: Record<string, string> = {
-  INSTAGRAM: 'Instagram (tish.kg/ig)', REELS: 'рилсы', TWOGIS: '2ГИС', WHATSAPP: 'WhatsApp', QR: 'QR', DEMO: 'из демо-клиники',
-  NONE: 'без метки',
+  INSTAGRAM: 'Instagram (tish.kg/ig)', REELS: 'рилсы', TWOGIS: '2ГИС', WHATSAPP: 'WhatsApp', QR: 'QR', TOUR: 'тур по Tish (tish.kg/tour)',
+  DEMO: 'из демо-клиники', NONE: 'без метки',
 }
 
 /** Воронка клиник, заведённых за период: где теряем новых. */

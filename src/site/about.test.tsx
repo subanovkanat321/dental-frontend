@@ -25,6 +25,10 @@ test('сайт-визитка /about: герой, части ролика, за�
   const tries = screen.getAllByRole('link', { name: 'Попробовать бесплатно' })
   expect(tries.length).toBeGreaterThanOrEqual(4)
   for (const a of tries) expect(a).toHaveAttribute('href', '/start')
+  // «Тур по Tish» (/tour): в шапке, под первым экраном и в подвале
+  const tours = screen.getAllByRole('link', { name: /Тур по Tish/ })
+  expect(tours.length).toBeGreaterThanOrEqual(3)
+  for (const a of tours) expect(a).toHaveAttribute('href', '/tour')
   // Вторая кнопка — написать нам в WhatsApp (вверху и внизу)
   expect(screen.getAllByRole('link', { name: /Написать нам в WhatsApp/ }).length).toBeGreaterThanOrEqual(2)
   // Срок пробного периода не обещаем, заявка — только как «помогите подключить»

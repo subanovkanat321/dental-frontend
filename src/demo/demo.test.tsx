@@ -7,6 +7,7 @@ import { DEMO_SIGNUP, demoRole, markDemoTourSeen } from '../lib/demo'
 import { isDemoPath } from '../lib/route'
 import { About } from '../site/About'
 import { Go } from '../site/Go'
+import { Tour } from '../site/Tour'
 import { fetchTour } from '../tour/state'
 import { me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
@@ -117,7 +118,7 @@ test('тур в демо: отметку помнит вкладка, серве
   expect(asked).toBe(false)
 })
 
-test('«Посмотреть демо» на /about и /go — только когда демо включено на сервере', async () => {
+test('«Посмотреть демо» на /about, /go и /tour — только когда демо включено на сервере', async () => {
   const about = render(<About />)
   expect(screen.queryByRole('link', { name: /Посмотреть демо/ })).toBeNull()
   about.unmount()
@@ -129,6 +130,10 @@ test('«Посмотреть демо» на /about и /go — только ко
   for (const a of links) expect(a).toHaveAttribute('href', '/demo')
   shown.unmount()
 
-  render(<Go />)
+  const go = render(<Go />)
+  expect(await screen.findByRole('link', { name: /Посмотреть демо/ })).toHaveAttribute('href', '/demo')
+  go.unmount()
+
+  render(<Tour />)
   expect(await screen.findByRole('link', { name: /Посмотреть демо/ })).toHaveAttribute('href', '/demo')
 })

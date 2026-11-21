@@ -1,0 +1,129 @@
+/*
+ * /tour — «Тур по Tish» для владельцев клиник. Токены DESIGN.md, режим Persuade (как /about): Geologica в заголовках,
+ * много воздуха, одна залитая бирюзовая кнопка на область. Страница всегда светлая (mount по умолчанию), скриншоты —
+ * в «рамке» телефона. Телефон (до 759px): шаги — горизонтальная лента со scroll-snap, один шаг на экран, полоска
+ * прогресса, точки, стрелки и липкая кнопка внизу. Компьютер: шаги списком, скриншот и текст попеременно.
+ */
+.tour {
+  --tour-max: 1080px;
+  --frame: #0F2A30;
+  color: var(--text);
+  font-family: var(--ui);
+  font-size: 1.0625rem;
+  line-height: 1.55;
+  overflow-x: clip;
+}
+.tour a { color: inherit; }
+.tour :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+.tour .num { font-weight: 500; font-variant-numeric: tabular-nums; }
+.tour h1, .tour h2 { margin: 0; font-family: var(--display); font-weight: 600; letter-spacing: -.02em; text-wrap: balance; }
+.tour p { margin: 0; }
+
+.tour-top { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 10px max(16px, calc((100vw - var(--tour-max)) / 2)); padding-top: max(10px, env(safe-area-inset-top));
+  background: color-mix(in srgb, var(--page) 90%, transparent); backdrop-filter: saturate(1.4) blur(10px);
+  border-bottom: 1px solid color-mix(in srgb, var(--separator) 70%, transparent); }
+.tour-brand { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font: 600 1.25rem var(--display); text-decoration: none; }
+.tour-top-links { display: flex; align-items: center; gap: 20px; font-size: .95rem; }
+.tour-top-links a:not(.tour-btn) { color: var(--hint); text-decoration: none; }
+.tour-top-links a:not(.tour-btn):hover { color: var(--text); }
+
+.tour-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; padding: 0 24px;
+  border: 1px solid var(--line-strong); border-radius: 14px; background: var(--card); color: var(--text) !important;
+  font: 600 1rem var(--ui); text-decoration: none; white-space: nowrap;
+  transition: background .15s ease-out, border-color .15s ease-out, transform .1s ease-out; }
+.tour-btn:hover { border-color: var(--accent); }
+.tour-btn:active { transform: scale(.98); }
+.tour-btn.primary { border-color: var(--accent); background: var(--accent); color: var(--accent-text) !important; }
+.tour-btn.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+.tour-btn.small { min-height: 40px; padding: 0 16px; border-radius: 10px; font-size: .9rem; }
+.tour-btn.big { min-height: 60px; padding: 0 32px; font-size: 1.125rem; border-radius: 16px; }
+
+.tour-hero { max-width: 760px; margin: 0 auto; padding: 56px 16px 24px; text-align: center; }
+.tour-eyebrow { margin-bottom: 14px !important; color: var(--accent-ink); font-weight: 600; font-size: .95rem; }
+.tour h1 { font-size: clamp(2rem, 4.6vw, 3.4rem); line-height: 1.08; }
+.tour-lead { margin-top: 16px !important; color: var(--hint); font-size: clamp(1.0625rem, 1.5vw, 1.2rem); text-wrap: pretty; }
+
+/* Шаг: скриншот в рамке телефона + текст */
+.tour-steps { margin: 0; padding: 0; list-style: none; }
+.tour-step { display: grid; align-items: center; gap: 24px; }
+.tour-shot { display: flex; justify-content: center; }
+.tour-phone { position: relative; width: min(100%, 300px); padding: 7px; border-radius: 34px; background: var(--frame);
+  box-shadow: 0 2px 4px rgba(15, 42, 48, .1), 0 24px 50px -10px rgba(15, 42, 48, .35); }
+.tour-phone::before { content: ''; position: absolute; z-index: 1; top: 14px; left: 50%; translate: -50% 0; width: 30%; height: 16px; border-radius: 10px; background: var(--frame); }
+.tour-phone img { display: block; width: 100%; height: auto; aspect-ratio: 600 / 1298; object-fit: cover; object-position: top; border-radius: 27px; background: #fff; }
+.tour-num { margin-bottom: 10px !important; color: var(--accent-ink); font-weight: 600; font-size: .95rem; }
+.tour-num .num { display: inline-grid; place-items: center; min-width: 34px; height: 26px; margin-right: 4px; padding: 0 8px; border-radius: 999px;
+  background: var(--accent-soft); font-size: .85rem; }
+.tour-copy h2 { font-size: clamp(1.5rem, 3vw, 2.4rem); line-height: 1.12; }
+.tour-copy > p:not(.tour-num) { margin-top: 12px !important; color: var(--hint); font-size: clamp(1.0625rem, 1.4vw, 1.2rem); text-wrap: pretty; }
+.tour-step-cta { margin-top: 20px; }
+
+.tour-final { max-width: 760px; margin: 0 auto; padding: 64px 16px 56px; text-align: center; }
+.tour-final h2 { font-size: clamp(1.75rem, 3.6vw, 2.8rem); line-height: 1.1; }
+.tour-ctas { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 28px; }
+.tour-note { margin-top: 20px !important; color: var(--faint); font-size: .95rem; }
+.tour-note a { color: var(--accent-ink); }
+.tour-footer { padding: 24px 16px 32px; text-align: center; color: var(--faint); font-size: .9rem; }
+.tour-footer a { color: var(--hint); }
+
+.tour-sticky { position: fixed; z-index: 30; left: 0; right: 0; bottom: 0; display: grid; padding: 10px 16px; padding-bottom: max(10px, env(safe-area-inset-bottom));
+  background: color-mix(in srgb, var(--page) 92%, transparent); backdrop-filter: saturate(1.4) blur(10px);
+  border-top: 1px solid color-mix(in srgb, var(--separator) 70%, transparent); }
+.tour-sticky { transition: translate .2s ease-out; }
+.tour-sticky.hidden { translate: 0 110%; }
+.tour-sticky .tour-btn { min-height: 50px; }
+
+/* Прогресс, стрелки и точки — только у карусели на телефоне */
+.tour-progress { display: flex; align-items: center; gap: 12px; padding: 0 16px 14px; }
+.tour-progress-mid { flex: 1; display: grid; gap: 6px; }
+.tour-progress-text { color: var(--hint); font-size: .9rem; text-align: center; }
+.tour-progress-bar { height: 4px; border-radius: 999px; background: var(--separator); overflow: hidden; }
+.tour-progress-bar > span { display: block; height: 100%; border-radius: inherit; background: var(--accent); transition: width .25s ease-out; }
+.tour-nav { display: flex; justify-content: center; padding: 4px 16px 0; }
+.tour-arrow { display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid var(--line-strong); border-radius: 999px;
+  background: var(--card); color: var(--text); font: 600 1.5rem/1 var(--ui); cursor: pointer; }
+.tour-arrow:disabled { opacity: .35; cursor: default; }
+.tour-dots { display: flex; flex-wrap: wrap; justify-content: center; }
+/* Точка маленькая, а место для пальца — 24×44 */
+.tour-dot { display: grid; place-items: center; width: 22px; height: 44px; padding: 0; border: 0; background: none; cursor: pointer; }
+.tour-dot::before { content: ''; width: 8px; height: 8px; border-radius: 999px; background: var(--line-strong); transition: width .2s ease-out, background .2s ease-out; }
+.tour-dot[aria-current]::before { width: 18px; background: var(--accent); }
+
+@media (max-width: 759px) {
+  .tour-top-links a:not(.tour-btn) { display: none; }
+  .tour-top-links .tour-btn { display: none; }
+  .tour-hero { padding: 16px 16px 14px; }
+  .tour-eyebrow { margin-bottom: 6px !important; font-size: .9rem; }
+  .tour h1 { font-size: 1.5rem; }
+  /* Первый экран — сам тур: подзаголовок героя на телефоне не показываем, о вымышленной клинике — в конце */
+  .tour-hero .tour-lead { display: none; }
+  /* Лента: один шаг на экран, свайп с «защёлкой» */
+  .tour-steps { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; }
+  .tour-steps::-webkit-scrollbar { display: none; }
+  .tour-steps:focus-visible { outline-offset: -2px; }
+  .tour-step { flex: 0 0 100%; align-content: start; gap: 16px; padding: 0 16px; scroll-snap-align: start; scroll-snap-stop: always; }
+  /* Скриншот — сколько влезает по высоте: под ним видно заголовок шага без прокрутки */
+  .tour-phone { width: min(64vw, 250px, calc((100svh - 480px) * 600 / 1298 + 14px)); min-width: 160px; }
+  .tour-copy { text-align: center; }
+  .tour-copy h2 { font-size: 1.375rem; }
+  .tour-copy > p:not(.tour-num) { margin-top: 8px !important; font-size: 1rem; }
+  /* «03 из 10» — уже над шагом («Шаг 3 из 10») */
+  .tour-num { display: none; }
+  /* Кнопка каждого шага на телефоне — липкая внизу, одна на все шаги */
+  .tour-step-cta { display: none; }
+  .tour-final { padding: 48px 16px 40px; }
+  .tour-final .tour-btn { flex: 1 1 100%; }
+  .tour-footer { padding-bottom: calc(92px + env(safe-area-inset-bottom)); }
+}
+@media (min-width: 760px) {
+  .tour-progress, .tour-nav, .tour-sticky { display: none; }
+  .tour-steps { display: grid; gap: 24px; max-width: var(--tour-max); margin: 0 auto; padding: 16px 16px 0; }
+  .tour-step { grid-template-columns: 1fr 1.15fr; gap: 64px; padding: 40px 0; scroll-margin-top: 72px; }
+  .tour-step + .tour-step { border-top: 1px solid var(--separator); }
+  .tour-step:nth-child(even) .tour-shot { order: 2; }
+  .tour-phone { width: 300px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tour-btn, .tour-dot::before, .tour-progress-bar > span, .tour-sticky { transition: none; }
+}

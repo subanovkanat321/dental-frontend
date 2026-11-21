@@ -141,6 +141,9 @@ test('заявка клиники: ошибки полей с сервера, п
   // Главный путь — регистрация самим; заявка — «помогите подключить»
   for (const a of screen.getAllByRole('link', { name: 'Попробовать бесплатно' })) expect(a).toHaveAttribute('href', '/start')
   expect(screen.getByRole('heading', { name: 'Хочу, чтобы помогли подключить' })).toBeInTheDocument()
+  // «Тур по Tish» — под «Что умеет» и в подвале
+  for (const a of screen.getAllByRole('link', { name: /Тур по Tish/ })) expect(a).toHaveAttribute('href', '/tour')
+  expect(screen.getAllByRole('link', { name: /Тур по Tish/ })).toHaveLength(2)
   expect(screen.queryByText('Кабинет')).not.toBeInTheDocument()
   expect(screen.queryByText(/1 490 сом/)).not.toBeInTheDocument()
   const form = screen.getByRole('form', { name: 'Заявка клиники' })
@@ -173,9 +176,10 @@ test('/go: сначала клиникам (оффер → /start, ролик, W
   const clinics = screen.getByRole('region', { name: 'Для клиник и частных врачей' })
   await within(clinics).findByRole('link', { name: /Спросить в WhatsApp/ })
   expect(await within(clinics).findByRole('link', { name: /Как это работает/ })).toHaveAttribute('href', '/join#materials')
-  // Порядок: подключить (с оффером) → как это работает → WhatsApp → Telegram → вход
+  // Порядок: подключить (с оффером) → тур по Tish → как это работает → WhatsApp → Telegram → вход
+  expect(within(clinics).getByRole('link', { name: /Тур по Tish — 2 минуты/ })).toHaveAttribute('href', '/tour')
   const links = within(clinics).getAllByRole('link')
-  expect(links.map((a) => a.getAttribute('href'))).toEqual(['/start', '/join#materials', 'https://wa.me/996770444555', 'https://t.me/tish_support', '/login'])
+  expect(links.map((a) => a.getAttribute('href'))).toEqual(['/start', '/tour', '/join#materials', 'https://wa.me/996770444555', 'https://t.me/tish_support', '/login'])
   expect(links[0]).toHaveAccessibleName(expect.stringContaining(`Подключить клинику — ${OFFER.toLowerCase()}`))
   expect(links[0]).toHaveAccessibleName(expect.stringContaining('Без предоплаты'))
   expect(container.textContent).not.toMatch(/дней|месяц/)

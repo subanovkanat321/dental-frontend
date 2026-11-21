@@ -143,6 +143,7 @@ export function Join() {
       <ul className="site-features">
         {FEATURES.map(([icon, title, text]) => <li key={title}><span className="ico" aria-hidden="true">{icon}</span><span><strong>{title}</strong><span>{text}</span></span></li>)}
       </ul>
+      <p className="site-tour-link"><a href="/tour">▶ Тур по Tish — 2 минуты</a>: как выглядит программа, 10 шагов со скриншотами</p>
       {story && <CaseBlock story={story} />}
       {/* Цены пока не показываем (владелец, 2026-11-02): клиника сначала пробует бесплатно, о цене — в разговоре */}
       <h2 id="tariffs">Сколько стоит</h2>
@@ -192,7 +193,7 @@ export function Join() {
         {errors.form && <p className="error" role="alert">{errors.form}</p>}
         <button type="submit" className="btn primary" disabled={sending}>Оставить заявку</button>
       </form>
-      <footer className="site-footer"><a href="/about">Для клиник: всё о Tish</a> · <a href="/login">Вход для клиники</a> · © {new Date().getFullYear()} Tish</footer>
+      <footer className="site-footer"><a href="/about">Для клиник: всё о Tish</a> · <a href="/tour">Тур по Tish</a> · <a href="/login">Вход для клиники</a> · © {new Date().getFullYear()} Tish</footer>
     </main>
   )
 }
