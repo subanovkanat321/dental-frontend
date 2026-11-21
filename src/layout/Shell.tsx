@@ -362,7 +362,12 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
     <div className={narrow ? 'shell narrow' : 'shell'}>
       <aside ref={sidebar} className="sidebar">
         <div className="brand-row">
-          {/* Свернуть/развернуть — первой в меню, у логотипа: на одном месте в обоих видах (как ≡ у Gmail) */}
+          {/* Логотип — на главную (расписание), как на любом сайте */}
+          <button type="button" className="brand" aria-label="На главную — расписание" onClick={() => go('schedule')} {...tipOn('Tish — на главную')}>
+            <img src={`${import.meta.env.BASE_URL}tishka-icon.svg`} alt="" width={24} height={36} />
+            <span>Tish</span>
+          </button>
+          {/* Свернуть/развернуть — справа от логотипа (2026-11-21, владелец); в свёрнутом меню — под логотипом */}
           {!phone && (
             <button type="button" className="sidebar-toggle" aria-expanded={!narrow} aria-label={narrow ? 'Развернуть меню' : 'Свернуть меню'}
               aria-keyshortcuts="[" onClick={toggleMenu} {...tipOn('Развернуть меню · [')} title={narrow ? undefined : 'Свернуть меню · ['}>
@@ -372,11 +377,6 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
               </svg>
             </button>
           )}
-          {/* Логотип — на главную (расписание), как на любом сайте */}
-          <button type="button" className="brand" aria-label="На главную — расписание" onClick={() => go('schedule')} {...tipOn('Tish — на главную')}>
-            <img src={`${import.meta.env.BASE_URL}tishka-icon.svg`} alt="" width={24} height={36} />
-            <span>Tish</span>
-          </button>
         </div>
         {/* Кто вошёл — внизу, блоком «Я»; здесь только клиника */}
         <div className="clinic">
