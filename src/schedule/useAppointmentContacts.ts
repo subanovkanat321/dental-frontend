@@ -43,8 +43,9 @@ export function useAppointmentContacts(a: Appointment, { canEdit, debtSom, onDeb
   })
   const sendReview = useSendReview()
   const asks = isRepeat(a)
-  const reminded = a.reminderOpenedAt
-    ? `уже напоминали ${remindedText(a.reminderOpenedAt)}${a.reply === 'CONFIRMED' ? ', ответил «Приду»' : ''}`
+  const lastReminded = a.reminderOpenedAt ?? a.soonRemindedAt
+  const reminded = lastReminded
+    ? `уже напоминали ${remindedText(lastReminded)}${a.soonRemindedAt && !a.reminderOpenedAt ? ' (бот, за 2 часа)' : ''}${a.reply === 'CONFIRMED' ? ', ответил «Приду»' : ''}`
     : a.reply === 'CONFIRMED' ? 'пациент уже ответил «Приду»' : undefined
   const sms = (to: string) => {
     const body = remind.text ?? ''

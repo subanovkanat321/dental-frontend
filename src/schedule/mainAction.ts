@@ -37,6 +37,8 @@ export function mainActionKind(a: Appointment, ctx: {
     case 'SCHEDULED':
       if (a.arrivedAt || a.inChairAt || a.reply === 'CONFIRMED') return null
       if (a.reminderOpenedAt) return a.reply && a.reply !== 'NONE' && a.reply !== 'NO_ANSWER' ? null : 'reply'
+      // Бот уже напомнил за 2 часа — «Напомнить» главной не предлагаем (повторить можно из «Связаться»)
+      if (a.soonRemindedAt) return null
       return ctx.canRemind ? 'remind' : null
     case 'DONE':
       if (ctx.payPending) return 'pay'

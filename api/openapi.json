@@ -19602,6 +19602,10 @@
           },
           "lockedForDoctors" : {
             "type" : "boolean"
+          },
+          "soonRemindedAt" : {
+            "type" : "string",
+            "format" : "date-time"
           }
         },
         "required" : [ "chairManual", "debtSom", "doctorId", "endAt", "firstVisit", "id", "lockedForDoctors", "patient", "source", "startAt", "status", "version" ]

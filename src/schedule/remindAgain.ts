@@ -18,7 +18,7 @@ export function remindedText(at: string, now = new Date()): string {
 
 /** Уже напоминали или пациент уже ответил «Приду» — повтор с подтверждением и другим текстом. */
 export function isRepeat(a: Appointment): boolean {
-  return Boolean(a.reminderOpenedAt) || a.reply === 'CONFIRMED'
+  return Boolean(a.reminderOpenedAt || a.soonRemindedAt) || a.reply === 'CONFIRMED'
 }
 
 /**
@@ -29,8 +29,9 @@ export function confirmRemind(a: Appointment, now = new Date()): Promise<boolean
   if (a.reply === 'CONFIRMED') {
     return ask('Пациент уже ответил „Приду“. Всё равно напомнить?', { ok: 'Напомнить' })
   }
-  if (a.reminderOpenedAt) {
-    const when = remindedText(a.reminderOpenedAt, now).replace(/^сегодня /, '')
+  const last = a.reminderOpenedAt ?? a.soonRemindedAt
+  if (last) {
+    const when = remindedText(last, now).replace(/^сегодня /, '')
     return ask(`Уже напоминали ${when}. Отправить ещё раз?`, { ok: 'Отправить ещё' })
   }
   return Promise.resolve(true)

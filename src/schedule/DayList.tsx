@@ -131,7 +131,7 @@ export function DayList({ me, doctors, date, onDate, onOpen, onQuick, onNew, onN
   const groups = doctors.map((d, i) => ({ doctor: d, items: itemsOf(d, i), booked: list.filter((a) => a.doctorId === d.id).length }))
   const items = groups.flatMap((g) => g.items)
   const scheduled = list.filter((a) => a.status === 'SCHEDULED')
-  const ready = scheduled.filter((a) => a.reminderOpenedAt || (a.reply && a.reply !== 'NONE')).length
+  const ready = scheduled.filter((a) => a.reminderOpenedAt || a.soonRemindedAt || (a.reply && a.reply !== 'NONE')).length
   const now = new Date().toISOString()
   const next = date === today ? [...list].sort((x, y) => x.startAt.localeCompare(y.startAt)).find((a) => a.status === 'SCHEDULED' && a.startAt > now) : undefined
   const off = doctors.filter((_, i) => slots[i]?.data && !slots[i].data.workingDay)
@@ -300,7 +300,7 @@ function Row({ a, me, color, paint, chair, next, active, canEdit, money, onOpen,
   const canRemind = canEdit && a.status === 'SCHEDULED' && a.endAt != null && new Date(a.endAt) > new Date()
   const notSent = useReminderNotSent(a)
   // После «не ушло» — снова кнопка, даже если успех нажатия ещё в памяти
-  const sent = !notSent.undo.isSuccess && (Boolean(a.reminderOpenedAt) || action.isSuccess || opened.isSuccess)
+  const sent = !notSent.undo.isSuccess && (Boolean(a.reminderOpenedAt || a.soonRemindedAt) || action.isSuccess || opened.isSuccess)
   // WhatsApp — только когда загружены настройки (текст напоминания)
   const busy = r.pending || (!viaBot && Boolean(r.phone) && r.text == null)
   // Тот же путь, что у карточки (useRemind): бот → «отправлено»; нет бота — WhatsApp; некуда — подсказка с карточкой
@@ -403,7 +403,7 @@ function Row({ a, me, color, paint, chair, next, active, canEdit, money, onOpen,
             <button type="button" className="remind-sent tone-ok" disabled={notSent.undo.isPending || action.isPending || opened.isPending}
               onClick={canAgain ? () => void remindAgain() : notSent.run}
               aria-label={canAgain ? `Напоминание отправлено: ${a.patient.fullName}. Отправить ещё` : `Напоминание отправлено: ${a.patient.fullName}. Не ушло? Снять отметку`}
-              title={a.reminderOpenedAt ? `Напоминали ${remindedText(a.reminderOpenedAt)}` : undefined}>✓ отправлено</button>
+              title={a.reminderOpenedAt ?? a.soonRemindedAt ? `Напоминали ${remindedText((a.reminderOpenedAt ?? a.soonRemindedAt)!)}` : undefined}>✓ отправлено</button>
           </span>
         ) : (
           <button type="button" className={viaBot ? 'remind-quick tg' : 'remind-quick'} disabled={busy}

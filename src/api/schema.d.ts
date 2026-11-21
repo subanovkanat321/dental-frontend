@@ -8637,6 +8637,8 @@ export interface components {
             /** Format: int32 */
             servicesTotalSom?: number;
             lockedForDoctors: boolean;
+            /** Format: date-time */
+            soonRemindedAt?: string;
         };
         FamiliesBooker: {
             fullName?: string;

@@ -27,6 +27,9 @@ export function statusOf(a: Appointment, now = new Date()): Status {
   if (a.reply === 'RESCHEDULE') return { label: CARD_STATUS.reschedule.label, icon: CARD_STATUS.reschedule.icon, tone: 'wait', kind: 'wait' }
   if (a.reply === 'NO_ANSWER') return { label: CARD_STATUS.noanswer.label, icon: CARD_STATUS.noanswer.icon, tone: 'wait', kind: 'wait' }
   if (a.reminderOpenedAt) return { label: 'Ждём ответа', icon: '⏳', tone: 'wait', kind: 'wait' }
+  // Бот сам написал «⏰ Ждём вас сегодня в …» за 2 часа (обычного напоминания не было — запись в тот же день): это напоминание,
+  // но без кнопок ответа — не «Ждём ответа» (2026-11-21, владелец: «ушло в Telegram, а стоит „Не напомнили“»)
+  if (a.soonRemindedAt) return { label: 'Бот напомнил', icon: '🔔', tone: 'ok', kind: 'quiet' }
   return { label: 'Не напомнили', icon: '🔔', tone: 'hint', kind: 'quiet' }
 }
 
