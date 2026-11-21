@@ -295,6 +295,7 @@ export function About() {
         <a className="about-brand" href="#start" aria-label="Tish — в начало">
           <img src={`${import.meta.env.BASE_URL}tishka-icon.svg`} alt="" width={20} height={30} /> Tish</a>
         <nav className="about-top-links" aria-label="Разделы">
+          <a href="/tour">Тур по Tish</a>
           <a href="#contacts">Контакты</a>
           <a href="/login">Вход для клиники</a>
           <a className="about-btn primary small" href={START}>Попробовать бесплатно</a>
@@ -316,6 +317,7 @@ export function About() {
                   <span aria-hidden="true">💬</span> Написать нам в WhatsApp</a>
               </div>
               <p className="about-note">{OFFER} — без предоплаты, клиника готова за 5 минут, с телефона или компьютера</p>
+              <p className="about-note"><a className="about-tour-link" href="/tour">▶ Тур по Tish — 2 минуты</a>: 10 шагов со скриншотами</p>
             </div>
             <HeroVideo />
           </div>
@@ -415,7 +417,7 @@ export function About() {
       </main>
 
       <footer className="about-footer">
-        <a href="/go">tish.kg</a> · <a href="/clinics">Записаться к стоматологу</a> · <a href="/login">Вход для клиники</a> · © {year} Tish
+        <a href="/go">tish.kg</a> · <a href="/tour">Тур по Tish</a> · <a href="/clinics">Записаться к стоматологу</a> · <a href="/login">Вход для клиники</a> · © {year} Tish
       </footer>
 
       {/* Точки справа (компьютер): где я и переход к любому слайду */}
