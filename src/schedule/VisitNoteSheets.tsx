@@ -3,6 +3,8 @@ import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { Sheet } from '../layout/Sheet'
+import { whenHistorySettled } from '../lib/back'
+import { openSettings } from '../lib/route'
 import { Spinner } from '../layout/Loading'
 import { shortDate } from '../lib/time'
 import { parseTeeth, templateSummary } from './templates'
@@ -82,7 +84,13 @@ export function TemplateSheet({ appointment: a, onProposal, onClose }: {
         )
       )}
       {proposal.error && <p className="error" role="alert">{errorText(proposal.error)}</p>}
-      {!picked && <p className="hint small"><a href="#/settings/visit-templates" onClick={onClose}>Настроить шаблоны</a></p>}
+      {!picked && <p className="hint small"><a href="#/settings/visit-templates" onClick={(e) => {
+        // Сначала лист (и карточка) закрываются и снимают свои шаги из истории, потом переход — иначе закрытие
+        // листа шагом назад возвращало прежний адрес и «Настроить шаблоны» не открывались (2026-11-21)
+        e.preventDefault()
+        onClose()
+        whenHistorySettled(() => openSettings('visit-templates'))
+      }}>Настроить шаблоны</a></p>}
     </Sheet>
   )
 }

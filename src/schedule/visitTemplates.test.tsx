@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
+import { enableBackHistory } from '../lib/back'
 import { appointment, me } from '../test/fixtures'
 import { server } from '../test/server'
 import { VisitNote } from './VisitNote'
@@ -172,4 +173,24 @@ test('«Сохранить как шаблон»: название, услуга
   await userEvent.click(within(sheet).getByRole('button', { name: 'Сохранить шаблон' }))
   expect(await screen.findByRole('status')).toHaveTextContent('Шаблон «Осмотр» сохранён')
   expect(calls.created[0]).toEqual({ title: 'Осмотр', sections: { complaints: 'Болит' }, serviceTypeId: 3, shared: true })
+})
+
+test('«Настроить шаблоны» из листа (история браузера, как в Safari/PWA) — лист закрылся и открылись «Настройки → Шаблоны»', async () => {
+  backend({ note: '', editable: true, sectionsOn: false })
+  enableBackHistory(true)
+  try {
+    window.location.hash = '/schedule'
+    renderNote()
+    await userEvent.click(await screen.findByRole('button', { name: 'Шаблон' }))
+    const sheet = await screen.findByRole('dialog', { name: 'Шаблоны приёма' })
+    await within(sheet).findByRole('group', { name: 'Общие клиники' })
+    await userEvent.click(within(sheet).getByRole('link', { name: 'Настроить шаблоны' }))
+    await new Promise((r) => setTimeout(r, 60))
+    expect(screen.queryByRole('dialog', { name: 'Шаблоны приёма' })).not.toBeInTheDocument()
+    expect(window.location.hash).toBe('#/settings/visit-templates')
+  } finally {
+    enableBackHistory(false)
+    await new Promise((r) => setTimeout(r, 30))
+    window.history.replaceState(null, '', '/')
+  }
 })

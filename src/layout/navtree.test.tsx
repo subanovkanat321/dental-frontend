@@ -219,7 +219,7 @@ test('старые адреса пунктов «Клиники»: #/settings/st
   }
 })
 
-test('телефон: внизу четыре раздела и «Ещё»; в «Ещё» — свой аватар, «Клиника», «Для пациента», «Настройки», «Помощь»; у «Клиники» — строка подразделов', async () => {
+test('телефон: внизу четыре раздела и «Ещё»; в «Ещё» — свой аватар, «Клиника», «Для пациента», «Настройки», «Помощь»; «Клиника» — лист подразделов', async () => {
   phone()
   server.use(http.get('*/api/clinic', () => HttpResponse.json({ brandName: 'Стоматология «Тест»', workDays: [] })))
   window.location.hash = '/schedule'
@@ -233,12 +233,17 @@ test('телефон: внизу четыре раздела и «Ещё»; в �
   expect(within(more).getAllByRole('button').map((b) => b.textContent?.trim())).toEqual([
     expect.stringContaining('Айгерим Садыкова'), 'Для пациента', 'Клиника', 'Настройки', 'Помощь',
   ])
+  // «Клиника» в «Ещё» — сразу лист её подразделов, как у вкладок внизу (2026-11-21), а не переход в первый пункт
   await userEvent.click(within(more).getByRole('button', { name: 'Клиника' }))
-  expect(window.location.hash).toBe('#/clinic')
+  expect(window.location.hash).toBe('#/schedule')
+  await userEvent.click(within(await screen.findByRole('menu', { name: 'Подразделы: Клиника' })).getByRole('menuitem', { name: /^Рабочее время/ }))
+  await waitFor(() => expect(window.location.hash).toBe('#/clinic/hours'))
+  expect(screen.queryByRole('dialog', { name: 'Ещё разделы' })).not.toBeInTheDocument()
   const bar = await screen.findByRole('navigation', { name: 'Подразделы: Клиника' })
-  await userEvent.click(within(bar).getByRole('button', { name: /^Клиника · О клинике: выбрать подраздел/ }))
-  await userEvent.click(within(screen.getByRole('menu', { name: 'Подразделы: Клиника' })).getByRole('menuitem', { name: 'Рабочее время' }))
-  expect(window.location.hash).toBe('#/clinic/hours')
+  await userEvent.click(within(bar).getByRole('button', { name: /^Клиника · Рабочее время: выбрать подраздел/ }))
+  await userEvent.click(within(screen.getByRole('menu', { name: 'Подразделы: Клиника' })).getByRole('menuitem', { name: /^О клинике/ }))
+  await waitFor(() => expect(window.location.hash).toBe('#/clinic/about'))
+  go('/clinic/hours')
   expect(within(await screen.findByRole('navigation', { name: 'Подразделы: Клиника' })).getByRole('button', { name: /^Клиника · Рабочее время/ })).toBeInTheDocument()
 })
 

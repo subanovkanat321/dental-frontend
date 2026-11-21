@@ -265,6 +265,17 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
       whenHistorySettled(() => openSub(key, sub))
     } else openSub(key, sub)
   }
+  /** «Ещё» на телефоне: раздел с подразделами (Клиника, Настройки…) — сразу лист его подразделов, как у вкладок
+   *  внизу (2026-11-21). Лист «Ещё» сначала закрывается и снимает свой шаг из истории, потом открывается лист. */
+  const fromMore = (key: Page) => {
+    if (!sheetable(key)) {
+      go(key)
+      return
+    }
+    setMore(false)
+    setMenu(null)
+    whenHistorySettled(() => setSheet(key))
+  }
   const showFly = (key: Page, el: HTMLElement) => {
     const r = el.getBoundingClientRect()
     setFly({ key, top: r.top, left: r.right + 6 })
@@ -441,7 +452,7 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
               <span className="chev" aria-hidden="true">›</span>
             </button>
             {extra.map((s) => (
-              <button key={s.key} type="button" className={s.key === page ? 'more-item active' : 'more-item'} data-section={s.key} onClick={() => go(s.key)}>
+              <button key={s.key} type="button" className={s.key === page ? 'more-item active' : 'more-item'} data-section={s.key} onClick={() => fromMore(s.key)}>
                 <Icon name={s.key} /> <span>{s.title}</span>
               </button>
             ))}
