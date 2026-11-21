@@ -184,11 +184,12 @@ test('/go: сначала клиникам (оффер → /start, ролик, W
   expect(links[0]).toHaveAccessibleName(expect.stringContaining('Без предоплаты'))
   expect(container.textContent).not.toMatch(/дней|месяц/)
   expect(links[0]).toHaveClass('main')
-  // Первая ссылка страницы — подключение клиники, пациентская запись — последняя, мелко
+  // Первая ссылка страницы — подключение клиники; пациентам — своим блоком ниже, строкой «Записаться к стоматологу»
   const all = Array.from(container.querySelectorAll('main a')).map((a) => a.getAttribute('href'))
   expect(all.indexOf('/start')).toBeLessThan(all.indexOf('/clinics'))
-  expect(screen.getByRole('link', { name: 'Пациентам: записаться к врачу →' })).toHaveAttribute('href', '/clinics')
-  expect(screen.queryByRole('region', { name: 'Пациентам' })).not.toBeInTheDocument()
+  const patients = screen.getByRole('region', { name: 'Пациентам' })
+  expect(within(patients).getByRole('link', { name: /Записаться к стоматологу/ })).toHaveAttribute('href', '/clinics')
+  expect(within(patients).getByRole('link', { name: /Записаться к стоматологу/ })).not.toHaveClass('main')
   expect(screen.queryByRole('link', { name: /Скачать/ })).not.toBeInTheDocument()
   // Звонок — на каждый номер, WhatsApp второй раз не повторяем
   const contacts = screen.getByRole('region', { name: 'Позвонить' })

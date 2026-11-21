@@ -26,7 +26,7 @@ function GoLink({ icon, title, sub, href, main, badge }: {
 /**
  * Одна ссылка для профиля Instagram (/go), как Taplink. Покупатель — владелец клиники или частный врач (аудит
  * Instagram 2026-11-20): сначала клиникам — подключиться (сразу к форме /start), «Тур по Tish» (/tour), ролик «Как это работает», спросить
- * в WhatsApp или Telegram, войти; пациентам — мелкой ссылкой внизу (выбрать клинику и записаться). Оффер — одна фраза
+ * в WhatsApp или Telegram, войти; пациентам — своим блоком ниже (выбрать клинику и записаться). Оффер — одна фраза
  * {@link OFFER} везде. Контакты — из «Сведений о платформе»: WhatsApp и Telegram — только если заданы.
  */
 export function Go() {
@@ -63,6 +63,13 @@ export function Go() {
         <p className="hint go-note">Работать можно в Telegram и на сайте — с телефона и компьютера.</p>
       </section>
 
+      {/* Пациентам — своим блоком сразу после клиник (2026-11-21, владелец: мелкую ссылку внизу не видно). Первым остаётся
+          блок клиник: Instagram Tish — для них, но пациент по старой ссылке должен найти врача */}
+      <section className="site-section" aria-labelledby="go-patients">
+        <h2 id="go-patients">Пациентам</h2>
+        <GoLink icon="🦷" title="Записаться к стоматологу" sub="Выберите клинику — запись в Telegram за минуту" href="/clinics" />
+      </section>
+
       {/* Instagram есть всегда — «Связаться» не пропадает, даже если номера поддержки не заполнены */}
       <section className="site-section" aria-labelledby="go-contacts">
         <h2 id="go-contacts">{c.supportPhones?.length ? 'Позвонить' : 'Мы в Instagram'}</h2>
@@ -72,8 +79,7 @@ export function Go() {
         </div>
       </section>
 
-      {/* Пациентская запись — не первой: Instagram Tish для клиник, но по старой ссылке пациент должен найти врача */}
-      <p className="go-patients"><a href="/clinics">Пациентам: записаться к врачу →</a></p>
+
       <footer className="site-footer">© {new Date().getFullYear()} Tish</footer>
     </main>
   )
