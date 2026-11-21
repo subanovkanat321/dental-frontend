@@ -18,9 +18,11 @@ type Charted = { number?: number; state?: string }
  *
  * @param dentition прикус (по умолчанию постоянные); у молочного — 5 зубов в четверти
  * @param teeth что отмечено на карте — сменному прикусу, чтобы решить, где ещё молочный ({@link toothAt})
+ * @param jawLabels подписи челюстей для скринридера (план пациента — на кыргызском); по умолчанию по-русски
  */
-export function ToothFormula({ render, className, dentition = 'PERMANENT', teeth }: {
+export function ToothFormula({ render, className, dentition = 'PERMANENT', teeth, jawLabels = ['Верхняя челюсть', 'Нижняя челюсть'] }: {
   render: (n: number) => ReactNode; className?: string; dentition?: Dentition; teeth?: readonly Charted[]
+  jawLabels?: readonly [string, string]
 }) {
   const row = (numbers: number[]) => numbers.map((n) => toothAt(n, dentition, teeth)).filter((n): n is number => n != null)
   const upper = row(UPPER)
@@ -28,11 +30,11 @@ export function ToothFormula({ render, className, dentition = 'PERMANENT', teeth
   const half = (r: number[]) => r.length / 2
   const jaws = (
     <>
-      <div className="jaw" role="group" aria-label="Верхняя челюсть">
+      <div className="jaw" role="group" aria-label={jawLabels[0]}>
         <Quadrant side="right" label="Верх · правая сторона" teeth={upper.slice(0, half(upper))} render={render} />
         <Quadrant side="left" label="Верх · левая сторона" teeth={upper.slice(half(upper))} render={render} />
       </div>
-      <div className="jaw" role="group" aria-label="Нижняя челюсть">
+      <div className="jaw" role="group" aria-label={jawLabels[1]}>
         <Quadrant side="right" label="Низ · правая сторона" teeth={lower.slice(0, half(lower))} render={render} />
         <Quadrant side="left" label="Низ · левая сторона" teeth={lower.slice(half(lower))} render={render} />
       </div>

@@ -24952,6 +24952,9 @@
           },
           "address" : {
             "type" : "string"
+          },
+          "chart" : {
+            "$ref" : "#/components/schemas/PlanPictureChart"
           }
         },
         "required" : [ "id", "totalSom" ]
@@ -24974,6 +24977,54 @@
           }
         },
         "required" : [ "stage", "totalSom" ]
+      },
+      "PlanPictureChart" : {
+        "properties" : {
+          "dentition" : {
+            "type" : "string",
+            "enum" : [ "PERMANENT", "PRIMARY", "MIXED" ]
+          },
+          "permanent" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int32"
+            }
+          },
+          "teeth" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PlanPictureChartTooth"
+            }
+          }
+        }
+      },
+      "PlanPictureChartTooth" : {
+        "properties" : {
+          "number" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "state" : {
+            "type" : "string",
+            "enum" : [ "HEALTHY", "CARIES", "TREATING", "FILLING", "CROWN", "IMPLANT", "MISSING" ]
+          },
+          "surfaces" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "M", "O", "D", "B", "L" ]
+            }
+          },
+          "stages" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int32"
+            }
+          }
+        },
+        "required" : [ "number" ]
       },
       "ProblemDetail" : {
         "properties" : {

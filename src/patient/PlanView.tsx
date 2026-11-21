@@ -1,5 +1,8 @@
+import { useState } from 'react'
+
 import type { Schemas } from '../api/client'
 import { ContactLinks } from '../lib/ContactLinks'
+import { PlanFormula } from '../medical/PlanFormula'
 import { somText, ZONE } from '../lib/time'
 import type { T } from './i18n'
 import './planView.css'
@@ -32,17 +35,19 @@ export function PlanView({ plan, t, onAgree, onAsk, onBook, busy = false, error 
   const stages = plan.stages ?? []
   const many = stages.length > 1
   const agreed = Boolean(plan.agreedAt)
+  const [tooth, setTooth] = useState<number | null>(null)
   return (
     <div className="plan-view">
       <h1>{t('planTitle')}</h1>
       {plan.forName && <p className="hint">{t('planFor', { name: plan.forName })}</p>}
       <p className="hint">{[plan.clinicName, plan.doctorName ? t('planDoctor', { name: plan.doctorName }) : null].filter(Boolean).join(' · ')}</p>
+      {plan.chart && <PlanTeeth chart={plan.chart} t={t} selected={tooth} onSelect={(n) => setTooth((cur) => (cur === n ? null : n))} />}
       {stages.map((st) => (
         <section key={st.stage} className="plan-view-stage" aria-label={many ? t('planStage', { n: st.stage }) : t('planWhat')}>
           <h2>{many ? t('planStage', { n: st.stage }) : t('planWhat')}</h2>
           <ul>
             {(st.items ?? []).map((item, i) => (
-              <li key={i}>
+              <li key={i} className={item.tooth != null && item.tooth === tooth ? 'selected' : undefined}>
                 <span>{item.tooth ? <b>{t('planTooth', { n: item.tooth })} · </b> : null}{item.title}</span>
                 <span className="num nowrap">{item.priceSom != null ? somText(item.priceSom) : <span className="hint">{t('planPriceLater')}</span>}</span>
               </li>
@@ -64,6 +69,36 @@ export function PlanView({ plan, t, onAgree, onAsk, onBook, busy = false, error 
       </div>
       {error && <p className="error" role="alert">{error}</p>}
       <ContactLinks phones={plan.phones} whatsapp={plan.whatsappPhone} texts={{ call: t('call'), whatsapp: t('writeWhatsapp') }} />
+    </div>
+  )
+}
+
+type Chart = NonNullable<Plan['chart']>
+
+/**
+ * Зубы плана рисунком — та же формула, что на печатном листе ({@link PlanFormula}): зубы из плана в рамке, их состояние
+ * цветом, остальные — здоровыми (остальную карту сервер не отдаёт). Нажал на зуб в рамке — его этапы подсвечены в списке.
+ * Сменный прикус: какие постоянные уже стоят вместо молочных — chart.permanent.
+ */
+function PlanTeeth({ chart, t, selected, onSelect }: { chart: Chart; t: T; selected: number | null; onSelect: (n: number) => void }) {
+  const teeth = chart.teeth ?? []
+  if (teeth.length === 0) return null
+  const stagesOf = new Map(teeth.map((x) => [x.number, x.stages ?? []]))
+  const planned = new Set(teeth.map((x) => x.number))
+  const charted = [...teeth, ...(chart.permanent ?? []).map((number) => ({ number }))]
+  return (
+    <div className="plan-view-teeth">
+      <h2>{t('planChart')}</h2>
+      <PlanFormula dentition={chart.dentition ?? 'PERMANENT'} teeth={teeth} chartTeeth={charted} planned={planned}
+        selected={selected} onSelect={onSelect}
+        texts={{
+          title: t('planChart'),
+          planned: t('planChartPlanned'),
+          state: (s) => t(`tooth${s}`),
+          jaws: [t('planChartUpper'), t('planChartLower')],
+          extra: (n) => (stagesOf.get(n)?.length ? stagesOf.get(n)!.map((st) => t('planChartStages', { n: st })).join(', ') : null),
+        }} />
+      <p className="hint small">{t('planChartHint')}</p>
     </div>
   )
 }

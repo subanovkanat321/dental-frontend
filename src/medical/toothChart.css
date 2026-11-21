@@ -26,14 +26,6 @@
 .tooth-ring .sd-seg { stroke-width: 1; stroke: var(--line-strong); }
 .tooth[data-state=MISSING] .tooth-ring { opacity: .35; }
 
-/* Поверхности на рисунке зуба */
-.tg-surf { fill: var(--tooth-caries); }
-.tooth-glyph[data-state=FILLING] .tg-surf { fill: var(--tooth-filling); }
-.tooth-glyph[data-state=TREATING] .tg-surf { fill: var(--tooth-treat); }
-.tg-surf .tg-surf-ring { fill: none; stroke: currentColor; stroke-width: 2.2; }
-.tooth-glyph[data-state=CARIES] .tg-surf-ring { stroke: var(--tooth-caries); }
-.tooth-glyph[data-state=FILLING] .tg-surf-ring { stroke: var(--tooth-filling); }
-.tooth-glyph[data-state=TREATING] .tg-surf-ring { stroke: var(--tooth-treat); }
 
 /* Шапка карты: заголовок и кнопки «Несколько», «На весь экран» */
 .chart-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }

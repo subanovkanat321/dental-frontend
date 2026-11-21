@@ -3,6 +3,7 @@ import { memo, useId } from 'react'
 import { isPrimaryTooth } from './dentition'
 import { SurfaceDiagram } from './SurfaceDiagram'
 import { hasSurfaces, type Surface, type ToothState } from './toothStates'
+import './toothGlyph.css'
 
 /**
  * Зуб рисунком: коронка по группе (резец, клык, премоляр, моляр), корни по числу, пульпа и каналы

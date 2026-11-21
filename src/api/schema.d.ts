@@ -10780,6 +10780,7 @@ export interface components {
             phones?: string[];
             whatsappPhone?: string;
             address?: string;
+            chart?: components["schemas"]["PlanPictureChart"];
         };
         PlanOffersStage: {
             /** Format: int32 */
@@ -10787,6 +10788,20 @@ export interface components {
             items?: components["schemas"]["PlanOffersItem"][];
             /** Format: int32 */
             totalSom: number;
+        };
+        PlanPictureChart: {
+            /** @enum {string} */
+            dentition?: "PERMANENT" | "PRIMARY" | "MIXED";
+            permanent?: number[];
+            teeth?: components["schemas"]["PlanPictureChartTooth"][];
+        };
+        PlanPictureChartTooth: {
+            /** Format: int32 */
+            number: number;
+            /** @enum {string} */
+            state?: "HEALTHY" | "CARIES" | "TREATING" | "FILLING" | "CROWN" | "IMPLANT" | "MISSING";
+            surfaces?: ("M" | "O" | "D" | "B" | "L")[];
+            stages?: number[];
         };
         ProblemDetail: {
             /** Format: uri */
