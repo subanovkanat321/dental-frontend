@@ -126,7 +126,7 @@ function initialTime(slot: Slot): string {
  * сегодня, время — эта минута вниз до 5, врач — тот, к кому записывает кнопка шапки; вместо сетки
  * свободного — поле времени, главная кнопка — «Начать приём». Сервер walk-in не отличает: это та же запись.
  */
-export function NewAppointmentPanel({ slot, me, initialPatient = null, initialContact = null, nowDoctorId, onClose, onCreated, onOpenAppointment }: {
+export function NewAppointmentPanel({ slot, me, initialPatient = null, initialContact = null, fromLeadId, nowDoctorId, onClose, onCreated, onOpenAppointment }: {
   slot: Slot
   me: Me
   /** К кому «⚡ Сейчас»: выбранный в расписании врач, иначе свой, иначе первый доступный. Нет — врач формы. */
@@ -136,6 +136,8 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
   /** Контакт, присланный боту (кнопка «📅 Записать»): найти пациента по номеру, нет — «Новый пациент» с именем и номером.
    * Без номера (помощник в боте: «Пациента … нет в базе») — сразу «Новый пациент» с этим именем. */
   initialContact?: { fullName: string; phone: string } | null
+  /** «Записать» из «Обращений»: сервер отметит обращение «Записан» с этой записью */
+  fromLeadId?: number
   onClose: () => void
   /** walkIn — «⚡ Сейчас»: приём начинается, карточку открыть сразу; обычная запись — тост «Записано: … — Открыть» */
   onCreated: (a: Appointment, how?: { walkIn: boolean }) => void
@@ -331,6 +333,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
           promoCode: promoCode || undefined,
           confirmChairTime: confirm || undefined,
           fromWaitlistId: waitlistId(p),
+          fromLeadId,
           chairId: chairId ?? chair.picked,
         },
       })))

@@ -17,7 +17,7 @@ export type Sub = { key: string; title: string; group?: string; hint?: string }
  */
 const SUB_HINTS: Partial<Record<Page, Record<string, string>>> = {
   patients: {
-    all: 'Вся база и поиск', booked: 'У кого есть запись', waitlist: 'Ждут свободного времени', comeback: 'Кого пригласить снова',
+    all: 'Вся база и поиск', booked: 'У кого есть запись', waitlist: 'Ждут свободного времени', leads: 'Позвонили, ещё не записаны', comeback: 'Кого пригласить снова',
     recall: 'Пора на профосмотр', dropped: 'Начали и пропали', nobot: 'Пригласить в бот клиники', questions: 'Вопросы из бота',
     tasks: 'Позвонить, напомнить', ratings: 'Как оценили приёмы',
   },
@@ -46,10 +46,10 @@ export type Counts = Partial<Record<string, number>>
 
 /**
  * Заметное число — красная точка-счётчик (с 2026-11-20, шаг 6А; раньше бирюзовое): новое, что ждёт действия;
- * остальные — серым. Всегда заметные — вопросы пациентов и просроченные задачи; «Лист ожидания» — когда в нём
+ * остальные — серым. Всегда заметные — вопросы пациентов, просроченные задачи и обращения (новые и «перезвонить» сегодня); «Лист ожидания» — когда в нём
  * есть новые с прошлого захода (Shell, layout/waitlistSeen.ts).
  */
-export const LOUD: ReadonlySet<string> = new Set(['patients/questions', 'patients/tasks'])
+export const LOUD: ReadonlySet<string> = new Set(['patients/questions', 'patients/tasks', 'patients/leads'])
 
 /** Заметное ли число у подраздела: `loud` — набор от Shell (LOUD + то, что заметно сейчас), без него — LOUD. */
 export function isLoud(loud: ReadonlySet<string> | undefined, page: Page, key: string): boolean {
@@ -74,6 +74,8 @@ function rawSubsOf(page: Page, me: Me): Sub[] {
       // «Позвать снова» — деньги на столе и приглашения; «Бросили лечение» — кто начал или согласился и пропал; ассистенту (денег не видит) — прежний «Профосмотр»
       // «Оценки» (2026-11-19) — в конце: смотрят реже, чем записывают и отвечают; кто чьи оценки видит — lib/roles
       return [{ key: 'all', title: 'Все' }, { key: 'booked', title: 'Записаны' }, { key: 'waitlist', title: 'Лист ожидания' },
+        // «Обращения» (шаг 8Б) — кто позвонил или написал, а записи ещё нет; ассистенту нет (сервер — 403)
+        ...(isAssistant(me) ? [] : [{ key: 'leads', title: 'Обращения' }]),
         isAssistant(me) ? { key: 'recall', title: 'Профосмотр' } : { key: 'comeback', title: 'Позвать снова' },
         // «Бросили лечение» (волна 1, часть B) — рядом с «Позвать снова»; ассистенту нет (в списке суммы, сервер — 403)
         ...(isAssistant(me) ? [] : [{ key: 'dropped', title: 'Бросили лечение' }]),

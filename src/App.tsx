@@ -156,7 +156,7 @@ function Screens() {
   const section = (p: Page) => {
     const l = linkOf(p)
     switch (p) {
-      case 'patients': return <PatientsPage me={me.data} initialPatient={l?.patientId} initialQuestion={l?.questionId} initialTask={l?.taskId} initialTaskDraft={l?.taskDraft} initialBooked={l?.tab === 'booked' ? { date: l.date, unconfirmed: l.unconfirmed, unmarked: l.unmarked, doctorId: l.doctorId } : undefined} onOpenAppointment={openAppointment} onBook={(x, preset) => linkTo({ page: 'schedule', bookPatientId: x.id, ...(preset && { bookDoctorId: preset.doctorId, bookServiceId: preset.serviceId, bookDuration: preset.duration }) })} />
+      case 'patients': return <PatientsPage me={me.data} initialPatient={l?.patientId} initialQuestion={l?.questionId} initialTask={l?.taskId} initialTaskDraft={l?.taskDraft} initialBooked={l?.tab === 'booked' ? { date: l.date, unconfirmed: l.unconfirmed, unmarked: l.unmarked, doctorId: l.doctorId } : undefined} onOpenAppointment={openAppointment} onBookLead={(lead) => linkTo({ page: 'schedule', bookLeadId: lead.id })} onBook={(x, preset) => linkTo({ page: 'schedule', bookPatientId: x.id, ...(preset && { bookDoctorId: preset.doctorId, bookServiceId: preset.serviceId, bookDuration: preset.duration }) })} />
       case 'cash': return <CashPage me={me.data} onOpenPatient={openPatient} />
       case 'stock': return <StockPage me={me.data} initialSupply={l?.supplyId} initialLabOrder={l?.labOrderId} onOpenPatient={openPatient} />
       case 'learn': return <LearnPage />
@@ -168,7 +168,7 @@ function Screens() {
       case 'schedule': return l?.assistToken
         ? <LinkedAssist token={l.assistToken} me={me.data} onNavigate={go} onOpenPatient={openPatient}
           onTask={(draft) => linkTo({ page: 'patients', tab: 'tasks', taskDraft: draft })} />
-        : l?.appointmentId || l?.bookPatientId || l?.contactToken
+        : l?.appointmentId || l?.bookPatientId || l?.contactToken || l?.bookLeadId
         ? <LinkedSchedule link={l} me={me.data} onNavigate={go} onOpenPatient={openPatient} />
         : <SchedulePage me={me.data} initialDate={l?.date} initialDoctor={l?.doctorId} bookPatient={booking} onBookingShown={() => setBooking(null)} onNavigate={go}
           onOpenEarnings={() => linkTo({ page: 'cash', tab: 'earnings' })} onOpenPatient={openPatient} />
@@ -309,10 +309,18 @@ function LinkedSchedule({ link, me, onNavigate, onOpenPatient }: {
     enabled: link.appointmentId != null,
     retry: false,
   })
+  // «Записать» из «Обращений»: связано с карточкой — на неё, иначе — имя и номер, как контакт из бота
+  const lead = useQuery({
+    queryKey: ['leads', 'one', link.bookLeadId],
+    queryFn: () => unwrap(api.GET('/api/leads/{id}', { params: { path: { id: link.bookLeadId! } } })),
+    enabled: link.bookLeadId != null,
+    retry: false,
+  })
+  const bookPatientId = link.bookPatientId ?? lead.data?.patientId ?? undefined
   const patient = useQuery({
-    queryKey: ['patient-card', link.bookPatientId],
-    queryFn: () => unwrap(api.GET('/api/appointments/by-patient/{patientId}', { params: { path: { patientId: link.bookPatientId! } } })),
-    enabled: link.bookPatientId != null,
+    queryKey: ['patient-card', bookPatientId],
+    queryFn: () => unwrap(api.GET('/api/appointments/by-patient/{patientId}', { params: { path: { patientId: bookPatientId! } } })),
+    enabled: bookPatientId != null,
     retry: false,
   })
   // Контакт из бота: токен одноразовый — забираем один раз (staleTime: Infinity, без повторов); устарел — скажем
@@ -332,7 +340,9 @@ function LinkedSchedule({ link, me, onNavigate, onOpenPatient }: {
       void notify(contact.error.message || 'Ссылка устарела — пришлите контакт боту ещё раз')
     }
   }, [contact.error])
-  if (appointment.isLoading || patient.isLoading || contact.isLoading) return <Loading />
-  return <SchedulePage me={me} openAppointment={appointment.data} bookPatient={patient.data?.patient ?? null} bookContact={contact.data ?? null}
+  if (appointment.isLoading || patient.isLoading || contact.isLoading || lead.isLoading) return <Loading />
+  const leadContact = lead.data && lead.data.patientId == null ? { fullName: lead.data.fullName ?? '', phone: lead.data.phone } : null
+  return <SchedulePage me={me} openAppointment={appointment.data} bookPatient={patient.data?.patient ?? null} bookContact={contact.data ?? leadContact}
+    bookLeadId={lead.data && lead.data.status !== 'BOOKED' ? lead.data.id : undefined}
     bookPreset={{ doctorId: link.bookDoctorId, serviceId: link.bookServiceId, duration: link.bookDuration }} onNavigate={onNavigate} onOpenPatient={onOpenPatient} />
 }

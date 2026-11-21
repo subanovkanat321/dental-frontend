@@ -28,6 +28,7 @@ import { isAssistant } from '../lib/roles'
 import { SurveyInvite } from '../survey/SurveyInvite'
 import { useNewQuestions } from '../api/questions'
 import { useTaskSummary } from '../tasks/api'
+import { useLeadSummary } from '../patients/leadsApi'
 import { usePurchaseCount } from '../stock/purchase/api'
 import { TourHost } from '../tour/Tour'
 import { DemoBanner } from '../demo/DemoBanner'
@@ -113,13 +114,15 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
   const waitlist = waitlistList?.length ?? 0
   // Мои просроченные задачи — заметным числом: их пора сделать
   const overdueTasks = useTaskSummary(Boolean(me.doctor)).data?.overdue ?? 0
+  // Обращения: новые без «перезвонить» и кому перезвонить сегодня — заметным числом (ассистенту не спрашиваем)
+  const leads = useLeadSummary(Boolean(me.doctor) && !isAssistant(me)).data?.attention ?? 0
   // Позиций к заказу у поставщиков — серым числом у «Склад → Заказ»
   const toOrder = usePurchaseCount(Boolean(me.doctor)).data?.count ?? 0
   // Лист ожидания: новые с прошлого захода — красным числом новых, иначе серым — сколько ждут всего 
   const patientsSub = useSub('patients')
   const waitlistOpen = page === 'patients' && patientsSub === 'waitlist'
   const waitlistNew = useWaitlistNew(waitlistList, waitlistOpen)
-  const counts: Counts = { 'patients/questions': questions, 'patients/waitlist': waitlistNew || waitlist, 'patients/tasks': overdueTasks, 'stock/purchase': toOrder }
+  const counts: Counts = { 'patients/questions': questions, 'patients/waitlist': waitlistNew || waitlist, 'patients/tasks': overdueTasks, 'patients/leads': leads, 'stock/purchase': toOrder }
   const loud = useMemo<ReadonlySet<string>>(() => (waitlistNew > 0 ? new Set([...LOUD, 'patients/waitlist']) : LOUD), [waitlistNew])
   // Открытый подраздел каждого раздела (адрес или последний открытый) и пункт «Настроек»
   const chosen: Partial<Record<Page, string | null>> = {
@@ -362,7 +365,12 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
     <div className={narrow ? 'shell narrow' : 'shell'}>
       <aside ref={sidebar} className="sidebar">
         <div className="brand-row">
-          {/* Свернуть/развернуть — первой в меню, у логотипа: на одном месте в обоих видах (как ≡ у Gmail) */}
+          {/* Логотип — на главную (расписание), как на любом сайте */}
+          <button type="button" className="brand" aria-label="На главную — расписание" onClick={() => go('schedule')} {...tipOn('Tish — на главную')}>
+            <img src={`${import.meta.env.BASE_URL}tishka-icon.svg`} alt="" width={24} height={36} />
+            <span>Tish</span>
+          </button>
+          {/* Свернуть/развернуть — справа от логотипа (2026-11-21, владелец); в свёрнутом меню — под логотипом */}
           {!phone && (
             <button type="button" className="sidebar-toggle" aria-expanded={!narrow} aria-label={narrow ? 'Развернуть меню' : 'Свернуть меню'}
               aria-keyshortcuts="[" onClick={toggleMenu} {...tipOn('Развернуть меню · [')} title={narrow ? undefined : 'Свернуть меню · ['}>
@@ -372,11 +380,6 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
               </svg>
             </button>
           )}
-          {/* Логотип — на главную (расписание), как на любом сайте */}
-          <button type="button" className="brand" aria-label="На главную — расписание" onClick={() => go('schedule')} {...tipOn('Tish — на главную')}>
-            <img src={`${import.meta.env.BASE_URL}tishka-icon.svg`} alt="" width={24} height={36} />
-            <span>Tish</span>
-          </button>
         </div>
         {/* Кто вошёл — внизу, блоком «Я»; здесь только клиника */}
         <div className="clinic">

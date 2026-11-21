@@ -144,6 +144,9 @@ export const server = setupServer(
   http.get('*/api/supplies/:id/prices', () => HttpResponse.json({ suppliers: [], entries: [] } satisfies Schemas['PurchaseViewsPriceHistory'])),
   // Задачи (V218): по умолчанию нет ни одной — ни числа у «Задач», ни строки в расписании
   http.get('*/api/tasks/summary', () => HttpResponse.json({ overdue: 0 } satisfies Schemas['TaskControllerSummary'])),
+  http.get('*/api/leads/summary', () => HttpResponse.json({ attention: 0 } satisfies Schemas['LeadControllerSummary'])),
+  http.get('*/api/leads', () => HttpResponse.json([] satisfies Schemas['LeadView'][])),
+  http.get('*/api/leads/conversion', () => HttpResponse.json({ from: '2026-11-01', to: '2026-11-30', total: 0, booked: 0, refused: 0, channels: [] } satisfies Schemas['LeadServiceConversion'])),
   http.get('*/api/tasks/assignees', () => HttpResponse.json([] satisfies Schemas['TaskControllerAssignee'][])),
   http.get('*/api/tasks', () => HttpResponse.json([] satisfies Schemas['TaskView'][])),
   // Лаборатория (V221): по умолчанию ни работ, ни лабораторий, ни долгов

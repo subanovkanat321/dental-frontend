@@ -30,6 +30,8 @@ import { DroppedTab } from './DroppedTab'
 import { NoBotTab } from './NoBotTab'
 import { DuplicatePairs } from './Duplicates'
 import { useDuplicatePairs } from './duplicatesModel'
+import { LeadsTab } from './LeadsTab'
+import type { Lead } from './leadsApi'
 
 type Me = Schemas['BookingViewsMe']
 type Row = Schemas['PatientListControllerPatientRow']
@@ -45,10 +47,12 @@ const SORTS: [SortKey, string][] = [['last', 'Сначала недавние'],
  * дате визита (/api/patients/recent, как в приложении); не нашли среди них — ищем на сервере
  * по всей клинике (/api/patients/search).
  */
-export function PatientsPage({ me, onBook, initialPatient, initialQuestion, initialTask, initialTaskDraft, initialBooked, onOpenAppointment }: {
+export function PatientsPage({ me, onBook, onBookLead, initialPatient, initialQuestion, initialTask, initialTaskDraft, initialBooked, onOpenAppointment }: {
   me: Me
   /** «Записать»: preset — врач и услуга из «Позвать снова → Отменили» */
   onBook: (p: Patient, preset?: BookPreset) => void
+  /** «Записать» из «Обращений»: «Новая запись» с именем и номером обращения (или его карточкой) */
+  onBookLead?: (lead: Lead) => void
   initialPatient?: number
   /** Кнопка уведомления «Открыть вопрос» — вкладка «Вопросы» с этим вопросом */
   initialQuestion?: number
@@ -68,7 +72,7 @@ export function PatientsPage({ me, onBook, initialPatient, initialQuestion, init
   // Подраздел (бывшие вкладки): все пациенты, записаны, лист ожидания, «позвать снова», вопросы —
   // в меню слева (на телефоне — лист из заголовка), адрес #/patients/<подраздел>
   const { sub, subTitle } = useSection('patients', me)
-  const tab = sub as 'all' | 'booked' | 'waitlist' | 'recall' | 'comeback' | 'dropped' | 'nobot' | 'questions' | 'tasks' | 'ratings'
+  const tab = sub as 'all' | 'booked' | 'waitlist' | 'leads' | 'recall' | 'comeback' | 'dropped' | 'nobot' | 'questions' | 'tasks' | 'ratings'
   const close = useCallback(() => setSelected(null), [])
   // Вопрос пациента справа (вкладка «Вопросы»); открыли карточку пациента — вопрос закрываем, и наоборот
   const [question, setQuestion] = useState<number | null>(initialQuestion ?? null)
@@ -178,6 +182,7 @@ export function PatientsPage({ me, onBook, initialPatient, initialQuestion, init
         </PageHead>
         {tab === 'booked' && <BookedTab me={me} initial={initialBooked} onOpenAppointment={onOpenAppointment} />}
         {tab === 'waitlist' && <WaitlistTab me={me} onOpen={setSelected} onBook={onBook} />}
+        {tab === 'leads' && <LeadsTab me={me} onOpenPatient={setSelected} onBookLead={(l) => onBookLead?.(l)} />}
         {tab === 'recall' && <RecallTab onOpen={setSelected} onBook={onBook} />}
         {tab === 'questions' && <QuestionsTab selected={question} onOpen={(id) => { setSelected(null); setQuestion(id) }} />}
         {tab === 'tasks' && <TasksTab onOpenPatient={setSelected} initialTask={initialTask} initialDraft={initialTaskDraft} />}

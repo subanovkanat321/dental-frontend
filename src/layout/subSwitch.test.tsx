@@ -90,7 +90,7 @@ test('телефон: над страницей — «Пациенты · Зап
   await userEvent.click(button)
   expect(button).toHaveAttribute('aria-expanded', 'true')
   const sheet = sheetOf('Пациенты')
-  expect(rows(sheet)).toEqual(['Записаны', 'Все', 'Лист ожидания', 'Позвать снова', 'Бросили лечение', 'Без бота', 'Вопросы', 'Задачи', 'Оценки'])
+  expect(rows(sheet)).toEqual(['Записаны', 'Все', 'Лист ожидания', 'Обращения', 'Позвать снова', 'Бросили лечение', 'Без бота', 'Вопросы', 'Задачи', 'Оценки'])
   const first = within(sheet).getAllByRole('menuitem')[0]!
   expect(first).toHaveAccessibleName('Записаны · открыт сейчас')
   expect(first).toHaveAttribute('aria-current', 'page')
@@ -225,7 +225,7 @@ test('подсказка про подразделы — один раз: зак
   window.location.hash = '/patients/all'
   const first = renderApp()
   const tip = await screen.findByRole('note')
-  expect(tip).toHaveTextContent('Здесь — подразделы «Пациенты»: Лист ожидания, Вопросы… Нажмите сюда или на «Пациенты» в нижнем меню.')
+  expect(tip).toHaveTextContent('Здесь — подразделы «Пациенты»: Лист ожидания, Обращения… Нажмите сюда или на «Пациенты» в нижнем меню.')
   await userEvent.click(within(tip).getByRole('button', { name: 'Закрыть подсказку' }))
   expect(screen.queryByRole('note')).not.toBeInTheDocument()
   expect(localStorage.getItem(SUB_HINT_KEY)).toBe('seen')

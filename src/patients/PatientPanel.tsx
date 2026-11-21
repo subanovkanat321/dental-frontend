@@ -283,7 +283,7 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
       <div className="patient-actions">
         <button type="button" className="btn primary" onClick={() => patient && onBook(patient)}>＋ Записать</button>
         {/* Есть представитель — звоним и пишем ему. Номер в шапке уже открывает «Связаться» — здесь значок, «＋ Записать» шире */}
-        <ContactMenu items={contacts} className={patient?.phone ? 'btn contact-icon' : 'btn'}
+        <ContactMenu items={contacts} className={patient?.phone ? 'btn contact-icon' : 'btn'} align="right"
           content={patient?.phone ? <span aria-hidden="true">📞</span> : undefined} />
       </div>
       {botInviteOf.sheet}
