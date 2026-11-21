@@ -6,7 +6,7 @@ import { api, unwrap, type Schemas } from '../api/client'
 import { useSwipeDown } from '../layout/useSwipeDown'
 import { useBack } from '../lib/back'
 import { telegram } from '../lib/telegram'
-import { TOUR_KEY, useFirstScreen } from '../tour/state'
+import { fetchTour, TOUR_KEY, useFirstScreen } from '../tour/state'
 import { launchedAsApp } from './pwa'
 import { currentSubscription, permission, pushSupport } from './push'
 import { PUSH_KEY, useEnablePush } from './useEnablePush'
@@ -52,7 +52,7 @@ export function PushPrompt({ me }: { me: Me }) {
   // Синхронные условия устройства — один раз: за время сеанса они не меняются
   const [eligible] = useState(() => staff && !telegram() && launchedAsApp() && pushSupport() === 'ok'
     && permission() !== 'denied' && !dismissed())
-  const tour = useQuery({ queryKey: TOUR_KEY, queryFn: () => unwrap(api.GET('/api/me/tour')), enabled: eligible, staleTime: Infinity, retry: false })
+  const tour = useQuery({ queryKey: TOUR_KEY, queryFn: fetchTour, enabled: eligible, staleTime: Infinity, retry: false })
   const tourSeen = Boolean(tour.data?.seenAt)
   const view = useQuery({ queryKey: PUSH_KEY, queryFn: () => unwrap(api.GET('/api/push')), enabled: eligible && tourSeen, retry: false })
   const [here, setHere] = useState<boolean | null>(null)

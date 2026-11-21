@@ -5,10 +5,11 @@ import { createPortal } from 'react-dom'
 import { api, unwrap, type Schemas } from '../api/client'
 import { useBack } from '../lib/back'
 import type { Page } from '../lib/route'
+import { isDemoSession, markDemoTourSeen } from '../lib/demo'
 import { telegram } from '../lib/telegram'
 import { matches, useMedia } from '../lib/useMedia'
 import { SUB_HINT_KEY } from '../layout/section'
-import { TOUR_EVENT, TOUR_KEY, useFirstScreen, useFirstScreensBusy } from './state'
+import { TOUR_EVENT, fetchTour, TOUR_KEY, useFirstScreen, useFirstScreensBusy } from './state'
 import { tourSteps, type TourStep } from './steps'
 import './tour.css'
 
@@ -32,9 +33,10 @@ const FIND_TIMEOUT_MS = 2500
 export function TourHost({ me, page }: { me: Me; page: Page }) {
   const staff = Boolean(me.doctor)
   const client = useQueryClient()
-  const state = useQuery({ queryKey: TOUR_KEY, queryFn: () => unwrap(api.GET('/api/me/tour')), enabled: staff, staleTime: Infinity, retry: false })
+  const state = useQuery({ queryKey: TOUR_KEY, queryFn: fetchTour, enabled: staff, staleTime: Infinity, retry: false })
   const mark = useMutation({
-    mutationFn: () => unwrap(api.PUT('/api/me/tour')),
+    // В демо отметку помнит вкладка: сервер у общего гостя её не хранит
+    mutationFn: async () => (isDemoSession() ? { seenAt: markDemoTourSeen() } : unwrap(api.PUT('/api/me/tour'))),
     onSuccess: (r) => client.setQueryData(TOUR_KEY, r),
   })
   const busy = useFirstScreensBusy()

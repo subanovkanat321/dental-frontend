@@ -1,8 +1,9 @@
 import { useEffect, useState, type ReactNode } from 'react'
 
 import { OFFER, TISH_INSTAGRAM, TISH_INSTAGRAM_NAME } from '../lib/brand'
+import { DEMO_PATH } from '../lib/demo'
 import { CaseBlock } from './CaseBlock'
-import { getJson, type JoinCase } from './web'
+import { getJson, useDemoEnabled, type JoinCase } from './web'
 import './about.css'
 
 /*
@@ -289,6 +290,7 @@ export function About() {
   const [story, setStory] = useState<JoinCase | null>(null)
   useEffect(() => { void getJson<JoinCase>('/web/case').then(({ data }) => setStory(data?.shown ? data : null)) }, [])
   const year = new Date().getFullYear()
+  const demo = useDemoEnabled()
   return (
     <div className="about">
       <header className="about-top">
@@ -312,6 +314,7 @@ export function About() {
               <ul className="about-points hero-points">{HERO_POINTS.map((x, i) => <li key={i}>{x}</li>)}</ul>
               <div className="about-ctas">
                 <a className="about-btn primary" href={START}>Попробовать бесплатно</a>
+                {demo && <a className="about-btn" href={DEMO_PATH}><span aria-hidden="true">👀</span> Посмотреть демо</a>}
                 <a className="about-btn" href={ABOUT_CONTACTS.whatsapp} target="_blank" rel="noopener noreferrer">
                   <span aria-hidden="true">💬</span> Написать нам в WhatsApp</a>
               </div>
@@ -395,6 +398,7 @@ export function About() {
               а с переносом данных и настройкой поможем — просто напишите.</p>
             <div className="about-ctas center">
               <a className="about-btn primary big" href={START}>Попробовать бесплатно</a>
+              {demo && <a className="about-btn big" href={DEMO_PATH}><span aria-hidden="true">👀</span> Посмотреть демо</a>}
               <a className="about-btn big" href={ABOUT_CONTACTS.whatsapp} target="_blank" rel="noopener noreferrer">
                 <span aria-hidden="true">💬</span> Написать нам в WhatsApp</a>
             </div>

@@ -143,6 +143,7 @@ function Report({ a }: { a: Analytics }) {
       <DueBlock a={a} />
       <RiskBlock a={a} />
       <FunnelBlock a={a} period={period} />
+      <DemoBlock />
       <GeoBlock a={a} period={period} />
       <MoneyBlock a={a} />
       <CohortBlock a={a} />
@@ -240,7 +241,8 @@ function RiskBlock({ a }: { a: Analytics }) {
  * Instagram даёт INSTAGRAM; NONE — без метки.
  */
 const SOURCE: Record<string, string> = {
-  INSTAGRAM: 'Instagram (tish.kg/ig)', REELS: 'рилсы', TWOGIS: '2ГИС', WHATSAPP: 'WhatsApp', QR: 'QR', NONE: 'без метки',
+  INSTAGRAM: 'Instagram (tish.kg/ig)', REELS: 'рилсы', TWOGIS: '2ГИС', WHATSAPP: 'WhatsApp', QR: 'QR', DEMO: 'из демо-клиники',
+  NONE: 'без метки',
 }
 
 /** Воронка клиник, заведённых за период: где теряем новых. */
@@ -269,6 +271,33 @@ function FunnelBlock({ a, period }: { a: Analytics; period: string }) {
           })}
         </ul>
       ) : <p className="hint">Новых клиник {period} не заводили.</p>}
+    </Block>
+  )
+}
+
+/** Демо-клиника без регистрации (бэкенд, ADR 0005): сколько раз заходили в демо — только число в день. */
+function DemoBlock() {
+  const query = useQuery({ queryKey: ['platform-demo-entries'], queryFn: () => unwrap(api.GET('/api/platform/demo/entries')) })
+  const d = query.data
+  if (!d) return null
+  return (
+    <Block title="Демо-клиника" label="Входы в демо"
+      hint={d.enabled ? <>Входов за 30 дней: <b className="num">{d.total}</b>. Регистрации из демо — «из демо-клиники» в воронке.</>
+        : <>Демо выключено на сервере (DEMO_ENABLED). Входов за 30 дней: <b className="num">{d.total}</b>.</>}
+      help="Кнопка «Посмотреть демо» на tish.kg: гость на 2 часа в вымышленной клинике, перезаливка каждую ночь. Считаем только число входов — без адресов и устройств.">
+      {d.days.length > 0 ? (
+        <ul className="hbars" aria-label="Входы в демо по дням">
+          {d.days.slice(0, 14).map((day) => (
+            <li key={day.day} title={`${shortDate(day.day)}: ${day.entries}`}>
+              <span className="hbar-name">{shortDate(day.day)}</span>
+              <span className="hbar-track" aria-hidden="true">
+                <span className="hbar-fill" style={{ width: `${(day.entries / Math.max(...d.days.map((x) => x.entries))) * 100}%` }} />
+              </span>
+              <span className="hbar-value num">{day.entries}</span>
+            </li>
+          ))}
+        </ul>
+      ) : <p className="hint">В демо пока не заходили.</p>}
     </Block>
   )
 }

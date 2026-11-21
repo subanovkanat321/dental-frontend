@@ -8,7 +8,7 @@ import { usePlatformInfo } from '../api/platform'
 import { openMine } from '../lib/route'
 import { openLink, telegram } from '../lib/telegram'
 import { useMedia } from '../lib/useMedia'
-import { TOUR_KEY, useFirstScreensBusy } from '../tour/state'
+import { fetchTour, TOUR_KEY, useFirstScreensBusy } from '../tour/state'
 import { GROUP_TIP, TIPS, tipsFor, type Tip } from './catalog'
 import { TIP_CARD_KEY, TIPS_KEY, useTipsOff, useTipsState } from './state'
 import './tips.css'
@@ -37,7 +37,7 @@ function go(target: string) {
 export function TipOfDay({ me }: { me: Me }) {
   const staff = Boolean(me.doctor)
   const client = useQueryClient()
-  const tour = useQuery({ queryKey: TOUR_KEY, queryFn: () => unwrap(api.GET('/api/me/tour')), enabled: staff, staleTime: Infinity, retry: false })
+  const tour = useQuery({ queryKey: TOUR_KEY, queryFn: fetchTour, enabled: staff, staleTime: Infinity, retry: false })
   const state = useTipsState(staff && Boolean(tour.data?.seenAt))
   const info = usePlatformInfo()
   const groupUrl = info.data?.doctorsGroupUrl

@@ -42,6 +42,18 @@ export type JoinCase = Schemas['JoinCaseCase']
 /** /join?ref=…: какая клиника пригласила и сколько месяцев бесплатно («Клиника приводит клинику», V231). */
 export type ReferralInvite = Schemas['ClinicReferralsInvite']
 
+/**
+ * «Посмотреть демо» (демо-клиника без регистрации, ADR 0005 бэкенда): кнопка — только если демо включено на сервере
+ * (GET /web/demo). Пока не ответил или выключено — кнопки нет, а не «демо выключено» после нажатия.
+ */
+export function useDemoEnabled(): boolean {
+  const [enabled, setEnabled] = useState(false)
+  useEffect(() => {
+    void getJson<Schemas['DemoControllerInfo']>('/web/demo').then(({ data }) => setEnabled(Boolean(data?.enabled)))
+  }, [])
+  return enabled
+}
+
 /** GET открытого адреса: ответ, null — ошибка; status — чтобы отличить 404 от «нет связи». */
 export async function getJson<T>(path: string): Promise<{ status: number; data: T | null }> {
   try {

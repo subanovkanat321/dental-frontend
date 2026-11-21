@@ -1,0 +1,21 @@
+/* Демо-клиника (lib/demo.ts): тонкая плашка над рабочей областью и экран входа. Цвета — токены DESIGN.md:
+   бирюзовая мягкая заливка (это не ошибка и не предупреждение, а подпись «вы в демо») */
+.demo-banner {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px;
+  margin-bottom: 12px; padding: 6px 12px;
+  background: var(--accent-soft); color: var(--accent-ink);
+  border-left: 3px solid var(--accent); border-radius: var(--r-md);
+  font-size: .875rem;
+}
+.demo-banner-text { flex: 1 1 220px; min-width: 0; }
+.demo-banner-cta { font-weight: 600; color: var(--accent-ink); white-space: nowrap; }
+.demo-banner-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.demo-banner-tools label { display: flex; align-items: center; gap: 6px; }
+.demo-banner select { min-height: 32px; padding: 2px 8px; font: inherit; font-size: .85rem; border: 1px solid var(--line-strong); border-radius: var(--r-sm); background: var(--card); color: var(--text); }
+@media (max-width: 760px) {
+  .demo-banner { font-size: .8125rem; padding: 6px 10px; }
+  .demo-banner-tools { width: 100%; justify-content: space-between; }
+}
+.demo-enter { max-width: 420px; margin: 0 auto; padding: 48px 16px; text-align: center; }
+.demo-enter h1 { font-family: Geologica, sans-serif; font-weight: 600; font-size: 1.25rem; margin: 0 0 8px; }
+.demo-enter .actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 16px; }

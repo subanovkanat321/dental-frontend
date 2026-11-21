@@ -2196,6 +2196,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/web/demo/enter": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["enter"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/web/clinic-applications": {
         parameters: {
             query?: never;
@@ -3293,7 +3309,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["enter"];
+        post: operations["enter_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4526,6 +4542,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["addSelf"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/demo/role": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["role"];
         delete?: never;
         options?: never;
         head?: never;
@@ -5796,6 +5828,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/web/demo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["info_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/web/content-jpeg/{file}": {
         parameters: {
             query?: never;
@@ -6492,6 +6540,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["finance"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/platform/demo/entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["entries"];
         put?: never;
         post?: never;
         delete?: never;
@@ -7340,6 +7404,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["report_3"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/demo/session": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["session"];
         put?: never;
         post?: never;
         delete?: never;
@@ -10558,6 +10638,16 @@ export interface components {
             token?: string;
             phone?: string;
         };
+        DemoControllerEnter: {
+            /** @enum {string} */
+            role?: "OWNER" | "RECEPTION" | "DOCTOR";
+        };
+        DemoControllerEntered: {
+            /** @enum {string} */
+            role: "OWNER" | "RECEPTION" | "DOCTOR";
+            /** Format: date-time */
+            expiresAt: string;
+        };
         ClinicApplicationsForm: {
             clinicName?: string;
             contactName?: string;
@@ -12026,6 +12116,9 @@ export interface components {
             supportPhones?: string[];
             supportWhatsapp?: string;
         };
+        DemoControllerInfo: {
+            enabled: boolean;
+        };
         WebAuthControllerConfig: {
             botUsername?: string;
             smsLogin: boolean;
@@ -12888,6 +12981,18 @@ export interface components {
             smsPriceSom?: number;
             lastUsdRate?: number;
         };
+        DemoControllerEntries: {
+            days: components["schemas"]["DemoControllerEntryDay"][];
+            /** Format: int32 */
+            total: number;
+            enabled: boolean;
+        };
+        DemoControllerEntryDay: {
+            /** Format: date */
+            day: string;
+            /** Format: int32 */
+            entries: number;
+        };
         InstagramTokensState: {
             enabled: boolean;
             /** Format: date-time */
@@ -13600,6 +13705,16 @@ export interface components {
             count: number;
             /** Format: int32 */
             patients: number;
+        };
+        DemoControllerRoleChoice: {
+            /** @enum {string} */
+            role: "OWNER" | "RECEPTION" | "DOCTOR";
+            label: string;
+        };
+        DemoControllerSession: {
+            /** @enum {string} */
+            role: "OWNER" | "RECEPTION" | "DOCTOR";
+            roles: components["schemas"]["DemoControllerRoleChoice"][];
         };
         ComebacksBoard: {
             patients?: components["schemas"]["ComebacksCandidate"][];
@@ -18998,6 +19113,30 @@ export interface operations {
             };
         };
     };
+    enter: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["DemoControllerEnter"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DemoControllerEntered"];
+                };
+            };
+        };
+    };
     submit: {
         parameters: {
             query?: never;
@@ -21125,7 +21264,7 @@ export interface operations {
             };
         };
     };
-    enter: {
+    enter_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -23522,6 +23661,30 @@ export interface operations {
             };
         };
     };
+    role: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DemoControllerEnter"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DemoControllerEntered"];
+                };
+            };
+        };
+    };
     skip_1: {
         parameters: {
             query?: never;
@@ -25773,6 +25936,26 @@ export interface operations {
             };
         };
     };
+    info_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DemoControllerInfo"];
+                };
+            };
+        };
+    };
     file_1: {
         parameters: {
             query?: never;
@@ -26745,6 +26928,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PlatformFinanceFinance"];
+                };
+            };
+        };
+    };
+    entries: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DemoControllerEntries"];
                 };
             };
         };
@@ -27953,6 +28156,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DiagnosesCodeCount"][];
+                };
+            };
+        };
+    };
+    session: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DemoControllerSession"];
                 };
             };
         };

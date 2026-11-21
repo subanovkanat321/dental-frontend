@@ -91,6 +91,26 @@ test('владелец: аналитика платформы — сводка, 
   expect(asked).toContain('90:')
 })
 
+test('демо-клиника: входы по дням — только число; регистрации из демо — своим каналом', async () => {
+  const r = report(30)
+  r.funnel!.sources = [{ channel: 'DEMO', clinics: 3 }]
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json({ ...me, owner: true, platform: true })),
+    http.get('*/api/platform/analytics', () => HttpResponse.json(r)),
+    http.get('*/api/platform/demo/entries', () => HttpResponse.json({
+      days: [{ day: '2026-11-21', entries: 7 }, { day: '2026-11-20', entries: 3 }], total: 10, enabled: true,
+    } satisfies Schemas['DemoControllerEntries'])),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await findSub('Аналитика'))
+
+  const block = await screen.findByRole('region', { name: 'Входы в демо' })
+  expect(block).toHaveTextContent('Входов за 30 дней: 10')
+  expect(within(block).getByRole('list', { name: 'Входы в демо по дням' })).toHaveTextContent(/21 нояб?\.? 2026\s*7/)
+  expect(screen.getByText(/откуда пришли: из демо-клиники — 3\./)).toBeInTheDocument()
+})
+
 test('менеджер платформы аналитику не видит', async () => {
   server.use(http.get('*/api/patient/me', () => HttpResponse.json({ ...me, owner: false, platform: true })))
   renderApp()

@@ -51,6 +51,9 @@ export const server = setupServer(
   http.get('*/api/clinic/referral', () => HttpResponse.json({ detail: 'нет' }, { status: 404 })),
   http.get('*/web/referral', () => HttpResponse.json({ detail: 'Приглашение не найдено' }, { status: 404 })),
   // Кейс на /join не заполнен — блока нет; черновик в «Платформа → Настройки» — пустой
+  // Демо-клиника без регистрации: по умолчанию выключена (как на сервере) — кнопок «Посмотреть демо» нет
+  http.get('*/api/platform/demo/entries', () => HttpResponse.json({ days: [], total: 0, enabled: false } satisfies Schemas['DemoControllerEntries'])),
+  http.get('*/web/demo', () => HttpResponse.json({ enabled: false } satisfies Schemas['DemoControllerInfo'])),
   http.get('*/web/case', () => HttpResponse.json({ metrics: [], consent: false, shown: false } satisfies Schemas['JoinCaseCase'])),
   http.get('*/api/platform/case', () => HttpResponse.json({ metrics: [], consent: false, shown: false } satisfies Schemas['JoinCaseCase'])),
   // Ролик и презентация на /join: по умолчанию каталога материалов нет — блока нет

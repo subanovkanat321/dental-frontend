@@ -10,7 +10,7 @@ import { DownloadPage } from './pwa/DownloadPage'
 import { ErrorBoundary } from './layout/ErrorBoundary'
 import { linkHash, readDeepLink, rememberLaunch, type DeepLink } from './lib/deepLink'
 import { dateOf, minutesOf } from './lib/time'
-import { isDownloadPath, isInstagramPath, isInvitePath, isLoginPath, isSignupConfirmPath, isSignupPath, usePage, type Page } from './lib/route'
+import { isDemoPath, isDownloadPath, isInstagramPath, isInvitePath, isLoginPath, isSignupConfirmPath, isSignupPath, usePage, type Page } from './lib/route'
 import { SectionActive } from './lib/section'
 import { INSTAGRAM_SIGNUP } from './lib/brand'
 import { telegram } from './lib/telegram'
@@ -44,6 +44,8 @@ const AtlasPage = lazy(() => import('./atlas/AtlasPage'))
 const InvitePage = lazy(() => import('./invite/InvitePage').then((m) => ({ default: m.InvitePage })))
 // Регистрация клиники (/start) — тоже свой чанк: нужна один раз в жизни клиники
 const SignupPage = lazy(() => import('./signup/SignupPage').then((m) => ({ default: m.SignupPage })))
+// «Посмотреть демо» (/demo) — вход гостем в демо-клинику: маленький свой чанк
+const DemoEnter = lazy(() => import('./demo/DemoEnter').then((m) => ({ default: m.DemoEnter })))
 const SignupConfirmPage = lazy(() => import('./signup/ConfirmPage').then((m) => ({ default: m.ConfirmPage })))
 
 /**
@@ -99,6 +101,8 @@ function Screens() {
   }
   // /start — клиника регистрируется сама: без входа, до проверки сессии
   if (isSignupPath()) return <ErrorBoundary><Suspense fallback={<Loading className="screen" />}><SignupPage /></Suspense></ErrorBoundary>
+  // /demo — «Посмотреть демо» на сайте: вход гостем в вымышленную клинику, до проверки сессии
+  if (isDemoPath()) return <ErrorBoundary><Suspense fallback={<Loading className="screen" />}><DemoEnter /></Suspense></ErrorBoundary>
   // /start/confirm?t=… — ссылка из письма регистрации (открыли из почты, уже в настоящем браузере)
   if (isSignupConfirmPath()) return <ErrorBoundary><Suspense fallback={<Loading className="screen" />}><SignupConfirmPage /></Suspense></ErrorBoundary>
   // 3D-атлас (#/atlas, /atlas) — без входа: на экране нет данных пациентов, его можно открыть на ТВ

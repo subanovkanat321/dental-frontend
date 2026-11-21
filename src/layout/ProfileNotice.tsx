@@ -3,7 +3,7 @@ import { useState } from 'react'
 
 import { api, unwrap, type Schemas } from '../api/client'
 import { openMine } from '../lib/route'
-import { TOUR_KEY, useFirstScreen } from '../tour/state'
+import { fetchTour, TOUR_KEY, useFirstScreen } from '../tour/state'
 
 type Me = Schemas['BookingViewsMe']
 
@@ -37,7 +37,7 @@ export function ProfileNotice({ me }: { me: Me }) {
   // Ошибка запроса тура — плашку не прячем
   const tour = useQuery({
     queryKey: TOUR_KEY,
-    queryFn: () => unwrap(api.GET('/api/me/tour')),
+    queryFn: fetchTour,
     enabled: Boolean(me.doctor),
     staleTime: Infinity,
     retry: false,

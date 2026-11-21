@@ -30,6 +30,8 @@ import { useNewQuestions } from '../api/questions'
 import { useTaskSummary } from '../tasks/api'
 import { usePurchaseCount } from '../stock/purchase/api'
 import { TourHost } from '../tour/Tour'
+import { DemoBanner } from '../demo/DemoBanner'
+import { isDemoSession } from '../lib/demo'
 import { PushPrompt } from '../pwa/PushPrompt'
 import { TipOfDay } from '../tips/TipOfDay'
 import { useFullView } from '../lib/fullView'
@@ -103,6 +105,8 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
   const role = !me.doctor ? (me.owner ? 'владелец платформы' : 'менеджер платформы')
     : me.admin ? 'руководитель' : me.reception ? 'регистратура' : isAssistant(me) ? 'ассистент' : 'врач'
   const sections = useMemo(() => sectionsOf(me), [me])
+  // Демо-клиника (lib/demo.ts): без плашки профиля и опросов — у гостя нет своего профиля
+  const [demo] = useState(isDemoSession)
   // Числа у подразделов: вопросы пациентов ждут ответа, сколько в листе ожидания (видно из любого раздела)
   const questions = useNewQuestions(Boolean(me.doctor)).data?.count ?? 0
   const waitlistList = useWaitlist(Boolean(me.doctor)).data
@@ -465,7 +469,7 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
           card={subCard} onPick={(sub) => goSub(sheetSection.key, sub)} onClose={closeSheet} />
       )}
       {/* Напоминания админу и приглашение в опрос — на главном экране, чтобы не занимать место в каждом разделе */}
-      <main ref={workspace} className="workspace"><NavContext.Provider value={nav}><div className="sub-tabs-slot" ref={setTabsSlot} /><OfflineNotice />{page === 'schedule' && <><ProfileNotice me={me} /><AdminNotices me={me} /><SurveyInvite me={me} /><TipOfDay me={me} /></>}{children}</NavContext.Provider></main>
+      <main ref={workspace} className="workspace"><NavContext.Provider value={nav}><DemoBanner /><div className="sub-tabs-slot" ref={setTabsSlot} /><OfflineNotice />{page === 'schedule' && <>{!demo && <ProfileNotice me={me} />}<AdminNotices me={me} />{!demo && <SurveyInvite me={me} />}<TipOfDay me={me} /></>}{children}</NavContext.Provider></main>
       {/* «💬 Помощь» — спросить помощника Tish, не уходя с экрана (ИИ по базе знаний; не знает — команде Tish) */}
       {me.doctor && phone && HELP_PAGES.includes(page) && !help && (
         <button type="button" className="help-fab" onClick={() => openHelpChat()} aria-label="Помощь: спросить помощника Tish">

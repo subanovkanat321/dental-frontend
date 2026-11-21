@@ -5773,6 +5773,33 @@
         }
       }
     },
+    "/web/demo/enter" : {
+      "post" : {
+        "tags" : [ "demo-controller" ],
+        "operationId" : "enter",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DemoControllerEnter"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DemoControllerEntered"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/web/clinic-applications" : {
       "post" : {
         "tags" : [ "join-controller" ],
@@ -8395,7 +8422,7 @@
     "/api/platform/clinics/{id}/enter" : {
       "post" : {
         "tags" : [ "platform-controller" ],
-        "operationId" : "enter",
+        "operationId" : "enter_1",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -11384,6 +11411,34 @@
         }
       }
     },
+    "/api/demo/role" : {
+      "post" : {
+        "tags" : [ "demo-controller" ],
+        "operationId" : "role",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DemoControllerEnter"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DemoControllerEntered"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/comebacks/{patientId}/skip" : {
       "post" : {
         "tags" : [ "comeback-controller" ],
@@ -14302,6 +14357,24 @@
         }
       }
     },
+    "/web/demo" : {
+      "get" : {
+        "tags" : [ "demo-controller" ],
+        "operationId" : "info_1",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DemoControllerInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/web/content-jpeg/{file}" : {
       "get" : {
         "tags" : [ "content-jpeg" ],
@@ -15542,6 +15615,24 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/PlatformFinanceFinance"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/platform/demo/entries" : {
+      "get" : {
+        "tags" : [ "demo-controller" ],
+        "operationId" : "entries",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DemoControllerEntries"
                 }
               }
             }
@@ -17027,6 +17118,24 @@
                   "items" : {
                     "$ref" : "#/components/schemas/DiagnosesCodeCount"
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/demo/session" : {
+      "get" : {
+        "tags" : [ "demo-controller" ],
+        "operationId" : "session",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DemoControllerSession"
                 }
               }
             }
@@ -24509,6 +24618,27 @@
           }
         }
       },
+      "DemoControllerEnter" : {
+        "properties" : {
+          "role" : {
+            "type" : "string",
+            "enum" : [ "OWNER", "RECEPTION", "DOCTOR" ]
+          }
+        }
+      },
+      "DemoControllerEntered" : {
+        "properties" : {
+          "role" : {
+            "type" : "string",
+            "enum" : [ "OWNER", "RECEPTION", "DOCTOR" ]
+          },
+          "expiresAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "expiresAt", "role" ]
+      },
       "ClinicApplicationsForm" : {
         "properties" : {
           "clinicName" : {
@@ -28120,6 +28250,14 @@
           }
         }
       },
+      "DemoControllerInfo" : {
+        "properties" : {
+          "enabled" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "enabled" ]
+      },
       "WebAuthControllerConfig" : {
         "properties" : {
           "botUsername" : {
@@ -30390,6 +30528,37 @@
           }
         }
       },
+      "DemoControllerEntries" : {
+        "properties" : {
+          "days" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/DemoControllerEntryDay"
+            }
+          },
+          "total" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "days", "enabled", "total" ]
+      },
+      "DemoControllerEntryDay" : {
+        "properties" : {
+          "day" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "entries" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "day", "entries" ]
+      },
       "InstagramTokensState" : {
         "properties" : {
           "enabled" : {
@@ -32172,6 +32341,33 @@
           }
         },
         "required" : [ "code", "count", "patients", "title" ]
+      },
+      "DemoControllerRoleChoice" : {
+        "properties" : {
+          "role" : {
+            "type" : "string",
+            "enum" : [ "OWNER", "RECEPTION", "DOCTOR" ]
+          },
+          "label" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "label", "role" ]
+      },
+      "DemoControllerSession" : {
+        "properties" : {
+          "role" : {
+            "type" : "string",
+            "enum" : [ "OWNER", "RECEPTION", "DOCTOR" ]
+          },
+          "roles" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/DemoControllerRoleChoice"
+            }
+          }
+        },
+        "required" : [ "role", "roles" ]
       },
       "ComebacksBoard" : {
         "properties" : {

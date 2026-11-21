@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 
 import { OFFER, TISH_INSTAGRAM, TISH_INSTAGRAM_NAME } from '../lib/brand'
+import { DEMO_PATH } from '../lib/demo'
 import { ContactLinks } from '../lib/ContactLinks'
-import { getJson, type Links, type PublicMaterials } from './web'
+import { getJson, useDemoEnabled, type Links, type PublicMaterials } from './web'
 
 /** Строка-ссылка /go: значок, заголовок, подпись. main — главное действие раздела (залито цветом). */
 function GoLink({ icon, title, sub, href, main, badge }: {
@@ -36,6 +37,7 @@ export function Go() {
     void getJson<PublicMaterials>('/web/materials/public').then(({ data }) => setM(data ?? {}))
   }, [])
   const wa = c.supportWhatsapp ? `https://wa.me/${c.supportWhatsapp}` : null
+  const demo = useDemoEnabled()
   return (
     <main className="site-page">
       <header className="site-hero">
@@ -48,6 +50,8 @@ export function Go() {
         <h2 id="go-clinics">Для клиник и частных врачей</h2>
         {/* Оффер — сама кнопка: нажали — сразу регистрация клиники (/start, без заявки) */}
         <GoLink icon="🎁" title={`Подключить клинику — ${OFFER.toLowerCase()}`} sub="Без предоплаты — клиника готова за 5 минут" href="/start" main />
+        {/* Демо-клиника без регистрации — только если включена на сервере (GET /web/demo) */}
+        {demo && <GoLink icon="👀" title="Посмотреть демо" sub="Вымышленная клиника изнутри — без регистрации, за секунды" href={DEMO_PATH} />}
         {/* Ролик на минуту — на /join (плеер там же, без предзагрузки); ролика нет — коротко о главном на /about */}
         <GoLink icon="▶" title="Как это работает" sub={m.video ? 'Ролик на минуту' : 'Запись, ИИ-диктовка, карта зубов, касса — с картинками'}
           href={m.video ? '/join#materials' : '/about'} />

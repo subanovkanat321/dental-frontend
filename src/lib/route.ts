@@ -203,6 +203,11 @@ export function isSignupPath(path = window.location.pathname): boolean {
   return /^\/start\/?$/i.test(path)
 }
 
+/** «Посмотреть демо»: /demo — вход гостем в демо-клинику, без входа (lib/demo.ts). */
+export function isDemoPath(path = window.location.pathname): boolean {
+  return /^\/demo\/?$/i.test(path)
+}
+
 /** Ссылка из шапки Instagram: tish.kg/ig → /start?from=instagram (на сервере — редирект nginx; это — запасной путь SPA). */
 export function isInstagramPath(path = window.location.pathname): boolean {
   return /^\/ig\/?$/i.test(path)
