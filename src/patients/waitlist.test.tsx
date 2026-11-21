@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
@@ -51,7 +51,7 @@ test('карточка пациента: «В лист ожидания» на 4
   const form = await within(panel).findByRole('form', { name: 'В лист ожидания' })
   await choose(within(form).getByLabelText('Сколько нужно времени'), '45 мин')
   await choose(within(form).getByLabelText('К какому врачу'), 'Дастан Т.')
-  await userEvent.click(within(form).getByRole('button', { name: 'В лист ожидания' }))
+  await userEvent.click(within(form).getByRole('button', { name: 'Добавить в лист ожидания' }))
   expect(await within(panel).findByText(/В листе ожидания/)).toHaveTextContent('45 мин')
   expect(sent).toEqual([{ patientId: 2, doctorId: 2, durationMinutes: 45, wish: { weekdays: [] } }])
 
@@ -60,8 +60,10 @@ test('карточка пациента: «В лист ожидания» на 4
 
   await userEvent.click((await findSub(/Лист ожидания · 1/)))
   const list = await screen.findByRole('list', { name: 'Лист ожидания' })
-  // Строка: имя, под ним одной строкой — сколько нужно и к кому; кнопок в строке нет, «Убрать» — в «⋯»
-  expect(list).toHaveTextContent(/45 мин · Дастан Т\./)
+  // Строка: имя, к кому и сколько, «Удобно: …»; в строке — «Записать», «Убрать» — в «⋯» (ещё не записан)
+  expect(list).toHaveTextContent(/Дастан Т\. · 45 мин/)
+  expect(list).toHaveTextContent('Удобно: когда угодно')
+  expect(within(list).getByRole('button', { name: 'Записать: Айгуль Т.' })).toBeInTheDocument()
   expect(within(list).queryByRole('button', { name: /^Убрать/ })).toBeNull()
   // «Убрать» переспрашивает: нажали случайно — пациент остаётся в листе
   const confirm = vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true)
@@ -199,7 +201,7 @@ test('вкладка «Лист ожидания»: «Добавить» — н�
   await userEvent.type(screen.getByLabelText('Найти пациента для листа ожидания'), 'Айг')
   await userEvent.click(await screen.findByRole('button', { name: /Айгуль Т\./ }))
   const box = screen.getByRole('form', { name: 'В лист ожидания' })
-  await userEvent.click(within(box).getByRole('button', { name: 'В лист ожидания' }))
+  await userEvent.click(within(box).getByRole('button', { name: 'Добавить в лист ожидания' }))
   expect(await screen.findByRole('list', { name: 'Лист ожидания' })).toHaveTextContent('Айгуль Т.')
   expect(sent).toHaveLength(1)
   expect(sent[0]).toMatchObject({ patientId: 2 })
@@ -213,11 +215,35 @@ test('«Когда удобно…»: утро и пн/пт — уходит н�
   const panel = await screen.findByRole('complementary', { name: 'Карточка пациента' })
   await userEvent.click(within(panel).getByRole('tab', { name: 'Прочее' }))
   const form = await within(panel).findByRole('form', { name: 'В лист ожидания' })
-  await userEvent.click(within(form).getByRole('button', { name: 'Когда удобно…' }))
+  await userEvent.click(within(form).getByRole('button', { name: /Когда удобно/ }))
   await userEvent.click(within(form).getByRole('button', { name: 'Утро' }))
   await userEvent.click(within(form).getByRole('button', { name: 'Пн' }))
   await userEvent.click(within(form).getByRole('button', { name: 'Пт' }))
-  await userEvent.click(within(form).getByRole('button', { name: 'В лист ожидания' }))
+  await userEvent.click(within(form).getByRole('button', { name: 'Добавить в лист ожидания' }))
   expect(await within(panel).findByText('утро · пн, пт')).toBeInTheDocument()
   expect(sent).toEqual([expect.objectContaining({ wish: { timeFrom: '08:00', timeTo: '12:00', weekdays: [1, 5] } })])
+})
+
+test('лист ожидания: «Записать» — новая запись на пациента; записан — «✅ Записан …» и «Убрать» без вопроса', async () => {
+  window.location.hash = '/patients'
+  const removed: string[] = []
+  backend([
+    { id: 7, patient: aigul, durationMinutes: 60, doctorId: 2, createdAt: '2026-10-20T04:00:00Z' },
+    { id: 8, patient: { ...aigul, id: 3, fullName: 'Бакыт Т.' }, durationMinutes: 30, createdAt: '2026-10-21T04:00:00Z',
+      upcoming: { id: 99, startAt: '2026-12-01T09:00:00Z', endAt: '2026-12-01T09:30:00Z', status: 'SCHEDULED', doctorId: 1, version: 0, patient: { id: 3, fullName: 'Бакыт Т.' } } as Schemas['AppointmentView'] },
+  ])
+  server.use(http.delete('*/api/waitlist/:id', ({ params }) => { removed.push(String(params.id)); return new HttpResponse(null, { status: 204 }) }))
+  const confirm = vi.spyOn(window, 'confirm')
+  renderApp()
+  await userEvent.click(await findSub(/Лист ожидания/))
+  const list = await screen.findByRole('list', { name: 'Лист ожидания' })
+  expect(list).toHaveTextContent(/✅ Записан/)
+  expect(within(list).queryByRole('button', { name: 'Записать: Бакыт Т.' })).toBeNull()
+  await userEvent.click(within(list).getByRole('button', { name: 'Убрать из листа: Бакыт Т.' }))
+  await waitFor(() => expect(removed).toEqual(['8']))
+  expect(confirm).not.toHaveBeenCalled()
+  // «Записать» — «Новая запись» на этого пациента
+  await userEvent.click(within(list).getByRole('button', { name: 'Записать: Айгуль Т.' }))
+  expect(await screen.findByRole('complementary', { name: 'Новая запись' })).toHaveTextContent('Айгуль Т.')
+  confirm.mockRestore()
 })

@@ -3412,3 +3412,15 @@ button.cash-entry:hover, button.cash-entry.active { background: var(--sunken); }
 .sheet-head-title { margin: 0; font-family: var(--display); font-size: 1.1rem; font-weight: 600; line-height: 1.3; }
 .sheet-head-sub { margin: 2px 0 0; color: var(--hint); font-size: .875rem; }
 .panel-x-only { justify-content: flex-end; }
+
+/* Лист ожидания (2026-11-21): строка — «врач · мин» и «Удобно: …» двумя строками; форма — подписи у полей, кнопка залита */
+.calm-sub .waitlist-wish-line { display: block; white-space: normal; }
+.calm-sub:has(.waitlist-wish-line) { white-space: normal; overflow: visible; text-overflow: clip; -webkit-line-clamp: unset; display: block; }
+.waitlist-booked { white-space: nowrap; font-size: .85rem; }
+.waitlist-hint { margin: 0 0 8px; }
+.waitlist-add-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.waitlist-add-head h3 { margin: 0; font-size: 1rem; }
+.waitlist-wish .wish-main { display: flex; flex-wrap: wrap; gap: 8px 12px; }
+.waitlist-wish .wish-main .field { flex: 1 1 140px; margin: 0; }
+.waitlist-wish .wish-actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+@media (max-width: 760px) { .waitlist-wish .wish-actions .btn.primary { flex: 1 1 auto; } }

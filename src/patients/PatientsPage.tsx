@@ -167,7 +167,7 @@ export function PatientsPage({ me, onBook, initialPatient, initialQuestion, init
           )}
         </PageHead>
         {tab === 'booked' && <BookedTab me={me} initial={initialBooked} onOpenAppointment={onOpenAppointment} />}
-        {tab === 'waitlist' && <WaitlistTab me={me} onOpen={setSelected} />}
+        {tab === 'waitlist' && <WaitlistTab me={me} onOpen={setSelected} onBook={onBook} />}
         {tab === 'recall' && <RecallTab onOpen={setSelected} onBook={onBook} />}
         {tab === 'questions' && <QuestionsTab selected={question} onOpen={(id) => { setSelected(null); setQuestion(id) }} />}
         {tab === 'tasks' && <TasksTab onOpenPatient={setSelected} initialTask={initialTask} initialDraft={initialTaskDraft} />}
