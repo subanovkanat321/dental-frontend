@@ -249,7 +249,7 @@ function WishFormBox({ me, initial, defaultMinutes, busy, error, submit, onSubmi
       }
       onSubmit({ doctorId: doctor ? Number(doctor) : undefined, durationMinutes: minutes, wish })
     }}>
-      <div className="wish-row wish-main">
+      <div className="wish-main">
         {doctors.length > 1 && (
           <label className="field"><span>Врач</span>
             <Select name="doctor" aria-label="К какому врачу" value={doctor} onChange={(e) => setDoctor(e.target.value)}>

@@ -3421,6 +3421,7 @@ button.cash-entry:hover, button.cash-entry.active { background: var(--sunken); }
 .waitlist-add-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .waitlist-add-head h3 { margin: 0; font-size: 1rem; }
 .waitlist-wish .wish-main { display: flex; flex-wrap: wrap; gap: 8px 12px; }
-.waitlist-wish .wish-main .field { flex: 1 1 140px; margin: 0; }
+.waitlist-wish .wish-main .field { flex: 1 1 140px; margin: 0; display: grid; gap: 4px; }
+.waitlist-wish .wish-main .field > span { font-size: .85rem; color: var(--hint); }
 .waitlist-wish .wish-actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 @media (max-width: 760px) { .waitlist-wish .wish-actions .btn.primary { flex: 1 1 auto; } }
