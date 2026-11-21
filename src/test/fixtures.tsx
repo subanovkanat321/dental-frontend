@@ -21,7 +21,7 @@ export const me: Schemas['BookingViewsMe'] = {
   doctors: [{ id: 1, fullName: 'Айгерим Садыкова', active: true, telegramLinked: false }, { id: 2, fullName: 'Дастан Т.', active: true, telegramLinked: false }], owner: false, platform: false, bookingEnabled: false, daysAhead: 0, canChangeClinic: false, waiting: false, hasReception: false, hasCard: false, maxRelatives: 6
 }
 
-/** Клиника отмечает приход (V245, «Настройки → Приём → Отметки приёма»): цепочка «Пришёл» → «Начать приём» → «Приём состоялся». */
+/** Клиника отмечает приход (флаг V245; пункт настройки убран 2026-11-21, у старых клиник может быть включён): цепочка «Пришёл» → «Начать приём» → «Приём состоялся». */
 export const meArrivals: Schemas['BookingViewsMe'] = { ...me, clinic: { ...me.clinic!, markArrival: true } }
 
 export function appointment(id: number, doctorId: number, time: string, name: string, extra: Partial<Schemas['AppointmentView']> = {}) {
