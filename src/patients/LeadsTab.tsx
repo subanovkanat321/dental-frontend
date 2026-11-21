@@ -141,7 +141,7 @@ function CallResult({ lead, onBook, onClose }: { lead: Lead; onBook: () => void;
   const save = (s: 'NO_ANSWER' | 'THINKING' | 'REFUSED', callbackAt?: string) =>
     status.mutate({ id: lead.id, status: s, callbackAt, reason: s === 'REFUSED' ? reason.trim() || undefined : undefined }, { onSuccess: onClose })
   return (
-    <div className="lead-result" role="group" aria-label="Чем закончился разговор">
+    <div className="lead-result" role="group" aria-label="Чем закончился разговор" data-row-skip>
       <div className="lead-result-head">
         <strong>{step === 'pick' ? 'Чем закончился разговор?' : step === 'REFUSED' ? 'Отказался — почему?' : `${STATUS_TITLE[step]} — когда перезвонить?`}</strong>
         <CloseButton onClick={onClose} />
