@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
 
 import { api, ApiError, unwrap, upload, type Schemas } from '../api/client'
+import { ChoiceCards } from '../layout/ChoiceCards'
 import { SaveBar } from '../layout/SaveBar'
 import { Select } from '../layout/Select'
 import { CITIES, guessCity } from '../lib/clinicSearch'
@@ -132,13 +133,21 @@ function AboutForm({ me, clinic: c }: { me: Me; clinic: Clinic }) {
 
         <div className="about-col">
           <h2>Как работают врачи</h2>
-          <label className="check"><input type="checkbox" checked={f.independentDoctors} disabled={!me.admin} onChange={flag('independentDoctors')} />
-            Врачи работают независимо: медкарты, заметки и выручку врача видит только он сам</label>
-          <p className="hint">Для частных врачей в одном кабинете. Расписание и пациенты остаются общими. Владелец кабинета
-            (руководитель без своего приёма) видит всё при любой настройке. Выключено — все руководители видят всё.</p>
-          <label className="check"><input type="checkbox" checked={f.separateSupplies} disabled={!me.admin} onChange={flag('separateSupplies')} />
-            Свой склад у каждого врача</label>
-          <p className="hint">Когда каждый врач закупает материалы сам: врач видит и тратит свои материалы и общие. Выключено — один склад на всех.</p>
+          {/* Карточки вместо галочек (2026-11-21, владелец): видно оба варианта и что каждый значит */}
+          <ChoiceCards label="Медкарты и деньги врачей" disabled={!me.admin} value={f.independentDoctors ? 'own' : 'clinic'}
+            onChange={(v) => set('independentDoctors')(v === 'own')} choices={[
+              { value: 'clinic', icon: '🏥', title: 'Одна клиника',
+                text: 'Общая касса и выручка. Врачи видят медкарты своих пациентов, в том числе общих; руководитель видит всё.' },
+              { value: 'own', icon: '👤', title: 'Врачи работают отдельно',
+                text: 'Как частные врачи в одном кабинете (например, аренда кресла): медкарты, заметки и выручку врача видит только он. Расписание и пациенты — общие.' },
+            ]} />
+          <h3 className="choice-cards-title">Склад</h3>
+          <ChoiceCards label="Склад" disabled={!me.admin} value={f.separateSupplies ? 'own' : 'shared'}
+            onChange={(v) => set('separateSupplies')(v === 'own')} choices={[
+              { value: 'shared', icon: '📦', title: 'Один склад на всех', text: 'Материалы общие, закупает клиника.' },
+              { value: 'own', icon: '🧳', title: 'Свой склад у каждого врача', text: 'Каждый врач закупает сам: видит и тратит свои материалы и общие.' },
+            ]} />
+          <p className="hint">Владелец кабинета (руководитель без своего приёма) видит всё при любой настройке. Изменения — после «Сохранить».</p>
 
           <h2>Для согласия пациентов</h2>
           <label className="field"><span>Клиника или ИП</span>

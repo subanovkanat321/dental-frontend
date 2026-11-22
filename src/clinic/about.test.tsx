@@ -52,7 +52,11 @@ test('админ: сохранить «О клинике» с днями и What
   expect(within(form).getByRole('link', { name: `${window.location.origin}/c/test1` })).toBeInTheDocument()
   expect(within(form).getByRole('textbox', { name: 'WhatsApp клиники' })).toHaveValue('555 123 456')
   expect(within(form).getByRole('link', { name: `${window.location.origin}/login` })).toBeInTheDocument()
-  await user.click(within(form).getByRole('checkbox', { name: /независимо/ }))
+  // «Как работают врачи» — карточками (2026-11-21): было «Одна клиника», выбираем «Врачи работают отдельно»
+  const mode = within(form).getByRole('radiogroup', { name: 'Медкарты и деньги врачей' })
+  expect(within(mode).getByRole('radio', { name: /Одна клиника/ })).toHaveAttribute('aria-checked', 'true')
+  await user.click(within(mode).getByRole('radio', { name: /Врачи работают отдельно/ }))
+  expect(within(mode).getByRole('radio', { name: /Врачи работают отдельно/ })).toHaveAttribute('aria-checked', 'true')
   await user.click(within(form).getByRole('button', { name: 'Сохранить' }))
   expect(await within(form).findByRole('status')).toHaveTextContent('«О клинике» сохранено')
   expect(saved).toMatchObject({

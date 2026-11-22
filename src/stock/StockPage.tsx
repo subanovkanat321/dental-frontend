@@ -260,11 +260,14 @@ function SeparateSupplies() {
   if (!clinic.data) return null
   return (
     <>
-      {/* Флажок — в строке шапки «Склада»; что он значит сейчас — подсказкой при наведении */}
-      <label className="check" title={clinic.data.separateSupplies ? 'Врач видит и тратит свои материалы и общие.' : 'Сейчас один склад на всех.'}>
-        <input type="checkbox" checked={Boolean(clinic.data.separateSupplies)} disabled={save.isPending} onChange={(e) => save.mutate(e.target.checked)} />
-        Свой склад у каждого врача
-      </label>
+      {/* Две кнопки вместо галочки (2026-11-21): видно, какой склад сейчас и какой второй вариант */}
+      <div className="segments stock-mode" role="radiogroup" aria-label="Склад">
+        {([[false, 'Один склад на всех'], [true, 'Свой у каждого врача']] as const).map(([on, label]) => (
+          <button key={label} type="button" role="radio" aria-checked={Boolean(clinic.data!.separateSupplies) === on} aria-pressed={Boolean(clinic.data!.separateSupplies) === on}
+            disabled={save.isPending} title={on ? 'Врач видит и тратит свои материалы и общие.' : 'Материалы общие.'}
+            onClick={() => Boolean(clinic.data!.separateSupplies) !== on && save.mutate(on)}>{label}</button>
+        ))}
+      </div>
       {save.error && <p className="error" role="alert">{save.error.message}</p>}
     </>
   )

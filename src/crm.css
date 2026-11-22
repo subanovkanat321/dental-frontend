@@ -3463,3 +3463,17 @@ button.history-link:hover .history-text { color: var(--link); }
 .visit-templates-empty p { margin: 0; }
 .visit-templates-defaults { display: grid; gap: 6px; justify-items: start; margin-top: 12px; }
 .visit-templates-defaults p { margin: 0; }
+
+/* Выбор карточками (layout/ChoiceCards, 2026-11-21): «Одна клиника / Врачи работают отдельно», склад */
+.choice-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; margin: 6px 0 10px; }
+.choice-card { display: grid; gap: 4px; align-content: start; padding: 12px 14px; border: 1px solid var(--line-strong); border-radius: var(--r-md);
+  background: var(--card); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.choice-card:hover:not(:disabled) { border-color: var(--accent); }
+.choice-card:disabled { cursor: default; opacity: .75; }
+.choice-card.on { border-color: var(--accent); background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent); }
+.choice-card-head { display: flex; align-items: center; gap: 8px; }
+.choice-card-head strong { flex: 1; font-size: .95rem; }
+.choice-card-mark { color: var(--accent-ink); font-weight: 700; }
+.choice-card-text { color: var(--hint); font-size: .85rem; line-height: 1.4; }
+.choice-cards-title { margin: 12px 0 0; font-size: .95rem; }
+.segments.stock-mode button { padding: 6px 12px; white-space: nowrap; font-size: .875rem; }
