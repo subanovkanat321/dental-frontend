@@ -6,7 +6,7 @@ import { ServicePicker } from '../clinic/ServicePicker'
 import { EditButton } from '../layout/EditButton'
 import { servicesOfDoctor } from '../lib/doctorServices'
 import { serviceEmoji } from '../lib/serviceEmoji'
-import { somText } from '../lib/time'
+import { somText, timeOf } from '../lib/time'
 import { useAppointmentAction } from './useAppointmentAction'
 import { LOCKED_HINT, lockedForMe, parseTeeth } from './lineLabel'
 
@@ -49,10 +49,17 @@ export function ServiceLines({ appointment: a, me, canEdit, prices }: { appointm
     queryKey: ['service-types'],
     queryFn: () => unwrap(api.GET('/api/service-types')),
     staleTime: 5 * 60_000,
-    enabled: editable && adding,
+    // Нужен и для «услуги не помещаются в приём» — грузим, пока приём можно продлить
+    enabled: editable && (adding || a.status === 'SCHEDULED'),
   })
   const offered = servicesOfDoctor((services.data ?? []).filter((s) => s.active !== false), me.doctorServices, a.doctorId)
   const total = prices && lines.length > 1 && a.servicesTotalSom != null ? a.servicesTotalSom : null
+  // Услуги не помещаются в приём (2026-11-21, владелец: «коронка × 4 — сумма прибавилась, а время нет»): сколько займут
+  // по длительностям прайса × количество — и «Продлить до …» (то же, что «Перенести» с той же датой; занято — скажет сервер)
+  const needed = Math.min(lines.reduce((m, l) => m + (services.data?.find((sv) => sv.id === l.serviceTypeId)?.durationMinutes ?? 0) * l.qty, 0), 480)
+  const length = Math.round((Date.parse(a.endAt) - Date.parse(a.startAt)) / 60_000)
+  const short = editable && a.status === 'SCHEDULED' && needed > length
+  const extend = () => action.mutate({ kind: 'reschedule', body: { version: a.version, startAt: a.startAt, durationMinutes: needed } })
 
   return (
     <div className="service-lines" aria-label="Услуги">
@@ -91,13 +98,23 @@ export function ServiceLines({ appointment: a, me, canEdit, prices }: { appointm
           <ServicePicker aria-label="Добавить услугу" services={offered} value="" prices={prices} placeholder="Выберите услугу…"
             onChange={(id) => {
               if (id === '') return
-              action.mutate({ kind: 'addLine', body: { serviceTypeId: id } }, { onSuccess: () => setAdding(false) })
+              // Та же услуга уже есть (без зубов) — «× 2» к ней, а не вторая такая же строка (2026-11-21, владелец)
+              const same = lines.find((l) => l.id > 0 && l.serviceTypeId === id && l.teeth.length === 0)
+              if (same) action.mutate({ kind: 'updateLine', lineId: same.id, body: { qty: same.qty + 1 } }, { onSuccess: () => setAdding(false) })
+              else action.mutate({ kind: 'addLine', body: { serviceTypeId: id } }, { onSuccess: () => setAdding(false) })
             }} />
           <button type="button" className="btn ghost small" onClick={() => setAdding(false)}>Отмена</button>
         </div>
       ) : (
         <button type="button" className="link service-line-plus" onClick={() => setAdding(true)}>＋ Услуга</button>
       ))}
+      {short && (
+        <p className="service-lines-short tone-wait" role="note">
+          Услуги займут {durationText(needed)}, а приём — {durationText(length)}.{' '}
+          <button type="button" className="link" disabled={action.isPending} onClick={extend}>
+            Продлить до {timeOf(new Date(Date.parse(a.startAt) + needed * 60_000).toISOString())}</button>
+        </p>
+      )}
       {editing == null && action.error && <p className="error" role="alert">{errorText(action.error)}</p>}
     </div>
   )
@@ -148,4 +165,11 @@ function LineEdit({ line, prices, pending, error, onSave, onCancel }: {
       </div>
     </form>
   )
+}
+
+/** «1 ч 30 мин», «45 мин». */
+function durationText(minutes: number): string {
+  const h = Math.floor(minutes / 60)
+  const m = minutes % 60
+  return h ? `${h} ч${m ? ` ${m} мин` : ''}` : `${m} мин`
 }
