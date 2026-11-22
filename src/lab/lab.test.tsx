@@ -228,3 +228,15 @@ test('«Лаборатории»: WhatsApp на другом номере и з�
   expect(within(form).getByLabelText(/Заметка/)).toHaveValue('техник Азамат')
   expect(within(form).queryByRole('button', { name: '＋ WhatsApp на другом номере' })).toBeNull()
 })
+
+test('карточка приёма: другие работы пациента у техника — строкой; нажали на работу — открылся её заказ', async () => {
+  const visit = appointment(10, 1, '15:00', 'Бакыт Тестов', { status: 'DONE' })
+  backend([{ ...base, id: 9, patientId: 10, fittingAppointmentId: 99, fittingAt: '2026-11-20T04:00:00Z', fittingStatus: 'SCHEDULED' }])
+  server.use(http.get('*/api/appointments', ({ request }) => HttpResponse.json(new URL(request.url).searchParams.get('doctorId') === '1' ? [visit] : [])))
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: /Бакыт Тестов/ }))
+  const block = await screen.findByRole('region', { name: 'Лаборатория на этот приём' })
+  expect(block).toHaveTextContent(/Коронка 36 — отправлено · срок 14\.11/)
+  await userEvent.click(within(block).getByRole('button', { name: 'Открыть заказ: Коронка 36' }))
+  expect(await screen.findByRole('dialog', { name: /Заказ|лаборатор/i })).toBeInTheDocument()
+})

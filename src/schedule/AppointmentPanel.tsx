@@ -483,7 +483,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
             <PatientExpensesFold patient={a.patient} me={me} doctorId={a.doctorId} />
           )}
           {/* Заказы лаборатории на этот приём (примерка) — только если есть такая работа */}
-          {canEdit && visitTools && a.patient.id ? <AppointmentLab appointment={a} /> : null}
+          {canEdit && visitTools && a.patient.id ? <AppointmentLab appointment={a} me={me} /> : null}
           {canEdit && a.status === 'SCHEDULED' && started && !visitTools && (
             <p className="hint small">Заметка, зубы и материалы — к началу приёма.{' '}
               <button type="button" className="link" onClick={() => setEarly(true)}>Показать сейчас</button></p>
@@ -625,7 +625,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
       )}
       {/* Примерка на этот приём: работа пришла? Нет — предупреждение и «WhatsApp технику». До приёма — здесь,
           наверху (успеть позвонить технику); на приёме и после — в секции «Приём», после расхода */}
-      {a.patient.id && canEdit && !visitTools ? <AppointmentLab appointment={a} /> : null}
+      {a.patient.id && canEdit && !visitTools ? <AppointmentLab appointment={a} me={me} /> : null}
       {!doctorView && patientExtras}
       {/* Оценка и отзыв пациента — всем, и врачу на приёме */}
       {a.rating != null && (
