@@ -38,3 +38,5 @@
 .appt-lab-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .appt-lab-actions .btn { text-decoration: none; }
 .appt-lab-new { margin-left: 8px; font-size: .9rem; }
+
+.appt-lab-open { font: inherit; font-weight: inherit; text-align: left; }
