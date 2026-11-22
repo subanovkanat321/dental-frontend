@@ -408,3 +408,53 @@
     box-shadow: none;
   }
 }
+
+/* «📷 Отправить листом» (sheetImage.ts): копия листа за краем экрана — всегда шириной A4 и не короче листа A4 (чек — 80 мм),
+   без ужатия для телефона: картинка одна и та же с любого экрана. Правила телефона ниже по специфичности — эти сильнее. */
+.sheet-capture {
+  position: fixed;
+  top: 0;
+  left: -10000px;
+  width: 210mm;
+  pointer-events: none;
+}
+
+.sheet-capture .print-sheet {
+  width: 210mm;
+  max-width: none;
+  min-height: 297mm;
+  margin: 0;
+  padding: 14mm 14mm 10mm;
+  box-shadow: none;
+  overflow-wrap: normal;
+}
+
+.sheet-capture .print-sheet.narrow {
+  width: 80mm;
+  min-height: 0;
+  padding: 4mm 3mm;
+}
+
+.sheet-capture .print-sheet table { font-size: 1em; }
+
+.sheet-capture .print-sheet th,
+.sheet-capture .print-sheet td { padding: 4px 6px; white-space: normal; }
+
+/* Окно «Отправить листом»: картинка листа уменьшенной и куда её отправить */
+.sheet-send {
+  display: grid;
+  gap: 10px;
+}
+
+.sheet-send-preview {
+  justify-self: center;
+  max-width: 100%;
+  max-height: 46vh;
+  border: 1px solid var(--line, #dce4e5);
+  border-radius: var(--r-sm, 6px);
+  background: #fff;
+}
+
+.sheet-send .actions {
+  flex-wrap: wrap;
+}

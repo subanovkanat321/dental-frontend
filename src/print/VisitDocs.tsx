@@ -89,7 +89,7 @@ export function MemoDocs({ appointment: a }: { appointment: Appointment }) {
       {m.ky && <MemoLangSwitch value={m.lang ?? 'RU'} patientLang={m.patientLang} onChange={setLang} />}
       <DocActions label={`памятка «${m.title}»`} phone={contactPhone(a.patient)} message={m}
         send={() => unwrap(api.POST('/api/appointments/{id}/care-memo/send', { params: { path: { id } }, body: { memoId: m.memoId, lang: m.lang } }))}
-        paper={{ render: () => <MemoPaper appointment={a} memo={m} /> }} onPrint={() => setPrinting(true)} />
+        paper={{ render: () => <MemoPaper appointment={a} memo={m} />, image: { fileName: 'pamyatka.png' } }} onPrint={() => setPrinting(true)} />
       {printing && <MemoSheet appointment={a} memo={m} onClose={() => setPrinting(false)} />}
     </div>
   )
@@ -176,7 +176,7 @@ function ReceiptDocs({ appointment: a, me }: { appointment: Appointment; me: Me 
         note={(channel) => channel === 'TELEGRAM' && r.pay?.qrToken
           ? <p className="hint small">📎 Следом бот пришлёт картинку QR для оплаты.</p> : null}
         send={() => unwrap(api.POST('/api/appointments/{id}/receipt/send', { params: { path: { id } } }))}
-        paper={{ formats: true, render: (format) => <ReceiptSheet r={r} narrow={format === 'receipt'} /> }}
+        paper={{ formats: true, render: (format) => <ReceiptSheet r={r} narrow={format === 'receipt'} />, image: { fileName: 'kvitanciya.png' } }}
         onPrint={(format) => setPrinting(format)} />
       {printing && (
         <PrintSheet title="Квитанция об оплате" formats initialFormat={printing} onClose={() => setPrinting(null)}>

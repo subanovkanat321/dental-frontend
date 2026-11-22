@@ -150,3 +150,32 @@ test('история визитов: «📋 Памятка и квитанция
   await userEvent.click(within(card).getByRole('button', { name: 'Просмотр: памятка «После чистки»' }))
   expect(within(card).getByRole('button', { name: 'Отправить пациенту в WhatsApp: памятка «После чистки»' })).toBeEnabled()
 })
+
+// «📷 Отправить листом» (сам рисунок и отправка — sheetSend.test.tsx): кнопка на листе плана и на вкладке «📄 Лист»
+test('Telegram (Mini App): «📄 План лечения листом» — лист без окна печати, с «📷 Отправить листом»', async () => {
+  ;(window as { Telegram?: unknown }).Telegram = { WebApp: { initData: 'query_id=1' } }
+  try {
+    backend(me, true)
+    await openMedical()
+    expect(screen.queryByRole('button', { name: 'Печать: план лечения' })).not.toBeInTheDocument()
+    await userEvent.click(await screen.findByRole('button', { name: 'Лист: план лечения' }))
+    const sheet = await screen.findByRole('dialog', { name: 'Печать: План лечения' })
+    expect(within(sheet).getByRole('button', { name: 'Отправить листом: план лечения' })).toBeInTheDocument()
+    expect(within(sheet).queryByRole('button', { name: '🖨 Печать' })).not.toBeInTheDocument()
+    await new Promise((r) => setTimeout(r, 400))
+    expect(window.print).not.toHaveBeenCalled()
+  } finally {
+    delete (window as { Telegram?: unknown }).Telegram
+  }
+})
+
+test('ассистент: «📄 Лист» в просмотре — лист плана без цен и «📷 Отправить листом»', async () => {
+  backend({ ...me, admin: false, doctorId: undefined, fullName: 'Асель', assistantOf: [1] }, true)
+  await openMedical()
+  await userEvent.click(await screen.findByRole('button', { name: 'Просмотр: план лечения' }))
+  await userEvent.click(await screen.findByRole('button', { name: '📄 Лист' }))
+  const paper = await screen.findByRole('document', { name: 'Лист: план лечения' })
+  expect(within(paper).getByRole('table', { name: 'Этапы плана' })).toHaveTextContent('Лечение каналов')
+  expect(paper).not.toHaveTextContent('сом')
+  expect(screen.getByRole('button', { name: 'Отправить листом: план лечения' })).toBeInTheDocument()
+})

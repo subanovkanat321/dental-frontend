@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode, type Ref } from 'react'
 import { createPortal } from 'react-dom'
 
 import { useMe } from '../api/me'
 import { useBack } from '../lib/back'
 import { formatPhone, timeOf } from '../lib/time'
-import { docDate, type PaperFormat } from './paper'
+import { canPrint, docDate, type PaperFormat } from './paper'
 import './print.css'
 import { CloseButton } from '../layout/SheetHead'
 
@@ -16,13 +16,17 @@ import { CloseButton } from '../layout/SheetHead'
  * @param formats есть — переключатель «A4 / Чек 80 мм» (квитанция)
  * @param initialFormat формат при открытии — тот, что выбрали в «🔍 Просмотре»
  * @param tools поля над листом, которые не печатаются (например, «Примечание»)
+ * @param sheetRef сам лист (article.print-sheet) — для «📷 Отправить листом»
+ *
+ * В Telegram (Mini App) печати нет: лист открывается без окна печати и без «🖨 Печать» — чтобы посмотреть и отправить листом.
  */
-export function PrintSheet({ title, onClose, formats = false, initialFormat = 'a4', tools, children }: {
+export function PrintSheet({ title, onClose, formats = false, initialFormat = 'a4', tools, sheetRef, children }: {
   title: string
   onClose: () => void
   formats?: boolean
   initialFormat?: PaperFormat
   tools?: ReactNode
+  sheetRef?: Ref<HTMLElement>
   children: (format: PaperFormat) => ReactNode
 }) {
   const [format, setFormat] = useState<PaperFormat>(initialFormat)
@@ -40,7 +44,7 @@ export function PrintSheet({ title, onClose, formats = false, initialFormat = 'a
       close.current()
     }
     window.addEventListener('keydown', onKey, true)
-    const timer = window.setTimeout(() => window.print(), 300)
+    const timer = canPrint() ? window.setTimeout(() => window.print(), 300) : 0
     return () => {
       window.clearTimeout(timer)
       window.removeEventListener('keydown', onKey, true)
@@ -61,11 +65,11 @@ export function PrintSheet({ title, onClose, formats = false, initialFormat = 'a
             <button type="button" aria-pressed={narrow} onClick={() => setFormat('receipt')}>Чек 80 мм</button>
           </div>
         )}
-        <button type="button" className="btn primary" onClick={() => window.print()}>🖨 Печать</button>
+        {canPrint() && <button type="button" className="btn primary" onClick={() => window.print()}>🖨 Печать</button>}
         <CloseButton className="print-x" onClick={onClose} />
         {tools}
       </div>
-      <PaperSheet format={format}>{children(format)}</PaperSheet>
+      <PaperSheet format={format} sheetRef={sheetRef}>{children(format)}</PaperSheet>
     </div>,
     document.body,
   )
@@ -75,13 +79,13 @@ export function PrintSheet({ title, onClose, formats = false, initialFormat = 'a
  * Сам лист: шапка клиники из «О клинике» (название, юрлицо, адрес, телефон), содержимое и внизу — дата. Один и тот же
  * в окне печати (PrintSheet) и в «🔍 Просмотре» (DocPreview) — что видно в просмотре, то и выйдет на бумаге.
  */
-export function PaperSheet({ format, children }: { format: PaperFormat; children: ReactNode }) {
+export function PaperSheet({ format, sheetRef, children }: { format: PaperFormat; sheetRef?: Ref<HTMLElement>; children: ReactNode }) {
   const me = useMe()
   const clinic = me.data?.clinic
   const name = clinic?.brandName || clinic?.name || ''
   const now = new Date().toISOString()
   return (
-    <article className={format === 'receipt' ? 'print-sheet narrow' : 'print-sheet'}>
+    <article ref={sheetRef} className={format === 'receipt' ? 'print-sheet narrow' : 'print-sheet'}>
       <header className="doc-head">
         <div>
           {name && <b>{name}</b>}

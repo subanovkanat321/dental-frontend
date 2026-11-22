@@ -9238,6 +9238,42 @@
         }
       }
     },
+    "/api/patients/{patientId}/plan/send-image" : {
+      "post" : {
+        "tags" : [ "plan-message-controller" ],
+        "operationId" : "sendImage",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "multipart/form-data" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "image" : {
+                    "type" : "string",
+                    "format" : "binary"
+                  }
+                },
+                "required" : [ "image" ]
+              }
+            }
+          }
+        },
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        }
+      }
+    },
     "/api/patients/{patientId}/plan/prices" : {
       "get" : {
         "tags" : [ "chart-controller" ],

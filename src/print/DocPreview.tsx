@@ -1,8 +1,9 @@
-import { useState, type ReactNode } from 'react'
+import { useRef, useState, type ReactNode } from 'react'
 
 import { canPrint, type PaperFormat } from './paper'
 import { ChannelSwitch, MessagePreview, type Channel } from './MessagePreview'
 import { PaperSheet } from './PrintSheet'
+import { SheetSend, type SheetImage } from './SheetSend'
 
 type Tab = 'message' | 'paper'
 
@@ -11,12 +12,14 @@ export type Paper = {
   /** переключатель «A4 / Чек 80 мм» (квитанция) */
   formats?: boolean
   render: (format: PaperFormat) => ReactNode
+  /** есть — «📷 Отправить листом»: этот лист картинкой (в бот, «Поделиться» или «Скачать») */
+  image?: SheetImage
 }
 
 /**
  * «🔍 Просмотр» документа пациенту (памятка, сообщение после приёма, квитанция, план): ровно то, что он получит, и уже
  * отсюда — «Отправить в Telegram / WhatsApp» или «🖨 Печать». Один порядок у всех документов: Просмотр → (Отправить |
- * Печать).
+ * Печать). У листа с `paper.image` — ещё «📷 Отправить листом»: этот же лист картинкой (SheetSend).
  *
  * Вкладка «💬 Сообщение» — текст с сервера как он придёт (MessagePreview: тот же текст уходит в бот и в WhatsApp, здесь
  * его не собираем); «📄 Лист» — лист печати с шапкой клиники (PaperSheet, тот же, что в окне печати). Канал — Telegram,
@@ -57,6 +60,8 @@ export function DocPreview({ label, text, telegramText, telegram, phone, parts, 
   const [tab, setTab] = useState<Tab>(paper ? initialTab : 'message')
   const [channel, setChannel] = useState<Channel>(telegram ? 'TELEGRAM' : 'WHATSAPP')
   const [format, setFormat] = useState<PaperFormat>('a4')
+  const [imaging, setImaging] = useState(false)
+  const sheet = useRef<HTMLElement>(null)
   const toTelegram = channel === 'TELEGRAM' && telegram
   const nowhere = !telegram && !phone
   return (
@@ -86,7 +91,7 @@ export function DocPreview({ label, text, telegramText, telegram, phone, parts, 
             </div>
           )}
           <div className="doc-preview-paper" role="document" aria-label={`Лист: ${label}`}>
-            <PaperSheet format={format}>{paper.render(format)}</PaperSheet>
+            <PaperSheet format={format} sheetRef={sheet}>{paper.render(format)}</PaperSheet>
           </div>
         </>
       )}
@@ -99,6 +104,11 @@ export function DocPreview({ label, text, telegramText, telegram, phone, parts, 
           <button type="button" className={tab === 'message' ? 'btn primary' : 'btn'} disabled={busy} aria-label={sendLabel?.('WHATSAPP')}
             onClick={onWhatsapp}>Отправить в WhatsApp</button>
         )}
+        {paper?.image && (
+          // Рисуем лист с вкладки «📄 Лист»: с «💬 Сообщения» — сначала переключаем на неё
+          <button type="button" className="btn" disabled={busy} aria-label={`Отправить листом: ${label}`}
+            onClick={() => { setTab('paper'); setImaging(true) }}>📷 Отправить листом</button>
+        )}
         {canPrint() ? (
           <button type="button" className={tab === 'paper' || nowhere ? 'btn primary' : 'btn'} disabled={busy} aria-label={`Печать: ${label}`}
             onClick={() => onPrint(format)}>🖨 Печать</button>
@@ -106,6 +116,10 @@ export function DocPreview({ label, text, telegramText, telegram, phone, parts, 
         {onClose && <button type="button" className="btn ghost" disabled={busy} onClick={onClose}>{closeText}</button>}
       </div>
       {children}
+      {imaging && paper?.image && (
+        <SheetSend label={label} image={paper.image} sheet={() => sheet.current} telegram={telegram} phone={phone}
+          onClose={() => setImaging(false)} />
+      )}
     </div>
   )
 }
