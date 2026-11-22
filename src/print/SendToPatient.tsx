@@ -12,7 +12,7 @@ import type { PaperFormat } from './paper'
 type Message = Pick<Schemas['PatientMessage'], 'text' | 'telegram'> & { telegramText?: string | null }
 
 /**
- * Документ пациенту (памятка, квитанция, план без цен): одна кнопка «👁 Просмотр» — под ней ровно то, что он получит
+ * Документ пациенту (памятка, квитанция, план без цен): одна кнопка «🔍 Просмотр» — под ней ровно то, что он получит
  * (сообщение с сервера и лист печати, DocPreview), и уже оттуда «Отправить в Telegram / WhatsApp» или «🖨 Печать».
  * Пациент в Telegram — сообщение шлёт бот (сервер), иначе — WhatsApp с готовым текстом: ссылку wa.me собирает браузер,
  * на сервер телефон не уходит. Бот не доставил — кнопка WhatsApp. Само ничего не отправляется — только по нажатию.
@@ -55,7 +55,7 @@ export function DocActions({ label, phone, message, send, onPrint, paper, note }
       {!open && (
         <div className="actions">
           <button type="button" className="btn" disabled={message == null} aria-label={`Просмотр: ${label}`}
-            onClick={() => { setSent(''); bot.reset(); setOpen(true) }}>👁 Просмотр</button>
+            onClick={() => { setSent(''); bot.reset(); setOpen(true) }}>🔍 Просмотр</button>
         </div>
       )}
       {open && message && (

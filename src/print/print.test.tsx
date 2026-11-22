@@ -79,7 +79,7 @@ test('регистратура: памятка по услуге — «📤 От
   const panel = await card(/Бакыт М\./)
   expect(await within(panel).findByText('После удаления зуба')).toBeInTheDocument()
   expect(sent.filter((s) => s.startsWith('memo'))).toEqual([])
-  // Сразу отправить нельзя — сначала «👁 Просмотр»: ровно тот текст, что придёт
+  // Сразу отправить нельзя — сначала «🔍 Просмотр»: ровно тот текст, что придёт
   expect(within(panel).queryByRole('button', { name: /Отправить пациенту/ })).not.toBeInTheDocument()
   await userEvent.click(within(panel).getByRole('button', { name: 'Просмотр: памятка «После удаления зуба»' }))
   expect(within(panel).getByRole('document', { name: 'Предпросмотр: памятка «После удаления зуба»' }).textContent).toBe(MEMO.text)
@@ -128,7 +128,7 @@ test('квитанция: платежи, кто принял, долг, «Не 
   backend(done())
   renderApp()
   const panel = await card(/Бакыт М\./)
-  // Квитанция — строкой сразу под оплатой, без «Ещё»; сначала «👁 Просмотр»: сообщение и лист
+  // Квитанция — строкой сразу под оплатой, без «Ещё»; сначала «🔍 Просмотр»: сообщение и лист
   await userEvent.click(await within(panel).findByRole('button', { name: 'Просмотр: квитанция' }))
   expect(within(panel).getByRole('document', { name: 'Предпросмотр: квитанция' }).textContent).toBe(RECEIPT.text)
   await userEvent.click(within(panel).getByRole('button', { name: '📄 Лист' }))

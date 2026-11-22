@@ -138,7 +138,7 @@ export function MemoSheet({ appointment: a, memo, onClose }: { appointment: Appo
   )
 }
 
-/** Содержимое листа памятки — в окне печати и в «👁 Просмотре» одно и то же. */
+/** Содержимое листа памятки — в окне печати и в «🔍 Просмотре» одно и то же. */
 export function MemoPaper({ appointment: a, memo: m }: { appointment: Appointment; memo: CareMemo }) {
   const words = SHEET[m.lang ?? 'RU']
   return (

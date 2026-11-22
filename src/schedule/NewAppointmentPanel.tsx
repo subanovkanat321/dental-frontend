@@ -62,7 +62,7 @@ function durationText(minutes: number): string {
 
 export type Slot = { doctorId: number; date: string; minutes: number | null; duration?: number; serviceId?: number; soft?: boolean; next?: boolean }
 
-const UNTOUCHED = { doctor: false, time: false, service: false }
+const UNTOUCHED = { doctor: false, time: false, service: false, duration: false }
 
 /** Врачей не больше — чипами, а не списком (телефон: одно касание). */
 const DOCTOR_CHIPS = 6
@@ -256,7 +256,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
       const sv = servicesOfDoctor(services.data ?? [], me.doctorServices, doctor).find((x) => x.id === step.serviceTypeId)
       if (sv) {
         setServiceIds([sv.id])
-        if (sv.durationMinutes) {
+        if (sv.durationMinutes && !touched.duration) {
           length = sv.durationMinutes
           setDuration(length)
         }
@@ -444,7 +444,9 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
       && createPatient.error.message)
   const busy = create.isPending || createPatient.isPending
   const offeredCodes = (promoCodes.data ?? []).filter((p) => p.active !== false && !expired(p, todayIn()))
-  const durationField = <DurationField value={duration} onChange={setDuration} />
+  // Длительность врач может поставить сам (2026-11-21, владелец: коронки на 3 зуба — 90 минут, а у услуги 30): выбрал
+  // вручную — выбор услуг его больше не перетирает; по умолчанию — сумма длительностей услуг
+  const durationField = <DurationField value={duration} onChange={(d) => { touch('duration'); setDuration(d) }} />
   // Услуги выбранного врача (выбраны у него — только они, иначе все услуги клиники)
   const activeServices = servicesOfDoctor(services.data ?? [], me.doctorServices, doctorId)
   // Врач сменился (и нажатием в другую колонку), а выбранную услугу он не оказывает — снять выбор
@@ -452,6 +454,15 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
     setServiceIds(serviceIds.filter((id) => activeServices.some((sv) => sv.id === id)))
   }
   const picked = serviceIds.map((id) => activeServices.find((sv) => sv.id === id)).filter((sv): sv is Service => sv != null)
+  const byServices = Math.min(picked.reduce((m, sv) => m + (sv.durationMinutes ?? 0), 0), 480)
+  const durationHint = touched.duration && byServices > 0 && byServices !== duration && (
+    <p className="hint small duration-hint">По услугам — {durationText(byServices)}.{' '}
+      <button type="button" className="link" onClick={() => {
+        touchedNow.current = { ...touchedNow.current, duration: false }
+        setTouched(touchedNow.current)
+        setDuration(byServices)
+      }}>Вернуть</button></p>
+  )
   // Подсказка суммы — сумма цен «от» выбранных услуг (итог считает сервер в «Оплате»)
   const pricedTotal = picked.some((sv) => sv.priceSom) ? picked.reduce((sum, sv) => sum + (sv.priceSom ?? 0), 0) : null
   // Услуги — одним полем с поиском (ServicePicker, 2026-11-20): несколько — чипами с ✕ и «＋ Ещё услуга…»
@@ -461,7 +472,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
     setServiceIds(next)
     // Длительность — сумма длительностей услуг (дальше её можно поправить), до 8 часов
     const minutes = next.map((id) => activeServices.find((sv) => sv.id === id)?.durationMinutes ?? 0).reduce((a, b) => a + b, 0)
-    if (minutes > 0) setDuration(Math.min(minutes, 480))
+    if (minutes > 0 && !touchedNow.current.duration) setDuration(Math.min(minutes, 480))
     // Первую услугу выбрали — дальше время (на телефоне сам прокрутим к нему)
     if (added && next.length === 1) reveal(walkIn ? submitRef.current : timeRef.current, walkIn)
   }
@@ -650,6 +661,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
           </div>
         )}
 
+        {durationHint}
         {!walkIn && (
           <div ref={timeRef}><TimePicker key={`${date}-${doctorId}`} date={date} doctorId={doctorId} duration={duration} value={time}
             onChange={(t) => { touch('time'); setTime(t); if (t) reveal(submitRef.current, true) }} error={fieldError('startAt') ?? (create.error?.code === 'time-taken' ? create.error.message : null)} /></div>

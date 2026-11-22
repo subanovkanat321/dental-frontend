@@ -5,6 +5,7 @@ import { http, HttpResponse } from 'msw'
 import type { Schemas } from '../api/client'
 import { appointment, me, openPay, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
+import { choose } from '../test/select'
 import { waitForSlow } from '../test/wait'
 
 type Appointment = Schemas['AppointmentView']
@@ -198,4 +199,60 @@ test('«Настройки → Правка приёмов»: руководит
   expect(await screen.findByRole('status')).toHaveTextContent('Сохранено')
   expect(sent).toEqual([{ doctorWindow: 'ALWAYS' }])
   window.location.hash = ''
+})
+
+test('новая запись: длительность вручную (коронки на 3 зуба — 90 мин) не перетирается выбором услуг; «Вернуть» — по услугам', async () => {
+  let body: Record<string, unknown> = {}
+  server.use(
+    http.get('*/api/service-types', () => HttpResponse.json(SERVICES)),
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/appointments', () => HttpResponse.json([])),
+    http.get('*/api/patients/recent', () => HttpResponse.json([{ id: 50, fullName: 'Айжан Вымышленная', phone: '996555000050', telegram: false }])),
+    http.post('*/api/appointments', async ({ request }) => {
+      body = await request.json() as Record<string, unknown>
+      return HttpResponse.json(appointment(77, 1, '15:00', 'Айжан Вымышленная'), { status: 201 })
+    }),
+  )
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: '＋ Новая запись' }))
+  const form = await screen.findByRole('complementary', { name: 'Новая запись' })
+  await userEvent.click(await within(form).findByRole('button', { name: /Айжан Вымышленная/ }))
+  const pick = async (name: RegExp) => {
+    await userEvent.click(within(form).getByRole('combobox', { name: 'Услуга' }))
+    await userEvent.click(within(screen.getByRole('listbox')).getAllByRole('option', { name })[0]!)
+  }
+  await pick(/Профгигиена/)
+  // Врач ставит сам: 90 минут (из списка)
+  await choose(within(form).getByLabelText('Длительность'), '90 мин')
+  // Ещё услуга — длительность остаётся 90, рядом подсказка «По услугам — …» и «Вернуть»
+  await pick(/Лечение кариеса/)
+  expect(within(form).getByText(/^По услугам — 1 ч 45 мин\./)).toBeInTheDocument()
+  await userEvent.click(within(form).getByRole('button', { name: /⚡ Сейчас/ }))
+  await userEvent.click(within(form).getByRole('button', { name: /^Начать приём|^Записать/ }))
+  await waitForSlow(() => expect(body).toMatchObject({ durationMinutes: 90 }))
+})
+
+test('новая запись: «Вернуть» — снова длительность по услугам, и дальше она снова считается сама', async () => {
+  server.use(
+    http.get('*/api/service-types', () => HttpResponse.json(SERVICES)),
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/appointments', () => HttpResponse.json([])),
+    http.get('*/api/patients/recent', () => HttpResponse.json([{ id: 50, fullName: 'Айжан Вымышленная', phone: '996555000050', telegram: false }])),
+  )
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: '＋ Новая запись' }))
+  const form = await screen.findByRole('complementary', { name: 'Новая запись' })
+  await userEvent.click(await within(form).findByRole('button', { name: /Айжан Вымышленная/ }))
+  const pick = async (name: RegExp) => {
+    await userEvent.click(within(form).getByRole('combobox', { name: 'Услуга' }))
+    await userEvent.click(within(screen.getByRole('listbox')).getAllByRole('option', { name })[0]!)
+  }
+  await pick(/Профгигиена/)
+  await pick(/Лечение кариеса/)
+  const field = () => within(form).getByLabelText('Длительность, мин')
+  await userEvent.clear(field())
+  await userEvent.type(field(), '120')
+  await userEvent.click(within(form).getByRole('button', { name: 'Вернуть' }))
+  expect(field()).toHaveValue(105)
+  expect(within(form).queryByText(/^По услугам —/)).not.toBeInTheDocument()
 })

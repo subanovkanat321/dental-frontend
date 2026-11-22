@@ -285,7 +285,7 @@ function AfterVisitMessage({ appointment: a, me, last }: { appointment: Appointm
           )}
           <div className="actions">
             <button type="button" className="btn primary" disabled={busy || !text.trim()} onClick={() => check.mutate()}>
-              {check.isPending && <Spinner />}👁 Просмотр</button>
+              {check.isPending && <Spinner />}🔍 Просмотр</button>
             <button type="button" className="btn ghost" onClick={() => setDraft(null)}>Отмена</button>
             {draft.ai && saved?.previous && (
               <button type="button" className="link" onClick={restore}>↩ Вернуть прежний вариант</button>
@@ -344,7 +344,7 @@ function MemoOnly({ appointment: a, memo: m, tab, onPrint, onDone }: {
   )
 }
 
-/** Лист «После приёма»: пациент, дата, текст сообщения и «Уход дома» — в окне печати и в «👁 Просмотре» одно и то же. */
+/** Лист «После приёма»: пациент, дата, текст сообщения и «Уход дома» — в окне печати и в «🔍 Просмотре» одно и то же. */
 function ReportPaper({ appointment: a, text, care, careHeading }: { appointment: Appointment; text: string; care: string; careHeading: string }) {
   return (
     <>

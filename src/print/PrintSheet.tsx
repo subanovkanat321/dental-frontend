@@ -14,7 +14,7 @@ import { CloseButton } from '../layout/SheetHead'
  * Шапка — клиника из «О клинике» (название, юрлицо, адрес, телефон), внизу — дата.
  *
  * @param formats есть — переключатель «A4 / Чек 80 мм» (квитанция)
- * @param initialFormat формат при открытии — тот, что выбрали в «👁 Просмотре»
+ * @param initialFormat формат при открытии — тот, что выбрали в «🔍 Просмотре»
  * @param tools поля над листом, которые не печатаются (например, «Примечание»)
  */
 export function PrintSheet({ title, onClose, formats = false, initialFormat = 'a4', tools, children }: {
@@ -73,7 +73,7 @@ export function PrintSheet({ title, onClose, formats = false, initialFormat = 'a
 
 /**
  * Сам лист: шапка клиники из «О клинике» (название, юрлицо, адрес, телефон), содержимое и внизу — дата. Один и тот же
- * в окне печати (PrintSheet) и в «👁 Просмотре» (DocPreview) — что видно в просмотре, то и выйдет на бумаге.
+ * в окне печати (PrintSheet) и в «🔍 Просмотре» (DocPreview) — что видно в просмотре, то и выйдет на бумаге.
  */
 export function PaperSheet({ format, children }: { format: PaperFormat; children: ReactNode }) {
   const me = useMe()
