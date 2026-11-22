@@ -158,7 +158,7 @@ function MemoPanel({ memo: m, services, editable, onClose }: { memo?: Memo; serv
               <label className="field"><span>Текст для пациента</span>
                 <textarea rows={14} maxLength={3500} value={form.body} onChange={(e) => change({ body: e.target.value })} />
               </label>
-              <p className="hint small">{PHONE} заменится на телефон клиники из «О клинике».</p>
+              <p className="hint small">{PHONE} заменится на телефон клиники из «О клинике» (или врача приёма — по «Номеру в напоминаниях»).</p>
               {error('body') && <p className="error">{error('body')}</p>}
             </>
           ) : (
@@ -215,7 +215,7 @@ function KyFields({ form, memo: m, onChange, titleError, bodyError }: {
       {bodyError && <p className="error">{bodyError}</p>}
       {empty ? <p className="hint small">Пусто — пациентам с кыргызским языком будет отправлен русский текст.</p>
         : standard ? <p className="hint small">Перевод Tish стандартной памятки — можно поправить под клинику.</p>
-          : <p className="hint small">{PHONE} оставьте как есть — заменится на телефон клиники.</p>}
+          : <p className="hint small">{PHONE} оставьте как есть — заменится на телефон клиники (или врача приёма).</p>}
       {ai.data?.on ? (
         <div className="actions">
           <button type="button" className="btn" disabled={translate.isPending || !form.title.trim() || !form.body.trim()}
