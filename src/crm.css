@@ -706,6 +706,8 @@ details.agreement-box { max-height: none; }
 .remind-quick { flex: none; align-self: center; width: 44px; height: 44px; margin-right: 6px; border: 1px solid var(--line-strong); border-radius: 50%;
   background: var(--card); color: var(--ok-ink); font: 700 .78rem var(--display); cursor: pointer; }
 .remind-quick.tg { color: #2AABEE; }
+.remind-pair { display: flex; flex: none; align-self: center; }
+.remind-pair .remind-quick + .remind-quick { margin-left: -2px; }
 .remind-quick:disabled { opacity: .5; cursor: default; }
 /* Напоминание ушло — вместо кнопки отметка; ошибка — отдельной строкой под приёмом */
 .remind-sent { flex: none; align-self: center; margin-right: 8px; font-size: .8rem; font-weight: 600; white-space: nowrap; }
@@ -3477,3 +3479,6 @@ button.history-link:hover .history-text { color: var(--link); }
 .choice-card-text { color: var(--hint); font-size: .85rem; line-height: 1.4; }
 .choice-cards-title { margin: 12px 0 0; font-size: .95rem; }
 .segments.stock-mode button { padding: 6px 12px; white-space: nowrap; font-size: .875rem; }
+
+/* «Услуги займут 2 ч, а приём — 30 мин · Продлить до 12:00» (ServiceLines, 2026-11-21) */
+.service-lines-short { margin: 4px 0 0; padding: 6px 10px; border-radius: var(--r-sm); background: var(--wait-bg); font-size: .875rem; }

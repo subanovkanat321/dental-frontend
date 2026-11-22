@@ -256,3 +256,33 @@ test('новая запись: «Вернуть» — снова длитель�
   expect(field()).toHaveValue(105)
   expect(within(form).queryByText(/^По услугам —/)).not.toBeInTheDocument()
 })
+
+test('услуги не помещаются в приём (кариес × 2 = 90 мин, приём 30) — «Услуги займут … · Продлить до …» → перенос с той же даты на 90 мин', async () => {
+  const a = appointment(10, 1, '10:00', 'Бакыт М.', { version: 1, serviceName: 'Лечение кариеса', services: [line(2, 2, 'Лечение кариеса', 6000, 2, [36, 37])] })
+  backend({ ...a, endAt: new Date(Date.parse(a.startAt) + 30 * 60_000).toISOString() })
+  const moved: Schemas['AppointmentRequestsReschedule'][] = []
+  server.use(http.post('*/api/appointments/:id/reschedule', async ({ request }) => {
+    const b = await request.json() as Schemas['AppointmentRequestsReschedule']
+    moved.push(b)
+    return HttpResponse.json({ ...a, endAt: new Date(Date.parse(a.startAt) + 90 * 60_000).toISOString(), version: 2 })
+  }))
+  renderApp()
+  const panel = await card(/Бакыт М\./)
+  const note = (await within(panel).findByText(/Услуги займут/)).closest('p')!
+  expect(note).toHaveTextContent(/Услуги займут 1 ч 30 мин, а приём — 30 мин\./)
+  await userEvent.click(within(note).getByRole('button', { name: /^Продлить до 11:30$/ }))
+  await waitForSlow(() => expect(moved).toEqual([expect.objectContaining({ startAt: a.startAt, durationMinutes: 90, version: 1 })]))
+})
+
+test('«＋ Услуга» той же услугой ещё раз — «× 2» в той же строке, а не вторая строка', async () => {
+  const sent = backend(appointment(10, 1, '10:00', 'Бакыт М.', { version: 1, serviceName: 'Профгигиена', services: [line(1, 1, 'Профгигиена', 3000)] }))
+  renderApp()
+  const panel = await card(/Бакыт М\./)
+  const block = within(panel).getByLabelText('Услуги')
+  await userEvent.click(within(block).getByRole('button', { name: '＋ Услуга' }))
+  await userEvent.click(within(block).getByRole('combobox', { name: 'Добавить услугу' }))
+  await userEvent.click(within(screen.getByRole('listbox')).getAllByRole('option', { name: /Профгигиена/ })[0]!)
+  await waitForSlow(() => expect(sent).toEqual([{ update: 1, qty: 2 }]))
+  expect(await within(block).findByText(/×\s2/)).toBeInTheDocument()
+  expect(within(block).getAllByRole('listitem')).toHaveLength(1)
+})

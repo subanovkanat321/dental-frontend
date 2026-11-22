@@ -227,3 +227,16 @@ test('телефон: день врача запрашивается один р
   // Без хвостов ночной смены (overnight) — тот же запрос, что у «Дня» списком, по одному на врача
   expect(days.filter((d) => d.startsWith('1:'))).toEqual(['1:'])
 })
+
+test('телефон: пациент в Telegram и с номером — рядом с «TG» есть «WA» (WhatsApp готовым текстом)', async () => {
+  remindBackend(appointment(10, 1, '23:30', 'Бакыт М.', { patient: { id: 10, fullName: 'Бакыт М.', phone: '996555000010', telegram: true } }))
+  const opened: string[] = []
+  vi.spyOn(window, 'open').mockImplementation((url) => { opened.push(String(url)); return null })
+  renderApp()
+  expect(await screen.findByRole('button', { name: /Напомнить в Telegram: Бакыт М\./ })).toBeInTheDocument()
+  const wa = screen.getByRole('button', { name: /Напомнить в WhatsApp: Бакыт М\./ })
+  await waitForSlow(() => expect(wa).toBeEnabled())
+  await userEvent.click(wa)
+  expect(opened[0]).toMatch(/whatsapp\.com\/send\/\?phone=996555000010/)
+  vi.restoreAllMocks()
+})

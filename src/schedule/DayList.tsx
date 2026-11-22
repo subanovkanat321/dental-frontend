@@ -406,9 +406,17 @@ function Row({ a, me, color, paint, chair, next, active, canEdit, money, onOpen,
               title={a.reminderOpenedAt ?? a.soonRemindedAt ? `Напоминали ${remindedText((a.reminderOpenedAt ?? a.soonRemindedAt)!)}` : undefined}>✓ отправлено</button>
           </span>
         ) : (
-          <button type="button" className={viaBot ? 'remind-quick tg' : 'remind-quick'} disabled={busy}
-            aria-label={`${viaBot ? 'Напомнить в Telegram' : 'Напомнить в WhatsApp'}: ${a.patient.fullName}, ${timeOf(a.startAt)}`}
-            onClick={remind}>{viaBot ? 'TG' : 'WA'}</button>
+          <span className="remind-pair">
+            <button type="button" className={viaBot ? 'remind-quick tg' : 'remind-quick'} disabled={busy}
+              aria-label={`${viaBot ? 'Напомнить в Telegram' : 'Напомнить в WhatsApp'}: ${a.patient.fullName}, ${timeOf(a.startAt)}`}
+              onClick={remind}>{viaBot ? 'TG' : 'WA'}</button>
+            {/* Пациент в Telegram, но есть и номер — WhatsApp рядом (2026-11-21, владелец: «не видно напомнить в WhatsApp») */}
+            {viaBot && r.phone && (
+              <button type="button" className="remind-quick" disabled={r.pending || r.text == null}
+                aria-label={`Напомнить в WhatsApp: ${a.patient.fullName}, ${timeOf(a.startAt)}`}
+                onClick={() => { notSent.undo.reset(); setNotice(null); if (r.whatsapp()) setNotice({ text: 'WhatsApp открыт', tone: 'ok' }) }}>WA</button>
+            )}
+          </span>
         ))}
       </div>
       {canRemind && error && <p className="error row-error" role="alert">{error.message}</p>}
