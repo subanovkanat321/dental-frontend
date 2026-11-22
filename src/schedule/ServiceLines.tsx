@@ -58,7 +58,7 @@ export function ServiceLines({ appointment: a, me, canEdit, prices }: { appointm
   // по длительностям прайса × количество — и «Продлить до …» (то же, что «Перенести» с той же датой; занято — скажет сервер)
   const needed = Math.min(lines.reduce((m, l) => m + (services.data?.find((sv) => sv.id === l.serviceTypeId)?.durationMinutes ?? 0) * l.qty, 0), 480)
   const length = Math.round((Date.parse(a.endAt) - Date.parse(a.startAt)) / 60_000)
-  const short = editable && a.status === 'SCHEDULED' && needed > length
+  const short = editable && a.status === 'SCHEDULED' && length > 0 && needed > length
   const extend = () => action.mutate({ kind: 'reschedule', body: { version: a.version, startAt: a.startAt, durationMinutes: needed } })
 
   return (

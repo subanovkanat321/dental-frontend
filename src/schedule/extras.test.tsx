@@ -54,7 +54,7 @@ test('перенести на другое время у того же врач�
 
   await waitForSlow(() => expect(sent).toHaveLength(1))
   expect(sent[0]).toEqual({ path: 'reschedule', body: { version: 2, startAt: new Date(`${todayIn()}T16:30:00+06:00`).toISOString(), durationMinutes: 30 } })
-  expect(await screen.findByRole('button', { name: /16:30/ })).toBeInTheDocument()
+  expect(await screen.findByRole('button', { name: /^16:30/ })).toBeInTheDocument()
 })
 
 test('перенос по сетке свободного времени: старое время приёма не мешает, после — «напомните заново»', async () => {
