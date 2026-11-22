@@ -240,3 +240,20 @@ test('телефон: пациент в Telegram и с номером — ряд
   expect(opened[0]).toMatch(/whatsapp\.com\/send\/\?phone=996555000010/)
   vi.restoreAllMocks()
 })
+
+test('карточка приёма: «Напоминание отправлено … · Отправить ещё» — после вопроса повтор в WhatsApp (вместо «не ушло?»)', async () => {
+  remindBackend(appointment(10, 1, '23:30', 'Бакыт М.', { reminderOpenedAt: new Date().toISOString() }))
+  const opened: string[] = []
+  vi.spyOn(window, 'open').mockImplementation((url) => { opened.push(String(url)); return null })
+  const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true)
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: /^23:30.*Бакыт М\./ }))
+  const panel = await screen.findByRole('complementary', { name: 'Карточка приёма' })
+  expect(within(panel).queryByRole('button', { name: 'не ушло?' })).not.toBeInTheDocument()
+  const again = within(panel).getByRole('button', { name: 'Отправить ещё' })
+  await waitForSlow(() => expect(again).toBeEnabled())
+  await userEvent.click(again)
+  expect(confirm.mock.calls[0]![0]).toMatch(/^Уже напоминали/)
+  await waitForSlow(() => expect(opened).toHaveLength(1))
+  vi.restoreAllMocks()
+})

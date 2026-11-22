@@ -2,7 +2,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { KidInfo } from '../patients/KidInfo'
 import { ask } from '../lib/confirm'
 import { PatientHistory } from './PatientHistory'
-import { useReminderNotSent } from './useReminderNotSent'
 import { useEffect, useRef, useState } from 'react'
 import { TaskDialog } from '../tasks/TaskDialog'
 import { LabOrderDialog } from '../lab/LabOrderDialog'
@@ -44,7 +43,8 @@ import { StatusPill } from './StatusPill'
 import { EditButton } from '../layout/EditButton'
 import { TagDots } from '../tags/TagDots'
 import { marksArrival, nextStep, statusOptions, type Reply } from './statusOptions'
-import { NOWHERE_TEXT } from './useRemind'
+import { NOWHERE_TEXT, useRemind } from './useRemind'
+import { confirmRemind } from './remindAgain'
 import { ReasonSheet } from './ReasonSheet'
 import { REASON_TEXT, reasonLine, type CancelReason } from './cancelReasons'
 import { colleagueMarkText, colleagueTimeOf } from './chairTime'
@@ -704,12 +704,22 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
 
 /** «Напоминание отправлено …» и «не ушло?» — снять отметку, если сообщение так и не отправили. */
 function ReminderSent({ a, canEdit }: { a: Appointment; canEdit: boolean }) {
-  const { run, undo } = useReminderNotSent(a)
+  // «не ушло?» заменено на «Отправить ещё» (2026-11-21, владелец): повтор тем же путём — бот, иначе WhatsApp, с вопросом
+  const r = useRemind(a)
+  const [sent, setSent] = useState('')
+  const again = () => void confirmRemind(a).then((ok) => {
+    if (!ok) return
+    setSent('')
+    if (r.viaBot) r.telegram(() => setSent('Напоминание отправлено в Telegram'))
+    else if (r.whatsapp()) setSent('WhatsApp открыт')
+  })
+  const can = canEdit && (r.viaBot || Boolean(r.phone))
   return (
     <>
       <p className="hint">Напоминание отправлено {agoText(a.reminderOpenedAt!)}, в {timeOf(a.reminderOpenedAt!)}
-        {canEdit && <> · <button type="button" className="link" disabled={undo.isPending} onClick={run}>не ушло?</button></>}</p>
-      {undo.error && <p className="error" role="alert">{undo.error.message}</p>}
+        {can && <> · <button type="button" className="link" disabled={r.pending || (!r.viaBot && r.text == null)} onClick={again}>Отправить ещё</button></>}</p>
+      {sent && <p className="hint small tone-ok" role="status">{sent}</p>}
+      {r.action.error && <p className="error" role="alert">{r.action.error.message}</p>}
     </>
   )
 }
