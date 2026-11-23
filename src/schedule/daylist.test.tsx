@@ -189,7 +189,7 @@ test('телефон: нажали «✓ отправлено» — «Отпра
   await userEvent.click(again)
   expect(confirm.mock.calls[0]![0]).toMatch(/^Уже напоминали в \d\d:\d\d\. Отправить ещё раз\?$/)
   await waitForSlow(() => expect(opened).toHaveLength(1))
-  expect(decodeURIComponent(opened[0]!)).toContain('Напоминаем ещё раз')
+  expect(decodeURIComponent(opened[0]!)).toContain('Ещё раз напоминаем')
   // Отметка «отправлено» осталась
   expect(await screen.findByRole('button', { name: /Напоминание отправлено: Бакыт М\./ })).toBeInTheDocument()
   await waitForSlow(() => expect(calls).toEqual(['opened']))

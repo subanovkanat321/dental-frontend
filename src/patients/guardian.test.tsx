@@ -75,9 +75,9 @@ test('напоминание в WhatsApp ребёнку — представит
   expect(contactPhone({ ...patient, guardian: { fullName: 'Айгуль', relation: 'MOTHER' } })).toBe('996555000001')
   expect(guardianLine({ phone: '996555000001' })).toBeNull()
   const startAt = new Date(Date.now() + 3 * 86400000).toISOString()
-  expect(reminderText({ startAt, patient })).toMatch(/^Здравствуйте, Айгуль! 👋 Запись ребёнка Аружан: .* приём у стоматолога/)
+  expect(reminderText({ startAt, patient })).toMatch(/^Здравствуйте, Айгуль! 👋\nЗапись ребёнка Аружан к стоматологу 🦷\n\n🗓 /)
   expect(reminderText({ startAt, patient }, { reminderTemplate: '{имя}, ждём вас {когда}' }))
     .toMatch(/^👶 Запись ребёнка Аружан\nАйгуль, ждём вас /)
   // Без представителя — как раньше
-  expect(reminderText({ startAt, patient: { fullName: 'Аружан' } })).toMatch(/^Здравствуйте, Аружан! 👋 Напоминаем: /)
+  expect(reminderText({ startAt, patient: { fullName: 'Аружан' } })).toMatch(/^Здравствуйте, Аружан! 👋\nНапоминаем о приёме у стоматолога 🦷/)
 })

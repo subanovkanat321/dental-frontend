@@ -54,7 +54,7 @@ test('напомнить в WhatsApp — текст с подписью клин
   await userEvent.click(await screen.findByRole('button', { name: /Бакыт М\./ }))
   const panel = screen.getByRole('complementary', { name: 'Карточка приёма' })
   await pickContact(panel, 'Напомнить о приёме в WhatsApp')
-  expect(decodeURIComponent(opened[0]!)).toContain('Ответьте 1 — приду, 2 — перенести')
+  expect(decodeURIComponent(opened[0]!)).toContain('Ответьте цифрой:\n1 — приду\n2 — перенести')
   expect(decodeURIComponent(opened[0]!)).toContain('Стоматология «Тест»')
 
   // Отдельного ряда «Подтвердил / Перенос / Нет ответа» нет — ответ в списке статуса
@@ -116,9 +116,8 @@ test('уже напоминали — «Уже напоминали: сегод�
   await pickContact(panel, 'Напомнить о приёме в WhatsApp')
   await waitForSlow(() => expect(opened).toHaveLength(1))
   const text = decodeURIComponent(opened[0]!)
-  expect(text).toContain('Напоминаем ещё раз: сегодня в 23:30 у вас приём у врача')
-  expect(text).toContain('Пожалуйста, ответьте, придёте ли — так мы сможем отдать время другому пациенту')
-  expect(text).toContain('Ответьте 1 — приду, 2 — перенести')
+  expect(text).toContain('Ещё раз напоминаем о приёме у стоматолога 🦷\n\n🗓 Сегодня, 23:30\n👨‍⚕️ Врач: ')
+  expect(text).toContain('Ответьте цифрой:\n1 — приду\n2 — перенести')
   await waitForSlow(() => expect(calls).toEqual(['opened']))
   vi.restoreAllMocks()
 })

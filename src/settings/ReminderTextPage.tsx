@@ -134,7 +134,7 @@ function Editor({ me, settings }: { me: Me; settings: Settings }) {
       <section className="card-block">
         <p className="hint">
           Это сообщение получает пациент перед приёмом: от бота клиники — накануне или по кнопке «Напомнить в Telegram», и из
-          карточки приёма — в WhatsApp и SMS. Кнопки «Приду» и «Нужно перенести» бот добавит сам, в WhatsApp и SMS — строку
+          карточки приёма — в WhatsApp и SMS (пока своего текста нет — там короткая карточка: дата, врач, адрес, карта, телефон). Кнопки «Приду» и «Нужно перенести» бот добавит сам, к своему тексту в WhatsApp и SMS — строку
           «Ответьте 1 — приду, 2 — перенести», адрес, телефон («Номер в напоминаниях»), ссылку на карту из «О клинике» и ссылку на бота. Это текст первого напоминания: нажали «Напомнить» ещё раз —
           уходит стандартный текст повтора. А за 2 часа до приёма бот сам пишет записавшимся через него короткое «⏰ Ждём вас» —
           этот текст не меняется (он ниже, для справки).
@@ -195,8 +195,7 @@ function Editor({ me, settings }: { me: Me; settings: Settings }) {
         <div className="reminder-previews">
           <figure className="reminder-preview" aria-label="Повторное напоминание">
             <figcaption>Повторное напоминание — если нажать «Напомнить» ещё раз</figcaption>
-            <p className="reminder-bubble">{repeatReminderText({ startAt: tomorrow10, patient: { fullName: SAMPLE.name, telegram: true } }, settings, doctor)
-              .split('\n')[0]}</p>
+            <p className="reminder-bubble">{repeatReminderText({ startAt: tomorrow10, patient: { fullName: SAMPLE.name, telegram: true } }, settings, doctor)}</p>
           </figure>
           <figure className="reminder-preview" aria-label="За 2 часа до приёма">
             <figcaption>За 2 часа до приёма — в Telegram</figcaption>

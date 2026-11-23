@@ -229,9 +229,61 @@ export function whenAt(startAt: string, now = new Date()): string {
   return `${date}, ${time}`
 }
 
+/** «Сегодня, 19:00», «Завтра, 10:00», «Понедельник, 26 октября, 10:00» — первой строкой карточки приёма. */
+function dayAt(startAt: string, now: Date, lang: 'ru' | 'ky'): string {
+  const day = dateOf(startAt)
+  const today = todayIn(now)
+  const time = timeOf(startAt)
+  if (lang === 'ky') {
+    if (day === today) return `Бүгүн, саат ${time}`
+    if (day === addDays(today, 1)) return `Эртең, саат ${time}`
+    const date = new Date(`${day}T00:00:00Z`)
+    return `${date.getUTCDate()}-${KY_MONTHS[date.getUTCMonth()]}, ${KY_WEEKDAYS[date.getUTCDay()]}, саат ${time}`
+  }
+  if (day === today) return `Сегодня, ${time}`
+  if (day === addDays(today, 1)) return `Завтра, ${time}`
+  const text = new Intl.DateTimeFormat('ru-RU', { timeZone: 'UTC', weekday: 'long', day: 'numeric', month: 'long' })
+    .format(new Date(`${day}T00:00:00Z`))
+  return `${text.charAt(0).toUpperCase()}${text.slice(1)}, ${time}`
+}
+
 /**
- * Напоминание о приёме в WhatsApp/SMS. Свой текст клиники (reminderTemplate) — тот же шаблон, что
- * у бота; нет его — стандартный текст. К тексту дописываем сами:
+ * Стандартное напоминание в WhatsApp/SMS карточкой (2026-11-23, владелец: «пациент должен понять за 2 секунды»):
+ * приветствие, одна строка «о чём», пустая строка, по строке на факт (когда, врач, где, карта, телефон), пустая строка,
+ * как ответить — каждый вариант своей строкой. Название клиники — в строке «где», поэтому подписи в конце нет.
+ */
+function visitCard(a: ReminderAppointment, settings: ReminderSettings | null | undefined, doctor: string | null | undefined,
+  now: Date, lang: 'ru' | 'ky', repeat: boolean): string {
+  const ky = lang === 'ky'
+  const guardian = a.patient.guardian?.fullName
+  const greet = guardian ?? a.patient.fullName
+  const clinic = settings?.clinicName?.trim() || settings?.clinicSignature?.trim()
+  const address = settings?.clinicAddress?.trim()
+  const where = [clinic, address].filter(Boolean).join(', ')
+  const phone = settings?.clinicPhone?.trim()
+  const map = settings?.clinicMapUrl?.trim()
+  const about = ky
+    ? guardian ? `Балаңыз ${a.patient.fullName} тиш дарыгерине жазылган 🦷${repeat ? ' — дагы бир жолу эскертебиз' : ''}`
+      : repeat ? 'Тиш дарыгеринин кабыл алуусун дагы бир жолу эскертебиз 🦷' : 'Тиш дарыгеринин кабыл алуусун эскертебиз 🦷'
+    : guardian ? `${repeat ? 'Ещё раз напоминаем: з' : 'З'}апись ребёнка ${a.patient.fullName} к стоматологу 🦷`
+      : repeat ? 'Ещё раз напоминаем о приёме у стоматолога 🦷' : 'Напоминаем о приёме у стоматолога 🦷'
+  const facts = [
+    `🗓 ${dayAt(a.startAt, now, lang)}`,
+    doctor ? `👨‍⚕️ ${ky ? 'Дарыгер' : 'Врач'}: ${doctor}` : null,
+    where ? `📍 ${where}` : null,
+    map ? `🗺 Карта: ${map}` : null,
+    phone ? `📞 ${phone}` : null,
+    ...depositLines(a, settings, lang),
+  ].filter(Boolean)
+  const reply = ky ? 'Цифра менен жооп бериңиз:\n1 — келем\n2 — жылдыруу керек' : 'Ответьте цифрой:\n1 — приду\n2 — перенести'
+  const text = [`${ky ? 'Саламатсызбы' : 'Здравствуйте'}, ${greet}! 👋\n${about}`, facts.join('\n'), reply].join('\n\n')
+  const botUrl = settings?.botUrl
+  return botUrl && !a.patient.telegram ? `${text}\n\n${BOT_LINE} ${botUrl}` : text
+}
+
+/**
+ * Напоминание о приёме в WhatsApp/SMS. Нет своего текста клиники — стандартная карточка ({@link visitCard}).
+ * Свой текст клиники (reminderTemplate) — тот же шаблон, что у бота; к нему дописываем сами:
  * - «Ответьте 1 — приду, 2 — перенести.» — у своего текста (в стандартном она уже есть);
  * - подпись клиники — если в шаблоне нет {клиника};
  * - ссылку на бота клиники отдельной строкой — пациенту, который ещё не в боте, если в шаблоне
@@ -251,16 +303,7 @@ export function reminderText(a: ReminderAppointment, settings?: ReminderSettings
   const address = settings?.clinicAddress?.trim() ? `📍 Адрес: ${settings.clinicAddress.trim()}` : null
   const guardian = a.patient.guardian?.fullName
   const greet = guardian ?? a.patient.fullName
-  if (!template) {
-    const text = `Здравствуйте, ${greet}! 👋 ${guardian ? `Запись ребёнка ${a.patient.fullName}:` : 'Напоминаем:'} `
-      + `${whenText(a.startAt, now)} в ${timeOf(a.startAt)} приём у стоматолога 🦷 ${REPLY_LINE}`
-    // Без адреса и предоплаты — как раньше (подпись через пробел); иначе строками: текст, адрес, предоплата, подпись
-    const deposit = depositLines(a, settings)
-    const contact = contactLines(settings)
-    return invite(address || deposit.length || contact.length
-      ? [text, address, ...contact, ...deposit, signature].filter(Boolean).join('\n')
-      : signed(text, signature))
-  }
+  if (!template) return visitCard(a, settings, doctor, now, 'ru', false)
   const filled = applyTemplate(template, {
     имя: greet, когда: whenAt(a.startAt, now), врач: doctor, услуга: a.serviceName,
     клиника: settings?.clinicName, адрес: settings?.clinicAddress, телефон: settings?.clinicPhone, бот: botUrl,
@@ -290,9 +333,6 @@ export function whenAtKy(startAt: string, now = new Date()): string {
   return `${date.getUTCDate()}-${KY_MONTHS[date.getUTCMonth()]}, ${KY_WEEKDAYS[date.getUTCDay()]}, ${time}`
 }
 
-/** «Ответьте 1 — приду, 2 — перенести» по-кыргызски. */
-const REPLY_LINE_KY = 'Жооп бериңиз: 1 — келем, 2 — жылдыруу керек.'
-
 /**
  * Повторное напоминание в WhatsApp/SMS (уже напоминали) — другим текстом, чтобы пациент не получил то же
  * сообщение дважды; как PatientReminders.repeatText бэкенда (reminder.repeat). Всегда системный текст:
@@ -302,30 +342,7 @@ const REPLY_LINE_KY = 'Жооп бериңиз: 1 — келем, 2 — жылд
  */
 export function repeatReminderText(a: ReminderAppointment, settings?: ReminderSettings | null, doctor?: string | null,
   now = new Date(), lang: 'ru' | 'ky' = 'ru'): string {
-  const guardian = a.patient.guardian?.fullName
-  const greet = guardian ?? a.patient.fullName
-  const clinic = settings?.clinicName?.trim()
-  const address = settings?.clinicAddress?.trim()
-  const where = [clinic, address].filter(Boolean).join(', ')
-  const botUrl = settings?.botUrl
-  let text: string
-  if (lang === 'ky') {
-    text = `Саламатсызбы, ${greet}! Дагы бир жолу эскертебиз: ${whenAtKy(a.startAt, now)} `
-      + `${doctor ? `${doctor} дарыгердин` : 'тиш дарыгеринин'} кабыл алуусуна жазылгансыз${where ? ` (${where})` : ''}. `
-      + 'Келесизби, жооп бериңизчи — пландарыңыз өзгөрсө, бул убакытты башка бейтапка бере алабыз.'
-    if (guardian) text = `👶 Балаңыз ${a.patient.fullName} жазылган\n${text}`
-    text += `\n${REPLY_LINE_KY}`
-  }
-  else {
-    text = `Здравствуйте, ${greet}! Напоминаем ещё раз: ${whenAt(a.startAt, now)} у вас приём `
-      + `${doctor ? `у врача ${doctor}` : 'у стоматолога'}${where ? ` в ${where}` : ''}. `
-      + 'Пожалуйста, ответьте, придёте ли — так мы сможем отдать время другому пациенту, если планы поменялись.'
-    if (guardian) text = `👶 Запись ребёнка ${a.patient.fullName}\n${text}`
-    text += `\n${REPLY_LINE}`
-  }
-  const tail = [...contactLines(settings, null, lang), ...depositLines(a, settings, lang)]
-  if (tail.length) text += `\n${tail.join('\n')}`
-  return botUrl && !a.patient.telegram ? `${text}\n\n${BOT_LINE} ${botUrl}` : text
+  return visitCard(a, settings, doctor, now, lang, true)
 }
 
 /** «⏰ Ждём вас» за 2 часа до приёма — soon.text бэкенда (SoonReminders); клиника его не меняет. */
