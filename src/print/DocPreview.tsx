@@ -59,7 +59,8 @@ export function DocPreview({ label, text, telegramText, telegram, phone, parts, 
 }) {
   const [tab, setTab] = useState<Tab>(paper ? initialTab : 'message')
   const [channel, setChannel] = useState<Channel>(telegram ? 'TELEGRAM' : 'WHATSAPP')
-  const [format, setFormat] = useState<PaperFormat>('a4')
+  // Квитанция — чековая лента по умолчанию (2026-11-23, владелец: «маленький вариант основным»), A4 — по выбору
+  const [format, setFormat] = useState<PaperFormat>(paper?.formats ? 'receipt' : 'a4')
   const [imaging, setImaging] = useState(false)
   const sheet = useRef<HTMLElement>(null)
   const toTelegram = channel === 'TELEGRAM' && telegram
@@ -86,8 +87,8 @@ export function DocPreview({ label, text, telegramText, telegram, phone, parts, 
         <>
           {paper.formats && (
             <div className="segments" role="group" aria-label="Формат">
+              <button type="button" aria-pressed={format === 'receipt'} onClick={() => setFormat('receipt')}>Чек</button>
               <button type="button" aria-pressed={format === 'a4'} onClick={() => setFormat('a4')}>A4</button>
-              <button type="button" aria-pressed={format === 'receipt'} onClick={() => setFormat('receipt')}>Чек 80 мм</button>
             </div>
           )}
           <div className="doc-preview-paper" role="document" aria-label={`Лист: ${label}`}>

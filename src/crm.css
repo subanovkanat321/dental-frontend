@@ -270,6 +270,9 @@
     padding: 14px 14px calc(14px + env(safe-area-inset-bottom)); overflow-y: auto;
     /* Ровно в видимой части экрана (lib/visualViewport.ts): клавиатура iPhone не уводит верх с ✕ за край */
     top: var(--vv-top, 0px); bottom: auto; height: var(--vv-height, 100dvh);
+    /* Строки — по содержимому, не сжимаются под высоту экрана: иначе при открытой клавиатуре поле ответа (textarea —
+       у неё минимальная высота в сетке 0) сжималось, и подсказка с кнопками наезжали на него (2026-11-23). Лишнее — прокруткой */
+    grid-auto-rows: max-content;
   }
   /* Строка с заголовком и ✕ — всегда сверху карточки, сколько ни листай вниз */
   /* Линия снизу: под шапку уходит прокрученное содержимое (подсказки, переключатели) — без неё казалось, что
@@ -1815,7 +1818,10 @@ section.dictation { padding: 12px; border: 1px solid var(--separator); border-ra
   .nav .nav-badge { position: absolute; top: 2px; left: calc(50% + 6px); margin: 0; }
 }
 .question-text { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.5; }
-.question-answer { width: 100%; font: inherit; line-height: 1.5; padding: 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); resize: vertical; }
+.question-answer { width: 100%; font: inherit; line-height: 1.5; padding: 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); resize: vertical;
+  display: block; box-sizing: border-box; min-height: calc(7 * 1.5em + 22px); flex: none; }
+.question-reply { display: grid; gap: 6px; }
+.question-reply > .hint { margin: 0; }
 /* «Сменить роль» в строке «Персонала» */
 .role-change { display: grid; gap: 8px; justify-items: end; margin-bottom: 6px; }
 .role-change .checks { justify-self: stretch; text-align: left; }
@@ -3507,3 +3513,20 @@ button.history-link:hover .history-text { color: var(--link); }
 
 /* «Услуги займут 2 ч, а приём — 30 мин · Продлить до 12:00» (ServiceLines, 2026-11-21) */
 .service-lines-short { margin: 4px 0 0; padding: 6px 10px; border-radius: var(--r-sm); background: var(--wait-bg); font-size: .875rem; }
+
+/* Богатый выбор на телефоне (layout/Segments → ChoicePick): поле с выбранным пунктом и лист с карточками */
+.choice-pick { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 6px 12px 6px 8px; border: 1px solid var(--line-strong);
+  border-radius: var(--r-md); background: var(--card); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.choice-pick .choice-name { flex: 1; min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.choice-caret { color: var(--hint); font-size: .8rem; }
+.choice-icon { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--accent-soft); font-size: 1.1rem; line-height: 1; }
+.choice-count { flex: none; padding: 2px 10px; border-radius: 99px; background: var(--sunken); color: var(--text); font-weight: 600; font-size: .9rem; }
+.choice-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.choice-item { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px; border: 1px solid var(--separator); border-radius: var(--radius);
+  background: var(--card); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.choice-item[aria-selected=true] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); background: color-mix(in srgb, var(--accent-soft) 45%, var(--card)); }
+.choice-item[aria-selected=true] .choice-count { background: var(--accent); color: var(--accent-text); }
+.choice-text { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.choice-text .choice-name { font-weight: 600; }
+.choice-hint { color: var(--hint); font-size: .85rem; line-height: 1.3; }
+.choice-check { flex: none; color: var(--accent); font-weight: 700; }

@@ -105,12 +105,12 @@ export function ComebackTab({ onOpen, onBook, canEditServices = false }: {
   const book = (c: Candidate) => onBook({ id: c.patientId, fullName: c.fullName ?? '', phone: c.phone, telegram: c.telegram },
     c.cancelled ? { doctorId: c.cancelled.doctorId, serviceId: c.cancelled.serviceId, duration: c.cancelled.minutes } : undefined)
   // Отбор — одной строкой переключателей в шапке; пустые группы не показываем (кроме выбранной)
-  const groups: [typeof filter, string, number, string?][] = [
-    ['PLAN', 'Планы лечения', board.data.planPatients, board.data.planSom > 0 ? somText(board.data.planSom) : undefined],
-    ['CANCELLED', 'Отменили', board.data.cancelled],
-    ['NO_SHOW', 'Не пришли', board.data.noShows],
-    ['RECALL', 'Пора на осмотр', board.data.recalls],
-    ['SENT', 'План отправлен', sent],
+  const groups: [typeof filter, string, number, string | undefined, string, string][] = [
+    ['PLAN', 'Планы лечения', board.data.planPatients, board.data.planSom > 0 ? somText(board.data.planSom) : undefined, '🦷', 'Начали лечение и не закончили'],
+    ['CANCELLED', 'Отменили', board.data.cancelled, undefined, '↩️', 'Отменили запись и не перезаписались'],
+    ['NO_SHOW', 'Не пришли', board.data.noShows, undefined, '🚫', 'Пропустили приём'],
+    ['RECALL', 'Пора на осмотр', board.data.recalls, undefined, '🗓', 'Подошёл срок профосмотра'],
+    ['SENT', 'План отправлен', sent, undefined, '📨', 'Ждём ответа на план лечения'],
   ]
 
   return (
@@ -120,9 +120,11 @@ export function ComebackTab({ onOpen, onBook, canEditServices = false }: {
       <HeadTools>
         {/* Пунктов до шести — на телефоне выпадающим списком (layout/Segments), а не таблетками в три строки */}
         <Segments className="comeback-filter" label="Кого позвать" value={filter} onChange={(key) => setFilter(filter === key ? 'ALL' : key)}
-          options={[{ value: 'ALL' as typeof filter, label: <>Все <span className="num">{everyone}</span></>, text: `Все · ${everyone}` },
-            ...groups.filter(([key, , n]) => n > 0 || filter === key).map(([key, title, n, money]) => (
-              { value: key, label: <>{title} <span className="num">{money ?? n}</span></>, text: `${title} · ${money ?? n}` }))]} />
+          options={[{ value: 'ALL' as typeof filter, label: <>Все <span className="num">{everyone}</span></>, text: `Все · ${everyone}`,
+            icon: '👥', name: 'Все', hint: 'Все, кого стоит позвать', count: String(everyone) },
+          ...groups.filter(([key, , n]) => n > 0 || filter === key).map(([key, title, n, money, icon, hint]) => (
+            { value: key, label: <>{title} <span className="num">{money ?? n}</span></>, text: `${title} · ${money ?? n}`,
+              icon, name: title, hint: money ? `${hint} · ${n} чел.` : hint, count: money ?? String(n) }))]} />
       </HeadTools>
       {!everyone ? (
         <EmptyState fill title="Звать некого" />

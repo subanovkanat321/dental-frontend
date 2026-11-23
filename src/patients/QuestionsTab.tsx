@@ -197,9 +197,13 @@ export function QuestionPanel({ questionId, onClose, onOpenPatient }: {
                   {draft.isPending ? <><Spinner />Пишем черновик…</> : drafted ? '✨ Другой черновик' : '✨ Черновик ответа'}</button>
               )}
               {drafted && <p className="hint small">✨ Черновик написал ИИ — проверьте и поправьте перед отправкой.</p>}
-              <textarea className="question-answer" aria-label="Ответ пациенту" rows={7} maxLength={4000} value={text} placeholder="Ответ пациенту"
-                onChange={(e) => setText(e.target.value)} />
-              <p className="hint small">Ответ уйдёт пациенту в Telegram от имени клиники.</p>
+              {/* Поле и подсказка — своим блоком: в карточке на весь экран iPhone (сетка фиксированной высоты, клавиатура
+                  открыта) поле сжималось в одну строку, а подсказка наезжала на него (2026-11-23) */}
+              <div className="question-reply">
+                <textarea className="question-answer" aria-label="Ответ пациенту" rows={7} maxLength={4000} value={text} placeholder="Ответ пациенту"
+                  onChange={(e) => setText(e.target.value)} />
+                <p className="hint small">Ответ уйдёт пациенту в Telegram от имени клиники.</p>
+              </div>
               <div className="actions">
                 <button type="button" className="btn primary" disabled={answer.isPending || !text.trim()} onClick={() => answer.mutate()}>
                   {answer.isPending ? <><Spinner />Отправляем…</> : 'Отправить'}</button>
