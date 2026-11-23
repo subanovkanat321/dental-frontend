@@ -62,7 +62,7 @@ export const P = {
 
 /** Рисунок каждого подраздела: раздел → ключ подраздела (как в `subsOf`). Новый подраздел — сюда же (тест `subIcons.test`). */
 export const SUB_ICONS: Partial<Record<Page, Record<string, ReactNode>>> = {
-  patients: { all: P.list, booked: P.calendarCheck, waitlist: P.hourglass, leads: P.phoneIn, comeback: P.comeback, dropped: P.dropped, nobot: P.plane, recall: P.tooth, questions: P.chat, tasks: P.checkList, ratings: P.star },
+  patients: { all: P.list, booked: P.calendarCheck, waitlist: P.hourglass, leads: P.phoneIn, comeback: P.comeback, dropped: P.dropped, groups: P.people, nobot: P.plane, recall: P.tooth, questions: P.chat, tasks: P.checkList, ratings: P.star },
   cash: { money: P.banknote, day: P.coins, earnings: P.wallet, analytics: P.trend, expenses: P.receipt, debtors: P.debtor, salary: P.envelope, stats: P.bars, report: P.doc },
   stock: { materials: P.box, spending: P.cart, purchase: P.receipt, lab: P.tooth },
   platform: {

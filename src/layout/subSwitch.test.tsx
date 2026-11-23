@@ -90,7 +90,7 @@ test('телефон: над страницей — «Пациенты · Зап
   await userEvent.click(button)
   expect(button).toHaveAttribute('aria-expanded', 'true')
   const sheet = sheetOf('Пациенты')
-  expect(rows(sheet)).toEqual(['Записаны', 'Все', 'Лист ожидания', 'Обращения', 'Позвать снова', 'Бросили лечение', 'Без бота', 'Вопросы', 'Задачи', 'Оценки'])
+  expect(rows(sheet)).toEqual(['Записаны', 'Все', 'Лист ожидания', 'Обращения', 'Позвать снова', 'Бросили лечение', 'Группы', 'Без бота', 'Вопросы', 'Задачи', 'Оценки'])
   const first = within(sheet).getAllByRole('menuitem')[0]!
   expect(first).toHaveAccessibleName('Записаны · открыт сейчас')
   expect(first).toHaveAttribute('aria-current', 'page')

@@ -74,6 +74,8 @@ export const TIMELINE_ICON: Record<TimelineKind, string> = {
   QUESTION: '❓',
   MERGED: '🔗',
   LEAD: '☎️',
+  GROUP_MESSAGE: '👥',
+  GROUP_OPT_OUT: '🔕',
 }
 
 const via = (channel?: string | null) => (channel && CHANNEL[channel] ? ` ${CHANNEL[channel]}` : '')
@@ -125,6 +127,8 @@ export function timelineText(i: TimelineItem): string {
     case 'COMEBACK_INVITED': return `Позвали снова${via(i.detail)}`
     case 'QUESTION': return 'Задал вопрос в боте'
     case 'MERGED': return `Объединили с карточкой «${i.extra ?? ''}»`
+    case 'GROUP_MESSAGE': return `Сообщение группы «${i.extra ?? ''}»${via(i.detail)}`
+    case 'GROUP_OPT_OUT': return 'Попросил не присылать сообщения групп'
     case 'LEAD': return `Обращение${i.detail && LEAD_CHANNEL[i.detail] ? ` · ${LEAD_CHANNEL[i.detail]}` : ''}: ${LEAD_STATUS[i.extra ?? ''] ?? 'изменилось'}`
   }
 }

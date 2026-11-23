@@ -18,7 +18,7 @@ export type Sub = { key: string; title: string; group?: string; hint?: string }
 const SUB_HINTS: Partial<Record<Page, Record<string, string>>> = {
   patients: {
     all: 'Вся база и поиск', booked: 'У кого есть запись', waitlist: 'Ждут свободного времени', leads: 'Позвонили, ещё не записаны', comeback: 'Кого пригласить снова',
-    recall: 'Пора на профосмотр', dropped: 'Начали и пропали', nobot: 'Пригласить в бот клиники', questions: 'Вопросы из бота',
+    recall: 'Пора на профосмотр', dropped: 'Начали и пропали', groups: 'Позвать сразу многих', nobot: 'Пригласить в бот клиники', questions: 'Вопросы из бота',
     tasks: 'Позвонить, напомнить', ratings: 'Как оценили приёмы',
   },
   cash: {
@@ -79,6 +79,8 @@ function rawSubsOf(page: Page, me: Me): Sub[] {
         isAssistant(me) ? { key: 'recall', title: 'Профосмотр' } : { key: 'comeback', title: 'Позвать снова' },
         // «Бросили лечение» (волна 1, часть B) — рядом с «Позвать снова»; ассистенту нет (в списке суммы, сервер — 403)
         ...(isAssistant(me) ? [] : [{ key: 'dropped', title: 'Бросили лечение' }]),
+        // «Группы» (шаг 9А) — готовые и свои группы: задачи на обзвон или сообщение сразу многим; ассистенту нет (сервер — 403)
+        ...(isAssistant(me) ? [] : [{ key: 'groups', title: 'Группы' }]),
         // «Без бота» (2026-11-20) — кого пригласить в бот клиники: напоминания станут бесплатными
         { key: 'nobot', title: 'Без бота' },
         { key: 'questions', title: 'Вопросы' }, { key: 'tasks', title: 'Задачи' },
