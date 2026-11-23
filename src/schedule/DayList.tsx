@@ -62,7 +62,7 @@ function shortName(name: string): string {
  * Один врач — его день; «Все врачи» — все приёмы вместе, у строки имя врача, свободные окна
  * каждого врача отдельно. У приёма — быстрое напоминание (Telegram или WhatsApp). Завтра — «Готово X из Y».
  */
-export function DayList({ me, doctors, date, onDate, onOpen, onQuick, onNew, onNewHere, selectedId, all, doctorsNote, paintOf, onCalendar }: {
+export function DayList({ me, doctors, date, onDate, onOpen, onQuick, onNew, onNewHere, selectedId, all, doctorsNote, paintOf, onCalendar, inToolbar }: {
   me: Me
   doctors: Doctor[]
   date: string
@@ -82,6 +82,8 @@ export function DayList({ me, doctors, date, onDate, onOpen, onQuick, onNew, onN
   paintOf?: (a: Appointment) => string | undefined
   /** «Все врачи»: нажали на имя в шапке колонки — мини-календарь врача */
   onCalendar?: (doctorId: number) => void
+  /** «Список» на компьютере: день, стрелки и «Сегодня» — в шапке расписания, своей строки даты нет */
+  inToolbar?: boolean
 }) {
   const today = todayIn()
   const many = all ?? doctors.length > 1
@@ -155,7 +157,8 @@ export function DayList({ me, doctors, date, onDate, onOpen, onQuick, onNew, onN
   }, [order])
 
   return (
-    <div className="day-list">
+    <div className={inToolbar ? 'day-list wide' : 'day-list'}>
+      {!inToolbar && <>
       {/* Один день крупно: стрелки — на день назад и вперёд, нажать на дату — календарь, «Сегодня» — назад */}
       <div className="date-bar" role="group" aria-label="День">
         <button type="button" className="date-step" aria-label="Предыдущий день" onClick={() => onDate(addDays(date, -1))}>‹</button>
@@ -168,6 +171,7 @@ export function DayList({ me, doctors, date, onDate, onOpen, onQuick, onNew, onN
         <button type="button" className="date-step" aria-label="Следующий день" onClick={() => onDate(addDays(date, 1))}>›</button>
         {date !== today && <button type="button" className="btn small date-today" onClick={() => onDate(today)}>Сегодня</button>}
       </div>
+      </>}
       {monthOpen && <MonthSheet date={date} today={today} doctorIds={doctors.map((d) => d.id)} onPick={onDate} onClose={() => setMonthOpen(false)} />}
       {single && !canEditDoctor(single.id) && <p className="readonly-note">Расписание коллеги — только просмотр</p>}
       {/* Пришёл без записи — та же «Новая запись», в ней «⚡ Сейчас» */}
@@ -204,7 +208,7 @@ export function DayList({ me, doctors, date, onDate, onOpen, onQuick, onNew, onN
                         </li>
                       ) : (
                         <FreeRow key={`f${item.at}`} start={item.at} end={item.end} canEdit={canEditDoctor(item.doctorId)}
-                          doctor={many ? g.doctor.name : undefined}
+                          doctor={many ? g.doctor.name : undefined} short={many && !inToolbar}
                           onPick={() => onNew(item.doctorId, minutesOf(item.at))} />
                       ))}
                     {g.items.length === 0 && <li className="hint day-empty">Нет записей</li>}
@@ -245,15 +249,17 @@ export function DayList({ me, doctors, date, onDate, onOpen, onQuick, onNew, onN
   )
 }
 
-function FreeRow({ start, end, canEdit, doctor, onPick }: {
+function FreeRow({ start, end, canEdit, doctor, short = false, onPick }: {
   start: string
   end: string
   canEdit: boolean
-  /** «Все врачи» (узкая колонка): коротко «до 13:00» */
+  /** «Все врачи»: чьё окно (для чтения с экрана) */
   doctor?: string
+  /** Узкая колонка (телефон, «Все врачи»): коротко «до 13:00» */
+  short?: boolean
   onPick: () => void
 }) {
-  const text = <>{doctor ? 'до' : 'свободно до'} {timeOf(end)}</>
+  const text = <>{short ? 'до' : 'свободно до'} {timeOf(end)}</>
   if (!canEdit) return <li className="row free readonly"><span className="time num">{timeOf(start)}</span><span className="hint">{text}</span></li>
   return (
     <li className="row free">

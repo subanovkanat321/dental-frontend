@@ -845,6 +845,19 @@ button.grid-head:not(:disabled):hover .grid-head-name { color: var(--link); }
 .doctor-columns .row.free .hint { font-size: .85rem; overflow-wrap: break-word; }
 .doctor-columns .row.pause { flex-wrap: wrap; padding: 8px; gap: 2px 6px; font-size: .82rem; }
 .doctor-columns .row.pause .name { min-width: 0; }
+/* «Список» на компьютере: один врач — колонкой до 760px (строка не растягивается на весь монитор); «Все врачи» — все колонки
+   рядом, каждая от 260px, без «выглядывания» и прокрутки вбок, пока помещаются; в колонке — строка как у одного врача */
+.day-list.wide { max-width: 760px; margin-top: 4px; }
+.day-list.wide:has(.doctor-columns) { max-width: none; }
+.day-list.wide .doctor-columns { grid-template-columns: repeat(var(--cols, 2), minmax(260px, 1fr)); --gap: 12px; scroll-snap-type: none; scrollbar-width: thin; }
+.day-list.wide .doctor-columns .row-button { grid-template-columns: 48px minmax(0, 1fr) auto; gap: 2px 8px; padding: 10px; }
+.day-list.wide .doctor-columns .row .end { display: inline; }
+.day-list.wide .doctor-columns .row .state, .day-list.wide .doctor-columns .row .row-note { grid-column: 2 / -1; }
+.day-list.wide .doctor-columns .row .state .hint { display: inline; }
+.day-list.wide .doctor-columns .row:has(> .row-slide):not(.swipe), .day-list.wide .doctor-columns .row.swipe > .row-slide { flex-direction: row; gap: 6px; }
+.day-list.wide .doctor-columns .row:has(> .row-slide) .row-button { flex: 1; }
+.day-list.wide .doctor-columns .remind-quick { width: 40px; height: 40px; margin: 0; align-self: center; font-size: .75rem; }
+.day-list.wide .doctor-columns .remind-sent { align-self: center; margin: 0 8px 0 0; }
 /* «Нажимается вся строка» (lib/rowClick.ts → rowOpen): строка списка открывает карточку кликом в любом месте,
    название — настоящая кнопка (Tab, скринридер). Подсветка наведения — только там, где есть мышь;
    на телефоне — короткий отклик на нажатие (:active), без «залипшего» hover после тапа */

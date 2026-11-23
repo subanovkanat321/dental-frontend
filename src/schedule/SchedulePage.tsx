@@ -74,17 +74,17 @@ function isNarrow(): boolean {
   return typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 760px)').matches
 }
 
-type Mode = 'day' | 'week' | 'month'
+type Mode = 'day' | 'list' | 'week' | 'month'
 
 /** До стольких врачей на компьютере — ряд чипов; больше — одна кнопка «Врачи: 4 из 10 ▾» (DoctorPicker). */
 const MAX_CHIPS = 6
 
-/** «День», «Неделя» или «Месяц» — запоминается на устройстве (только слово, не личные данные). */
+/** «День», «Список», «Неделя» или «Месяц» — запоминается на устройстве (только слово, не личные данные). */
 function useMode(): [Mode, (mode: Mode) => void] {
   const [mode, setMode] = useState<Mode>(() => {
     try {
       const saved = localStorage.getItem('crm.schedule.mode')
-      return saved === 'week' || saved === 'month' ? saved : 'day'
+      return saved === 'week' || saved === 'month' || saved === 'list' ? saved : 'day'
     } catch {
       return 'day'
     }
@@ -228,6 +228,11 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
   const [mode, setMode] = useMode()
   // «Месяц» — и на компьютере, и на телефоне (на телефоне ячейка — число дня и число записей); врач — выбранный или все
   const monthMode = mode === 'month' && doctors.length > 0 && !narrow
+  // «Список» на компьютере (2026-11-23, просьба владельца) — тот же «День» списком, что на телефоне: только записи, между ними
+  // «свободно 10:00–11:30», без сетки по часам. Шапка расписания (дата, вид, «＋ Новая запись») — компьютерная
+  const listMode = mode === 'list' && !narrow && doctors.length > 0
+  // День берём без ночных хвостов со вчера — как список дня (DayList) на телефоне: тот же ключ кэша, один запрос на врача
+  const listy = narrow || listMode
   const desktop = useMedia('(min-width: 1024px)')
   // Телефон — «День» списком (dayList ниже), «Недели» там нет
   const weekMode = mode === 'week' && desktop && !(narrow && !monthMode) && doctors.length > 0
@@ -248,8 +253,8 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
       // Свой ключ: «День» списком на телефоне берёт день без них (тот же префикс — действия обновляют оба).
       // Телефон — сетки нет, а «День» списком (DayList) просит день без хвостов: тот же запрос и ключ,
       // что у него, — один запрос на врача вместо двух
-      queryKey: narrow ? ['appointments', date, d.id] : ['appointments', date, d.id, 'overnight'],
-      queryFn: () => unwrap(api.GET('/api/appointments', { params: { query: narrow ? { date, doctorId: d.id } : { date, doctorId: d.id, overnight: true } } })),
+      queryKey: listy ? ['appointments', date, d.id] : ['appointments', date, d.id, 'overnight'],
+      queryFn: () => unwrap(api.GET('/api/appointments', { params: { query: listy ? { date, doctorId: d.id } : { date, doctorId: d.id, overnight: true } } })),
       refetchInterval: REFRESH_MS,
       // В «Неделе» и «Месяце» дни не нужны: у них свой запрос на несколько дней
       enabled: !weekMode && !monthMode,
@@ -265,7 +270,7 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
       // Свободные окна в сетке меняются вместе с приёмами — обновлять так же
       refetchInterval: REFRESH_MS,
       // Телефон: «Все врачи» тоже — по ним видно, у кого выходной (кэш общий с «Днём» списком, лишних запросов нет)
-      enabled: !weekMode && !monthMode && (!narrow || view === 'all'),
+      enabled: !weekMode && !monthMode && (!listy || view === 'all'),
     })),
   })
 
@@ -280,7 +285,7 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
   // Выходной у всех — колонки остаются, как раньше («Выходной» в каждой): пустая сетка ничего не объяснит
   const offHidden = offToday.length < visible.length && offShownFor !== date ? offToday : []
   const shown = view === 'all' ? visible.filter((d) => !offHidden.includes(d)) : doctors.filter((d) => d.id === view)
-  const dayList = narrow && !monthMode && shown.length > 0 ? shown : null
+  const dayList = listy && !monthMode && !weekMode && shown.length > 0 ? shown : null
   // «показано 4 из 10» — когда колонок «Все врачи» меньше, чем врачей (скрыты или выходной)
   const partial = view === 'all' && shown.length < doctors.length ? `показано ${shown.length} из ${doctors.length}` : null
   const offHint = <OffDaysHint doctors={offHidden} onShow={() => setOffShownFor(date)} />
@@ -481,7 +486,7 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
     <div className={side ? 'schedule with-panel' : summary ? 'schedule with-summary' : 'schedule'}>
       <section className="schedule-main">
         {/* Телефон: без заголовка дня — день выбирают в ленте (там же месяц и «📅 другой день») */}
-        {!dayList && (
+        {(!dayList || listMode) && (
           <header ref={toolbar} className="toolbar schedule-toolbar">
             <div className="day-switch">
               <button type="button" className="btn ghost" aria-label={monthMode ? 'Предыдущий месяц' : weekMode ? 'Предыдущая неделя' : 'Предыдущий день'}
@@ -527,7 +532,7 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
               : weekMode
                 ? monday !== weekStart(today) && <button type="button" className="btn" onClick={() => setDate(today)}>Эта неделя</button>
                 : date !== today && <button type="button" className="btn" onClick={() => setDate(today)}>Сегодня</button>}
-            <ViewModes mode={monthMode ? 'month' : weekMode ? 'week' : 'day'} week={desktop} onChange={setMode} />
+            <ViewModes mode={monthMode ? 'month' : weekMode ? 'week' : listMode ? 'list' : 'day'} week={desktop} list={!narrow} onChange={setMode} />
 
             {/* Действия — одной неразрывной группой справа. Тесно (крупный текст, зум, узкое окно) — useToolbarFit
                 оставляет у «Сводки дня» только значок; группа строки не делит. Пришёл без записи — «⚡ Сейчас» в «Новой записи» */}
@@ -545,7 +550,7 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
         )}
 
         <SetupHint me={me} />
-        {dayList ? (
+        {dayList && !listMode ? (
           <>
             {/* Телефон: только то, что нужно сделать сейчас, — заявки и оплата на кассе (и «мой день» врача). «Ждём ответа» видно в строках
                 дня, «склад: мало» — в «Складе» и сообщением бота: на главной это было лишнее */}
@@ -616,7 +621,7 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
             )}
             {/* Отменённые в сетке не рисуем, но и не прячем молча: «Отменено: N ›» — ссылкой в конце строки над
                 сеткой (под сеткой строка уходила за край экрана и её не замечали); раскрытый список — строкой ниже */}
-            {!weekMode && !monthMode && shown.length > 0 && (
+            {!weekMode && !monthMode && !dayList && shown.length > 0 && (
               <CancelledList inline items={loaded.filter((a) => a.status === 'CANCELLED' && (view === 'all' || shown.some((d) => d.id === a.doctorId)))}
                 selectedId={selected?.id} onOpen={(a) => setSide({ kind: 'appointment', id: a.id, fallback: a })}
                 doctorName={view === 'all' ? (id) => doctors.find((d) => d.id === id)?.fullName ?? '' : undefined} />
@@ -633,9 +638,9 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
         {dayList ? (
           <DayList me={me} doctors={dayList.map((d) => ({ id: d.id, name: d.fullName ?? '', color: colorOf(d) }))} date={date} onDate={setDate} selectedId={selected?.id}
             paintOf={paintOf} onCalendar={(id) => setCalendar({ id, anchor: null })}
-            all={view === 'all' && doctors.length > 1}
-            doctorsNote={partial || offHidden.length ? <>{partial && <span className="shown-of">{partial.replace(/^./, (c) => c.toUpperCase())}</span>}{partial && offHidden.length ? ' · ' : ''}{offHint}</> : undefined}
-            onNewHere={bookable.length > 0 ? newHere : undefined}
+            all={view === 'all' && doctors.length > 1} inToolbar={listMode}
+            doctorsNote={!listMode && (partial || offHidden.length) ? <>{partial && <span className="shown-of">{partial.replace(/^./, (c) => c.toUpperCase())}</span>}{partial && offHidden.length ? ' · ' : ''}{offHint}</> : undefined}
+            onNewHere={bookable.length > 0 && !listMode ? newHere : undefined}
             onOpen={(a) => setSide({ kind: 'appointment', id: a.id, fallback: a })} onQuick={openQuick}
             onNew={(doctorId, minutes) => setSide({ kind: 'new', slot: { doctorId, date, minutes } })} />
         ) : monthMode ? (
@@ -829,11 +834,15 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
   )
 }
 
-/** «День | Неделя | Месяц»; «Неделя» — только на компьютере (семь колонок на телефоне не читаются). */
-function ViewModes({ mode, week, onChange }: { mode: Mode; week: boolean; onChange: (mode: Mode) => void }) {
+/**
+ * «День | Список | Неделя | Месяц»; «Неделя» — только на компьютере (семь колонок на телефоне не читаются), «Список» — не на
+ * телефоне (там «День» и так списком).
+ */
+function ViewModes({ mode, week, list, onChange }: { mode: Mode; week: boolean; list: boolean; onChange: (mode: Mode) => void }) {
   return (
     <div className={`segments view-mode${week ? '' : ' compact'}`} role="group" aria-label="Вид расписания">
       <button type="button" aria-pressed={mode === 'day'} onClick={() => onChange('day')}>День</button>
+      {list && <button type="button" aria-pressed={mode === 'list'} title="Только записи, между ними — свободное время" onClick={() => onChange('list')}>Список</button>}
       {week && <button type="button" aria-pressed={mode === 'week'} onClick={() => onChange('week')}>Неделя</button>}
       <button type="button" aria-pressed={mode === 'month'} onClick={() => onChange('month')}>Месяц</button>
     </div>
