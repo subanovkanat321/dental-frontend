@@ -137,3 +137,24 @@ test('DocPreview: «📷 Отправить листом» с вкладки «�
   // У квитанции бота-картинки нет — только скачать
   expect(screen.queryByRole('button', { name: 'В Telegram-бот' })).not.toBeInTheDocument()
 })
+
+test('«WhatsApp пациенту»: картинка в буфер обмена и сразу чат по номеру пациента — выбирать контакт не нужно', async () => {
+  const write = vi.fn(async () => {})
+  vi.stubGlobal('ClipboardItem', class { constructor(readonly items: Record<string, Blob>) {} })
+  const clipboard = Object.getOwnPropertyDescriptor(navigator, 'clipboard')
+  Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { write } })
+  const open = vi.spyOn(window, 'open').mockReturnValue(null)
+  renderSend()
+  const button = await screen.findByRole('button', { name: 'WhatsApp пациенту' })
+  expect(button).toHaveClass('primary')
+  await userEvent.click(button)
+  expect(write).toHaveBeenCalledTimes(1)
+  expect(open.mock.calls[0]![0]).toMatch(/phone=996700000111|wa\.me\/996700000111/)
+  expect(await screen.findByRole('status')).toHaveTextContent('Картинка скопирована, чат пациента открыт')
+  // «Открыть чат WhatsApp» отдельно не нужен — это и делает главная кнопка
+  expect(screen.queryByRole('button', { name: 'Открыть чат WhatsApp' })).not.toBeInTheDocument()
+  open.mockRestore()
+  vi.unstubAllGlobals()
+  if (clipboard) Object.defineProperty(navigator, 'clipboard', clipboard)
+  else delete (navigator as { clipboard?: unknown }).clipboard
+})

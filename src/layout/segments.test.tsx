@@ -52,3 +52,32 @@ test('телефон и 2–3 пункта — таблетки одной ст�
   expect(within(screen.getByRole('group', { name: 'Кого позвать' })).getAllByRole('button')).toHaveLength(3)
   expect(screen.queryByRole('combobox')).toBeNull()
 })
+
+test('телефон, пункты со значком и названием — поле и лист с карточками: пояснение, число, выбранный отмечен', async () => {
+  screenWidth(390)
+  function Rich() {
+    const [v, setV] = useState('all')
+    return (
+      <>
+        <Segments label="Кого позвать" value={v} onChange={setV} options={[
+          { value: 'all', label: 'Все', icon: '👥', name: 'Все', hint: 'Все, кого стоит позвать', count: '9' },
+          { value: 'plan', label: 'Планы', icon: '🦷', name: 'Планы лечения', hint: 'Начали лечение и не закончили', count: '48 000 сом' },
+          { value: 'cancel', label: 'Отменили', icon: '↩️', name: 'Отменили', count: '2' },
+          { value: 'noshow', label: 'Не пришли', icon: '🚫', name: 'Не пришли', count: '1' },
+        ]} />
+        <output>{v}</output>
+      </>
+    )
+  }
+  render(<Rich />)
+  await userEvent.click(screen.getByRole('button', { name: 'Кого позвать: Все · 9' }))
+  const list = screen.getByRole('listbox', { name: 'Кого позвать' })
+  expect(within(list).getByRole('option', { name: /Все/ })).toHaveAttribute('aria-selected', 'true')
+  const plan = within(list).getByRole('option', { name: /Планы лечения/ })
+  expect(plan).toHaveTextContent('Начали лечение и не закончили')
+  expect(plan).toHaveTextContent('48 000 сом')
+  await userEvent.click(plan)
+  expect(screen.queryByRole('listbox')).toBeNull()
+  expect(screen.getByRole('status')).toHaveTextContent('plan')
+  expect(screen.getByRole('button', { name: 'Кого позвать: Планы лечения · 48 000 сом' })).toBeInTheDocument()
+})

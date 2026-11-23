@@ -132,7 +132,8 @@ test('квитанция: платежи, кто принял, долг, «Не 
   await userEvent.click(await within(panel).findByRole('button', { name: 'Просмотр: квитанция' }))
   expect(within(panel).getByRole('document', { name: 'Предпросмотр: квитанция' }).textContent).toBe(RECEIPT.text)
   await userEvent.click(within(panel).getByRole('button', { name: '📄 Лист' }))
-  await userEvent.click(within(panel).getByRole('button', { name: 'Чек 80 мм' }))
+  // Чек — по умолчанию (лента 80 мм), A4 — по выбору
+  expect(within(panel).getByRole('button', { name: 'Чек' })).toHaveAttribute('aria-pressed', 'true')
   const paper = within(panel).getByRole('document', { name: 'Лист: квитанция' })
   expect(paper.querySelector('.print-sheet')).toHaveClass('narrow')
   expect(paper).toHaveTextContent('Не является фискальным чеком')
@@ -248,8 +249,8 @@ test('квитанция с аванса: строка «с аванса», «О
   await userEvent.click(await within(panel).findByRole('button', { name: 'Просмотр: квитанция' }))
   await userEvent.click(within(panel).getByRole('button', { name: 'Печать: квитанция' }))
   const sheet = await screen.findByRole('dialog', { name: 'Печать: Квитанция об оплате' })
-  const rows = within(within(sheet).getByRole('table', { name: 'Платежи' })).getAllByRole('row')
-  expect(rows[1]).toHaveTextContent(/с аванса/)
+  // Печать — чеком по умолчанию: платежи списком
+  expect(within(sheet).getByRole('list', { name: 'Платежи' })).toHaveTextContent(/с аванса/)
   expect(sheet).toHaveTextContent(/Оплачено с аванса: 3\s000 сом/)
   expect(sheet).toHaveTextContent(/Остаток аванса: 17\s000 сом/)
   expect(sheet).toHaveTextContent('Оплачено полностью')
@@ -285,8 +286,8 @@ test('квитанция с долгом: «Как оплатить» с рек�
   const pay = within(paper).getByRole('region', { name: 'Как оплатить' })
   expect(pay).toHaveTextContent('MBANK 0555 000 111')
   expect(within(pay).getByRole('img', { name: 'QR для оплаты' })).toHaveAttribute('src', `/web/pay/${TOKEN}/qr`)
-  // Чек 80 мм — тот же блок
-  await userEvent.click(within(panel).getByRole('button', { name: 'Чек 80 мм' }))
+  // A4 — тот же блок (чек — по умолчанию)
+  await userEvent.click(within(panel).getByRole('button', { name: 'A4' }))
   expect(within(within(panel).getByRole('document', { name: 'Лист: квитанция' })).getByRole('region', { name: 'Как оплатить' })).toBeInTheDocument()
 })
 
