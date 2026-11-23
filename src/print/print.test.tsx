@@ -130,9 +130,8 @@ test('квитанция: платежи, кто принял, долг, «Не 
   const panel = await card(/Бакыт М\./)
   // Квитанция — строкой сразу под оплатой, без «Ещё»; сначала «🔍 Просмотр»: сообщение и лист
   await userEvent.click(await within(panel).findByRole('button', { name: 'Просмотр: квитанция' }))
-  expect(within(panel).getByRole('document', { name: 'Предпросмотр: квитанция' }).textContent).toBe(RECEIPT.text)
-  await userEvent.click(within(panel).getByRole('button', { name: '📄 Лист' }))
-  // Чек — по умолчанию (лента 80 мм), A4 — по выбору
+  // Просмотр квитанции — сразу лист-чек 80 мм (A4 — по выбору); текст — вкладкой «💬 Сообщение»
+  expect(within(panel).getByRole('button', { name: '📄 Лист' })).toHaveAttribute('aria-pressed', 'true')
   expect(within(panel).getByRole('button', { name: 'Чек' })).toHaveAttribute('aria-pressed', 'true')
   const paper = within(panel).getByRole('document', { name: 'Лист: квитанция' })
   expect(paper.querySelector('.print-sheet')).toHaveClass('narrow')
@@ -293,6 +292,8 @@ test('квитанция с долгом: «Как оплатить» с рек�
   await userEvent.click(await within(panel).findByRole('button', { name: 'Просмотр: квитанция' }))
   // Реквизиты есть — подсказки добавить их нет
   expect(within(panel).queryByText(/Добавьте реквизиты и QR/)).not.toBeInTheDocument()
+  // Просмотр открывается на листе-чеке; текст — вкладкой «💬 Сообщение»
+  await userEvent.click(within(panel).getByRole('button', { name: '💬 Сообщение' }))
   // Telegram: текст для бота (без ссылки) и подсказка про картинку QR
   const bubble = within(panel).getByRole('document', { name: 'Предпросмотр: квитанция' })
   expect(bubble).toHaveTextContent('Как оплатить: MBANK 0555 000 111')

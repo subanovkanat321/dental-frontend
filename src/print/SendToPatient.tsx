@@ -34,6 +34,7 @@ export function DocActions({ label, phone, message, send, onPrint, paper, note }
   note?: (channel: Channel) => ReactNode
 }) {
   const [open, setOpen] = useState(false)
+  // Квитанция (лист с форматами) — «🔍 Просмотр» сразу на листе-чеке 80 мм (2026-11-23, владелец), текст — вкладкой «💬 Сообщение»
   // «📤 Отправить»: окно выбора — как (текст / чек / A4) и куда; картинкой — просмотр сразу с «Отправить листом»
   const [choosing, setChoosing] = useState(false)
   const [preset, setPreset] = useState<{ format: PaperFormat } | null>(null)
@@ -99,7 +100,7 @@ export function DocActions({ label, phone, message, send, onPrint, paper, note }
       )}
       {open && message && (
         <DocPreview label={label} text={message.text ?? ''} telegramText={message.telegramText} note={note} telegram={Boolean(message.telegram)} phone={phone} paper={paper}
-          initialTab={preset ? 'paper' : undefined} initialFormat={preset?.format} autoImage={Boolean(preset)}
+          initialTab={preset || paper?.formats ? 'paper' : undefined} initialFormat={preset?.format} autoImage={Boolean(preset)}
           busy={bot.isPending} onClose={() => setOpen(false)} onPrint={onPrint}
           sendLabel={(c) => `Отправить пациенту в ${c === 'TELEGRAM' ? 'Telegram' : 'WhatsApp'}: ${label}`}
           onTelegram={() => { setSent(''); bot.mutate() }} onWhatsapp={whatsapp}>
