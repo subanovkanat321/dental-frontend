@@ -132,6 +132,15 @@ test('«Записать на следующий визит»: услуга и �
   expect(await within(form).findByRole('button', { name: `Записать · ${shortDay(week)}, 11:00` })).toBeInTheDocument()
   expect(within(form).getByRole('button', { name: '11:00' })).toHaveAttribute('aria-pressed', 'true')
   expect(asked).toContain(`${week}|2|60`)
+  // Услуги из плана — карточками: несделанный этап (коронка) уже выбран, сделанный (пломба) не предлагаем; нажатие убирает
+  const fromPlan = within(form).getByRole('group', { name: 'Из плана лечения' })
+  const crown = within(fromPlan).getByRole('button', { name: /Коронка/ })
+  expect(crown).toHaveAttribute('aria-pressed', 'true')
+  expect(within(fromPlan).queryByRole('button', { name: /Пломба/ })).not.toBeInTheDocument()
+  await user.click(crown)
+  expect(crown).toHaveAttribute('aria-pressed', 'false')
+  await user.click(crown)
+  expect(crown).toHaveAttribute('aria-pressed', 'true')
 })
 
 test('«Записать на следующий визит»: в этот день свободного нет — первое свободное в следующие дни', async () => {
