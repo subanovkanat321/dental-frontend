@@ -698,6 +698,8 @@ details.agreement-box { max-height: none; }
 .day-list .row .end { font-size: .85rem; }
 .day-list .row .state, .day-list .row .row-note { grid-column: 2 / -1; font-size: .85rem; }
 .day-list .row-note { color: var(--hint); }
+.day-list .row-sub { grid-column: 2 / -1; display: grid; gap: 2px; min-width: 0; }
+.day-list .row .row-sub > * { grid-column: auto; }
 .day-list .row.free { border-style: dashed; background: none; }
 .day-list .row.free .row-button { grid-template-columns: 52px 1fr auto; }
 .day-list .row.free .plus { color: var(--accent); font-weight: 700; }
@@ -833,6 +835,7 @@ button.grid-head:not(:disabled):hover .grid-head-name { color: var(--link); }
 .doctor-columns .row .name { white-space: normal; overflow-wrap: break-word; font-size: .92rem; line-height: 1.2; }
 .doctor-columns .row .name-text { white-space: normal; overflow-wrap: break-word; }
 .doctor-columns .row .state, .doctor-columns .row .row-note { grid-column: auto; font-size: .85rem; overflow-wrap: break-word; }
+.doctor-columns .row-sub { grid-column: auto; }
 .doctor-columns .row .state .hint { display: none; }
 /* Строка приёма: «✓ отправлено» / кнопка напоминания — отдельной строкой внизу карточки, а не сбоку
    (сбоку они отнимали ширину у имени). В свайп-режиме раскладку держит .row-slide */
@@ -852,7 +855,17 @@ button.grid-head:not(:disabled):hover .grid-head-name { color: var(--link); }
 .day-list.wide .doctor-columns { grid-template-columns: repeat(var(--cols, 2), minmax(260px, 1fr)); --gap: 12px; scroll-snap-type: none; scrollbar-width: thin; }
 .day-list.wide .doctor-columns .row-button { grid-template-columns: 48px minmax(0, 1fr) auto; gap: 2px 8px; padding: 10px; }
 .day-list.wide .doctor-columns .row .end { display: inline; }
-.day-list.wide .doctor-columns .row .state, .day-list.wide .doctor-columns .row .row-note { grid-column: 2 / -1; }
+.day-list.wide .doctor-columns .row-sub { grid-column: 2 / -1; }
+/* «Список» на компьютере: все строки одной высоты — запись в две строки (имя; статус · услуга · заметки — с многоточием),
+   свободное время и перерыв — по центру той же высоты */
+.day-list.wide .rows > .row { min-height: 64px; }
+.day-list.wide .row.free, .day-list.wide .row.pause { align-items: center; }
+.day-list.wide .row.free .row-button { align-items: center; align-self: stretch; }
+.day-list.wide .row-sub { display: flex; align-items: baseline; gap: 8px; overflow: hidden; white-space: nowrap; }
+.day-list.wide .row-sub > .state { flex: 0 0 auto; max-width: 70%; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.day-list.wide .row-sub > .row-note { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.day-list.wide .row-sub > .row-note::before { content: '·'; margin-right: 8px; color: var(--hint); }
+.day-list.wide .row-sub > .row-note.chair-mark::before { content: none; }
 .day-list.wide .doctor-columns .row .state .hint { display: inline; }
 .day-list.wide .doctor-columns .row:has(> .row-slide):not(.swipe), .day-list.wide .doctor-columns .row.swipe > .row-slide { flex-direction: row; gap: 6px; }
 .day-list.wide .doctor-columns .row:has(> .row-slide) .row-button { flex: 1; }

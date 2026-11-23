@@ -389,18 +389,22 @@ function Row({ a, me, color, paint, chair, next, active, canEdit, money, onOpen,
           {/* Имя обрезается многоточием, значки — нет: ❗ у длинного имени не должен пропасть */}
           <span className="name"><TagDots patient={a.patient} /><span className="name-text">{a.patient.fullName}</span> <ApptBadges appointment={a} money={money} /></span>
           <span className="end num hint">{timeOf(a.endAt)}</span>
-          <span className={`state tone-${s.tone}`}><span className="ico" aria-hidden="true">{s.icon}</span> {s.label}{a.serviceName ? <span className="hint"> · {serviceEmoji(a.serviceName)} {serviceLabel(a)}</span> : null}</span>
-          {chair && (
-            <span className="row-note chair-mark" title={colleagueMarkText(chair)}>
-              <span aria-hidden="true">🪑 </span>время {shortName(chair.doctorName ?? 'коллеги')}
-            </span>
-          )}
-          {a.comment && <span className="row-note">{a.comment}</span>}
-          {a.depositStatus && money && ['REQUESTED', 'SCHEDULED'].includes(a.status) && (
-            <span className={`row-note tone-${a.depositStatus === 'RECEIVED' ? 'ok' : 'wait'}`}>
-              Предоплата {somText(a.depositSom ?? 0)} · {a.depositStatus === 'RECEIVED' ? 'получена' : a.depositStatus === 'REPORTED' ? 'пациент оплатил — проверьте' : 'ждём'}
-            </span>
-          )}
+          {/* Вторая строка: статус и заметки. Телефон — столбиком; «Список» на компьютере — одной строкой с многоточием,
+              чтобы все записи были одной высоты (полностью — в карточке приёма) */}
+          <span className="row-sub">
+            <span className={`state tone-${s.tone}`}><span className="ico" aria-hidden="true">{s.icon}</span> {s.label}{a.serviceName ? <span className="hint"> · {serviceEmoji(a.serviceName)} {serviceLabel(a)}</span> : null}</span>
+            {chair && (
+              <span className="row-note chair-mark" title={colleagueMarkText(chair)}>
+                <span aria-hidden="true">🪑 </span>время {shortName(chair.doctorName ?? 'коллеги')}
+              </span>
+            )}
+            {a.comment && <span className="row-note" title={a.comment}>{a.comment}</span>}
+            {a.depositStatus && money && ['REQUESTED', 'SCHEDULED'].includes(a.status) && (
+              <span className={`row-note tone-${a.depositStatus === 'RECEIVED' ? 'ok' : 'wait'}`}>
+                Предоплата {somText(a.depositSom ?? 0)} · {a.depositStatus === 'RECEIVED' ? 'получена' : a.depositStatus === 'REPORTED' ? 'пациент оплатил — проверьте' : 'ждём'}
+              </span>
+            )}
+          </span>
         </button>
         {canRemind && (sent ? (
           <span className="remind-sent-box">
