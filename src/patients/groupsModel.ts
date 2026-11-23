@@ -23,7 +23,6 @@ export const READY_HINT: Record<Ready, string> = {
   ONE_VISIT: 'Был один приём больше месяца назад',
   DEBT: 'Не доплатили за лечение',
   BIRTHDAY_MONTH: 'Поздравить и пригласить на осмотр',
-  NO_TELEGRAM: 'Бот им не напишет — WhatsApp или звонок',
 }
 
 export const SKIP_TEXT: Record<SkipReason, string> = {

@@ -17491,7 +17491,7 @@
           "required" : false,
           "schema" : {
             "type" : "string",
-            "enum" : [ "LAPSED_6", "LAPSED_12", "DROPPED", "PLAN_NOT_AGREED", "ONE_VISIT", "DEBT", "BIRTHDAY_MONTH", "NO_TELEGRAM" ]
+            "enum" : [ "LAPSED_6", "LAPSED_12", "DROPPED", "PLAN_NOT_AGREED", "ONE_VISIT", "DEBT", "BIRTHDAY_MONTH" ]
           }
         }, {
           "name" : "tagId",
@@ -23288,7 +23288,7 @@
           },
           "ready" : {
             "type" : "string",
-            "enum" : [ "LAPSED_6", "LAPSED_12", "DROPPED", "PLAN_NOT_AGREED", "ONE_VISIT", "DEBT", "BIRTHDAY_MONTH", "NO_TELEGRAM" ]
+            "enum" : [ "LAPSED_6", "LAPSED_12", "DROPPED", "PLAN_NOT_AGREED", "ONE_VISIT", "DEBT", "BIRTHDAY_MONTH" ]
           },
           "tagId" : {
             "type" : "integer",
@@ -27791,7 +27791,7 @@
         "properties" : {
           "ready" : {
             "type" : "string",
-            "enum" : [ "LAPSED_6", "LAPSED_12", "DROPPED", "PLAN_NOT_AGREED", "ONE_VISIT", "DEBT", "BIRTHDAY_MONTH", "NO_TELEGRAM" ]
+            "enum" : [ "LAPSED_6", "LAPSED_12", "DROPPED", "PLAN_NOT_AGREED", "ONE_VISIT", "DEBT", "BIRTHDAY_MONTH" ]
           },
           "tagId" : {
             "type" : "integer",
