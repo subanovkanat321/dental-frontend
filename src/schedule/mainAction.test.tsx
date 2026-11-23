@@ -51,8 +51,9 @@ function renderPanel(a: Appointment, who: Me = me, onBook = vi.fn()) {
   return { panel: screen.getByRole('complementary', { name: 'Карточка приёма' }), onBook }
 }
 
-const bar = (panel: HTMLElement) => within(panel).getByRole('toolbar', { name: 'Действия с приёмом' })
-const main = (panel: HTMLElement) => bar(panel).querySelector('.appt-bar-main')?.textContent ?? null
+/** Нижняя панель; главной нет — панели нет (2026-11-23), «⋯» в шапке — тогда ищем во всей карточке */
+const bar = (panel: HTMLElement) => within(panel).queryByRole('toolbar', { name: 'Действия с приёмом' }) ?? panel
+const main = (panel: HTMLElement) => within(panel).queryByRole('toolbar', { name: 'Действия с приёмом' })?.querySelector('.appt-bar-main')?.textContent ?? null
 /** a раньше b в карточке */
 const before = (a: Element, b: Element) => Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING)
 
@@ -93,7 +94,7 @@ describe('телефон: внизу — главное действие каж�
     const extra = within(panel).getAllByRole('button', { name: /Принять доплату/ })
     expect(extra).toHaveLength(1)
     expect(panel.querySelector('.appt-pay')).toContainElement(extra[0]!)
-    expect(within(bar(panel)).queryByRole('button', { name: /Принять доплату/ })).not.toBeInTheDocument()
+    expect(within(panel).queryByRole('toolbar', { name: 'Действия с приёмом' })).not.toBeInTheDocument()
     const next = within(panel).getByRole('button', { name: 'Записать на следующий визит' })
     expect(next).not.toHaveClass('primary')
     expect(panel.querySelectorAll('.btn.primary')).toHaveLength(1)

@@ -546,6 +546,10 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
               onClick={() => setLesson(!lesson)}>📖</button>
           )}
           {/* «⋯» — редкое и опасное: удалить запись насовсем (только владелец Tish; клиники отменяют) */}
+          {phone && !barMain && barMenu.length > 0 && (
+            <ActionMenu label="Ещё действия" buttonLabel="Ещё действия" className="btn ghost" content="⋯" caret={false} align="right"
+              title={`${timeOf(a.startAt)} · ${a.patient.fullName}`} disabled={remove.isPending} items={barMenu} />
+          )}
           {me.owner && !phone && (
             <ActionMenu label="Ещё действия" buttonLabel="Ещё действия" className="btn ghost" content="⋯" caret={false} align="right"
               title={`${timeOf(a.startAt)} · ${a.patient.fullName}`}
@@ -687,7 +691,9 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
           onClose={() => setLabOpen(false)} />
       ) : null}
       {/* Телефон: следующий шаг и «⋯» — внизу карточки, всегда под пальцем (над безопасной зоной iPhone) */}
-      {phone && (barMain || barMenu.length > 0) && (
+      {/* Главной кнопки нет — нижней панели тоже нет (2026-11-23, владелец: «снизу пустота» — одна «⋯» на всю ширину):
+          «⋯» — в шапке карточки */}
+      {phone && barMain && (
         <div className="appt-bar" role="toolbar" aria-label="Действия с приёмом">
           {barMain && <button type="button" className="btn primary appt-bar-main" disabled={action.isPending || barMain.disabled} onClick={barMain.run}>{barMain.label}</button>}
           {barMain && kind === 'step' && noShowLink && noShowButton}
