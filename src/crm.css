@@ -3540,3 +3540,6 @@ button.history-link:hover .history-text { color: var(--link); }
 .plan-pick-item[aria-pressed=true] .plan-pick-check { background: var(--accent); color: var(--accent-text); }
 .plan-pick-text { display: grid; gap: 1px; min-width: 0; }
 .plan-pick-name { font-weight: 600; }
+.pay-discount-quick { display: flex; flex-wrap: wrap; gap: 6px; }
+.pay-discount-quick .chip { padding: 4px 12px; border: 1px solid var(--line-strong); border-radius: 99px; background: var(--card); color: var(--text); font: inherit; font-weight: 600; cursor: pointer; }
+.pay-discount-quick .chip[aria-pressed=true] { border-color: var(--accent); background: var(--accent); color: var(--accent-text); }

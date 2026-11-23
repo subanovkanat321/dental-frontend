@@ -35,7 +35,7 @@ export type Paper = {
  * @param messageLabel имя пузыря сообщения для диктора; нет — «Предпросмотр: <label>»
  * @param sendLabel подпись кнопки отправки для диктора; нет — видимый текст
  */
-export function DocPreview({ label, text, telegramText, telegram, phone, parts, paper, initialTab = 'message', busy = false, note, sendLabel, messageLabel,
+export function DocPreview({ label, text, telegramText, telegram, phone, parts, paper, initialTab = 'message', initialFormat, autoImage = false, busy = false, note, sendLabel, messageLabel,
   onTelegram, onWhatsapp, onPrint, onClose, closeText = 'Закрыть', hint, children }: {
   label: string
   text: string
@@ -45,6 +45,10 @@ export function DocPreview({ label, text, telegramText, telegram, phone, parts, 
   parts?: number
   paper?: Paper
   initialTab?: Tab
+  /** формат листа при открытии; нет — чек у квитанции, иначе A4 */
+  initialFormat?: PaperFormat
+  /** открыть сразу «Отправить листом» (кнопка «📤 Отправить» → «Чек / A4 картинкой») */
+  autoImage?: boolean
   busy?: boolean
   note?: (channel: Channel) => ReactNode
   sendLabel?: (channel: Channel) => string
@@ -60,8 +64,8 @@ export function DocPreview({ label, text, telegramText, telegram, phone, parts, 
   const [tab, setTab] = useState<Tab>(paper ? initialTab : 'message')
   const [channel, setChannel] = useState<Channel>(telegram ? 'TELEGRAM' : 'WHATSAPP')
   // Квитанция — чековая лента по умолчанию (2026-11-23, владелец: «маленький вариант основным»), A4 — по выбору
-  const [format, setFormat] = useState<PaperFormat>(paper?.formats ? 'receipt' : 'a4')
-  const [imaging, setImaging] = useState(false)
+  const [format, setFormat] = useState<PaperFormat>(initialFormat ?? (paper?.formats ? 'receipt' : 'a4'))
+  const [imaging, setImaging] = useState(autoImage && Boolean(paper?.image))
   const sheet = useRef<HTMLElement>(null)
   const toTelegram = channel === 'TELEGRAM' && telegram
   const nowhere = !telegram && !phone

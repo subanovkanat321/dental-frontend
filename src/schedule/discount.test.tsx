@@ -5,6 +5,7 @@ import { http, HttpResponse } from 'msw'
 import type { Schemas } from '../api/client'
 import { appointment, me, renderApp, openPay } from '../test/fixtures'
 import { server } from '../test/server'
+import { waitForSlow } from '../test/wait'
 
 type Appointment = Schemas['AppointmentView']
 
@@ -44,6 +45,21 @@ async function card() {
   return screen.getByRole('complementary', { name: 'Карточка приёма' })
 }
 
+test('скидка кнопкой «10 %»: сумму считает сама', async () => {
+  const sent = backend(appointment(10, 1, '10:00', 'Бакыт М.', { status: 'DONE', servicePriceSom: 18000, version: 1 }), ADMIN_POLICY)
+  renderApp()
+  const panel = await card()
+  const form = await openPay(panel)
+  await userEvent.click(within(form).getByRole('button', { name: '＋ Скидка' }))
+  const discount = within(form).getByRole('group', { name: 'Скидка' })
+  await userEvent.click(within(within(discount).getByRole('group', { name: 'Скидка в процентах' })).getByRole('button', { name: '10 %' }))
+  expect(within(discount).getByLabelText('Скидка, %')).toHaveValue(10)
+  expect(within(discount).getByLabelText('Итог со скидкой')).toHaveTextContent(/Скидка 10 % — 1\s800 сом · К оплате 16\s200 сом/)
+  await userEvent.click(within(discount).getByRole('button', { name: 'Постоянный пациент' }))
+  await userEvent.click(within(form).getByRole('button', { name: /^Сохранить оплату/ }))
+  await waitForSlow(() => expect(sent).toEqual([{ amountSom: 16200, method: 'CASH', priceSom: 18000, discount: { percent: 10, reason: 'REGULAR' } }]))
+})
+
 test('скидка 10 %: итог «К оплате» в форме, на сервер — цена и скидка без стоимости, в карточке — скидка и причина', async () => {
   const sent = backend(appointment(10, 1, '10:00', 'Бакыт М.', { status: 'DONE', servicePriceSom: 6000, version: 1 }), ADMIN_POLICY)
   renderApp()
@@ -75,6 +91,8 @@ test('скидка суммой и «Другое»: без комментари
   await userEvent.click(within(discount).getByRole('button', { name: 'Другое' }))
   await userEvent.click(within(form).getByRole('button', { name: 'Часть, остальное потом' }))
   await userEvent.type(within(form).getByLabelText('Заплатил сейчас, сом'), '2000')
+  // Сумма в сомах — рядом её процент: 500 из 5 000 — 10 %
+  expect(within(discount).getByLabelText('Итог со скидкой')).toHaveTextContent(/Скидка 500 сом \(10 %\) · К оплате 4\s500 сом/)
   expect(within(form).getByText(/Остальное потом:/)).toHaveTextContent(/2\s500 сом/)
   await userEvent.click(within(form).getByRole('button', { name: /^Сохранить оплату/ }))
   expect(within(form).getByRole('alert')).toHaveTextContent('Напишите, за что скидка')
@@ -96,6 +114,9 @@ test('регистратура: предел 10 % — больше нельзя;
   await userEvent.click(within(form).getByRole('button', { name: '＋ Скидка' }))
   const discount = within(form).getByRole('group', { name: 'Скидка' })
   expect(within(discount).getByText('Ваш предел — до 10 % от цены')).toBeInTheDocument()
+  // Кнопки процентов — только в пределах: 5 и 10, без 15 и 20
+  const quick = within(discount).getByRole('group', { name: 'Скидка в процентах' })
+  expect(within(quick).getAllByRole('button').map((b) => b.textContent)).toEqual(['5 %', '10 %'])
   await userEvent.type(within(discount).getByLabelText('Скидка, %'), '15')
   await userEvent.click(within(discount).getByRole('button', { name: 'Акция' }))
   await userEvent.click(within(form).getByRole('button', { name: /^Сохранить оплату/ }))

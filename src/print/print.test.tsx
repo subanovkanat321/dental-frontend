@@ -157,6 +157,28 @@ test('квитанция: платежи, кто принял, долг, «Не 
   expect(open).toHaveBeenCalledWith(`https://api.whatsapp.com/send/?phone=996555123456&text=${encodeURIComponent(RECEIPT.text)}`, '_blank', 'noopener')
 })
 
+test('квитанция «📤 Отправить»: выбор — текстом в WhatsApp, чек или A4 картинкой', async () => {
+  const open = vi.spyOn(window, 'open').mockReturnValue(null)
+  backend(done())
+  renderApp()
+  const panel = await card(/Бакыт М\./)
+  await userEvent.click(await within(panel).findByRole('button', { name: 'Отправить: квитанция' }))
+  let sheet = screen.getByRole('dialog', { name: 'Отправить: квитанция' })
+  // Пациент без Telegram — текстом только WhatsApp
+  expect(within(sheet).queryByRole('button', { name: /Текстом в Telegram/ })).not.toBeInTheDocument()
+  await userEvent.click(within(sheet).getByRole('button', { name: /Текстом в WhatsApp/ }))
+  expect(open).toHaveBeenCalledWith(`https://api.whatsapp.com/send/?phone=996555123456&text=${encodeURIComponent(RECEIPT.text)}`, '_blank', 'noopener')
+  expect(screen.queryByRole('dialog', { name: 'Отправить: квитанция' })).not.toBeInTheDocument()
+
+  // «Чек картинкой» — просмотр сразу на листе-чеке и окно «Отправить листом»
+  await userEvent.click(within(panel).getByRole('button', { name: 'Отправить: квитанция' }))
+  sheet = screen.getByRole('dialog', { name: 'Отправить: квитанция' })
+  await userEvent.click(within(sheet).getByRole('button', { name: /Чек картинкой/ }))
+  expect(within(panel).getByRole('document', { name: 'Лист: квитанция' }).querySelector('.print-sheet')).toHaveClass('narrow')
+  expect(await screen.findByRole('dialog', { name: 'Отправить листом: квитанция' })).toBeInTheDocument()
+  open.mockRestore()
+})
+
 test('ассистент: памятка есть, квитанции нет — денег ему не показываем', async () => {
   const assistant = { ...me, admin: false, doctorId: undefined, fullName: 'Асель', assistantOf: [1] }
   const sent = backend(done({ paidSom: undefined, chargeSom: undefined, debtSom: 0 }), assistant)
