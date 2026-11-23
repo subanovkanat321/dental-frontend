@@ -80,8 +80,8 @@ function backend() {
       sent.push({ move: Number(params.stepId), up: body.up })
       const i = plan.findIndex((s) => s.id === Number(params.stepId))
       const j = body.up ? i - 1 : i + 1
-      const copy = [...plan];
-      [copy[i], copy[j]] = [copy[j], copy[i]]
+      const copy = [...plan]
+      copy.splice(Math.min(i, j), 2, plan[Math.max(i, j)]!, plan[Math.min(i, j)]!)
       plan = copy
       return HttpResponse.json(plan)
     }),
@@ -205,7 +205,7 @@ test('страница плана по ссылке: варианты вклад
     http.post('*/web/plan/:token/agree', ({ request }) => {
       agreed = new URL(request.url).search
       return HttpResponse.json({ ...plan, variants: undefined, agreedAt: '2026-11-23T05:00:00Z', chosenNumber: 2, chosenName: 'Эконом', totalSom: 33000,
-        stages: plan.variants![1].stages } satisfies Plan)
+        stages: plan.variants![1]!.stages } satisfies Plan)
     }),
   )
   render(<PlanPage />)
