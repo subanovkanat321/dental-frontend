@@ -2119,6 +2119,84 @@
         }
       }
     },
+    "/api/patients/{patientId}/plan/variants/{variantId}" : {
+      "put" : {
+        "tags" : [ "plan-variant-controller" ],
+        "operationId" : "rename",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "variantId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PlanVariantsRename"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PlanVariantsVariants"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "plan-variant-controller" ],
+        "operationId" : "delete_12",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "variantId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PlanVariantsVariants"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/patients/{patientId}/plan/status" : {
       "get" : {
         "tags" : [ "plan-state-controller" ],
@@ -2697,7 +2775,7 @@
       },
       "delete" : {
         "tags" : [ "patient-tags-controller" ],
-        "operationId" : "delete_12",
+        "operationId" : "delete_13",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -2802,7 +2880,7 @@
       },
       "delete" : {
         "tags" : [ "segment-controller" ],
-        "operationId" : "delete_13",
+        "operationId" : "delete_14",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -3117,7 +3195,7 @@
       },
       "put" : {
         "tags" : [ "staff-members-controller" ],
-        "operationId" : "rename",
+        "operationId" : "rename_1",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -3321,7 +3399,7 @@
       },
       "delete" : {
         "tags" : [ "lead-controller" ],
-        "operationId" : "delete_14",
+        "operationId" : "delete_15",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -3456,7 +3534,7 @@
       },
       "delete" : {
         "tags" : [ "lab-controller" ],
-        "operationId" : "delete_15",
+        "operationId" : "delete_16",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -3476,7 +3554,7 @@
     "/api/families/{id}" : {
       "put" : {
         "tags" : [ "family-controller" ],
-        "operationId" : "rename_1",
+        "operationId" : "rename_2",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -3548,7 +3626,7 @@
       },
       "delete" : {
         "tags" : [ "expense-controller" ],
-        "operationId" : "delete_16",
+        "operationId" : "delete_17",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -4691,7 +4769,7 @@
     "/api/chairs/{id}" : {
       "put" : {
         "tags" : [ "chair-controller" ],
-        "operationId" : "rename_2",
+        "operationId" : "rename_3",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -4726,7 +4804,7 @@
       },
       "delete" : {
         "tags" : [ "chair-controller" ],
-        "operationId" : "delete_17",
+        "operationId" : "delete_18",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -5731,6 +5809,14 @@
           "required" : true,
           "schema" : {
             "type" : "string"
+          }
+        }, {
+          "name" : "variant",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         } ],
         "responses" : {
@@ -9198,6 +9284,14 @@
             "type" : "integer",
             "format" : "int64"
           }
+        }, {
+          "name" : "variantId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
         } ],
         "requestBody" : {
           "content" : {
@@ -9226,6 +9320,150 @@
         }
       }
     },
+    "/api/patients/{patientId}/plan/{stepId}/move" : {
+      "post" : {
+        "tags" : [ "chart-controller" ],
+        "operationId" : "moveStep",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "stepId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ChartControllerMove"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/TreatmentStepView"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/patients/{patientId}/plan/variants" : {
+      "get" : {
+        "tags" : [ "plan-variant-controller" ],
+        "operationId" : "list_9",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PlanVariantsVariants"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "plan-variant-controller" ],
+        "operationId" : "create_14",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PlanVariantsCreate"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PlanVariantsVariants"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/patients/{patientId}/plan/variants/{variantId}/choose" : {
+      "post" : {
+        "tags" : [ "plan-variant-controller" ],
+        "operationId" : "choose",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "variantId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PlanVariantsVariants"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/patients/{patientId}/plan/templates/{templateId}" : {
       "post" : {
         "tags" : [ "plan-template-controller" ],
@@ -9242,6 +9480,14 @@
           "name" : "templateId",
           "in" : "path",
           "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "variantId",
+          "in" : "query",
+          "required" : false,
           "schema" : {
             "type" : "integer",
             "format" : "int64"
@@ -9457,6 +9703,14 @@
           "name" : "patientId",
           "in" : "path",
           "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "variantId",
+          "in" : "query",
+          "required" : false,
           "schema" : {
             "type" : "integer",
             "format" : "int64"
@@ -10377,6 +10631,14 @@
             "type" : "integer",
             "format" : "int64"
           }
+        }, {
+          "name" : "variant",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
         } ],
         "responses" : {
           "200" : {
@@ -10753,7 +11015,7 @@
       },
       "post" : {
         "tags" : [ "segment-controller" ],
-        "operationId" : "create_14",
+        "operationId" : "create_15",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -10957,7 +11219,7 @@
     "/api/news" : {
       "get" : {
         "tags" : [ "news-controller" ],
-        "operationId" : "list_9",
+        "operationId" : "list_10",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -11300,7 +11562,7 @@
     "/api/leads" : {
       "get" : {
         "tags" : [ "lead-controller" ],
-        "operationId" : "list_10",
+        "operationId" : "list_11",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -11319,7 +11581,7 @@
       },
       "post" : {
         "tags" : [ "lead-controller" ],
-        "operationId" : "create_15",
+        "operationId" : "create_16",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -11440,7 +11702,7 @@
     "/api/lab-orders" : {
       "get" : {
         "tags" : [ "lab-controller" ],
-        "operationId" : "list_11",
+        "operationId" : "list_12",
         "parameters" : [ {
           "name" : "fitted",
           "in" : "query",
@@ -11499,7 +11761,7 @@
       },
       "post" : {
         "tags" : [ "lab-controller" ],
-        "operationId" : "create_16",
+        "operationId" : "create_17",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -11662,7 +11924,7 @@
     "/api/expenses" : {
       "get" : {
         "tags" : [ "expense-controller" ],
-        "operationId" : "list_12",
+        "operationId" : "list_13",
         "parameters" : [ {
           "name" : "from",
           "in" : "query",
@@ -11793,7 +12055,7 @@
       },
       "post" : {
         "tags" : [ "doctor-controller" ],
-        "operationId" : "create_17",
+        "operationId" : "create_18",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -12276,7 +12538,7 @@
     "/api/clinic/pay/requests" : {
       "post" : {
         "tags" : [ "pay-controller" ],
-        "operationId" : "create_18",
+        "operationId" : "create_19",
         "parameters" : [ {
           "name" : "months",
           "in" : "query",
@@ -12844,7 +13106,7 @@
     "/api/chairs" : {
       "get" : {
         "tags" : [ "chair-assignment-controller" ],
-        "operationId" : "list_13",
+        "operationId" : "list_14",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -12863,7 +13125,7 @@
       },
       "post" : {
         "tags" : [ "chair-controller" ],
-        "operationId" : "create_19",
+        "operationId" : "create_20",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -12975,7 +13237,7 @@
     "/api/care-memos" : {
       "get" : {
         "tags" : [ "care-memo-controller" ],
-        "operationId" : "list_14",
+        "operationId" : "list_15",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -12994,7 +13256,7 @@
       },
       "post" : {
         "tags" : [ "care-memo-controller" ],
-        "operationId" : "create_20",
+        "operationId" : "create_21",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -13119,7 +13381,7 @@
       },
       "delete" : {
         "tags" : [ "calendar-feed-controller" ],
-        "operationId" : "delete_18",
+        "operationId" : "delete_19",
         "responses" : {
           "204" : {
             "description" : "No Content"
@@ -13239,7 +13501,7 @@
       },
       "post" : {
         "tags" : [ "appointment-controller" ],
-        "operationId" : "create_21",
+        "operationId" : "create_22",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -15630,7 +15892,7 @@
     "/api/salaries" : {
       "get" : {
         "tags" : [ "salary-controller" ],
-        "operationId" : "list_15",
+        "operationId" : "list_16",
         "parameters" : [ {
           "name" : "month",
           "in" : "query",
@@ -16023,7 +16285,7 @@
     "/api/platform/outreach" : {
       "get" : {
         "tags" : [ "outreach-controller" ],
-        "operationId" : "list_16",
+        "operationId" : "list_17",
         "parameters" : [ {
           "name" : "group",
           "in" : "query",
@@ -16113,7 +16375,7 @@
     "/api/platform/materials" : {
       "get" : {
         "tags" : [ "materials-controller" ],
-        "operationId" : "list_17",
+        "operationId" : "list_18",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -16825,7 +17087,7 @@
       },
       "delete" : {
         "tags" : [ "medical-record-controller" ],
-        "operationId" : "delete_19",
+        "operationId" : "delete_20",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "path",
@@ -17357,7 +17619,7 @@
     "/api/patient-questions" : {
       "get" : {
         "tags" : [ "question-controller" ],
-        "operationId" : "list_18",
+        "operationId" : "list_19",
         "parameters" : [ {
           "name" : "done",
           "in" : "query",
@@ -17553,7 +17815,7 @@
     "/api/opening-debts" : {
       "get" : {
         "tags" : [ "opening-debt-controller" ],
-        "operationId" : "list_19",
+        "operationId" : "list_20",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "query",
@@ -17583,7 +17845,7 @@
     "/api/members" : {
       "get" : {
         "tags" : [ "staff-members-controller" ],
-        "operationId" : "list_20",
+        "operationId" : "list_21",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -18560,7 +18822,7 @@
       },
       "delete" : {
         "tags" : [ "appointment-controller" ],
-        "operationId" : "delete_20",
+        "operationId" : "delete_21",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -18615,7 +18877,7 @@
     "/api/appointments/{id}/teeth" : {
       "get" : {
         "tags" : [ "visit-teeth-controller" ],
-        "operationId" : "list_21",
+        "operationId" : "list_22",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -19679,7 +19941,7 @@
     "/api/time-off/{id}" : {
       "delete" : {
         "tags" : [ "time-off-controller" ],
-        "operationId" : "delete_21",
+        "operationId" : "delete_22",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -19719,7 +19981,7 @@
     "/api/platform/clinics/{id}" : {
       "delete" : {
         "tags" : [ "platform-controller" ],
-        "operationId" : "delete_22",
+        "operationId" : "delete_23",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -19776,7 +20038,7 @@
     "/api/news/{id}" : {
       "delete" : {
         "tags" : [ "news-controller" ],
-        "operationId" : "delete_23",
+        "operationId" : "delete_24",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -19835,7 +20097,7 @@
     "/api/doctors/{id}" : {
       "delete" : {
         "tags" : [ "doctor-controller" ],
-        "operationId" : "delete_24",
+        "operationId" : "delete_25",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -19895,7 +20157,7 @@
     "/api/cash-day/movements/{id}" : {
       "delete" : {
         "tags" : [ "cash-day-controller" ],
-        "operationId" : "delete_25",
+        "operationId" : "delete_26",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -22812,6 +23074,71 @@
         },
         "required" : [ "id", "stage" ]
       },
+      "PlanVariantsRename" : {
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          }
+        }
+      },
+      "PlanVariantsVariantView" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "number" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "label" : {
+            "type" : "string"
+          },
+          "current" : {
+            "type" : "boolean"
+          },
+          "chosenAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "chosenVia" : {
+            "type" : "string",
+            "enum" : [ "STAFF", "BOT", "APP", "PAGE" ]
+          },
+          "totalSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "leftSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "steps" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/TreatmentStepView"
+            }
+          }
+        },
+        "required" : [ "current", "number" ]
+      },
+      "PlanVariantsVariants" : {
+        "properties" : {
+          "variants" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PlanVariantsVariantView"
+            }
+          },
+          "switchable" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "switchable" ]
+      },
       "PlanStateControllerMarkRequest" : {
         "properties" : {
           "mark" : {
@@ -25563,6 +25890,19 @@
           },
           "chart" : {
             "$ref" : "#/components/schemas/PlanPictureChart"
+          },
+          "variants" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PlanOffersVariantPlan"
+            }
+          },
+          "chosenNumber" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "chosenName" : {
+            "type" : "string"
           }
         },
         "required" : [ "id", "totalSom" ]
@@ -25585,6 +25925,35 @@
           }
         },
         "required" : [ "stage", "totalSom" ]
+      },
+      "PlanOffersVariantPlan" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "number" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "stages" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PlanOffersStage"
+            }
+          },
+          "totalSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "chart" : {
+            "$ref" : "#/components/schemas/PlanPictureChart"
+          }
+        },
+        "required" : [ "id", "number", "totalSom" ]
       },
       "PlanPictureChart" : {
         "properties" : {
@@ -27127,6 +27496,25 @@
           }
         }
       },
+      "ChartControllerMove" : {
+        "properties" : {
+          "up" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "up" ]
+      },
+      "PlanVariantsCreate" : {
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "copyFrom" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
       "PlanTemplatesApply" : {
         "properties" : {
           "teeth" : {
@@ -27199,6 +27587,13 @@
           },
           "active" : {
             "type" : "boolean"
+          },
+          "variants" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "chosenVariant" : {
+            "type" : "string"
           }
         },
         "required" : [ "active", "id", "totalSom" ]
@@ -32709,7 +33104,7 @@
           },
           "kind" : {
             "type" : "string",
-            "enum" : [ "CREATED", "BOOKED", "REQUESTED", "DONE", "NO_SHOW", "CANCELLED", "REMINDED", "REMINDED_SOON", "REVIEW_ASKED", "RATED", "REVIEW_LINK", "REVIEW_CLICKED", "REPORT_SENT", "PAYMENT", "DEPOSIT", "ADVANCE_IN", "ADVANCE_REFUND", "ADVANCE_TRANSFER", "OPENING_DEBT", "OPENING_DEBT_PAID", "DEBT_REMINDED", "WAITLIST_ADDED", "WAITLIST_OFFERED", "WAITLIST_DECLINED", "PLAN_STEPS", "PLAN_SENT", "PLAN_AGREED", "PLAN_ACCEPTED", "PLAN_REFUSED", "BOT_INVITED", "BOT_JOINED", "BIRTHDAY", "TASK_CREATED", "TASK_DONE", "COMEBACK_INVITED", "QUESTION", "MERGED", "LEAD", "GROUP_MESSAGE", "GROUP_OPT_OUT" ]
+            "enum" : [ "CREATED", "BOOKED", "REQUESTED", "DONE", "NO_SHOW", "CANCELLED", "REMINDED", "REMINDED_SOON", "REVIEW_ASKED", "RATED", "REVIEW_LINK", "REVIEW_CLICKED", "REPORT_SENT", "PAYMENT", "DEPOSIT", "ADVANCE_IN", "ADVANCE_REFUND", "ADVANCE_TRANSFER", "OPENING_DEBT", "OPENING_DEBT_PAID", "DEBT_REMINDED", "WAITLIST_ADDED", "WAITLIST_OFFERED", "WAITLIST_DECLINED", "PLAN_STEPS", "PLAN_SENT", "PLAN_AGREED", "PLAN_ACCEPTED", "PLAN_REFUSED", "PLAN_VARIANT_ADDED", "PLAN_VARIANT_CHOSEN", "BOT_INVITED", "BOT_JOINED", "BIRTHDAY", "TASK_CREATED", "TASK_DONE", "COMEBACK_INVITED", "QUESTION", "MERGED", "LEAD", "GROUP_MESSAGE", "GROUP_OPT_OUT" ]
           },
           "at" : {
             "type" : "string",

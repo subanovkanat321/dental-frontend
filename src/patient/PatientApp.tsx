@@ -888,9 +888,10 @@ function PlanScreen({ ctx, back }: { ctx: Ctx; back: Screen }) {
   const client = useQueryClient()
   const plans = useQuery({ queryKey: ['patient-plans'], queryFn: () => unwrap(api.GET('/api/patient/plans')) })
   const plan = plans.data?.[0]
-  const answer = useMutation<Schemas['PlanOffersPatientPlan'], ApiError, 'agree' | 'question'>({
-    mutationFn: (kind) => unwrap(kind === 'agree'
-      ? api.POST('/api/patient/plans/{id}/agree', { params: { path: { id: plan!.id } } })
+  // variant — выбранный вариант плана (V254), если врач прислал несколько
+  const answer = useMutation<Schemas['PlanOffersPatientPlan'], ApiError, { kind: 'agree' | 'question'; variant?: number }>({
+    mutationFn: ({ kind, variant }) => unwrap(kind === 'agree'
+      ? api.POST('/api/patient/plans/{id}/agree', { params: { path: { id: plan!.id }, query: variant != null ? { variant } : undefined } })
       : api.POST('/api/patient/plans/{id}/question', { params: { path: { id: plan!.id } } })),
     onSuccess: (fresh) => {
       haptic('success')
@@ -905,7 +906,7 @@ function PlanScreen({ ctx, back }: { ctx: Ctx; back: Screen }) {
       {plans.error && <p className="error">{errorText(t, plans.error, ctx.me.clinicContact)}</p>}
       {plans.isSuccess && !plan && <><h1>{t('planTitle')}</h1><p className="hint">{t('planNone')}</p></>}
       {plan && (
-        <PlanView plan={plan} t={t} busy={answer.isPending} onAgree={() => answer.mutate('agree')} onAsk={() => answer.mutate('question')}
+        <PlanView plan={plan} t={t} busy={answer.isPending} onAgree={(variant) => answer.mutate({ kind: 'agree', variant })} onAsk={() => answer.mutate({ kind: 'question' })}
           onBook={() => ctx.go(bookStart())}
           error={answer.error ? (answer.error.status === 404 ? t('planGone') : errorText(t, answer.error, ctx.me.clinicContact)) : null} />
       )}

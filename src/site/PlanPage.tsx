@@ -32,10 +32,10 @@ export function PlanPage() {
     })
   }, [token, valid])
 
-  const answer = async (kind: 'agree' | 'question') => {
+  const answer = async (kind: 'agree' | 'question', variant?: number) => {
     setBusy(true)
     setError(null)
-    const { status, data } = await postJson<Plan>(`/web/plan/${token}/${kind}`, {})
+    const { status, data } = await postJson<Plan>(`/web/plan/${token}/${kind}${variant != null ? `?variant=${variant}` : ''}`, {})
     setBusy(false)
     if (data) setPlan(data)
     else setError(status === 404 ? t('planGone') : t('noConnection'))
@@ -51,7 +51,7 @@ export function PlanPage() {
       {state === 'gone' && <p role="alert">{t('planGone')}</p>}
       {state === 'offline' && <p role="alert">{t('noConnection')}</p>}
       {plan && <PlanView plan={plan} t={t} busy={busy} error={error}
-        onAgree={() => void answer('agree')} onAsk={() => void answer('question')} />}
+        onAgree={(variant) => void answer('agree', variant)} onAsk={() => void answer('question')} />}
     </main>
   )
 }

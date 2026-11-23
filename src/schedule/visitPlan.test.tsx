@@ -60,9 +60,12 @@ test('строка «План лечения» рядом с зубами: сч�
 
   await userEvent.click(head)
   expect(within(row).getByRole('list', { name: 'Этапы лечения' })).toHaveTextContent('Лечение каналов')
-  await userEvent.type(within(row).getByRole('textbox', { name: 'Что сделать' }), 'Пломба')
-  await userEvent.type(within(row).getByRole('textbox', { name: 'Зуб' }), '36')
-  await userEvent.click(within(row).getByRole('button', { name: '＋ Добавить в план' }))
+  // С зубов: 36 на формуле плана → «Что сделать: 36 →» → лист
+  await userEvent.click(within(row).getByRole('button', { name: /^Зуб 36:/ }))
+  await userEvent.click(within(row).getByRole('button', { name: 'Что сделать: 36 →' }))
+  const add = await screen.findByRole('form', { name: 'Новый этап' })
+  await userEvent.type(within(add).getByRole('textbox', { name: 'Что сделать' }), 'Пломба')
+  await userEvent.click(within(add).getByRole('button', { name: '＋ Добавить в план' }))
   await waitForSlow(() => expect(calls).toContainEqual(expect.objectContaining({ title: 'Пломба', tooth: 36 })))
   await waitForSlow(() => expect(head).toHaveTextContent('2 этапа, 1 сделан сегодня'))
 

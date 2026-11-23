@@ -45,3 +45,14 @@
   .plan-view .plan-chart-tooth .tooth-number { font-size: .78rem; }
   .plan-view .plan-chart .teeth { gap: 3px; }
 }
+
+/* Несколько вариантов плана (V254): вкладки с итогом — «Вариант 1 — 63 000 сом», крупные, чтобы нажать пальцем */
+.plan-view-intro { font-weight: 600; }
+.plan-view-variants { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+.plan-view-variants button {
+  display: grid; gap: 2px; justify-items: start; min-height: 56px; padding: 8px 12px; border: 1.5px solid var(--line-strong, var(--separator));
+  border-radius: var(--r-md); background: var(--card, transparent); color: var(--text); font: inherit; text-align: left; cursor: pointer;
+}
+.plan-view-variants button b { font-size: 1.05rem; }
+.plan-view-variants button[aria-selected=true] { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 0 0 1px var(--accent); }
+.plan-view-chosen { font-weight: 600; }

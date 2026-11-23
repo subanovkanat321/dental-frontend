@@ -64,6 +64,8 @@ export const TIMELINE_ICON: Record<TimelineKind, string> = {
   PLAN_SENT: '📤',
   PLAN_AGREED: '👍',
   PLAN_ACCEPTED: '👍',
+  PLAN_VARIANT_ADDED: '⧉',
+  PLAN_VARIANT_CHOSEN: '✅',
   PLAN_REFUSED: '👎',
   BOT_INVITED: '📲',
   BOT_JOINED: '🤖',
@@ -77,6 +79,9 @@ export const TIMELINE_ICON: Record<TimelineKind, string> = {
   GROUP_MESSAGE: '👥',
   GROUP_OPT_OUT: '🔕',
 }
+
+/** Как выбрал вариант плана (V254). */
+const CHOSEN_VIA: Record<string, string> = { STAFF: ' (отметил сотрудник)', BOT: ' в боте', APP: ' в приложении', PAGE: ' по ссылке' }
 
 const via = (channel?: string | null) => (channel && CHANNEL[channel] ? ` ${CHANNEL[channel]}` : '')
 const when = (at?: string | null) => (at ? shortDate(at, true) : '')
@@ -118,6 +123,8 @@ export function timelineText(i: TimelineItem): string {
     case 'PLAN_SENT': return `Отправили план пациенту${via(i.detail)}`
     case 'PLAN_AGREED': return 'Согласился с планом по ссылке'
     case 'PLAN_ACCEPTED': return 'План принят'
+    case 'PLAN_VARIANT_ADDED': return `Добавлен вариант плана: Вариант ${i.count ?? ''}${i.extra ? ` — ${i.extra}` : ''}`
+    case 'PLAN_VARIANT_CHOSEN': return `Пациент выбрал вариант ${i.count ?? ''}${i.extra ? ` — ${i.extra}` : ''}${CHOSEN_VIA[i.detail ?? ''] ?? ''}`
     case 'PLAN_REFUSED': return 'Отказался от плана'
     case 'BOT_INVITED': return `Пригласили в бот${via(i.detail)}`
     case 'BOT_JOINED': return 'Подключился к боту'

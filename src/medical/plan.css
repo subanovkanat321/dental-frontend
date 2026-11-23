@@ -59,3 +59,72 @@
   .plan-template-row { grid-template-columns: 1fr 1fr; padding-bottom: 8px; border-bottom: 1px solid var(--separator); }
   .plan-template-row > input:first-child { grid-column: 1 / -1; }
 }
+
+/*
+ * План с зубов (2026-11-23): формула сверху — главный способ добавить работу; зуб с этапом плана — в пунктирной рамке
+ * с числом этапов; выбранные — галочкой (как «Несколько зубов» на карте). Ниже — полоса «Выбрано: 16, 17 · Что сделать →».
+ */
+.plan-teeth { display: grid; gap: 8px; margin: 4px 0 8px; }
+.plan-teeth .tooth { position: relative; }
+.plan-teeth .tooth.planned { border: 1.5px dashed var(--accent); background: var(--accent-soft); }
+.plan-teeth .tooth.planned.picked { border-style: solid; }
+.tooth-plan-count { position: absolute; top: 1px; right: 2px; min-width: 15px; height: 15px; padding: 0 3px; border-radius: 8px;
+  background: var(--accent); color: var(--on-accent, #fff); font-size: .66rem; font-weight: 700; line-height: 15px; text-align: center; }
+.plan-teeth-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px;
+  border-radius: var(--r-md); background: var(--sunken); }
+/* Выбрали зубы — полоса «Что сделать →» прилипает к низу: кнопка под пальцем, пока листаешь формулу */
+.plan-teeth-bar.active { position: sticky; bottom: 8px; z-index: 2; background: var(--accent-soft); box-shadow: 0 2px 10px rgba(15, 42, 48, .12); }
+.plan-teeth-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.plan li.picked-row { background: var(--accent-soft); }
+.plan-move { display: inline-flex; gap: 0; }
+.plan-move .btn:disabled { opacity: .3; }
+
+/* «Что сделать: 16, 17» */
+.plan-step-sheet { display: grid; gap: 12px; }
+.plan-step-already { padding: 8px 10px; border-radius: var(--r-md); background: var(--sunken); }
+.plan-step-already ul { margin: 4px 0 0; padding-left: 18px; }
+.plan-step-quick .chip { min-height: 40px; padding: 6px 12px; }
+.plan-step-search { display: grid; gap: 6px; }
+.plan-step-search input, .plan-step-fields input { font: inherit; padding: 9px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md);
+  background: var(--card); color: var(--text); min-width: 0; width: 100%; box-sizing: border-box; }
+.plan-step-found { list-style: none; margin: 0; padding: 0; display: grid; max-height: 260px; overflow: auto; border: 1px solid var(--separator); border-radius: var(--r-md); }
+.plan-step-found li + li { border-top: 1px solid var(--separator); }
+.plan-step-found .row-link { display: flex; justify-content: space-between; gap: 12px; width: 100%; padding: 10px 12px; font-weight: 500; min-height: 44px; }
+.plan-step-found .row-link:hover { background: var(--accent-soft); }
+.plan-step-picked { margin: 0; display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; }
+.plan-step-fields { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1.3fr); gap: 8px 12px; }
+.plan-step-fields .field { margin: 0; }
+@media (max-width: 640px) {
+  .plan-step-fields { grid-template-columns: 1fr 1fr; }
+  .plan-step-title { grid-column: 1 / -1; }
+  .plan-teeth-actions, .plan-teeth-actions .btn { flex: 1 1 auto; min-height: 44px; }
+  /* Строка этапа: цена слева, ↑ ↓ 🦷 👤 ✏️ ✕ — в одну строку на 390 px */
+  .plan li > .btn.small, .plan-move .btn { padding: 0 4px; min-width: 36px; min-height: 40px; }
+}
+
+/* Варианты плана (V254): вкладки с итогом, на компьютере — сравнение столбцами */
+.plan-variants { display: grid; gap: 8px; margin: 4px 0 8px; }
+.plan-variant-tabs button { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-height: 44px; }
+.plan-variant-tabs button[aria-selected=true] { background: var(--card); color: var(--link); font-weight: 600;
+  box-shadow: 0 1px 3px rgba(15, 42, 48, .14), 0 0 0 1.5px var(--accent); }
+.plan-variant-total { font-weight: 700; }
+.plan-variant-add { border-style: dashed !important; }
+.plan-variant-actions { flex-wrap: wrap; align-items: center; }
+.plan-variant-rename { display: flex; flex-wrap: wrap; gap: 8px; }
+.plan-variant-rename input { font: inherit; padding: 7px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); flex: 1 1 200px; }
+.plan-variant-chosen { margin: 0; font-weight: 600; }
+.plan-variant-sum { margin: 4px 0; padding: 8px 12px; border-radius: var(--r-md); background: var(--accent-soft); font-size: 1.05rem; }
+.plan-variant-others summary { cursor: pointer; color: var(--hint); }
+.plan-variant-others ul { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 6px; }
+.plan-variant-others li { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.plan-compare { display: grid; grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr)); gap: 10px; }
+.plan-compare-col { display: grid; align-content: start; gap: 6px; padding: 10px 12px; border: 1px solid var(--separator); border-radius: var(--r-md); background: var(--card); }
+.plan-compare-col.active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.plan-compare-col ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; font-size: .88rem; }
+.plan-compare-col li { display: flex; justify-content: space-between; gap: 8px; }
+.plan-compare-total { margin: 0; padding-top: 6px; border-top: 1px solid var(--separator); }
+@media (max-width: 900px) { .plan-compare { display: none; } }
+.plan-template-search { font: inherit; padding: 9px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); width: 100%; box-sizing: border-box; margin-bottom: 8px; }
+.plan-template-save { display: grid; gap: 6px; margin: 8px 0; padding: 10px 12px; border-radius: var(--r-md); background: var(--accent-soft); }
+.plan-template-save input { font: inherit; padding: 8px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
+.plan-offer-how { margin-bottom: 8px; }

@@ -95,12 +95,14 @@ test('план по этапам: заголовки «Этап 1 · 10 500 со
   await userEvent.click(screen.getByRole('button', { name: 'Сохранить' }))
   await waitForSlow(() => expect(calls).toContainEqual({ put: 2, stage: 2 }))
 
-  const form = screen.getByRole('form', { name: 'Новый этап' })
-  await userEvent.click(within(form).getByRole('combobox', { name: 'Услуга из прайса' }))
-  await userEvent.click(screen.getByRole('option', { name: /Имплант/ }))
+  // С зубов: 46 на формуле → «Что сделать» → поиск услуги в прайсе
+  await userEvent.click(screen.getByRole('button', { name: /^Зуб 46:/ }))
+  await userEvent.click(screen.getByRole('button', { name: 'Что сделать: 46 →' }))
+  const form = await screen.findByRole('form', { name: 'Новый этап' })
+  await userEvent.type(within(form).getByRole('searchbox', { name: 'Найти услугу в прайсе' }), 'имп')
+  await userEvent.click(within(form).getByRole('button', { name: /Имплант/ }))
   expect(within(form).getByRole('textbox', { name: 'Что сделать' })).toHaveValue('Имплант')
   expect(within(form).getByRole('spinbutton', { name: 'Цена, сом' })).toHaveValue(30000)
-  await userEvent.type(within(form).getByRole('textbox', { name: 'Зуб' }), '46')
   await userEvent.click(within(form).getByRole('combobox', { name: 'Этап лечения' }))
   await userEvent.click(screen.getByRole('option', { name: 'Этап 3' }))
   await userEvent.click(within(form).getByRole('button', { name: '＋ Добавить в план' }))

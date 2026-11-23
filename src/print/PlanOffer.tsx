@@ -16,11 +16,13 @@ type Step = Schemas['TreatmentStepView']
 type Patient = Schemas['PatientView']
 type Offer = Schemas['PlanOffersOfferView']
 type Channel = NonNullable<Schemas['PlanOffersSendRequest']['channel']>
+type Variant = Schemas['PlanVariantsVariantView']
 
 /** «Отправлен 3 ноя 2026 · согласован 4 ноя 2026» — статус последнего отправленного плана. */
 function offerStatus(o: Offer): string {
   const parts = [`Отправлен ${o.sentAt ? shortDate(o.sentAt) : ''}${o.channel === 'WHATSAPP' ? ' в WhatsApp' : ' в Telegram'}`]
-  if (o.agreedAt) parts.push(`согласован ${shortDate(o.agreedAt)}`)
+  if (o.agreedAt) parts.push(`согласован ${shortDate(o.agreedAt)}${o.chosenVariant ? ` · ${o.chosenVariant}` : ''}`)
+  else if (o.variants) parts.push(`вариантов: ${o.variants}`)
   else if (o.questionAt) parts.push(`просит перезвонить (${shortDate(o.questionAt)})`)
   else if (!o.active) parts.push('не согласован, цены истекли')
   else parts.push('ждём ответа')
@@ -34,7 +36,14 @@ function offerStatus(o: Offer): string {
  * кнопками «Согласен» / «Есть вопрос» / «Записаться на 1-й этап»), в WhatsApp (текст со ссылкой на
  * страницу плана) или печать. Отправляет сервер; здесь — только то, что увидит пациент.
  */
-export function PlanOffer({ patient, steps }: { patient: Patient; steps: Step[] }) {
+export function PlanOffer({ patient, steps, variants, onSheet }: {
+  patient: Patient
+  steps: Step[]
+  /** Несколько вариантов, пациент ещё не выбрал (V254): уйдут все, пациент выберет */
+  variants?: Variant[]
+  /** «📄 Листом A4» — открыть лист плана и отправить его картинкой */
+  onSheet?: () => void
+}) {
   const patientId = patient.id
   const offers = useQuery({
     queryKey: ['plan-offers', patientId],
@@ -46,13 +55,17 @@ export function PlanOffer({ patient, steps }: { patient: Patient; steps: Step[] 
   return (
     <div className="plan-offer">
       {last && <p className={last.agreedAt ? 'tone-ok small' : 'hint small'} aria-label="Статус плана">{offerStatus(last)}</p>}
-      {open ? <OfferPanel patient={patient} steps={todo} onClose={() => setOpen(false)} />
+      {open ? <OfferPanel patient={patient} steps={todo} variants={variants} onSheet={onSheet} onClose={() => setOpen(false)} />
         : todo.length > 0 && <button type="button" className="btn" onClick={() => setOpen(true)}>Отправить план пациенту</button>}
     </div>
   )
 }
 
-function OfferPanel({ patient, steps, onClose }: { patient: Patient; steps: Step[]; onClose: () => void }) {
+function OfferPanel({ patient, steps, variants, onSheet, onClose }: {
+  patient: Patient; steps: Step[]; variants?: Variant[]; onSheet?: () => void; onClose: () => void
+}) {
+  // Два равных способа (владелец, 2026-11-23): сообщением со ссылкой и кнопкой «Согласен» — или листом A4 картинкой
+  const [how, setHow] = useState<'message' | 'sheet'>('message')
   const patientId = patient.id
   const client = useQueryClient()
   const today = todayIn()
@@ -85,8 +98,28 @@ function OfferPanel({ patient, steps, onClose }: { patient: Patient; steps: Step
     )
   }
   const telegramFirst = Boolean(patient.telegram)
+  const ways = onSheet && (
+    <div className="segments plan-offer-how" role="group" aria-label="Как отправить">
+      <button type="button" aria-pressed={how === 'message'} onClick={() => setHow('message')}>💬 Сообщением</button>
+      <button type="button" aria-pressed={how === 'sheet'} onClick={() => setHow('sheet')}>📄 Листом A4</button>
+    </div>
+  )
+  if (how === 'sheet' && onSheet) {
+    return (
+      <section className="plan-offer-panel" aria-label="План пациенту">
+        {ways}
+        <p className="hint">Лист A4, как на печати: рисунок зубов, этапы и цены{variants ? ', все варианты с итогами' : ''} — пациенту картинкой
+          в Telegram-бот или в WhatsApp. Кнопки «Согласен» на картинке нет — согласие отметьте сами.</p>
+        <div className="actions">
+          <button type="button" className="btn primary" onClick={onSheet}>📄 Открыть лист и отправить</button>
+          <button type="button" className="btn ghost" onClick={onClose}>Отмена</button>
+        </div>
+      </section>
+    )
+  }
   return (
     <section className="plan-offer-panel" aria-label="План пациенту">
+      {ways}
       <div className="plan-offer-fields">
         <label className="field"><span>Срок лечения, ориентировочно</span>
           <input value={duration} maxLength={100} placeholder="например, 2–3 месяца" onChange={(e) => setDuration(e.target.value)} />
@@ -97,7 +130,8 @@ function OfferPanel({ patient, steps, onClose }: { patient: Patient; steps: Step
         </label>
       </div>
       <div className="plan-offer-preview" aria-label="Предпросмотр плана">
-        <OfferDoc steps={steps} validUntil={validUntil} duration={duration.trim()} />
+        {variants ? <OfferVariants variants={variants} validUntil={validUntil} duration={duration.trim()} />
+          : <OfferDoc steps={steps} validUntil={validUntil} duration={duration.trim()} />}
       </div>
       <div className="actions">
         {telegramFirst && (
@@ -167,6 +201,36 @@ function OfferDoc({ steps, validUntil, duration, print = false }: { steps: Step[
       <p>Цены действительны до {validUntil.split('-').reverse().join('.')}.</p>
       <p className="note">План может меняться по результатам лечения.</p>
       {(name || phone) && <p className="hint small">— {[name, phone ? formatPhone(phone) : null].filter(Boolean).join(', ')}</p>}
+    </div>
+  )
+}
+
+/** Предпросмотр плана с вариантами (V254): пациент увидит каждый вариант с итогом и выберет кнопкой. */
+function OfferVariants({ variants, validUntil, duration }: { variants: Variant[]; validUntil: string; duration: string }) {
+  return (
+    <div className="offer-doc">
+      <h3>Ваш план лечения</h3>
+      <p className="hint small">Врач подготовил {variants.length} варианта — пациент выберет удобный кнопкой в боте или на странице плана.</p>
+      {variants.map((v) => {
+        const open = (v.steps ?? []).filter((s) => !s.doneAt)
+        const total = open.reduce((sum, s) => sum + (s.priceSom ?? 0), 0)
+        return (
+          <div key={v.id ?? 0} className="offer-stage">
+            <h4>{v.label}</h4>
+            <table aria-label={v.label}>
+              <tbody>
+                {open.map((s) => (
+                  <tr key={s.id}><td>{s.tooth ? `Зуб ${s.tooth}` : '—'}</td><td>{s.title}</td>
+                    <td className="r num">{s.priceSom != null ? somText(s.priceSom) : ''}</td></tr>
+                ))}
+              </tbody>
+            </table>
+            {total > 0 && <p className="offer-subtotal">Итого: <b className="num">{somText(total)}</b></p>}
+          </div>
+        )
+      })}
+      {duration && <p>Срок лечения: ориентировочно {duration}</p>}
+      <p>Цены действительны до {validUntil.split('-').reverse().join('.')}.</p>
     </div>
   )
 }

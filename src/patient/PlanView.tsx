@@ -26,22 +26,70 @@ const dayOf = (instant: string) =>
 export function PlanView({ plan, t, onAgree, onAsk, onBook, busy = false, error }: {
   plan: Plan
   t: T
-  onAgree: () => void
+  /** variantId — выбранный вариант, если врач прислал несколько (V254) */
+  onAgree: (variantId?: number) => void
   onAsk: () => void
   onBook?: () => void
   busy?: boolean
   error?: string | null
 }) {
-  const stages = plan.stages ?? []
-  const many = stages.length > 1
+  const variants = plan.variants ?? []
+  const choosing = variants.length > 1 && !plan.agreedAt
+  const [vid, setVid] = useState<number | null>(null)
+  const variant = choosing ? variants.find((v) => v.id === vid) ?? variants[0] : null
+  const stages = (variant ? variant.stages : plan.stages) ?? []
+  const total = variant ? variant.totalSom : plan.totalSom
+  const chart = variant ? variant.chart : plan.chart
   const agreed = Boolean(plan.agreedAt)
   const [tooth, setTooth] = useState<number | null>(null)
+  const label = (n: number, name?: string | null) => `${t('planVariant', { n })}${name ? ` — ${name}` : ''}`
   return (
     <div className="plan-view">
       <h1>{t('planTitle')}</h1>
       {plan.forName && <p className="hint">{t('planFor', { name: plan.forName })}</p>}
       <p className="hint">{[plan.clinicName, plan.doctorName ? t('planDoctor', { name: plan.doctorName }) : null].filter(Boolean).join(' · ')}</p>
-      {plan.chart && <PlanTeeth chart={plan.chart} t={t} selected={tooth} onSelect={(n) => setTooth((cur) => (cur === n ? null : n))} />}
+      {choosing && (
+        <>
+          <p className="plan-view-intro">{t('planVariants')}</p>
+          <div className="plan-view-variants" role="tablist" aria-label={t('planVariants')}>
+            {variants.map((v) => (
+              <button key={v.id} type="button" role="tab" aria-selected={v.id === variant!.id} onClick={() => { setVid(v.id); setTooth(null) }}>
+                <span>{label(v.number, v.name)}</span>
+                <b className="num">{somText(v.totalSom)}</b>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+      {plan.chosenNumber != null && <p className="tone-ok plan-view-chosen">✅ {t('planChosen', { v: label(plan.chosenNumber, plan.chosenName) })}</p>}
+      {chart && <PlanTeeth key={variant?.id ?? 0} chart={chart} t={t} selected={tooth} onSelect={(n) => setTooth((cur) => (cur === n ? null : n))} />}
+      <Stages stages={stages} t={t} tooth={tooth} />
+      {total > 0 && <p className="plan-view-total">{variant ? t('planVariantTotal') : t('planTotal')}: <b className="num">{somText(total)}</b></p>}
+      {plan.duration && <p>{t('planDuration', { d: plan.duration })}</p>}
+      {plan.validUntil && <p>{t('planValid', { date: day(plan.validUntil) })}</p>}
+      <p className="hint small">{t('planNote')}</p>
+      {agreed && <p className="tone-ok" role="status">✅ {t('planAgreed', { date: dayOf(plan.agreedAt!) })}</p>}
+      {!agreed && plan.questionAt && <p className="hint" role="status">{t('planAsked')}</p>}
+      <div className="plan-view-actions">
+        {!agreed && (
+          <button type="button" className="btn primary" disabled={busy} onClick={() => onAgree(variant?.id)}>
+            {variant ? `${t('planChoose')}: ${label(variant.number, variant.name)}` : t('planAgree')}
+          </button>
+        )}
+        {onBook && <button type="button" className={agreed ? 'btn primary' : 'btn'} onClick={onBook}>{t('planBook')}</button>}
+        {!agreed && !plan.questionAt && <button type="button" className="btn" disabled={busy} onClick={onAsk}>{t('planAsk')}</button>}
+      </div>
+      {error && <p className="error" role="alert">{error}</p>}
+      <ContactLinks phones={plan.phones} whatsapp={plan.whatsappPhone} texts={{ call: t('call'), whatsapp: t('writeWhatsapp') }} />
+    </div>
+  )
+}
+
+/** Этапы плана (или выбранного варианта): процедуры, цены, итог за этап; зуб с рисунка — подсвечен. */
+function Stages({ stages, t, tooth }: { stages: NonNullable<Plan['stages']>; t: T; tooth: number | null }) {
+  const many = stages.length > 1
+  return (
+    <>
       {stages.map((st) => (
         <section key={st.stage} className="plan-view-stage" aria-label={many ? t('planStage', { n: st.stage }) : t('planWhat')}>
           <h2>{many ? t('planStage', { n: st.stage }) : t('planWhat')}</h2>
@@ -56,20 +104,7 @@ export function PlanView({ plan, t, onAgree, onAsk, onBook, busy = false, error 
           {many && st.totalSom > 0 && <p className="plan-view-sub">{t('planStageTotal')}: <b className="num">{somText(st.totalSom)}</b></p>}
         </section>
       ))}
-      {plan.totalSom > 0 && <p className="plan-view-total">{t('planTotal')}: <b className="num">{somText(plan.totalSom)}</b></p>}
-      {plan.duration && <p>{t('planDuration', { d: plan.duration })}</p>}
-      {plan.validUntil && <p>{t('planValid', { date: day(plan.validUntil) })}</p>}
-      <p className="hint small">{t('planNote')}</p>
-      {agreed && <p className="tone-ok" role="status">✅ {t('planAgreed', { date: dayOf(plan.agreedAt!) })}</p>}
-      {!agreed && plan.questionAt && <p className="hint" role="status">{t('planAsked')}</p>}
-      <div className="plan-view-actions">
-        {!agreed && <button type="button" className="btn primary" disabled={busy} onClick={onAgree}>{t('planAgree')}</button>}
-        {onBook && <button type="button" className={agreed ? 'btn primary' : 'btn'} onClick={onBook}>{t('planBook')}</button>}
-        {!agreed && !plan.questionAt && <button type="button" className="btn" disabled={busy} onClick={onAsk}>{t('planAsk')}</button>}
-      </div>
-      {error && <p className="error" role="alert">{error}</p>}
-      <ContactLinks phones={plan.phones} whatsapp={plan.whatsappPhone} texts={{ call: t('call'), whatsapp: t('writeWhatsapp') }} />
-    </div>
+    </>
   )
 }
 

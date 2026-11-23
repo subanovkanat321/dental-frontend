@@ -179,9 +179,13 @@ export const server = setupServer(
   http.get('*/api/patients/:id/timeline', () => HttpResponse.json({ items: [] } satisfies Schemas['PatientTimelinePage'])),
   // «Зубы этого приёма» и история зубов по визитам (V155): по умолчанию ничего не отмечено
   http.get('*/api/appointments/:id/teeth', () => HttpResponse.json([] satisfies Schemas['VisitToothView'][])),
+  // Карта зубов — у формулы в плане лечения (план с зубов); по умолчанию все здоровы
+  http.get('*/api/patients/:id/teeth', () => HttpResponse.json([] satisfies Schemas['ToothView'][])),
   http.get('*/api/patients/:id/teeth/history', () => HttpResponse.json([] satisfies Schemas['VisitTeethView'][])),
   http.get('*/api/patients/:id/plan', () => HttpResponse.json([] satisfies Schemas['TreatmentStepView'][])),
   // Статус плана (V236): плана нет — status пусто, нули
+  // Варианты плана (V254): по умолчанию — пусто, план работает как один вариант
+  http.get('*/api/patients/:id/plan/variants', () => HttpResponse.json({ variants: [], switchable: true } satisfies Schemas['PlanVariantsVariants'])),
   http.get('*/api/patients/:id/plan/status', () => HttpResponse.json({ done: 0, total: 0, doneSom: 0, totalSom: 0, manualAgreed: false } satisfies Schemas['PlanStatesProgress'])),
   http.get('*/api/patients/:id/expenses', () => HttpResponse.json([])),
   http.get('*/api/patients/:id/anamnesis', () => HttpResponse.json({ items: [] })),

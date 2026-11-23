@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Fragment, useEffect, useRef, useState, type FormEvent } from 'react'
+import { Fragment, useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { ask } from '../lib/confirm'
@@ -16,6 +16,10 @@ import { PlanStatusBar } from './PlanProgress'
 import { StepAssignForm, StepAssignMeta } from './PlanStepAssign'
 import { PlanTemplateSheet } from './PlanTemplateSheet'
 import { PlanRepriceSheet } from './PlanReprice'
+import { PlanStepSheet } from './PlanStepSheet'
+import { PlanTeethPicker } from './PlanTeethPicker'
+import { PlanVariantBar } from './PlanVariants'
+import { variantsKey } from '../lib/planVariants'
 import { overdueCount } from '../lib/planSteps'
 import './plan.css'
 
@@ -23,13 +27,14 @@ type Patient = Schemas['PatientView']
 type Step = Schemas['TreatmentStepView']
 
 /**
- * План лечения пациента — этапы (что сделать, зуб, цена, этап 1–5), отметка «сделано», правка и удаление,
- * врач и срок у этапа (V241, «👤»; у заголовка «Этап N» — всей группе), «📄 Из шаблона», «💲 Обновить цены»,
- * печать и отправка пациенту. Один редактор на медкарту (вкладка «План лечения») и карточку приёма
- * (строка «План лечения ›»): после осмотра врач добавляет этапы, не уходя из приёма. Права — на сервере
- * (ChartService.requireEdit): readOnly — ассистент, он план только смотрит.
+ * План лечения пациента — сверху зубная формула (PlanTeethPicker): врач нажимает зубы → «Что сделать» (PlanStepSheet:
+ * услуга из прайса или своё описание, цена за зуб) или «＋ Без зуба» (чистка, консультация — «В конце плана»). Ниже этапы:
+ * отметка «сделано», «↑ ↓» — порядок, правка и удаление, врач и срок у этапа (V241, «👤»; у заголовка «Этап N» — всей
+ * группе), «📄 Из шаблона», «💲 Обновить цены», печать и отправка пациенту. Несколько вариантов плана (V254, PlanVariantBar):
+ * вкладки с итогами, «⧉ Ещё вариант», «Пациент выбрал». Один редактор на медкарту (вкладка «План лечения») и карточку
+ * приёма (строка «План лечения ›»). Права — на сервере (ChartService.requireEdit): readOnly — ассистент, он план только смотрит.
  *
- * @param prefill зуб из карты зубов («В план лечения») — подставится в новый этап
+ * @param prefill зуб из карты зубов («В план лечения») — сразу открыть «Что сделать» с этим зубом
  * @param heading заголовок «План лечения» — в медкарте; в строке карточки приёма заголовок уже есть
  */
 export function TreatmentPlan({ patient, prefill = null, readOnly, heading = true }: {
@@ -41,12 +46,24 @@ export function TreatmentPlan({ patient, prefill = null, readOnly, heading = tru
     queryKey: ['plan', patientId],
     queryFn: () => unwrap(api.GET('/api/patients/{patientId}/plan', { params: { path: { patientId } } })),
   })
-  const empty = { tooth: '', title: '', price: '', stage: '1', service: '' }
-  // Вкладка «План» открывается уже с зубом из карты — сразу подставить его
-  const [form, setForm] = useState(() => (prefill ? { ...empty, tooth: String(prefill.tooth) } : empty))
-  // Услуги прайса: выбрал — название и цена подставились, врач может поправить (V140)
-  const services = useQuery({ queryKey: ['service-types'], queryFn: () => unwrap(api.GET('/api/service-types')), enabled: !readOnly })
-  const priced = (services.data ?? []).filter((x) => x.active)
+  // Варианты плана (V254): у обычного плана — один, без названия; не ответил сервер — работаем как с одним
+  const variants = useQuery({
+    queryKey: variantsKey(patientId),
+    queryFn: () => unwrap(api.GET('/api/patients/{patientId}/plan/variants', { params: { path: { patientId } } })),
+    retry: false,
+  })
+  const list = variants.data?.variants ?? []
+  const multi = list.length > 1
+  const [selectedId, setSelectedId] = useState<number | null>(null)
+  const selected = multi
+    ? list.find((v) => v.id === selectedId) ?? list.find((v) => v.chosenAt) ?? list.find((v) => v.current) ?? list[0]
+    : null
+  const isCurrent = !selected || selected.current
+  const variantId = isCurrent ? undefined : selected.id
+  // Этапы — открытого варианта: основной — из общего кэша ['plan', id] (его видят карточка приёма и «Что сделали сегодня?»)
+  const steps = (isCurrent ? plan.data : selected.steps) ?? []
+  const [picked, setPicked] = useState<number[]>(() => (prefill ? [prefill.tooth] : []))
+  const [sheet, setSheet] = useState<'teeth' | 'general' | null>(() => (prefill && !readOnly ? 'teeth' : null))
   const [editing, setEditing] = useState<number | null>(null)
   // Этап «коронка», «винир», «протез»… — «🦷 В лабораторию»: заказ технику с этим зубом
   const me = useMe().data
@@ -54,36 +71,21 @@ export function TreatmentPlan({ patient, prefill = null, readOnly, heading = tru
   // «👤 Врач и срок»: один этап (key — id) или вся группа «Этап N» (key — 'stage-N')
   const [assigning, setAssigning] = useState<string | null>(null)
   const [tool, setTool] = useState<'template' | 'prices' | null>(null)
-  const title = useRef<HTMLInputElement>(null)
-  // Пришёл зуб из карты — подставить в новый этап (состояние меняем при отрисовке, без эффекта)
+  // Пришёл зуб из карты — выбрать его и открыть «Что сделать» (состояние меняем при отрисовке, без эффекта)
   const [applied, setApplied] = useState(prefill)
   if (prefill !== applied) {
     setApplied(prefill)
-    if (prefill) setForm((f) => ({ ...f, tooth: String(prefill.tooth) }))
-  }
-  useEffect(() => {
     if (prefill) {
-      title.current?.scrollIntoView?.({ block: 'center' })
-      title.current?.focus()
+      setPicked([prefill.tooth])
+      if (!readOnly) setSheet('teeth')
     }
-  }, [prefill])
-  // Этапы поменялись — и статус плана («В работе», «Завершён», снятый отказ) пересчитать
-  const saved = (steps: Step[]) => planSaved(client, patientId, steps)
+  }
+  // Этапы поменялись: основной — в кэш плана и пересчитать статус; любой — перечитать варианты (итоги)
+  const saved = (fresh: Step[]) => {
+    if (isCurrent) planSaved(client, patientId, fresh)
+    void client.invalidateQueries({ queryKey: variantsKey(patientId) })
+  }
 
-  const add = useMutation<Schemas['TreatmentStepView'][], ApiError>({
-    mutationFn: () => unwrap(api.POST('/api/patients/{patientId}/plan', {
-      params: { path: { patientId } },
-      body: {
-        title: form.title.trim(), tooth: form.tooth ? Number(form.tooth) : undefined, priceSom: form.price ? Number(form.price) : undefined,
-        stage: Number(form.stage), serviceTypeId: form.service ? Number(form.service) : undefined,
-      },
-    })),
-    onSuccess: (steps) => {
-      saved(steps)
-      // Этап оставляем: врач обычно добавляет подряд несколько процедур одного этапа
-      setForm({ ...empty, stage: form.stage })
-    },
-  })
   const toggle = useMutation<Schemas['TreatmentStepView'][], ApiError, Schemas['TreatmentStepView']>({
     mutationFn: (s) => unwrap(api.PUT('/api/patients/{patientId}/plan/{stepId}', {
       params: { path: { patientId, stepId: s.id } }, body: { tooth: s.tooth, title: s.title, priceSom: s.priceSom, stage: s.stage, done: !s.doneAt },
@@ -94,38 +96,52 @@ export function TreatmentPlan({ patient, prefill = null, readOnly, heading = tru
     mutationFn: (stepId) => unwrap(api.DELETE('/api/patients/{patientId}/plan/{stepId}', { params: { path: { patientId, stepId } } })),
     onSuccess: saved,
   })
+  const move = useMutation<Step[], ApiError, { stepId: number; up: boolean }>({
+    mutationFn: ({ stepId, up }) => unwrap(api.POST('/api/patients/{patientId}/plan/{stepId}/move', {
+      params: { path: { patientId, stepId } }, body: { up },
+    })),
+    onSuccess: saved,
+  })
+  const addVariant = useMutation<Schemas['PlanVariantsVariants'], ApiError>({
+    mutationFn: () => unwrap(api.POST('/api/patients/{patientId}/plan/variants', { params: { path: { patientId } }, body: {} })),
+    onSuccess: (fresh) => {
+      client.setQueryData(variantsKey(patientId), fresh)
+      setSelectedId(fresh.variants?.[fresh.variants.length - 1]?.id ?? null)
+    },
+  })
 
-  const steps = plan.data ?? []
   // Этапы показываем, только когда их больше одного: «сначала — потом»
-  const stages = stagesOf(steps.filter((x) => !x.doneAt))
+  const open = steps.filter((x) => !x.doneAt)
+  const stages = stagesOf(open)
   const staged = stages.length > 1
   const total = steps.reduce((s, x) => s + (x.priceSom ?? 0), 0)
-  const left = steps.filter((x) => !x.doneAt).reduce((s, x) => s + (x.priceSom ?? 0), 0)
-  const error = add.error ?? toggle.error ?? remove.error
+  const left = open.reduce((s, x) => s + (x.priceSom ?? 0), 0)
+  const error = toggle.error ?? remove.error ?? move.error ?? addVariant.error
   const overdue = overdueCount(steps)
-  // «Обновить цены» — есть несделанные этапы с услугой из прайса (только их цену берём из прайса)
-  const repriceable = steps.some((x) => !x.doneAt && x.serviceTypeId != null)
-  // Пустое «Что сделать» — не молча выключенная кнопка, а подсказка, что вписать
-  const [missing, setMissing] = useState(false)
-  const submit = (e: FormEvent) => {
-    e.preventDefault()
-    if (form.title.trim()) add.mutate()
-    else {
-      setMissing(true)
-      title.current?.focus()
-    }
-  }
+  // «Обновить цены» — есть несделанные этапы с услугой из прайса (только их цену берём из прайса); только основной вариант
+  const repriceable = isCurrent && steps.some((x) => !x.doneAt && x.serviceTypeId != null)
+  const loaded = isCurrent ? plan.isSuccess : true
+  const sum = total ? `${somText(total)}${left && left !== total ? `, осталось ${somText(left)}` : ''}` : ''
 
   return (
     <section className="card-block">
       {heading
-        ? <h2>План лечения{total ? <span className="hint"> · {somText(total)}{left && left !== total ? `, осталось ${somText(left)}` : ''}</span> : null}</h2>
-        : total ? <p className="hint small">{somText(total)}{left && left !== total ? `, осталось ${somText(left)}` : ''}</p> : null}
-      {steps.length > 0 && <PlanStatusBar patientId={patientId} readOnly={readOnly} />}
+        ? <h2>План лечения{sum && !multi ? <span className="hint"> · {sum}</span> : null}</h2>
+        : sum && !multi ? <p className="hint small">{sum}</p> : null}
+      {(plan.data?.length ?? 0) > 0 && <PlanStatusBar patientId={patientId} readOnly={readOnly} />}
+      {multi && selected && variants.data && (
+        <PlanVariantBar patientId={patientId} data={variants.data} selected={selected} onSelect={setSelectedId} readOnly={readOnly} />
+      )}
+      {loaded && (
+        <PlanTeethPicker patient={patient} steps={steps} picked={picked} onPick={setPicked} readOnly={readOnly}
+          onWhat={() => setSheet('teeth')} onGeneral={() => setSheet('general')} onTemplate={() => setTool('template')} />
+      )}
       {overdue > 0 && <p className="plan-overdue-line" role="status">⏱ Просрочен{overdue > 1 ? 'о' : ''} {overdue} {overdue === 1 ? 'этап' : overdue < 5 ? 'этапа' : 'этапов'} — срок прошёл, не сделано</p>}
       {steps.length > 0 && (
         <ul className="plan" aria-label="Этапы лечения">
-          {steps.map((s, i) => (
+          {steps.map((s, i) => {
+            const at = open.indexOf(s)
+            return (
             <Fragment key={s.id}>
             {staged && !s.doneAt && steps[i - 1]?.stage !== s.stage && (
               <li className="plan-stage">
@@ -139,25 +155,33 @@ export function TreatmentPlan({ patient, prefill = null, readOnly, heading = tru
             {staged && !s.doneAt && steps[i - 1]?.stage !== s.stage && assigning === `stage-${s.stage}` && (
               <li className="plan-assign-row">
                 <StepAssignForm patientId={patientId} label={`Врач и срок: этап ${s.stage}`} current={s}
-                  stepIds={steps.filter((x) => !x.doneAt && x.stage === s.stage).map((x) => x.id)}
+                  stepIds={open.filter((x) => x.stage === s.stage).map((x) => x.id)}
                   onDone={(fresh) => { if (fresh) saved(fresh); setAssigning(null) }} />
               </li>
             )}
-            <li className={s.doneAt ? 'done' : s.overdue ? 'overdue' : undefined}>
+            <li className={[s.doneAt ? 'done' : s.overdue ? 'overdue' : '', s.tooth != null && picked.includes(s.tooth) ? 'picked-row' : ''].filter(Boolean).join(' ') || undefined}>
               {editing === s.id ? (
-                <StepEdit patientId={patientId} step={s} onDone={(steps) => { if (steps) saved(steps); setEditing(null) }} />
+                <StepEdit patientId={patientId} step={s} onDone={(fresh) => { if (fresh) saved(fresh); setEditing(null) }} />
               ) : assigning === String(s.id) ? (
                 <StepAssignForm patientId={patientId} stepIds={[s.id]} label={`Врач и срок: ${s.title}`} current={s}
                   onDone={(fresh) => { if (fresh) saved(fresh); setAssigning(null) }} />
               ) : (
                 <>
                   <label className="check">
-                    <input type="checkbox" checked={Boolean(s.doneAt)} disabled={readOnly || toggle.isPending} onChange={() => toggle.mutate(s)}
-                      aria-label={`Сделано: ${s.title}`} />
+                    <input type="checkbox" checked={Boolean(s.doneAt)} disabled={readOnly || toggle.isPending || !isCurrent} onChange={() => toggle.mutate(s)}
+                      aria-label={`Сделано: ${s.title}`} title={isCurrent ? undefined : 'Отмечать сделанным — после выбора этого варианта'} />
                     <span>{s.tooth ? <b>{s.tooth} · </b> : null}{s.title}<StepAssignMeta step={s} /></span>
                   </label>
                   <span className="nowrap">{s.priceSom != null ? somText(s.priceSom) : ''}</span>
-                  {!readOnly && me && !s.doneAt && labKindOf(s.title) && (
+                  {!readOnly && !s.doneAt && (
+                    <span className="plan-move">
+                      <button type="button" className="btn ghost small" aria-label={`Выше: ${s.title}`} title="Выше" disabled={at <= 0 || move.isPending}
+                        onClick={() => move.mutate({ stepId: s.id, up: true })}>↑</button>
+                      <button type="button" className="btn ghost small" aria-label={`Ниже: ${s.title}`} title="Ниже" disabled={at >= open.length - 1 || move.isPending}
+                        onClick={() => move.mutate({ stepId: s.id, up: false })}>↓</button>
+                    </span>
+                  )}
+                  {!readOnly && me && !s.doneAt && isCurrent && labKindOf(s.title) && (
                     <button type="button" className="btn ghost small" aria-label={`В лабораторию: ${s.title}`} title="Заказ в лабораторию" onClick={() => setToLab(s)}>🦷</button>
                   )}
                   {!readOnly && !s.doneAt && (
@@ -173,49 +197,41 @@ export function TreatmentPlan({ patient, prefill = null, readOnly, heading = tru
               )}
             </li>
             </Fragment>
-          ))}
+            )
+          })}
         </ul>
       )}
+      {multi && sum && <p className="plan-variant-sum">Итого по варианту: <b className="num">{sum}</b></p>}
       {toLab && me && (
         <LabOrderDialog me={me} preset={{ patient: { id: patient.id, fullName: patient.fullName }, kind: labKindOf(toLab.title) ?? undefined,
           teeth: toLab.tooth != null ? String(toLab.tooth) : undefined }} onClose={() => setToLab(null)} />
       )}
-      {!readOnly && plan.isSuccess && (
+      {!readOnly && loaded && (
         <div className="actions plan-tools">
           <button type="button" className="btn" onClick={() => setTool('template')}>📄 Из шаблона</button>
           {repriceable && <button type="button" className="btn" onClick={() => setTool('prices')}>💲 Обновить цены</button>}
+          {!multi && steps.some((x) => !x.doneAt) && variants.isSuccess && (
+            <button type="button" className="btn" disabled={addVariant.isPending} onClick={() => addVariant.mutate()}
+              title="Копия плана — поменяйте в ней материалы или способ лечения, пациент выберет">⧉ Ещё вариант (дешевле или дороже)</button>
+          )}
         </div>
       )}
+      {sheet && (
+        <PlanStepSheet patientId={patientId} teeth={sheet === 'teeth' ? [...picked].sort((a, b) => a - b) : []} steps={steps} variantId={variantId}
+          onClose={() => setSheet(null)} onAdded={(fresh) => { saved(fresh); setSheet(null); setPicked([]) }} />
+      )}
       {tool === 'template' && (
-        <PlanTemplateSheet patientId={patientId} steps={steps} onClose={() => setTool(null)} onAdded={(fresh) => { saved(fresh); setTool(null) }} />
+        <PlanTemplateSheet patientId={patientId} steps={steps} variantId={variantId} teeth={picked} onClose={() => setTool(null)}
+          onAdded={(fresh) => { saved(fresh); setTool(null); setPicked([]) }} />
       )}
       {tool === 'prices' && <PlanRepriceSheet patientId={patientId} onClose={() => setTool(null)} onSaved={(fresh) => { saved(fresh); setTool(null) }} />}
-      {/* Печать и отправка — и ассистенту (без цен): он отдаёт план пациенту */}
-      <PlanDocs patient={patient} steps={steps} />
-      {plan.isSuccess && steps.length === 0 && <EmptyState compact title="Плана лечения пока нет">{readOnly ? null : 'Добавьте первый этап ниже.'}</EmptyState>}
-      {!readOnly && <form className="plan-add" aria-label="Новый этап" onSubmit={submit} data-advance
-        onChange={() => { setMissing(false); if (add.isSuccess) add.reset() }}>
-        {priced.length > 0 && (
-          <Select aria-label="Услуга из прайса" className="plan-service" value={form.service} onChange={(e) => {
-            const picked = priced.find((x) => String(x.id) === e.target.value)
-            setForm({ ...form, service: e.target.value, title: picked?.name ?? form.title,
-              price: picked?.priceSom != null ? String(picked.priceSom) : form.price })
-          }}>
-            <option value="">Из прайса — или впишите сами</option>
-            {priced.map((x) => <option key={x.id} value={String(x.id)}>{x.name}{x.priceSom != null ? ` · ${somText(x.priceSom)}` : ''}</option>)}
-          </Select>
-        )}
-        <input aria-label="Зуб" placeholder="Зуб" inputMode="numeric" value={form.tooth} onChange={(e) => setForm({ ...form, tooth: e.target.value })} />
-        <input ref={title} aria-label="Что сделать" placeholder="Что сделать: пломба, чистка…" value={form.title} maxLength={200}
-          onChange={(e) => setForm({ ...form, title: e.target.value })} />
-        <input aria-label="Цена, сом" placeholder="Цена" type="number" min={0} value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
-        <Select aria-label="Этап лечения" value={form.stage} onChange={(e) => setForm({ ...form, stage: e.target.value })}>
-          {STAGES.map((n) => <option key={n} value={String(n)}>Этап {n}</option>)}
-        </Select>
-        <button type="submit" className="btn primary plan-submit" disabled={add.isPending}>＋ Добавить в план</button>
-        {missing && <p className="error plan-hint" role="alert">Впишите, что сделать, — или выберите услугу из прайса</p>}
-        {add.isSuccess && <p className="tone-ok small plan-hint" role="status">Добавлено в план — сохранено</p>}
-      </form>}
+      {/* Печать и отправка — и ассистенту (без цен): он отдаёт план пациенту. Варианты не выбраны — на листе все */}
+      <PlanDocs patient={patient} steps={plan.data ?? []} variants={multi && !list.some((v) => v.chosenAt) ? list : undefined} />
+      {loaded && steps.length === 0 && (
+        <EmptyState compact title={multi ? 'В этом варианте пока нет этапов' : 'Плана лечения пока нет'}>
+          {readOnly ? null : 'Нажмите зубы на формуле выше — или «＋ Без зуба».'}
+        </EmptyState>
+      )}
       {error && <p className="error" role="alert">{Object.values(error.fieldErrors)[0] ?? error.message}</p>}
     </section>
   )

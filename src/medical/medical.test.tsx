@@ -90,17 +90,18 @@ test('медкарта: зуб 16 — кариес с заметкой; отме
   await userEvent.click(within(plan).getByLabelText('Сделано: Пломба'))
   expect(await within(plan).findByLabelText('Сделано: Пломба')).toBeChecked()
 
-  const add = screen.getByRole('form', { name: 'Новый этап' })
+  // План с зубов: нажать зуб на формуле плана → «Что сделать: 26 →» → лист добавления
+  await userEvent.click(screen.getByRole('button', { name: /^Зуб 26:/ }))
+  await userEvent.click(screen.getByRole('button', { name: 'Что сделать: 26 →' }))
+  const add = await screen.findByRole('form', { name: 'Новый этап' })
   // Не вписали «Что сделать» — кнопка не молчит, а подсказывает
   await userEvent.click(within(add).getByRole('button', { name: '＋ Добавить в план' }))
   expect(within(add).getByRole('alert')).toHaveTextContent('Впишите, что сделать')
-  expect(within(add).getByLabelText('Что сделать')).toHaveFocus()
-  await userEvent.type(within(add).getByLabelText('Зуб'), '26')
   await userEvent.type(within(add).getByLabelText('Что сделать'), 'Коронка')
   await userEvent.type(within(add).getByLabelText('Цена, сом'), '12000')
   await userEvent.click(within(add).getByRole('button', { name: '＋ Добавить в план' }))
   expect(await within(plan).findByText('Коронка')).toBeInTheDocument()
-  expect(within(add).getByRole('status')).toHaveTextContent('Добавлено в план — сохранено')
+  expect(screen.queryByRole('form', { name: 'Новый этап' })).not.toBeInTheDocument()
   expect(sent).toContainEqual({ plan: { title: 'Коронка', tooth: 26, priceSom: 12000, stage: 1 } })
 
   await medTab('Снимки')
@@ -131,9 +132,10 @@ test('отмеченные зубы списком; зуб → «В план л�
 
   await userEvent.click(screen.getByRole('button', { name: 'Зуб 16: Кариес, есть заметка' }))
   await userEvent.click(within(screen.getByRole('form', { name: 'Зуб 16' })).getByRole('button', { name: 'В план лечения' }))
-  const add = screen.getByRole('form', { name: 'Новый этап' })
-  expect(within(add).getByLabelText('Зуб')).toHaveValue('16')
-  expect(within(add).getByLabelText('Что сделать')).toHaveFocus()
+  // Сразу открылось «Что сделать: 16» — зуб уже выбран
+  const sheet = await screen.findByRole('dialog', { name: 'Что сделать: 16' })
+  expect(within(sheet).getByRole('form', { name: 'Новый этап' })).toBeInTheDocument()
+  await userEvent.click(within(sheet).getByRole('button', { name: 'Отмена' }))
 
   const plan = screen.getByRole('list', { name: 'Этапы лечения' })
   await userEvent.click(within(plan).getByRole('button', { name: 'Изменить этап: Пломба' }))
