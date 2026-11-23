@@ -158,7 +158,7 @@ export const REPLY_LINE = 'Ответьте 1 — приду, 2 — перене
 /** Что из /api/settings нужно для напоминания: подпись, бот и свой текст клиники с её данными. */
 export type ReminderSettings = Partial<Pick<Schemas['SettingsControllerSettings'],
   'clinicSignature' | 'botUrl' | 'reminderTemplate' | 'clinicName' | 'clinicAddress' | 'clinicPhone' | 'paymentDetails'
-  | 'depositPayUrl' | 'reminderContact' | 'doctorPhones'>>
+  | 'depositPayUrl' | 'reminderContact' | 'doctorPhones' | 'clinicMapUrl'>>
 
 /**
  * Чей телефон в сообщении о приёме — то же правило, что ClinicLinks.contactFor бэкенда (V252): «Номер в напоминаниях» =
@@ -174,6 +174,20 @@ export function appointmentPhone(settings: ReminderSettings | null | undefined, 
 /** Настройки для текста о приёме этого врача: {телефон} и «позвоните» — по {@link appointmentPhone}. */
 export function forAppointment<T extends ReminderSettings>(settings: T, doctorId?: number | null): T {
   return { ...settings, clinicPhone: appointmentPhone(settings, doctorId).phone ?? undefined }
+}
+
+/**
+ * Строки «как связаться и добраться» под напоминанием в WhatsApp/SMS — как у бота (номер и кнопка карты):
+ * «📞 Телефон: …» (врача приёма или клиники — после {@link forAppointment}), если клиника не вставила {телефон} сама,
+ * и «🗺 Как добраться: <2GIS>», если ссылка на карту есть в «О клинике».
+ */
+export function contactLines(settings?: ReminderSettings | null, template?: string | null, lang: 'ru' | 'ky' = 'ru'): string[] {
+  const lines: string[] = []
+  const phone = settings?.clinicPhone?.trim()
+  if (phone && !(template && usesVariable(template, 'телефон'))) lines.push(`📞 Телефон: ${phone}`)
+  const map = settings?.clinicMapUrl?.trim()
+  if (map) lines.push(`🗺 ${lang === 'ky' ? 'Кантип жетүү' : 'Как добраться'}: ${map}`)
+  return lines
 }
 
 type ReminderAppointment = {
@@ -222,7 +236,7 @@ export function whenAt(startAt: string, now = new Date()): string {
  * - подпись клиники — если в шаблоне нет {клиника};
  * - ссылку на бота клиники отдельной строкой — пациенту, который ещё не в боте, если в шаблоне
  *   нет {бот} (иначе ссылка там, куда её поставила клиника).
- * Адрес отдельной строкой, как бот, не дописываем: в WhatsApp он только через {адрес}.
+ * - телефон (врача приёма или клиники) и ссылку на карту — {@link contactLines}.
  *
  * У ребёнка с представителем (V164) пишем представителю (как PatientReminders бэкенда): «Здравствуйте, Айгуль!
  * Запись ребёнка Аружан: …»; в своём тексте {имя} — имя представителя, первой строкой «👶 Запись ребёнка Аружан».
@@ -242,7 +256,9 @@ export function reminderText(a: ReminderAppointment, settings?: ReminderSettings
       + `${whenText(a.startAt, now)} в ${timeOf(a.startAt)} приём у стоматолога 🦷 ${REPLY_LINE}`
     // Без адреса и предоплаты — как раньше (подпись через пробел); иначе строками: текст, адрес, предоплата, подпись
     const deposit = depositLines(a, settings)
-    return invite(address || deposit.length ? [text, address, ...deposit, signature].filter(Boolean).join('\n')
+    const contact = contactLines(settings)
+    return invite(address || deposit.length || contact.length
+      ? [text, address, ...contact, ...deposit, signature].filter(Boolean).join('\n')
       : signed(text, signature))
   }
   const filled = applyTemplate(template, {
@@ -252,6 +268,7 @@ export function reminderText(a: ReminderAppointment, settings?: ReminderSettings
   const body = guardian ? `👶 Запись ребёнка ${a.patient.fullName}\n${filled}` : filled
   const lines = [body, REPLY_LINE]
   if (address && !usesVariable(template, 'адрес')) lines.push(address)
+  lines.push(...contactLines(settings, template))
   // Предоплата — отдельной строкой после своего текста клиники (сам текст не трогаем)
   lines.push(...depositLines(a, settings))
   if (signature && !usesVariable(template, 'клиника')) lines.push(signature)
@@ -306,8 +323,8 @@ export function repeatReminderText(a: ReminderAppointment, settings?: ReminderSe
     if (guardian) text = `👶 Запись ребёнка ${a.patient.fullName}\n${text}`
     text += `\n${REPLY_LINE}`
   }
-  const deposit = depositLines(a, settings, lang)
-  if (deposit.length) text += `\n${deposit.join('\n')}`
+  const tail = [...contactLines(settings, null, lang), ...depositLines(a, settings, lang)]
+  if (tail.length) text += `\n${tail.join('\n')}`
   return botUrl && !a.patient.telegram ? `${text}\n\n${BOT_LINE} ${botUrl}` : text
 }
 

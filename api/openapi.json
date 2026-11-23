@@ -30680,6 +30680,9 @@
             "additionalProperties" : {
               "type" : "string"
             }
+          },
+          "clinicMapUrl" : {
+            "type" : "string"
           }
         },
         "required" : [ "doctorPhones", "reminderContact" ]

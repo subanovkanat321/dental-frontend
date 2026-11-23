@@ -13082,6 +13082,7 @@ export interface components {
             doctorPhones: {
                 [key: string]: string;
             };
+            clinicMapUrl?: string;
         };
         ServiceTypeControllerPopular: {
             ids?: number[];
