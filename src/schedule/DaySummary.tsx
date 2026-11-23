@@ -29,7 +29,7 @@ function duration(minutes: number): string {
  * сеткой на ноутбуке поуже, — только столбиком; нажатие ведёт туда же. Когда открыта карточка
  * приёма, она занимает это место.
  */
-export function DaySummary({ date, today, all, doctorName, requests, waiting, toPay, revenueSom, earnings, onOpenEarnings, low, free, onOpen: openProp, onBook: bookProp, onNavigate: navigateProp, onClose, reviewAsks = 0, onReviewAsks, extra, windowsHint }: {
+export function DaySummary({ date, today, all, doctorName, requests, waiting, toPay, revenueSom, earnings, onOpenEarnings, low, free, onOpen: openProp, onBook: bookProp, onNavigate: navigateProp, onClose, reviewAsks = 0, onReviewAsks, extra, windowsHint, startFull = false }: {
   date: string
   today: string
   /** Приёмы дня без отменённых */
@@ -56,9 +56,11 @@ export function DaySummary({ date, today, all, doctorName, requests, waiting, to
   extra?: ReactNode
   /** Подсказка «Освободилось окно · подходят N из листа ожидания» — своим блоком под «Требует внимания» */
   windowsHint?: ReactNode
+  /** Открыли кнопкой «Сводка дня» — сразу большой (2026-11-23, владелец); сбоку при загрузке расписания — обычной */
+  startFull?: boolean
 }) {
   // «На весь экран» — пока смотрят; открыли приём, запись или раздел — сводка снова сбоку
-  const [full, setFull] = useState(false)
+  const [full, setFull] = useState(startFull)
   const onOpen = (a: Appointment) => { setFull(false); openProp(a) }
   const onBook = (doctorId: number, minutes: number) => { setFull(false); bookProp(doctorId, minutes) }
   const onNavigate = navigateProp && ((page: Page) => { setFull(false); navigateProp(page) })
