@@ -61,8 +61,8 @@ export function PrintSheet({ title, onClose, formats = false, initialFormat = 'a
         <h2>{title}</h2>
         {formats && (
           <div className="segments" role="group" aria-label="Формат">
-            <button type="button" aria-pressed={!narrow} onClick={() => setFormat('a4')}>A4</button>
             <button type="button" aria-pressed={narrow} onClick={() => setFormat('receipt')}>Чек 80 мм</button>
+            <button type="button" aria-pressed={!narrow} onClick={() => setFormat('a4')}>A4</button>
           </div>
         )}
         {canPrint() && <button type="button" className="btn primary" onClick={() => window.print()}>🖨 Печать</button>}
