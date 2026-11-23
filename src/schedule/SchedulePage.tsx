@@ -418,9 +418,12 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
     } catch { /* нет хранилища */ }
     return (me.doctors ?? []).filter((d) => d.active !== false).length <= 3
   })
+  // Сводку открыли кнопкой — показать её сразу большой (DaySummary.startFull); сбоку при загрузке — обычной
+  const [summaryClicked, setSummaryClicked] = useState(false)
   const toggleSummary = () => {
     const next = !summaryOpen
     setSummaryOpen(next)
+    setSummaryClicked(next)
     try { localStorage.setItem(SUMMARY_KEY, next ? '1' : '0') } catch { /* нет хранилища */ }
   }
   const canSummary = wide && !dayList && !weekMode && !monthMode && doctors.length > 0
@@ -789,7 +792,7 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
         <DaySummary date={date} today={today} all={all} requests={requests} waiting={waiting} toPay={toPay.data?.length ?? 0}
           revenueSom={revenue.data ? revenue.data.totalSom : null} earnings={earnings.data ?? null} onOpenEarnings={openEarnings} low={low} free={shown.length > 0 && date >= today ? free : []}
           doctorName={(id) => doctors.find((d) => d.id === id)?.fullName ?? ''}
-          onOpen={(a) => setSide({ kind: 'appointment', id: a.id, fallback: a })} onBook={bookAt} onNavigate={onNavigate} onClose={toggleSummary}
+          onOpen={(a) => setSide({ kind: 'appointment', id: a.id, fallback: a })} onBook={bookAt} onNavigate={onNavigate} onClose={toggleSummary} startFull={summaryClicked}
           reviewAsks={date === today ? reviewAsks : 0} onReviewAsks={() => setReviewAsksOpen(true)}
           extra={<>
             <BirthdaysChip rows={shownBirthdays} onOpen={() => setBirthdaysOpen(true)} />

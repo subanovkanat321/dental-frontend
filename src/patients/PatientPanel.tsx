@@ -5,6 +5,7 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { useAnamnesis } from '../api/anamnesis'
 import { MedAlertPill } from '../medical/Anamnesis'
 import { useClose } from '../lib/useClose'
+import { useFullView } from '../lib/fullView'
 import { canEditDoctor, isAssistant, seesAdvance, seesMoneyOf, seesAllMoney } from '../lib/roles'
 import { debtLine, remindedText, seesDebts } from '../lib/debt'
 import { DebtPromiseForm, DebtRemindForm } from '../cash/DebtRemind'
@@ -82,6 +83,8 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
   onOpenPatient?: (patientId: number) => void
 }) {
   useClose(onClose)
+  // Компьютер — сразу большой, как карточка приёма (2026-11-23); свернули — запомнится на этом компьютере
+  const [full, toggleFull] = useFullView('patient', () => true)
   const [editing, setEditing] = useState(false)
   const [allPast, setAllPast] = useState(false)
   // Вкладка карточки: визиты, медкарта, деньги, прочее — одна за раз
@@ -214,7 +217,8 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
   ].filter(Boolean).join(' · ')
 
   return (
-    <aside className="panel patient-card" aria-label="Карточка пациента">
+    <>
+    <aside className={full ? 'panel panel-full patient-card' : 'panel patient-card'} aria-label="Карточка пациента">
       {/* Шапка: имя, телефон, возраст и как ему пишем */}
       <header className="panel-head">
         <div>
@@ -277,6 +281,8 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
                 setContractAsked((a) => ({ id: patient.id, n: a?.id === patient.id ? a.n + 1 : 1 }))
               } : undefined} />
           )}
+          <button type="button" className="btn ghost panel-expand" aria-pressed={full} onClick={toggleFull}
+            aria-label={full ? 'Свернуть карточку' : 'Карточка на весь экран'} title={full ? 'Свернуть' : 'На весь экран'}>{full ? '⤡' : '⤢'}</button>
           <button type="button" className="btn ghost" aria-label="Закрыть" onClick={onClose}>✕</button>
         </div>
       </header>
@@ -372,6 +378,9 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
         </section>
       )}
     </aside>
+    {/* Подложка — после карточки: карточка остаётся на месте «Загружаем…» (тот же элемент), а подложка под ней по z-index */}
+    {full && <div className="panel-backdrop" onClick={toggleFull} aria-hidden="true" />}
+    </>
   )
 }
 

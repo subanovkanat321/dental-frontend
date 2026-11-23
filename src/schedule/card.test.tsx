@@ -202,11 +202,13 @@ test('до начала приёма — без заметки и материа
   await userEvent.click(within(panel).getByRole('button', { name: 'Показать сейчас' }))
   expect(await within(panel).findByRole('form', { name: 'Заметка о приёме' })).toBeInTheDocument()
 
-  await userEvent.click(within(panel).getByRole('button', { name: 'Карточка на весь экран' }))
+  // Компьютер — сразу на весь экран; свернули — запомнилось, развернули снова
   expect(panel).toHaveClass('panel-full')
-  expect(localStorage.getItem('tish.full.appointment')).toBe('1')
   await userEvent.click(within(panel).getByRole('button', { name: 'Свернуть карточку' }))
   expect(panel).not.toHaveClass('panel-full')
+  expect(localStorage.getItem('tish.full.appointment')).toBe('0')
+  await userEvent.click(within(panel).getByRole('button', { name: 'Карточка на весь экран' }))
+  expect(panel).toHaveClass('panel-full')
 })
 
 test('до приёма «＋ Промокод» — своей строкой под «＋ Комментарий»; «＋ Предоплата · ＋ В лист ожидания» — строкой ссылок, без свёрнутого «Ещё»', async () => {

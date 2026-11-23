@@ -128,7 +128,8 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
   const date = a.startAt ? dateOf(a.startAt) : todayIn()
   // «Состоялся» сервер разрешает с дня приёма: будущий приём ещё не мог пройти
   const started = date <= todayIn()
-  const [full, toggleFull] = useFullView('appointment')
+  // На компьютере — сразу большой (2026-11-23, владелец: «все модалки сначала большие»); свернули — запомнится
+  const [full, toggleFull] = useFullView('appointment', () => true)
   // Этап приёма: заметка, материалы и диктовка — когда приём начинается (за 15 минут) или прошёл;
   // утром карточка дневного приёма короткая: напомнить, перенести, связаться. «Показать сейчас» — если начали раньше
   const nowMinutes = useNowMinutes()
