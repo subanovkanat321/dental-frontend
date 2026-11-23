@@ -100,6 +100,8 @@
   .plan-teeth-actions, .plan-teeth-actions .btn { flex: 1 1 auto; min-height: 44px; }
   /* Строка этапа: цена слева, ↑ ↓ 🦷 👤 ✏️ ✕ — в одну строку на 390 px */
   .plan li > .btn.small, .plan-move .btn { padding: 0 4px; min-width: 36px; min-height: 40px; }
+  /* Кнопок стало больше (↑ ↓ и 🦷) — цена без отступа под галочкой, иначе ✕ уходил на новую строку */
+  .plan li > label.check + .nowrap { padding-left: 4px; }
 }
 
 /* Варианты плана (V254): вкладки с итогом, на компьютере — сравнение столбцами */
