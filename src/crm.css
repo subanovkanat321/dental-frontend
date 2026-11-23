@@ -848,10 +848,9 @@ button.grid-head:not(:disabled):hover .grid-head-name { color: var(--link); }
 .doctor-columns .row.free .hint { font-size: .85rem; overflow-wrap: break-word; }
 .doctor-columns .row.pause { flex-wrap: wrap; padding: 8px; gap: 2px 6px; font-size: .82rem; }
 .doctor-columns .row.pause .name { min-width: 0; }
-/* «Список» на компьютере: один врач — колонкой до 760px (строка не растягивается на весь монитор); «Все врачи» — все колонки
+/* «Список» на компьютере: один врач — на всю ширину (2026-11-23, владелец); «Все врачи» — все колонки
    рядом, каждая от 260px, без «выглядывания» и прокрутки вбок, пока помещаются; в колонке — строка как у одного врача */
-.day-list.wide { max-width: 760px; margin-top: 4px; }
-.day-list.wide:has(.doctor-columns) { max-width: none; }
+.day-list.wide { margin-top: 4px; }
 .day-list.wide .doctor-columns { grid-template-columns: repeat(var(--cols, 2), minmax(260px, 1fr)); --gap: 12px; scroll-snap-type: none; scrollbar-width: thin; }
 .day-list.wide .doctor-columns .row-button { grid-template-columns: 48px minmax(0, 1fr) auto; gap: 2px 8px; padding: 10px; }
 .day-list.wide .doctor-columns .row .end { display: inline; }
