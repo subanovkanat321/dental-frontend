@@ -43,6 +43,8 @@ import type { Slot } from './NewAppointmentPanel'
 import { StatusPill } from './StatusPill'
 import { EditButton } from '../layout/EditButton'
 import { TagDots } from '../tags/TagDots'
+import { BookingTags } from '../tags/BookingTags'
+import { canTag } from '../tags/tags'
 import { marksArrival, nextStep, statusOptions, type Reply } from './statusOptions'
 import { NOWHERE_TEXT, useRemind } from './useRemind'
 import { confirmRemind } from './remindAgain'
@@ -131,6 +133,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
   const started = date <= todayIn()
   // На компьютере — сразу большой (2026-11-23, владелец: «все модалки сначала большие»); свернули — запомнится
   const [full, toggleFull] = useBigByDefault()
+  const [tagging, setTagging] = useState(false)
   // Этап приёма: заметка, материалы и диктовка — когда приём начинается (за 15 минут) или прошёл;
   // утром карточка дневного приёма короткая: напомнить, перенести, связаться. «Показать сейчас» — если начали раньше
   const nowMinutes = useNowMinutes()
@@ -604,6 +607,14 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
             </div>
           )
         })()}
+        {/* Метки после записи (2026-11-24, владелец: «после создания записи как выбрать метку? в карточке записи нету»):
+            «🏷 Метки» раскрывает те же чипы-переключатели, что в «Новой записи» (руководитель и регистратура) */}
+        {canTag(me) && a.status !== 'CANCELLED' && (
+          tagging
+            ? <BookingTags me={me} patientId={a.patient.id} tagIds={a.patient.tagIds} />
+            : <button type="button" className="link appt-tags-edit" onClick={() => setTagging(true)}>
+                🏷 {(a.patient.tagIds?.length ?? 0) > 0 ? 'Изменить метки' : '＋ Метка'}</button>
+        )}
         {/* История одной строкой слева, «＋ Задача» и «＋ В лабораторию» — справа в той же строке (врачу на приёме — в «О записи») */}
         <div className="appt-history-row">
           <PatientHistory appointment={a} me={me} />

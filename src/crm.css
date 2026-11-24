@@ -3570,3 +3570,4 @@ button.history-link:hover .history-text { color: var(--link); }
 .wa-table td.tone-hint { color: var(--hint); }
 .wa-mark { font-size: 13px; }
 .wa-mark.tone-ok { color: var(--ok-ink); } .wa-mark.tone-bad { color: var(--bad-ink); } .wa-mark.tone-wait { color: var(--wait-ink); }
+.appt-tags-edit { justify-self: start; font-size: .9rem; }
