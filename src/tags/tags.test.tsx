@@ -80,7 +80,7 @@ describe('«Настройки → Метки пациентов»', () => {
     ])
   })
 
-  test('ошибка сервера (дубль) — под формой; восемь меток — формы нет', async () => {
+  test('ошибка сервера (дубль) — под формой; двенадцать меток — формы нет', async () => {
     let list = TAGS.map((t) => ({ ...t }))
     server.use(
       http.get('*/api/patient/me', () => HttpResponse.json({ ...me, admin: true })),
@@ -94,11 +94,11 @@ describe('«Настройки → Метки пациентов»', () => {
     expect(await within(form).findByRole('alert')).toHaveTextContent('Такая метка уже есть')
     view.unmount()
 
-    list = Array.from({ length: 8 }, (_, i) => ({ id: i + 1, name: `Метка ${i + 1}`, color: 'gray', position: i, patients: 0 }))
+    list = Array.from({ length: 12 }, (_, i) => ({ id: i + 1, name: `Метка ${i + 1}`, color: 'gray', position: i, patients: 0 }))
     renderApp()
-    await screen.findByText('Метка 8')
+    await screen.findByText('Метка 12')
     expect(screen.queryByRole('form', { name: 'Новая метка' })).not.toBeInTheDocument()
-    expect(screen.getByText(/Это 8 меток/)).toBeInTheDocument()
+    expect(screen.getByText(/Это 12 меток/)).toBeInTheDocument()
   })
 })
 

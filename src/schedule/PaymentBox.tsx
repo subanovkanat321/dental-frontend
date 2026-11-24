@@ -17,6 +17,7 @@ import { Loading } from '../layout/Loading'
 import { discountText, reasonText } from '../lib/discount'
 import { discountText as promoDiscountText, expired, usePromoCodes } from '../lib/promo'
 import { DiscountField } from './DiscountField'
+import { tagDiscount, usePatientTags, type TagDiscount } from '../tags/tags'
 import { initialPayView, type PayView } from './payView'
 import { draftOf, draftProblem, draftSom, useDiscountPolicy, type DiscountDraft } from './discountDraft'
 import { EditButton } from '../layout/EditButton'
@@ -351,6 +352,18 @@ function PayForm({ a, me, billOnly, parts: initialParts, spentHere = 0, onCancel
   const [cost, setCost] = useState(String(a.discount?.priceSom ?? a.chargeSom ?? a.paidSom ?? a.servicesTotalSom ?? a.servicePriceSom ?? ''))
   const [discount, setDiscount] = useState<DiscountDraft | null>(() => draftOf(a.discount))
   const policy = useDiscountPolicy()
+  // Скидка по метке (V255 бэкенда): у пациента «Друг» со скидкой 10 % — подставим её в новую оплату (ещё нет ни оплаты,
+  // ни скидки), если сотруднику можно давать такую скидку («Настройки → Скидки»). Больше его предела — не подставляем и не
+  // урезаем молча, а подсказываем: решает руководитель. Деньги меняются, только когда сотрудник сохранит оплату
+  const tagList = usePatientTags((a.patient?.tagIds?.length ?? 0) > 0)
+  const offer = tagDiscount(a.patient?.tagIds, tagList.data)
+  const offerFits = offer != null && Boolean(policy.data?.canGive) && offer.percent <= (policy.data?.myMaxPercent ?? 100)
+  const [offerChecked, setOfferChecked] = useState(false)
+  if (!offerChecked && offer && policy.data) {
+    // Один раз, когда метки и политика загрузились (состояние по ходу рендера — без лишнего прохода эффекта)
+    setOfferChecked(true)
+    if (offerFits && !a.discount && a.paidSom == null && !discount) setDiscount(tagDraft(offer))
+  }
   const [whole, setWhole] = useState(!hadDebt)
   const [paidNow, setPaidNow] = useState(hadDebt ? String(a.paidSom ?? '') : '')
   const [due, setDue] = useState(a.dueOn ?? '')
@@ -490,7 +503,11 @@ function PayForm({ a, me, billOnly, parts: initialParts, spentHere = 0, onCancel
           <LinesSum a={a} cost={priceNum} onUse={(sum) => setCost(String(sum))} />
           {costField(discount ? 'Цена приёма до скидки, сом' : 'Стоимость приёма, сом')}
           <PriceChips onPick={pick} />
-          <DiscountField price={priceNum} value={discount} onChange={setDiscount} policy={policy.data} />
+          {offer && policy.data && <TagDiscountNote offer={offer} fits={offerFits} canGive={Boolean(policy.data.canGive)}
+            max={policy.data.myMaxPercent} discount={discount} onApply={() => setDiscount(tagDraft(offer))} />}
+          {/* Подставленная по метке — без фокуса в поле: на телефоне не выскочит клавиатура */}
+          <DiscountField price={priceNum} value={discount} onChange={setDiscount} policy={policy.data}
+            autoFocus={!(offer && sameDiscount(discount, offer))} />
           <PromoField a={a} me={me} onDiscount={(percent) => {
             // Код со скидкой в процентах — подставим её, если скидку ещё не вписали (решает сотрудник: можно убрать)
             if (!discount && policy.data?.canGive) setDiscount({ kind: 'percent', value: String(percent), reason: 'PROMO', comment: '' })
@@ -560,6 +577,35 @@ function PayForm({ a, me, billOnly, parts: initialParts, spentHere = 0, onCancel
 }
 
 /** Доплата долга: сумма (не больше долга) и способ. */
+/** Скидка по метке — в черновик формы: процент, причина и комментарий «Метка «Друг»». */
+function tagDraft(offer: TagDiscount): DiscountDraft {
+  return { kind: 'percent', value: String(offer.percent), reason: offer.reason, comment: offer.comment }
+}
+
+/** В форме — та самая скидка по метке (процент и причина). */
+function sameDiscount(d: DiscountDraft | null, offer: TagDiscount): boolean {
+  return d?.kind === 'percent' && d.value === String(offer.percent) && d.reason === offer.reason
+}
+
+/**
+ * Строка над скидкой: «🏷 Скидка по метке «Друг» — 10 %», пока в форме она и стоит; убрали — «Скидка по метке … · Подставить»;
+ * давать скидку нельзя или предел меньше — только подсказка, решает руководитель.
+ */
+function TagDiscountNote({ offer, fits, canGive, max, discount, onApply }: {
+  offer: TagDiscount; fits: boolean; canGive: boolean; max?: number; discount: DiscountDraft | null; onApply: () => void
+}) {
+  const what = `Скидка по метке «${offer.tag.name}» — ${offer.percent} %`
+  if (!fits) {
+    const why = !canGive ? 'скидку даёт руководитель' : `больше вашего предела (${max} %) — решает руководитель`
+    return <p className="pay-tag-note muted" role="note">🏷 {what}: {why}</p>
+  }
+  if (sameDiscount(discount, offer)) return <p className="pay-tag-note" role="note">🏷 {what}</p>
+  if (discount) return null
+  return (
+    <p className="pay-tag-note muted" role="note">🏷 {what} · <button type="button" className="link" onClick={onApply}>Подставить</button></p>
+  )
+}
+
 function ExtraForm({ a, me, onCancel }: { a: Appointment; me: Me; onCancel: () => void }) {
   const action = useAppointmentAction(a)
   const advance = useAdvanceFor(a, me, 0)

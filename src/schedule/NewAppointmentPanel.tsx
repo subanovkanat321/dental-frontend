@@ -38,6 +38,7 @@ import { ageYears, yearsText } from '../lib/age'
 import { GUARDIAN_RELATION } from '../lib/guardian'
 import { activeUpcoming, treatingDoctorId, usePatientCard } from './patientCard'
 import type { QueryClient } from '@tanstack/react-query'
+import { BookingTags } from '../tags/BookingTags'
 
 type Me = Schemas['BookingViewsMe']
 type Patient = Schemas['PatientView']
@@ -155,6 +156,8 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
   // «⚡ Сейчас»: пациент пришёл сам — приём с этой минуты, без сетки свободного и листа ожидания
   const [walkIn, setWalkIn] = useState(false)
   const [birthDate, setBirthDate] = useState('')
+  // Метки нового пациента (2026-11-24): отмечены в форме — поставим сразу после того, как пациент заведётся
+  const [newTags, setNewTags] = useState<number[]>([])
   const [source, setSource] = useState('')
   const sources = useSources()
   const [wantsEarlier, setWantsEarlier] = useState(false)
@@ -389,6 +392,15 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
         }
         return
       }
+      if (newTags.length) {
+        // Тот же PUT, что строка меток в карточке пациента; не поставилась — запись всё равно создаём, но скажем
+        const failed = (await Promise.all(newTags.map((tagId) => unwrap(api.PUT('/api/patients/{id}/tags/{tagId}', {
+          params: { path: { id: who!.id, tagId } }, body: { on: true },
+        })).then(() => false, () => true)))).some(Boolean)
+        void client.invalidateQueries({ queryKey: ['patient-tags'] })
+        if (failed) void notify('Пациент добавлен, но не все метки поставились — поставьте их в карточке пациента.')
+        setNewTags([])
+      }
       setPatient(who)
       setAdding(false)
     }
@@ -557,6 +569,8 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
               </div>
               {/* Уже записан (на этот день — предупреждение), долг, ⚠ аллергия, когда был */}
               {patient.id != null && <BookingContext patientId={patient.id} me={me} date={date} onOpenAppointment={onOpenAppointment} />}
+              {/* Метки — сразу при записи: «Друг», «Родственник»… (у найденного в списке меток нет — берём из карточки) */}
+              {patient.id != null && <BookingTags me={me} patientId={patient.id} tagIds={card.data?.patient?.tagIds ?? patient.tagIds} />}
             </>
           ) : adding ? (
             <>
@@ -577,6 +591,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
                   <option value="">Не указано</option>
                   {sourceChoices(sources.data).map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
                 </Select></label>
+              <BookingTags me={me} tagIds={newTags} onChange={setNewTags} />
               {createPatient.error?.code === 'duplicate-patient' && (
                 <div className="duplicate" role="alert">
                   <p>{createPatient.error.message}{duplicate ? `: ${duplicate.fullName}` : ''}</p>
