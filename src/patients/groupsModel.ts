@@ -14,7 +14,7 @@ export type PlanStatus = NonNullable<GroupFilter['planStatus']>
 /** Все запросы групп — под одним ключом: создали задачи или сообщение — обновились числа и история. */
 export const GROUPS = ['patient-groups'] as const
 
-/** Что значит готовая группа — серая строка под названием в списке групп. */
+/** Что значит готовая группа — пояснение у карточки «Позвать снова». */
 export const READY_HINT: Record<Ready, string> = {
   LAPSED_6: 'Последний визит больше полугода назад, не записаны',
   LAPSED_12: 'Последний визит больше года назад, не записаны',
@@ -23,6 +23,10 @@ export const READY_HINT: Record<Ready, string> = {
   ONE_VISIT: 'Был один приём больше месяца назад',
   DEBT: 'Не доплатили за лечение',
   BIRTHDAY_MONTH: 'Поздравить и пригласить на осмотр',
+  CANCELLED: 'Отменили запись и не перезаписались',
+  NO_SHOW: 'Пропустили приём и не перезаписались',
+  RECALL: 'Подошёл срок профосмотра',
+  PLAN_SENT: 'Отправили план с ценами — не записались',
 }
 
 export const SKIP_TEXT: Record<SkipReason, string> = {
@@ -65,13 +69,16 @@ export function useGroups() {
   return useQuery({ queryKey: [...GROUPS, 'list'], queryFn: () => unwrap(api.GET('/api/patient-groups')) })
 }
 
-export function useMembers(ref: GroupRef, doctorId: number | null, limit: number) {
+/** Пациенты группы (страница) и итоги; {@code limit} 0 — только число, тексты для «Позвать всех» и «Что уже делали». */
+export function useMembers(ref: GroupRef | null, doctorId: number | null, limit: number) {
   return useQuery({
-    queryKey: [...GROUPS, 'members', keyOf(ref), doctorId, limit],
+    queryKey: [...GROUPS, 'members', ref ? keyOf(ref) : null, doctorId, limit],
     queryFn: () => unwrap(api.GET('/api/patient-groups/members', {
-      params: { query: { ready: ref.ready, tagId: ref.tagId, groupId: ref.groupId, doctorId: doctorId ?? undefined, limit } },
+      params: { query: { ready: ref?.ready, tagId: ref?.tagId, groupId: ref?.groupId, doctorId: doctorId ?? undefined, limit } },
     })),
-    placeholderData: (prev) => prev,
+    enabled: ref != null,
+    // Та же группа, другая страница или врач — прежний список на экране, пока грузится; другая группа — нет
+    placeholderData: (prev, q) => (q && q.queryKey[2] === (ref ? keyOf(ref) : null) ? prev : undefined),
   })
 }
 

@@ -1,14 +1,4 @@
-/* «Пациенты → Группы» (шаг 9А): спокойный список групп и пациентов (calm.css), шапка группы, окно «Позвать группу» */
-.group-head { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
-.group-head { flex-direction: column; align-items: flex-start; }
-.group-back { font-size: .9rem; }
-.group-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: -8px; }
-.group-tools .group-call-btn { margin-left: auto; }
-@media (max-width: 640px) {
-  .group-tools .group-call-btn { width: 100%; margin-left: 0; }
-}
-.group-title { display: flex; align-items: center; gap: 6px; margin: 0; font-family: var(--display); font-size: 1.15rem; font-weight: 600; }
-.groups .calm-meta .num { font-size: .95rem; }
+/* Группы пациентов (шаг 9А; с 2026-11-24 — карточки «Позвать снова»): окно «Позвать группу», ход сообщения, редактор своей группы */
 
 .group-call-sub { margin: -4px 0 12px; }
 .group-call-form { display: grid; gap: 12px; margin-top: 16px; }

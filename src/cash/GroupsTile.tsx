@@ -25,7 +25,7 @@ export function GroupsTile() {
       <p className="hint small">
         За 90 дней: сообщение — <span className="num">{r.messaged}</span>{r.messaged > 0 && <> (записались <span className="num">{r.messagedBooked}</span>)</>},
         {' '}задачи на обзвон — <span className="num">{r.called}</span>{r.called > 0 && <> (записались <span className="num">{r.calledBooked}</span>)</>}.
-        {' '}Считаем запись в течение 30 дней. <a href="#/patients/groups">Открыть группы</a>
+        {' '}Считаем запись в течение 30 дней. <a href="#/patients/comeback">Открыть «Позвать снова»</a>
       </p>
     </section>
   )

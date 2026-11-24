@@ -11,3 +11,30 @@
 @media (max-width: 760px) {
   .head-tools > .segments-select.comeback-filter { flex: 1 1 100%; }
 }
+
+/* Карточки «кого звать» на компьютере (2026-11-24, одна вкладка вместо трёх): значок в круге, название, число; выбранная —
+   рамка и заливка акцента, как у листа выбора на телефоне (layout/Segments → ChoicePick) */
+.cb-cards { display: flex; flex-wrap: wrap; gap: 8px; }
+.cb-card { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 5px 12px 5px 6px; border: 1px solid var(--separator);
+  border-radius: 99px; background: var(--card); color: var(--text); font: inherit; font-size: .925rem; cursor: pointer; }
+.cb-card:hover { background: var(--sunken); }
+.cb-card[aria-pressed=true] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); background: color-mix(in srgb, var(--accent-soft) 45%, var(--card)); }
+.cb-card-icon { flex: none; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--accent-soft); font-size: 1rem; line-height: 1; }
+.cb-card-name { font-weight: 600; white-space: nowrap; max-width: 240px; overflow: hidden; text-overflow: ellipsis; }
+.cb-card-count { padding: 1px 8px; border-radius: 99px; background: var(--sunken); font-weight: 600; font-size: .85rem; }
+.cb-card[aria-pressed=true] .cb-card-count { background: var(--accent); color: var(--accent-text); }
+.cb-card-new { border-style: dashed; color: var(--hint); }
+.cb-card-new .cb-card-icon { background: var(--sunken); color: var(--accent); font-weight: 700; }
+/* Строка под карточками: пояснение или итог, «Врач», ✏️ и «Позвать всех N» справа */
+.cb-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.cb-tools .group-call-btn { margin-left: auto; }
+.cb-tools > .head-note { align-self: center; padding-bottom: 0; font-size: .85rem; }
+.cb-more { margin-top: 4px; }
+.cb-more > summary { cursor: pointer; color: var(--hint); font-weight: 600; padding: 6px 0; }
+.cb-more[open] > summary { margin-bottom: 8px; }
+@media (max-width: 640px) {
+  .cb-tools > .segments, .cb-tools > .ui-select { flex: 1 1 100%; }
+  .cb-tools > .head-note, .cb-tools > .edit-btn { order: 1; }
+  .cb-tools > .head-note { flex: 0 1 auto; flex-basis: auto; }
+  .cb-tools .group-call-btn { order: 2; flex: 1 1 100%; margin-left: 0; }
+}

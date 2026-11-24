@@ -34,6 +34,12 @@ export const PLATFORM_MOVED: Record<string, string> = {
   agreements: 'settings/contract', contract: 'settings/contract', tariffs: 'settings/tariffs',
 }
 
+/**
+ * «Бросили лечение» и «Группы» стали карточками вкладки «Позвать снова» (2026-11-24): старые адреса (закладки, плитки
+ * «Аналитики», советы) — сюда; карточка — третий кусок адреса ({@link comebackCardInHash}).
+ */
+const PATIENTS_MOVED: Record<string, string> = { dropped: 'patients/comeback/dropped', groups: 'patients/comeback' }
+
 /** Совсем старые разделы (закладки до «Настроек»): «Команда», «Аккаунт». */
 const OLD: Record<string, string> = { team: 'clinic/staff', account: 'help/support' }
 
@@ -49,6 +55,7 @@ export function hashParts(): [string, string | undefined] {
   else if (OLD[name]) to = OLD[name]
   else if (name === 'clinic' && (item === 'doctors' || item === 'members')) to = 'clinic/staff'
   else if (name === 'platform' && item && PLATFORM_MOVED[item]) to = `platform/${PLATFORM_MOVED[item]}`
+  else if (name === 'patients' && item && PATIENTS_MOVED[item]) to = PATIENTS_MOVED[item]
   if (!to) return [name, item]
   window.history.replaceState(window.history.state, '', `${window.location.pathname}${window.location.search}#/${to}`)
   const [n = '', i] = to.split('/')
@@ -136,6 +143,20 @@ export function platformModeInHash(sub: string): string | null {
   hashParts()
   const [name, item, mode] = window.location.hash.replace(/^#\/?/, '').split('/')
   return name === 'platform' && item === sub && mode ? mode : null
+}
+
+/** Карточка «Позвать снова» из адреса: #/patients/comeback/dropped → 'dropped'; нет — null. */
+export function comebackCardInHash(): string | null {
+  hashParts()
+  const [name, item, card] = window.location.hash.replace(/^#\/?/, '').split('/')
+  return name === 'patients' && item === 'comeback' && card ? card : null
+}
+
+/** Выбрали карточку — адрес заменой (как режимы «Платформы»): обновили страницу или поделились ссылкой — та же карточка. */
+export function setComebackCardInHash(card: string | null): void {
+  const [name, item] = window.location.hash.replace(/^#\/?/, '').split('/')
+  if (name !== 'patients' || item !== 'comeback') return
+  window.history.replaceState(window.history.state, '', `${window.location.pathname}${window.location.search}#/patients/comeback${card ? `/${card}` : ''}`)
 }
 
 /** Сменили режим вкладки — адрес заменой (переключатель, как вкладки, не копит шаги «назад»). */
