@@ -1,6 +1,7 @@
 import type { Schemas } from '../api/client'
 import { somText } from '../lib/time'
 import { discountAmount, percentText, priceOf, QUICK_PERCENTS, setDiscount, typePrice, type PriceDraft } from './stepDiscount'
+import './plan.css'
 
 type Policy = Schemas['DiscountPoliciesPolicy']
 

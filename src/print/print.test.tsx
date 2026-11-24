@@ -277,6 +277,30 @@ test('квитанция с аванса: строка «с аванса», «О
   expect(sheet).toHaveTextContent('Оплачено полностью')
 })
 
+test('квитанция со скидками строк (V258): «Коронка × 4 — 28 000 → 24 000 (скидка 4 000)», «Скидка по услугам», «Скидка всего»', async () => {
+  backend(done({ paidSom: 23400, chargeSom: 23400, debtSom: 0 }))
+  server.use(http.get('*/api/appointments/:id/receipt', () => HttpResponse.json({
+    ...RECEIPT, chargeSom: 23400, paidSom: 23400, debtSom: 0, linesDiscountSom: 6000, fullSom: 32000,
+    discount: { som: 2600, percent: 10, reason: 'REGULAR', priceSom: 26000 },
+    lines: [{ name: 'Коронка', qty: 4, teeth: [14, 15, 24, 25], amountSom: 28000, discountSom: 4000 },
+      { name: 'Лечение кариеса', qty: 1, teeth: [36], amountSom: 4000, discountSom: 2000 }],
+    payments: [{ paidAt: '2026-10-20T04:30:00Z', amountSom: 23400, method: 'CASH', takenBy: 'Жылдыз' }],
+  } satisfies Schemas['ReceiptsReceiptView'])))
+  renderApp()
+  const panel = await card(/Бакыт М\./)
+  await userEvent.click(await within(panel).findByRole('button', { name: 'Просмотр: квитанция' }))
+  await userEvent.click(within(panel).getByRole('button', { name: 'Печать: квитанция' }))
+  const sheet = await screen.findByRole('dialog', { name: 'Печать: Квитанция об оплате' })
+  expect(within(sheet).getByRole('list', { name: 'Услуги' })).toHaveTextContent(
+    /Коронка \(14, 15, 24, 25\) × 4 — 28\s000 сом → 24\s000 сом \(скидка 4\s000 сом\)/)
+  expect(sheet).toHaveTextContent(/Стоимость:?\s*32\s000 сом/)
+  expect(sheet).toHaveTextContent(/Скидка по услугам:?\s*6\s000 сом/)
+  expect(sheet).toHaveTextContent(/Скидка всего:?\s*8\s600 сом/)
+  expect(sheet).toHaveTextContent(/К оплате:?\s*23\s400 сом/)
+  // Причину скидки пациенту не печатаем
+  expect(sheet).not.toHaveTextContent('Постоянный')
+})
+
 const TOKEN = 'a'.repeat(43)
 
 test('квитанция с долгом: «Как оплатить» с реквизитами и QR на листе, в бот — без ссылки, следом картинка QR', async () => {
