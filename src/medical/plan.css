@@ -92,7 +92,8 @@
 .plan-step-found .row-link { display: flex; justify-content: space-between; gap: 12px; width: 100%; padding: 10px 12px; font-weight: 500; min-height: 44px; }
 .plan-step-found .row-link:hover { background: var(--accent-soft); }
 .plan-step-picked { margin: 0; display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; }
-.plan-step-fields { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1.3fr); gap: 8px 12px; }
+.plan-step-fields { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1.3fr); gap: 8px 12px; }
+.plan-step-who { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); }
 .plan-step-fields .field { margin: 0; }
 @media (max-width: 640px) {
   .plan-step-fields { grid-template-columns: 1fr 1fr; }
@@ -130,3 +131,31 @@
 .plan-template-save { display: grid; gap: 6px; margin: 8px 0; padding: 10px 12px; border-radius: var(--r-md); background: var(--accent-soft); }
 .plan-template-save input { font: inherit; padding: 8px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
 .plan-offer-how { margin-bottom: 8px; }
+
+/* Скидка этапа (V257): поле цены, «Скидка: 5 % 10 % … [  ] % | сом», строка «Цена по прайсу ~~4 000~~ → 2 500 сом, скидка …» */
+.step-price { display: grid; gap: 6px; min-width: 0; }
+.step-price .field { margin: 0; max-width: 220px; }
+.step-price input { font: inherit; padding: 9px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md);
+  background: var(--card); color: var(--text); min-width: 0; width: 100%; box-sizing: border-box; }
+.step-discount { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.step-discount-own { display: inline-flex; gap: 4px; align-items: center; }
+.step-discount-value, .step-price .step-discount-value { width: 72px; }
+.step-price-note { margin: 0; padding: 6px 10px; border-radius: var(--r-md); background: var(--accent-soft); font-size: .9rem; }
+.step-price-note.muted { background: transparent; color: var(--hint); padding-left: 0; }
+.step-price-was { color: var(--hint); font-weight: 400; }
+.step-price-off { font-size: .8rem; }
+.plan-step-due .chips-pick { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.plan-step-due > span { display: block; margin-bottom: 4px; }
+.plan-discount-form { display: grid; gap: 8px; padding: 10px 12px; margin: 8px 0; border-radius: var(--r-md); background: var(--accent-soft); }
+.plan-discount-form p { margin: 0; }
+.plan-discount-form .chips-pick { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.plan-discount-form input { font: inherit; padding: 7px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md);
+  background: var(--card); color: var(--text); }
+.step-edit .step-price { grid-column: 1 / -1; }
+@media (max-width: 640px) {
+  .plan-step-who { grid-template-columns: 1fr; }
+  /* Цена со скидкой на телефоне — в две строки: «~~4 500~~ −10 %» над «4 050 сом», чтобы кнопки этапа влезли в строку */
+  .plan .step-price-text { display: inline-flex; flex-direction: column; line-height: 1.15; }
+  .plan .step-price-was { font-size: .8rem; }
+  .step-price .field { max-width: none; }
+}

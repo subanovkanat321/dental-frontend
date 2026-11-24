@@ -39,6 +39,8 @@ export function PlanView({ plan, t, onAgree, onAsk, onBook, busy = false, error 
   const variant = choosing ? variants.find((v) => v.id === vid) ?? variants[0] : null
   const stages = (variant ? variant.stages : plan.stages) ?? []
   const total = variant ? variant.totalSom : plan.totalSom
+  // Скидка этапов (V257): итог — к оплате; цена до скидки — итог + скидка
+  const discount = (variant ? variant.discountSom : plan.discountSom) ?? 0
   const chart = variant ? variant.chart : plan.chart
   const agreed = Boolean(plan.agreedAt)
   const [tooth, setTooth] = useState<number | null>(null)
@@ -56,6 +58,7 @@ export function PlanView({ plan, t, onAgree, onAsk, onBook, busy = false, error 
               <button key={v.id} type="button" role="tab" aria-selected={v.id === variant!.id} onClick={() => { setVid(v.id); setTooth(null) }}>
                 <span>{label(v.number, v.name)}</span>
                 <b className="num">{somText(v.totalSom)}</b>
+                {v.discountSom ? <span className="hint small">{t('planDiscount')} −{somText(v.discountSom)}</span> : null}
               </button>
             ))}
           </div>
@@ -64,7 +67,14 @@ export function PlanView({ plan, t, onAgree, onAsk, onBook, busy = false, error 
       {plan.chosenNumber != null && <p className="tone-ok plan-view-chosen">✅ {t('planChosen', { v: label(plan.chosenNumber, plan.chosenName) })}</p>}
       {chart && <PlanTeeth key={variant?.id ?? 0} chart={chart} t={t} selected={tooth} onSelect={(n) => setTooth((cur) => (cur === n ? null : n))} />}
       <Stages stages={stages} t={t} tooth={tooth} />
-      {total > 0 && <p className="plan-view-total">{variant ? t('planVariantTotal') : t('planTotal')}: <b className="num">{somText(total)}</b></p>}
+      {total > 0 && discount > 0 && (
+        <div className="plan-view-total plan-view-discount">
+          <p>{variant ? t('planVariantTotal') : t('planTotal')}: <s className="num">{somText(total + discount)}</s></p>
+          <p>{t('planDiscount')}: <span className="num">−{somText(discount)}</span></p>
+          <p>{t('planWithDiscount')}: <b className="num">{somText(total)}</b></p>
+        </div>
+      )}
+      {total > 0 && discount === 0 && <p className="plan-view-total">{variant ? t('planVariantTotal') : t('planTotal')}: <b className="num">{somText(total)}</b></p>}
       {plan.duration && <p>{t('planDuration', { d: plan.duration })}</p>}
       {plan.validUntil && <p>{t('planValid', { date: day(plan.validUntil) })}</p>}
       <p className="hint small">{t('planNote')}</p>
@@ -97,11 +107,16 @@ function Stages({ stages, t, tooth }: { stages: NonNullable<Plan['stages']>; t: 
             {(st.items ?? []).map((item, i) => (
               <li key={i} className={item.tooth != null && item.tooth === tooth ? 'selected' : undefined}>
                 <span>{item.tooth ? <b>{t('planTooth', { n: item.tooth })} · </b> : null}{item.title}</span>
-                <span className="num nowrap">{item.priceSom != null ? somText(item.priceSom) : <span className="hint">{t('planPriceLater')}</span>}</span>
+                <span className="num nowrap">{item.priceSom == null ? <span className="hint">{t('planPriceLater')}</span>
+                  : item.discountSom ? <><s className="hint">{somText(item.priceSom)}</s> <b>{somText(item.priceSom - item.discountSom)}</b></>
+                    : somText(item.priceSom)}</span>
               </li>
             ))}
           </ul>
-          {many && st.totalSom > 0 && <p className="plan-view-sub">{t('planStageTotal')}: <b className="num">{somText(st.totalSom)}</b></p>}
+          {many && st.totalSom > 0 && (
+            <p className="plan-view-sub">{t('planStageTotal')}: <b className="num">{somText(st.totalSom)}</b>
+              {st.discountSom ? <span className="hint"> ({t('planDiscount').toLowerCase()} −{somText(st.discountSom)})</span> : null}</p>
+          )}
         </section>
       ))}
     </>

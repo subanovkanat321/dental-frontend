@@ -2287,6 +2287,46 @@
         }
       }
     },
+    "/api/patients/{patientId}/plan/discount" : {
+      "put" : {
+        "tags" : [ "chart-controller" ],
+        "operationId" : "discount",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ChartControllerDiscount"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/TreatmentStepView"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/patients/{patientId}/plan/assign" : {
       "put" : {
         "tags" : [ "chart-controller" ],
@@ -23384,6 +23424,21 @@
           "dueOn" : {
             "type" : "string",
             "format" : "date"
+          },
+          "discount" : {
+            "$ref" : "#/components/schemas/TreatmentPlanStepDiscount"
+          }
+        }
+      },
+      "TreatmentPlanStepDiscount" : {
+        "properties" : {
+          "percent" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "som" : {
+            "type" : "integer",
+            "format" : "int32"
           }
         }
       },
@@ -23433,6 +23488,18 @@
           },
           "overdue" : {
             "type" : "boolean"
+          },
+          "discountPercent" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "discountSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "netSom" : {
+            "type" : "integer",
+            "format" : "int32"
           }
         },
         "required" : [ "id", "stage" ]
@@ -23484,6 +23551,10 @@
             "items" : {
               "$ref" : "#/components/schemas/TreatmentStepView"
             }
+          },
+          "discountSom" : {
+            "type" : "integer",
+            "format" : "int32"
           }
         },
         "required" : [ "current", "number" ]
@@ -23545,6 +23616,20 @@
           }
         },
         "required" : [ "done", "manualAgreed", "total" ]
+      },
+      "ChartControllerDiscount" : {
+        "properties" : {
+          "stepIds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int64"
+            }
+          },
+          "discount" : {
+            "$ref" : "#/components/schemas/TreatmentPlanStepDiscount"
+          }
+        }
       },
       "ChartControllerAssign" : {
         "properties" : {
@@ -26299,6 +26384,10 @@
           "priceSom" : {
             "type" : "integer",
             "format" : "int32"
+          },
+          "discountSom" : {
+            "type" : "integer",
+            "format" : "int32"
           }
         }
       },
@@ -26373,6 +26462,10 @@
           },
           "chosenName" : {
             "type" : "string"
+          },
+          "discountSom" : {
+            "type" : "integer",
+            "format" : "int32"
           }
         },
         "required" : [ "id", "totalSom" ]
@@ -26390,6 +26483,10 @@
             }
           },
           "totalSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "discountSom" : {
             "type" : "integer",
             "format" : "int32"
           }
@@ -26421,6 +26518,10 @@
           },
           "chart" : {
             "$ref" : "#/components/schemas/PlanPictureChart"
+          },
+          "discountSom" : {
+            "type" : "integer",
+            "format" : "int32"
           }
         },
         "required" : [ "id", "number", "totalSom" ]
@@ -28112,6 +28213,9 @@
           "dueOn" : {
             "type" : "string",
             "format" : "date"
+          },
+          "discount" : {
+            "$ref" : "#/components/schemas/TreatmentPlanStepDiscount"
           }
         }
       },
@@ -33685,6 +33789,10 @@
             "format" : "int32"
           },
           "nowSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "nowNetSom" : {
             "type" : "integer",
             "format" : "int32"
           }

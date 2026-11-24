@@ -21,6 +21,10 @@ import { PlanTeethPicker } from './PlanTeethPicker'
 import { PlanVariantBar } from './PlanVariants'
 import { variantsKey } from '../lib/planVariants'
 import { overdueCount } from '../lib/planSteps'
+import { useDiscountPolicy } from '../schedule/discountDraft'
+import { PlanDiscountForm } from './PlanDiscount'
+import { StepPrice, StepPriceText } from './StepPrice'
+import { fromStep, priceOf, totalsOf, totalText } from './stepDiscount'
 import './plan.css'
 
 type Patient = Schemas['PatientView']
@@ -33,6 +37,8 @@ type Step = Schemas['TreatmentStepView']
  * группе), «📄 Из шаблона», «💲 Обновить цены», печать и отправка пациенту. Несколько вариантов плана (V254, PlanVariantBar):
  * вкладки с итогами, «⧉ Ещё вариант», «Пациент выбрал». Один редактор на медкарту (вкладка «План лечения») и карточку
  * приёма (строка «План лечения ›»). Права — на сервере (ChartService.requireEdit): readOnly — ассистент, он план только смотрит.
+ * Скидки (V257): у этапа «~~4 500~~ 4 050 сом (−10 %)», итог «…, скидка −…, к оплате …», «🏷 Скидка на выбранные» (зубы на формуле)
+ * и «🏷 Скидка на весь план» — по правилам «Настройки → Скидки».
  *
  * @param prefill зуб из карты зубов («В план лечения») — сразу открыть «Что сделать» с этим зубом
  * @param heading заголовок «План лечения» — в медкарте; в строке карточки приёма заголовок уже есть
@@ -71,6 +77,11 @@ export function TreatmentPlan({ patient, prefill = null, readOnly, heading = tru
   // «👤 Врач и срок»: один этап (key — id) или вся группа «Этап N» (key — 'stage-N')
   const [assigning, setAssigning] = useState<string | null>(null)
   const [tool, setTool] = useState<'template' | 'prices' | null>(null)
+  // «🏷 Скидка»: на этапы выбранных зубов или на весь план (несделанные этапы открытого варианта)
+  const [discounting, setDiscounting] = useState<'picked' | 'all' | null>(null)
+  const policy = useDiscountPolicy()
+  const services = useQuery({ queryKey: ['service-types'], queryFn: () => unwrap(api.GET('/api/service-types')), enabled: !readOnly })
+  const serviceOf = (id?: number | null) => (id == null ? undefined : services.data?.find((x) => x.id === id))
   // Пришёл зуб из карты — выбрать его и открыть «Что сделать» (состояние меняем при отрисовке, без эффекта)
   const [applied, setApplied] = useState(prefill)
   if (prefill !== applied) {
@@ -114,14 +125,17 @@ export function TreatmentPlan({ patient, prefill = null, readOnly, heading = tru
   const open = steps.filter((x) => !x.doneAt)
   const stages = stagesOf(open)
   const staged = stages.length > 1
-  const total = steps.reduce((s, x) => s + (x.priceSom ?? 0), 0)
-  const left = open.reduce((s, x) => s + (x.priceSom ?? 0), 0)
+  const all = totalsOf(steps)
+  const total = all.pay
+  const left = totalsOf(open).pay
   const error = toggle.error ?? remove.error ?? move.error ?? addVariant.error
   const overdue = overdueCount(steps)
   // «Обновить цены» — есть несделанные этапы с услугой из прайса (только их цену берём из прайса); только основной вариант
   const repriceable = isCurrent && steps.some((x) => !x.doneAt && x.serviceTypeId != null)
   const loaded = isCurrent ? plan.isSuccess : true
-  const sum = total ? `${somText(total)}${left && left !== total ? `, осталось ${somText(left)}` : ''}` : ''
+  const sum = total ? `${totalText(all)}${left && left !== total ? `, осталось ${somText(left)}` : ''}` : ''
+  const pickedSteps = open.filter((x) => x.tooth != null && picked.includes(x.tooth))
+  const canDiscount = !readOnly && Boolean(policy.data?.canGive) && open.some((x) => (x.priceSom ?? 0) > 0)
 
   return (
     <section className="card-block">
@@ -161,7 +175,8 @@ export function TreatmentPlan({ patient, prefill = null, readOnly, heading = tru
             )}
             <li className={[s.doneAt ? 'done' : s.overdue ? 'overdue' : '', s.tooth != null && picked.includes(s.tooth) ? 'picked-row' : ''].filter(Boolean).join(' ') || undefined}>
               {editing === s.id ? (
-                <StepEdit patientId={patientId} step={s} onDone={(fresh) => { if (fresh) saved(fresh); setEditing(null) }} />
+                <StepEdit patientId={patientId} step={s} policy={policy.data} listPrice={serviceOf(s.serviceTypeId)?.priceSom}
+                  onDone={(fresh) => { if (fresh) saved(fresh); setEditing(null) }} />
               ) : assigning === String(s.id) ? (
                 <StepAssignForm patientId={patientId} stepIds={[s.id]} label={`Врач и срок: ${s.title}`} current={s}
                   onDone={(fresh) => { if (fresh) saved(fresh); setAssigning(null) }} />
@@ -170,9 +185,13 @@ export function TreatmentPlan({ patient, prefill = null, readOnly, heading = tru
                   <label className="check">
                     <input type="checkbox" checked={Boolean(s.doneAt)} disabled={readOnly || toggle.isPending || !isCurrent} onChange={() => toggle.mutate(s)}
                       aria-label={`Сделано: ${s.title}`} title={isCurrent ? undefined : 'Отмечать сделанным — после выбора этого варианта'} />
-                    <span>{s.tooth ? <b>{s.tooth} · </b> : null}{s.title}<StepAssignMeta step={s} /></span>
+                    <span>{s.tooth ? <b>{s.tooth} · </b> : null}{s.title}<StepAssignMeta step={s} />
+                      {!s.doneAt && serviceOf(s.serviceTypeId)?.durationMinutes ? (
+                        <span className="plan-assign" title="Длительность по прайсу — для записи">⏱ {serviceOf(s.serviceTypeId)?.durationMinutes} мин</span>
+                      ) : null}
+                    </span>
                   </label>
-                  <span className="nowrap">{s.priceSom != null ? somText(s.priceSom) : ''}</span>
+                  <span className="nowrap num"><StepPriceText step={s} /></span>
                   {!readOnly && !s.doneAt && (
                     <span className="plan-move">
                       <button type="button" className="btn ghost small" aria-label={`Выше: ${s.title}`} title="Выше" disabled={at <= 0 || move.isPending}
@@ -206,8 +225,18 @@ export function TreatmentPlan({ patient, prefill = null, readOnly, heading = tru
         <LabOrderDialog me={me} preset={{ patient: { id: patient.id, fullName: patient.fullName }, kind: labKindOf(toLab.title) ?? undefined,
           teeth: toLab.tooth != null ? String(toLab.tooth) : undefined }} onClose={() => setToLab(null)} />
       )}
+      {discounting && (
+        <PlanDiscountForm patientId={patientId} policy={policy.data}
+          steps={discounting === 'picked' ? pickedSteps : open}
+          label={discounting === 'picked' ? `Скидка на выбранные: ${[...new Set(pickedSteps.map((x) => x.tooth))].join(', ')}` : 'Скидка на весь план'}
+          onDone={(fresh) => { if (fresh) saved(fresh); setDiscounting(null) }} />
+      )}
       {!readOnly && loaded && (
         <div className="actions plan-tools">
+          {canDiscount && pickedSteps.length > 0 && (
+            <button type="button" className="btn" onClick={() => setDiscounting('picked')}>🏷 Скидка на выбранные ({pickedSteps.length})</button>
+          )}
+          {canDiscount && <button type="button" className="btn" onClick={() => setDiscounting('all')}>🏷 Скидка на весь план</button>}
           <button type="button" className="btn" onClick={() => setTool('template')}>📄 Из шаблона</button>
           {repriceable && <button type="button" className="btn" onClick={() => setTool('prices')}>💲 Обновить цены</button>}
           {!multi && steps.some((x) => !x.doneAt) && variants.isSuccess && (
@@ -244,26 +273,34 @@ function stageTotal(stages: ReturnType<typeof stagesOf<Step>>, stage?: number): 
   return stages.find((x) => x.stage === stage)?.total ?? 0
 }
 
-/** Правка этапа: зуб, что сделать, цена и этап; отметка «сделано» остаётся как была. */
-function StepEdit({ patientId, step, onDone }: { patientId: number; step: Step; onDone: (steps?: Step[]) => void }) {
-  const [f, setF] = useState({ tooth: step.tooth != null ? String(step.tooth) : '', title: step.title ?? '', price: step.priceSom != null ? String(step.priceSom) : '',
-    stage: String(step.stage) })
+/**
+ * Правка этапа: зуб, что сделать, цена (со скидкой — StepPrice) и этап; отметка «сделано» остаётся как была. Скидку
+ * присылаем всегда: пустая — снять (сервер без поля оставил бы прежнюю).
+ */
+function StepEdit({ patientId, step, policy, listPrice, onDone }: {
+  patientId: number; step: Step; policy?: Schemas['DiscountPoliciesPolicy']; listPrice?: number | null; onDone: (steps?: Step[]) => void
+}) {
+  const [f, setF] = useState({ tooth: step.tooth != null ? String(step.tooth) : '', title: step.title ?? '', stage: String(step.stage) })
+  const [money, setMoney] = useState(() => fromStep(step))
   const save = useMutation<Step[], ApiError>({
-    mutationFn: () => unwrap(api.PUT('/api/patients/{patientId}/plan/{stepId}', {
-      params: { path: { patientId, stepId: step.id } },
-      body: { tooth: f.tooth ? Number(f.tooth) : undefined, title: f.title.trim(), priceSom: f.price ? Number(f.price) : undefined,
-        stage: Number(f.stage), done: Boolean(step.doneAt) },
-    })),
+    mutationFn: () => {
+      const p = priceOf(money, policy)
+      return unwrap(api.PUT('/api/patients/{patientId}/plan/{stepId}', {
+        params: { path: { patientId, stepId: step.id } },
+        body: { tooth: f.tooth ? Number(f.tooth) : undefined, title: f.title.trim(), priceSom: p.priceSom,
+          stage: Number(f.stage), done: Boolean(step.doneAt), discount: p.discount ?? {} },
+      }))
+    },
     onSuccess: (steps) => onDone(steps),
   })
   return (
     <form className="plan-add step-edit" aria-label={`Этап: ${step.title}`} onSubmit={(e) => { e.preventDefault(); if (f.title.trim()) save.mutate() }}>
       <input aria-label="Зуб этапа" placeholder="Зуб" inputMode="numeric" value={f.tooth} onChange={(e) => setF({ ...f, tooth: e.target.value })} />
       <input aria-label="Что сделать на этапе" value={f.title} maxLength={200} autoFocus onChange={(e) => setF({ ...f, title: e.target.value })} />
-      <input aria-label="Цена этапа, сом" placeholder="Цена" type="number" min={0} value={f.price} onChange={(e) => setF({ ...f, price: e.target.value })} />
       <Select aria-label="Этап лечения этого шага" value={f.stage} onChange={(e) => setF({ ...f, stage: e.target.value })}>
         {STAGES.map((n) => <option key={n} value={String(n)}>Этап {n}</option>)}
       </Select>
+      <StepPrice value={money} onChange={setMoney} policy={policy} listPrice={listPrice} inputLabel="Цена этапа, сом" />
       <button type="submit" className="btn primary" disabled={save.isPending || !f.title.trim()}>Сохранить</button>
       <button type="button" className="btn ghost" onClick={() => onDone()}>Отмена</button>
       {save.error && <p className="error" role="alert">{Object.values(save.error.fieldErrors)[0] ?? save.error.message}</p>}

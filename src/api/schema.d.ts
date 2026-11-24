@@ -772,6 +772,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/patients/{patientId}/plan/discount": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["discount"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/patients/{patientId}/plan/assign": {
         parameters: {
             query?: never;
@@ -10150,6 +10166,13 @@ export interface components {
             doctorId?: number;
             /** Format: date */
             dueOn?: string;
+            discount?: components["schemas"]["TreatmentPlanStepDiscount"];
+        };
+        TreatmentPlanStepDiscount: {
+            /** Format: int32 */
+            percent?: number;
+            /** Format: int32 */
+            som?: number;
         };
         TreatmentStepView: {
             /** Format: int64 */
@@ -10173,6 +10196,12 @@ export interface components {
             /** Format: date */
             dueOn?: string;
             overdue?: boolean;
+            /** Format: int32 */
+            discountPercent?: number;
+            /** Format: int32 */
+            discountSom?: number;
+            /** Format: int32 */
+            netSom?: number;
         };
         PlanVariantsRename: {
             name?: string;
@@ -10194,6 +10223,8 @@ export interface components {
             /** Format: int32 */
             leftSom?: number;
             steps?: components["schemas"]["TreatmentStepView"][];
+            /** Format: int32 */
+            discountSom?: number;
         };
         PlanVariantsVariants: {
             variants?: components["schemas"]["PlanVariantsVariantView"][];
@@ -10219,6 +10250,10 @@ export interface components {
             manualAgreed: boolean;
             /** Format: date-time */
             refusedAt?: string;
+        };
+        ChartControllerDiscount: {
+            stepIds?: number[];
+            discount?: components["schemas"]["TreatmentPlanStepDiscount"];
         };
         ChartControllerAssign: {
             stepIds?: number[];
@@ -11320,6 +11355,8 @@ export interface components {
             title?: string;
             /** Format: int32 */
             priceSom?: number;
+            /** Format: int32 */
+            discountSom?: number;
         };
         PlanOffersPatientPlan: {
             /** Format: int64 */
@@ -11347,6 +11384,8 @@ export interface components {
             /** Format: int32 */
             chosenNumber?: number;
             chosenName?: string;
+            /** Format: int32 */
+            discountSom?: number;
         };
         PlanOffersStage: {
             /** Format: int32 */
@@ -11354,6 +11393,8 @@ export interface components {
             items?: components["schemas"]["PlanOffersItem"][];
             /** Format: int32 */
             totalSom: number;
+            /** Format: int32 */
+            discountSom?: number;
         };
         PlanOffersVariantPlan: {
             /** Format: int64 */
@@ -11365,6 +11406,8 @@ export interface components {
             /** Format: int32 */
             totalSom: number;
             chart?: components["schemas"]["PlanPictureChart"];
+            /** Format: int32 */
+            discountSom?: number;
         };
         PlanPictureChart: {
             /** @enum {string} */
@@ -12056,6 +12099,7 @@ export interface components {
             doctorId?: number;
             /** Format: date */
             dueOn?: string;
+            discount?: components["schemas"]["TreatmentPlanStepDiscount"];
         };
         DebtReminderControllerRemind: {
             /** @enum {string} */
@@ -14259,6 +14303,8 @@ export interface components {
             wasSom?: number;
             /** Format: int32 */
             nowSom: number;
+            /** Format: int32 */
+            nowNetSom?: number;
         };
         TreatmentPlanReprice: {
             changes?: components["schemas"]["TreatmentPlanPriceChange"][];
@@ -17262,6 +17308,32 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PlanStatesProgress"];
+                };
+            };
+        };
+    };
+    discount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChartControllerDiscount"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TreatmentStepView"][];
                 };
             };
         };

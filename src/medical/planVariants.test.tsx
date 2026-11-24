@@ -130,7 +130,8 @@ test('с зубов: два зуба → «Что сделать» → услу�
   expect(within(sheet).getByRole('spinbutton', { name: 'Цена, сом' })).toHaveValue(4000)
   expect(sheet).toHaveTextContent(/4\s000 сом × 2 зуба = 8\s000 сом/)
   await userEvent.click(within(sheet).getByRole('button', { name: '＋ Добавить в план' }))
-  expect(sent).toContainEqual({ batch: { teeth: [16, 17], title: 'Пломба композит', priceSom: 4000, stage: 1, serviceTypeId: 3 } })
+  // Врач — тот, кто добавляет; срок — через неделю (этап 1)
+  expect(sent).toContainEqual({ batch: { teeth: [16, 17], title: 'Пломба композит', priceSom: 4000, stage: 1, serviceTypeId: 3, doctorId: 1, dueOn: '2026-11-18' } })
   const list = screen.getByRole('list', { name: 'Этапы лечения' })
   expect(await within(list).findAllByText(/Пломба композит/)).toHaveLength(2)
 })
@@ -148,7 +149,7 @@ test('«＋ Без зуба»: профгигиена — быстрой кно�
   await userEvent.click(within(sheet).getByRole('button', { name: '＋ Добавить в план' }))
   const list = await screen.findByRole('list', { name: 'Этапы лечения' })
   expect(await within(list).findByText('Профгигиена')).toBeInTheDocument()
-  expect(sent).toContainEqual({ add: { title: 'Профгигиена', priceSom: 3500, stage: 2, serviceTypeId: 5 }, variant: null })
+  expect(sent).toContainEqual({ add: expect.objectContaining({ title: 'Профгигиена', priceSom: 3500, stage: 2, serviceTypeId: 5 }), variant: null })
   expect(list).toHaveTextContent(/Этап 1.*Имплант.*Этап 2.*Профгигиена/)
 
   // Стрелки: у первого «↑» выключена, «↓» двигает
@@ -176,7 +177,7 @@ test('варианты: «⧉ Ещё вариант» → вкладки с ит
   await userEvent.type(within(sheet).getByRole('spinbutton', { name: 'Цена, сом' }), '7000')
   await choose(within(sheet).getByRole('combobox', { name: 'Этап лечения' }), 'Этап 1')
   await userEvent.click(within(sheet).getByRole('button', { name: '＋ Добавить в план' }))
-  expect(sent).toContainEqual({ add: { title: 'Отбеливание', priceSom: 7000, stage: 1 }, variant: '102' })
+  expect(sent).toContainEqual({ add: expect.objectContaining({ title: 'Отбеливание', priceSom: 7000, stage: 1 }), variant: '102' })
   expect(await within(tabs).findByRole('tab', { name: /Вариант 2 — Эконом.*67\s000 сом/ })).toBeInTheDocument()
   // Сделанным этап невыбранного варианта не отметить
   expect(within(screen.getByRole('list', { name: 'Этапы лечения' })).getByRole('checkbox', { name: 'Сделано: Отбеливание' })).toBeDisabled()

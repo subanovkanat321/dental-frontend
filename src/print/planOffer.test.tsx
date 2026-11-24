@@ -106,7 +106,7 @@ test('план по этапам: заголовки «Этап 1 · 10 500 со
   await userEvent.click(within(form).getByRole('combobox', { name: 'Этап лечения' }))
   await userEvent.click(screen.getByRole('option', { name: 'Этап 3' }))
   await userEvent.click(within(form).getByRole('button', { name: '＋ Добавить в план' }))
-  await waitForSlow(() => expect(calls).toContainEqual({ add: { title: 'Имплант', tooth: 46, priceSom: 30000, stage: 3, serviceTypeId: 7 } }))
+  await waitForSlow(() => expect(calls).toContainEqual({ add: { title: 'Имплант', tooth: 46, priceSom: 30000, stage: 3, serviceTypeId: 7, doctorId: 1, dueOn: '2026-12-16' } }))
 })
 
 test('«Отправить план пациенту»: предпросмотр с итогами по этапам, срок, цены до…, в Telegram — статус', async () => {

@@ -179,3 +179,18 @@ test('ассистент: «📄 Лист» в просмотре — лист �
   expect(paper).not.toHaveTextContent('сом')
   expect(screen.getByRole('button', { name: 'Отправить листом: план лечения' })).toBeInTheDocument()
 })
+
+test('лист плана со скидкой этапа (V257): зачёркнутая цена, «Сумма по плану … скидка», «Итого со скидкой»', async () => {
+  backend(me, true)
+  server.use(http.get('*/api/patients/2/plan', () => HttpResponse.json([
+    { id: 1, tooth: 36, title: 'Лечение каналов', priceSom: 8000, stage: 1, discountPercent: 10, discountSom: 800, netSom: 7200 },
+    { id: 3, tooth: 16, title: 'Пломба', priceSom: 4000, stage: 1 },
+  ] satisfies Schemas['TreatmentStepView'][])))
+  await openMedical()
+  await userEvent.click(await screen.findByRole('button', { name: 'Печать: план лечения' }))
+  const sheet = await screen.findByRole('dialog', { name: 'Печать: План лечения' })
+  const rows = within(within(sheet).getByRole('table', { name: 'Этапы плана' })).getAllByRole('row')
+  expect(rows[1]).toHaveTextContent(/36Лечение каналов8\s000 сом7\s200 сом \(−10 %\)в плане/)
+  expect(sheet).toHaveTextContent(/Сумма по плану: 12\s000 сом · скидка −800 сом/)
+  expect(sheet).toHaveTextContent(/Итого со скидкой: 11\s200 сом/)
+})

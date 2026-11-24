@@ -6,6 +6,8 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { useMe } from '../api/me'
 import { DateInput } from '../layout/DateInput'
 import { stagesOf } from '../lib/planStages'
+import { totalsOf, totalText } from '../medical/stepDiscount'
+import { PriceCell } from '../medical/StepPrice'
 import { haptic, openLink } from '../lib/telegram'
 import { whatsappUrl } from '../lib/texts'
 import { addDays, formatPhone, shortDate, somText, todayIn } from '../lib/time'
@@ -188,7 +190,7 @@ function OfferDoc({ steps, validUntil, duration, print = false }: { steps: Step[
                 <tr key={s.id}>
                   <td>{s.tooth ? `Зуб ${s.tooth}` : '—'}</td>
                   <td>{s.title}</td>
-                  <td className="r num">{s.priceSom != null ? somText(s.priceSom) : ''}</td>
+                  <td className="r num"><PriceCell step={s} /></td>
                 </tr>
               ))}
             </tbody>
@@ -196,7 +198,8 @@ function OfferDoc({ steps, validUntil, duration, print = false }: { steps: Step[
           {stages.length > 1 && st.total > 0 && <p className="offer-subtotal">Итого за этап: <b className="num">{somText(st.total)}</b></p>}
         </div>
       ))}
-      {total > 0 && <p className="total">Всего: <span className="num">{somText(total)}</span></p>}
+      {total > 0 && totalsOf(steps).off > 0 && <p className="r">Сумма: {somText(totalsOf(steps).full)} · скидка −{somText(totalsOf(steps).off)}</p>}
+      {total > 0 && <p className="total">{totalsOf(steps).off > 0 ? 'К оплате' : 'Всего'}: <span className="num">{somText(total)}</span></p>}
       {duration && <p>Срок лечения: ориентировочно {duration}</p>}
       <p>Цены действительны до {validUntil.split('-').reverse().join('.')}.</p>
       <p className="note">План может меняться по результатам лечения.</p>
@@ -213,7 +216,8 @@ function OfferVariants({ variants, validUntil, duration }: { variants: Variant[]
       <p className="hint small">Врач подготовил {variants.length} варианта — пациент выберет удобный кнопкой в боте или на странице плана.</p>
       {variants.map((v) => {
         const open = (v.steps ?? []).filter((s) => !s.doneAt)
-        const total = open.reduce((sum, s) => sum + (s.priceSom ?? 0), 0)
+        const t = totalsOf(open)
+        const total = t.pay
         return (
           <div key={v.id ?? 0} className="offer-stage">
             <h4>{v.label}</h4>
@@ -221,11 +225,11 @@ function OfferVariants({ variants, validUntil, duration }: { variants: Variant[]
               <tbody>
                 {open.map((s) => (
                   <tr key={s.id}><td>{s.tooth ? `Зуб ${s.tooth}` : '—'}</td><td>{s.title}</td>
-                    <td className="r num">{s.priceSom != null ? somText(s.priceSom) : ''}</td></tr>
+                    <td className="r num"><PriceCell step={s} /></td></tr>
                 ))}
               </tbody>
             </table>
-            {total > 0 && <p className="offer-subtotal">Итого: <b className="num">{somText(total)}</b></p>}
+            {total > 0 && <p className="offer-subtotal">Итого: <b className="num">{totalText(t)}</b></p>}
           </div>
         )
       })}

@@ -9,7 +9,8 @@ type Step = Schemas['TreatmentStepView']
 /**
  * «💲 Обновить цены» (шаг 4А): старый план по текущему прайсу. Сервер считает «было → стало» для несделанных этапов с
  * услугой из прайса (GET /plan/prices) и после «Обновить» пересчитывает заново сам (POST) — фронт цены не присылает.
- * Сделанные этапы, этапы без услуги прайса и скрытые услуги не меняются.
+ * Сделанные этапы, этапы без услуги прайса и скрытые услуги не меняются. Скидка этапа (V257) остаётся: процент — от новой
+ * цены; итоги «осталось» — к оплате, со скидками.
  */
 export function PlanRepriceSheet({ patientId, onClose, onSaved }: {
   patientId: number; onClose: () => void; onSaved: (steps: Step[]) => void
@@ -37,6 +38,7 @@ export function PlanRepriceSheet({ patientId, onClose, onSaved }: {
                 <span>{c.tooth ? <b>{c.tooth} · </b> : null}{c.title}</span>
                 <span className="nowrap num">
                   <s>{c.wasSom != null ? somText(c.wasSom) : 'без цены'}</s> → <b>{somText(c.nowSom)}</b>
+                  {c.nowNetSom != null && <span className="hint"> · со скидкой {somText(c.nowNetSom)}</span>}
                 </span>
               </li>
             ))}

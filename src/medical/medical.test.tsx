@@ -102,7 +102,7 @@ test('медкарта: зуб 16 — кариес с заметкой; отме
   await userEvent.click(within(add).getByRole('button', { name: '＋ Добавить в план' }))
   expect(await within(plan).findByText('Коронка')).toBeInTheDocument()
   expect(screen.queryByRole('form', { name: 'Новый этап' })).not.toBeInTheDocument()
-  expect(sent).toContainEqual({ plan: { title: 'Коронка', tooth: 26, priceSom: 12000, stage: 1 } })
+  expect(sent).toContainEqual({ plan: expect.objectContaining({ title: 'Коронка', tooth: 26, priceSom: 12000, stage: 1 }) })
 
   await medTab('Снимки')
   expect(await screen.findByText('Прицельный 16')).toBeInTheDocument()
@@ -146,5 +146,5 @@ test('отмеченные зубы списком; зуб → «В план л�
   await userEvent.type(within(edit).getByLabelText('Цена этапа, сом'), '3500')
   await userEvent.click(within(edit).getByRole('button', { name: 'Сохранить' }))
   expect(await within(plan).findByText('Пломба композит')).toBeInTheDocument()
-  expect(sent).toContainEqual({ step: 1, tooth: 16, title: 'Пломба композит', priceSom: 3500, stage: 1, done: false })
+  expect(sent).toContainEqual({ step: 1, tooth: 16, title: 'Пломба композит', priceSom: 3500, stage: 1, done: false, discount: {} })
 })

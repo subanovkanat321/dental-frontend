@@ -5,6 +5,8 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { ask } from '../lib/confirm'
 import { chosenText, MAX_VARIANTS, variantsKey } from '../lib/planVariants'
 import { somText } from '../lib/time'
+import { StepPriceText } from './StepPrice'
+import { totalsOf } from './stepDiscount'
 
 type Variants = Schemas['PlanVariantsVariants']
 type Variant = Schemas['PlanVariantsVariantView']
@@ -133,11 +135,14 @@ function VariantCompare({ variants, selected, onSelect }: { variants: Variant[];
             <ul>
               {open.map((s) => (
                 <li key={s.id}><span>{s.tooth ? <b className="num">{s.tooth} · </b> : null}{s.title}</span>
-                  <span className="num nowrap">{s.priceSom != null ? somText(s.priceSom) : ''}</span></li>
+                  <span className="num nowrap"><StepPriceText step={s} /></span></li>
               ))}
               {open.length === 0 && <li className="hint">Этапов нет</li>}
             </ul>
-            {v.totalSom != null && <p className="plan-compare-total">Итого: <b className="num">{somText(v.leftSom ?? v.totalSom)}</b></p>}
+            {v.totalSom != null && (
+              <p className="plan-compare-total">Итого: <b className="num">{somText(v.leftSom ?? v.totalSom)}</b>
+                {totalsOf(open).off > 0 && <span className="hint small"> · скидка −{somText(totalsOf(open).off)}</span>}</p>
+            )}
           </section>
         )
       })}

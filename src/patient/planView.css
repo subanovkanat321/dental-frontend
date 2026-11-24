@@ -56,3 +56,7 @@
 .plan-view-variants button b { font-size: 1.05rem; }
 .plan-view-variants button[aria-selected=true] { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 0 0 1px var(--accent); }
 .plan-view-chosen { font-weight: 600; }
+.plan-view-discount p { margin: 0; }
+.plan-view-discount p + p { margin-top: 4px; }
+.plan-view-discount p:not(:last-child) { font-size: .95rem; }
+.plan-view-variants button .hint { display: block; }

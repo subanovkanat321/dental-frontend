@@ -7,6 +7,8 @@ import { useMe } from '../api/me'
 import { isAssistant } from '../lib/roles'
 import { somText } from '../lib/time'
 import { stagesOf } from '../lib/planStages'
+import { totalsOf, totalText } from '../medical/stepDiscount'
+import { PriceCell } from '../medical/StepPrice'
 import { assignText, byTooth } from '../lib/planSteps'
 import { canPrint, docDate } from './paper'
 import { PrintSheet } from './PrintSheet'
@@ -148,8 +150,10 @@ function PlanPaper({ patient, steps, variants, view = 'stages', withPrices = tru
   })
   const debt = (debts.data ?? []).reduce((sum, d) => sum + d.debtSom, 0)
   const doctor = (me?.doctors ?? []).find((d) => d.id === me?.doctorId)?.fullName
-  const all = steps.reduce((sum, s) => sum + (s.priceSom ?? 0), 0)
-  const left = steps.filter((s) => !s.doneAt).reduce((sum, s) => sum + (s.priceSom ?? 0), 0)
+  // Итоги — к оплате, со скидками этапов (V257); скидка — отдельной строкой
+  const allT = totalsOf(steps)
+  const all = allT.pay
+  const left = totalsOf(steps.filter((s) => !s.doneAt)).pay
   // Несколько вариантов (V254): рисунок — все зубы вариантов, ниже у каждого свои этапы и итог
   const chartSteps = variants ? variants.flatMap((v) => (v.steps ?? []).filter((s) => !s.doneAt)) : steps
   return (
@@ -167,12 +171,12 @@ function PlanPaper({ patient, steps, variants, view = 'stages', withPrices = tru
           <p className="note">Врач подготовил {variants.length} варианта лечения — выберите удобный.</p>
           {variants.map((v) => {
             const open = (v.steps ?? []).filter((s) => !s.doneAt)
-            const sum = open.reduce((x, s) => x + (s.priceSom ?? 0), 0)
+            const t = totalsOf(open)
             return (
               <section key={v.id ?? 0} className="plan-variant-sheet">
                 <h2>{v.label}</h2>
                 <PlanTable steps={open} view={view} prices={prices} assigned={assigned} />
-                {prices && <p className="total">Итого по варианту: {somText(sum)}</p>}
+                {prices && <p className="total">Итого по варианту: {totalText(t)}</p>}
               </section>
             )
           })}
@@ -182,7 +186,8 @@ function PlanPaper({ patient, steps, variants, view = 'stages', withPrices = tru
           <PlanTable steps={steps} view={view} prices={prices} assigned={assigned} />
           {prices && (
             <>
-              <p className="total">Итого: {somText(all)}{left !== all ? ` · осталось: ${somText(left)}` : ''}</p>
+              {allT.off > 0 && <p className="r">Сумма по плану: {somText(allT.full)} · скидка −{somText(allT.off)}</p>}
+              <p className="total">{allT.off > 0 ? 'Итого со скидкой' : 'Итого'}: {somText(all)}{left !== all ? ` · осталось: ${somText(left)}` : ''}</p>
               {left !== all && <p className="r">Уже выполнено на {somText(all - left)}</p>}
             </>
           )}
@@ -209,7 +214,7 @@ function PlanTable({ steps, view, prices, assigned }: { steps: Step[]; view: Vie
     ? stages.map((st) => ({ key: `s${st.stage}`, title: stages.length > 1 ? `Этап ${st.stage}` : null, items: st.items, total: st.total,
       subtotal: `Итого за этап ${st.stage}` }))
     : byTooth(steps).map((g) => ({ key: `t${g.tooth ?? 0}`, title: g.tooth != null ? `Зуб ${g.tooth}` : 'Вся полость рта', items: g.items,
-      total: g.items.reduce((sum, s) => sum + (s.priceSom ?? 0), 0), subtotal: g.tooth != null ? `Итого по зубу ${g.tooth}` : 'Итого' }))
+      total: totalsOf(g.items).pay, subtotal: g.tooth != null ? `Итого по зубу ${g.tooth}` : 'Итого' }))
   // Сквозной номер строки через все группы (не счётчиком в render: лист перерисовывается)
   const number = new Map(groups.flatMap((g) => g.items).map((s, i) => [s.id, i + 1]))
   const columns = 4 + (assigned ? 1 : 0) + (prices ? 1 : 0)
@@ -229,7 +234,7 @@ function PlanTable({ steps, view, prices, assigned }: { steps: Step[]; view: Vie
               <td>{view === 'teeth' ? `этап ${s.stage}` : s.tooth ?? '—'}</td>
               <td>{s.title}</td>
               {assigned && <td className={s.overdue ? 'assign overdue' : 'assign'}>{assignText(s)}{s.overdue ? ' · просрочен' : ''}</td>}
-              {prices && <td className="r">{s.priceSom != null ? somText(s.priceSom) : ''}</td>}
+              {prices && <td className="r"><PriceCell step={s} /></td>}
               <td>{s.doneAt ? `сделано ${docDate(s.doneAt)}` : 'в плане'}</td>
             </tr>
           ))}
