@@ -10,9 +10,10 @@ import { server } from '../test/server'
 const today: Schemas['BirthdaysToday'] = {
   date: todayIn(),
   promoCode: 'TESTBDAY',
+  gift: 'скидка 10 %',
   items: [
-    { patient: { id: 5, fullName: 'Тест Именинница', phone: '996555000005', telegram: false }, age: 30 },
-    { patient: { id: 6, fullName: 'Тест В боте', phone: '996555000006', telegram: true }, age: 41 },
+    { patient: { id: 5, fullName: 'Тест Именинница', phone: '996555000005', telegram: false }, age: 30, giftUsed: false },
+    { patient: { id: 6, fullName: 'Тест В боте', phone: '996555000006', telegram: true }, age: 41, giftUsed: false },
   ],
 }
 

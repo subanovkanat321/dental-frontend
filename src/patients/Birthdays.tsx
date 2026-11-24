@@ -8,6 +8,7 @@ import { whatsappUrl } from '../lib/texts'
 import { openLink } from '../lib/telegram'
 import { timeOf } from '../lib/time'
 import { AttentionDialog } from '../schedule/AttentionDialog'
+import { useMe } from '../api/me'
 import { BIRTHDAYS_KEY, notGreeted, useBirthdays } from './birthdaysModel'
 
 type Row = Schemas['BirthdaysRow']
@@ -28,7 +29,7 @@ export function BirthdaysChip({ rows, compact, onOpen }: { rows: Row[] | undefin
 export function BirthdaysDialog({ onClose, onOpen }: { onClose: () => void; onOpen?: (patientId: number) => void }) {
   return (
     <AttentionDialog title="🎂 Сегодня день рождения" labelId="birthdays-title" onClose={onClose}>
-      <BirthdayList onOpen={onOpen && ((id) => { onClose(); onOpen(id) })} />
+      <BirthdayList onOpen={onOpen && ((id) => { onClose(); onOpen(id) })} onSettings={onClose} />
     </AttentionDialog>
   )
 }
@@ -37,7 +38,7 @@ export function BirthdaysDialog({ onClose, onOpen }: { onClose: () => void; onOp
  * Список именинников с «Поздравить»: в бот (пациент в боте) или WhatsApp — готовый тёплый текст на выбранном языке с названием
  * клиники и промокодом (если руководитель его выбрал). Текст собирает сервер; поздравили — «✓» до конца дня.
  */
-export function BirthdayList({ onOpen }: { onOpen?: (patientId: number) => void }) {
+export function BirthdayList({ onOpen, onSettings }: { onOpen?: (patientId: number) => void; onSettings?: () => void }) {
   const list = useBirthdays()
   const [lang, setLang] = useState<Lang>('RU')
   if (list.isPending) return <p className="hint">Загружаем…</p>
@@ -52,12 +53,30 @@ export function BirthdayList({ onOpen }: { onOpen?: (patientId: number) => void 
             <button key={l} type="button" aria-pressed={lang === l} onClick={() => setLang(l)}>{l === 'RU' ? 'Русский' : 'Кыргызча'}</button>
           ))}
         </span>
-        {list.data.promoCode && <span>· промокод в подарок: <b>{list.data.promoCode}</b></span>}
       </div>
+      <GiftLine gift={list.data.gift} code={list.data.promoCode} onSettings={onSettings} />
       <ul className="bd-list" aria-label="Сегодня день рождения">
         {list.data.items.map((r) => <BirthdayRow key={r.patient.id} r={r} lang={lang} onOpen={onOpen} />)}
       </ul>
     </div>
+  )
+}
+
+/**
+ * «🎁 Подарок: скидка 10 % (код ДР10) · изменить» над списком (2026-11-24: владелец не нашёл, где подарок). «Изменить» —
+ * только руководителю: ведёт в «Настройки → Дни рождения».
+ */
+function GiftLine({ gift, code, onSettings }: { gift?: string; code?: string; onSettings?: () => void }) {
+  const me = useMe()
+  const admin = Boolean(me.data?.admin)
+  if (!gift && !admin) return null
+  const edit = admin && (
+    <> · <a className="link" href="#/settings/birthdays" onClick={() => onSettings?.()}>{gift ? 'изменить' : 'выбрать'}</a></>
+  )
+  return (
+    <p className="bd-gift hint small" aria-label="Подарок на день рождения">
+      {gift ? <>🎁 Подарок: <b>{gift}</b>{code ? ` (код ${code})` : ''}</> : '🎁 Без подарка — можно добавить скидку или профчистку'}{edit}
+    </p>
   )
 }
 
@@ -77,12 +96,14 @@ function BirthdayRow({ r, lang, onOpen }: { r: Row; lang: Lang; onOpen?: (patien
     },
   })
   const greeted = r.greetedAt ? `✓ поздравили ${timeOf(r.greetedAt)}${r.greetedVia === 'WHATSAPP' ? ' · WhatsApp' : r.greetedVia === 'AUTO' ? ' · бот сам' : ' · в бот'}` : null
+  // С каким подарком поздравили и воспользовался ли (запись с кодом или скидка «Подарок на день рождения» после поздравления)
+  const gift = r.greetedAt && r.giftCode ? `🎁 ${r.giftCode}${r.giftUsed ? ' · использовал' : ''}` : null
   return (
     <li>
       <span className="bd-who">
         {onOpen ? <button type="button" className="link" onClick={() => onOpen(r.patient.id)}><strong>{r.patient.fullName}</strong></button>
           : <strong>{r.patient.fullName}</strong>}
-        <span className="hint small">{ageText(r.age)}{greeted && <> · <span className="tone-ok">{greeted}</span></>}</span>
+        <span className="hint small">{ageText(r.age)}{greeted && <> · <span className="tone-ok">{greeted}</span></>}{gift && <> · <span>{gift}</span></>}</span>
         {greet.error && <span className="error small" role="alert">{greet.error.message}</span>}
       </span>
       {!r.greetedAt && (

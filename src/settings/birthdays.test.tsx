@@ -12,7 +12,7 @@ type Settings = Schemas['BirthdaysSettings']
 
 afterEach(() => { window.location.hash = '' })
 
-test('«Настройки → Дни рождения»: по умолчанию выключено; включить, час и промокод — сохраняются сразу', async () => {
+test('«Настройки → Дни рождения»: по умолчанию выключено; включить и час — сохраняются сразу', async () => {
   const puts: Settings[] = []
   let state: Settings = { autoGreet: false, greetHour: 10 }
   server.use(
@@ -21,6 +21,10 @@ test('«Настройки → Дни рождения»: по умолчани�
       { id: 3, code: 'TESTBDAY', discountPercent: 10, active: true, appointments: 0 },
     ] satisfies Schemas['PromoCodesCode'][])),
     http.get('*/api/clinic/birthday-settings', () => HttpResponse.json(state)),
+    http.get('*/api/service-types', () => HttpResponse.json([])),
+    http.get('*/api/clinic/birthday-gift', () => HttpResponse.json({
+      preset: 'NONE', active: false, validDays: 30, validUntil: '2026-12-24', previewRu: '🎂 С днём рождения!', previewKy: '🎂 Туулган күнүңүз менен!',
+    } satisfies Schemas['BirthdaysGift'])),
     http.put('*/api/clinic/birthday-settings', async ({ request }) => {
       state = (await request.json()) as Settings
       puts.push(state)
@@ -35,7 +39,6 @@ test('«Настройки → Дни рождения»: по умолчани�
   await userEvent.click(auto)
   await waitForSlow(() => expect(auto).toBeChecked())
   await choose(within(box).getByLabelText('Во сколько поздравлять'), '09:00')
-  await choose(within(box).getByLabelText('Промокод в подарок'), 'TESTBDAY (−10%)')
-  await waitForSlow(() => expect(puts).toHaveLength(3))
-  expect(puts[2]).toEqual({ autoGreet: true, greetHour: 9, promoCodeId: 3 })
+  await waitForSlow(() => expect(puts).toHaveLength(2))
+  expect(puts[1]).toEqual({ autoGreet: true, greetHour: 9 })
 })

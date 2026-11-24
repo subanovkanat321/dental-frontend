@@ -14,6 +14,9 @@
 .fw-hint { display: grid; gap: 6px; }
 .fw-hint .fw-window { padding: 8px 10px; }
 .bd-lang { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.bd-gift { margin: 6px 0 2px; }
+.bd-preview { display: grid; gap: 6px; margin-top: 8px; }
+.bd-preview-text { margin: 0; padding: 12px 14px; border-radius: var(--r-md); background: var(--surface-2, var(--accent-soft)); white-space: pre-wrap; line-height: 1.45; font-size: .92rem; overflow-wrap: anywhere; }
 @media (max-width: 600px) {
   .fw-list li, .bd-list li { flex-direction: column; align-items: stretch; }
   .fw-actions, .bd-actions { justify-content: flex-start; }

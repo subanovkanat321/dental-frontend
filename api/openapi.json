@@ -4834,6 +4834,50 @@
         }
       }
     },
+    "/api/clinic/birthday-gift" : {
+      "get" : {
+        "tags" : [ "birthday-controller" ],
+        "operationId" : "gift",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/BirthdaysGift"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "birthday-controller" ],
+        "operationId" : "updateGift",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/BirthdaysGiftRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/BirthdaysGift"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/clinic/audit/settings" : {
       "get" : {
         "tags" : [ "audit-controller" ],
@@ -25598,6 +25642,76 @@
         },
         "required" : [ "autoGreet", "greetHour" ]
       },
+      "BirthdaysGiftRequest" : {
+        "properties" : {
+          "preset" : {
+            "type" : "string",
+            "enum" : [ "NONE", "PERCENT_10", "PERCENT_15", "PERCENT_20", "CLEANING", "CUSTOM" ]
+          },
+          "promoCodeId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "serviceId" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "BirthdaysGift" : {
+        "properties" : {
+          "preset" : {
+            "type" : "string",
+            "enum" : [ "NONE", "PERCENT_10", "PERCENT_15", "PERCENT_20", "CLEANING", "CUSTOM" ]
+          },
+          "active" : {
+            "type" : "boolean"
+          },
+          "promoCodeId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "code" : {
+            "type" : "string"
+          },
+          "discountPercent" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "discountText" : {
+            "type" : "string"
+          },
+          "serviceId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "serviceName" : {
+            "type" : "string"
+          },
+          "servicePriceSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "validDays" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "validUntil" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "label" : {
+            "type" : "string"
+          },
+          "previewRu" : {
+            "type" : "string"
+          },
+          "previewKy" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "active", "preset", "previewKy", "previewRu", "validDays", "validUntil" ]
+      },
       "AuditControllerSettingsChange" : {
         "properties" : {
           "disabled" : {
@@ -35571,9 +35685,15 @@
           "greetedVia" : {
             "type" : "string",
             "enum" : [ "TELEGRAM", "WHATSAPP", "AUTO" ]
+          },
+          "giftCode" : {
+            "type" : "string"
+          },
+          "giftUsed" : {
+            "type" : "boolean"
           }
         },
-        "required" : [ "age", "patient" ]
+        "required" : [ "age", "giftUsed", "patient" ]
       },
       "BirthdaysToday" : {
         "properties" : {
@@ -35588,6 +35708,9 @@
             }
           },
           "promoCode" : {
+            "type" : "string"
+          },
+          "gift" : {
             "type" : "string"
           }
         },

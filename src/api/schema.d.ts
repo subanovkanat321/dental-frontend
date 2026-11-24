@@ -1732,6 +1732,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/clinic/birthday-gift": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["gift"];
+        put: operations["updateGift"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/clinic/audit/settings": {
         parameters: {
             query?: never;
@@ -11043,6 +11059,37 @@ export interface components {
             /** Format: int64 */
             promoCodeId?: number;
         };
+        BirthdaysGiftRequest: {
+            /** @enum {string} */
+            preset?: "NONE" | "PERCENT_10" | "PERCENT_15" | "PERCENT_20" | "CLEANING" | "CUSTOM";
+            /** Format: int64 */
+            promoCodeId?: number;
+            /** Format: int64 */
+            serviceId?: number;
+        };
+        BirthdaysGift: {
+            /** @enum {string} */
+            preset: "NONE" | "PERCENT_10" | "PERCENT_15" | "PERCENT_20" | "CLEANING" | "CUSTOM";
+            active: boolean;
+            /** Format: int64 */
+            promoCodeId?: number;
+            code?: string;
+            /** Format: int32 */
+            discountPercent?: number;
+            discountText?: string;
+            /** Format: int64 */
+            serviceId?: number;
+            serviceName?: string;
+            /** Format: int32 */
+            servicePriceSom?: number;
+            /** Format: int32 */
+            validDays: number;
+            /** Format: date */
+            validUntil: string;
+            label?: string;
+            previewRu: string;
+            previewKy: string;
+        };
         AuditControllerSettingsChange: {
             disabled: string[];
         };
@@ -15012,12 +15059,15 @@ export interface components {
             greetedAt?: string;
             /** @enum {string} */
             greetedVia?: "TELEGRAM" | "WHATSAPP" | "AUTO";
+            giftCode?: string;
+            giftUsed: boolean;
         };
         BirthdaysToday: {
             /** Format: date */
             date: string;
             items: components["schemas"]["BirthdaysRow"][];
             promoCode?: string;
+            gift?: string;
         };
         VisitReportsSent: {
             text?: string;
@@ -19486,6 +19536,50 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BirthdaysSettings"];
+                };
+            };
+        };
+    };
+    gift: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BirthdaysGift"];
+                };
+            };
+        };
+    };
+    updateGift: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BirthdaysGiftRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BirthdaysGift"];
                 };
             };
         };

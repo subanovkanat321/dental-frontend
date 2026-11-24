@@ -21,6 +21,8 @@ import { tagDiscount, usePatientTags, type TagDiscount } from '../tags/tags'
 import { initialPayView, type PayView } from './payView'
 import { draftOf, draftProblem, draftSom, useDiscountPolicy, type DiscountDraft } from './discountDraft'
 import { EditButton } from '../layout/EditButton'
+import { BirthdayGiftNote } from './BirthdayGiftNote'
+import { prefillDraft, sameDraft, useBirthdayOffer } from '../patients/birthdayGift'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
@@ -358,11 +360,15 @@ function PayForm({ a, me, billOnly, parts: initialParts, spentHere = 0, onCancel
   const tagList = usePatientTags((a.patient?.tagIds?.length ?? 0) > 0)
   const offer = tagDiscount(a.patient?.tagIds, tagList.data)
   const offerFits = offer != null && Boolean(policy.data?.canGive) && offer.percent <= (policy.data?.myMaxPercent ?? 100)
+  // Подарок на день рождения (2026-11-24): с меткой не складываем — подставляем бо́льшую, подсказываем обе
+  const birthday = useBirthdayOffer(a)
+  const tagsReady = !(a.patient?.tagIds?.length) || tagList.isFetched
   const [offerChecked, setOfferChecked] = useState(false)
-  if (!offerChecked && offer && policy.data) {
-    // Один раз, когда метки и политика загрузились (состояние по ходу рендера — без лишнего прохода эффекта)
+  if (!offerChecked && (offer || birthday.offer) && policy.data && tagsReady && birthday.ready) {
+    // Один раз, когда метки, подарок и политика загрузились (состояние по ходу рендера — без лишнего прохода эффекта)
     setOfferChecked(true)
-    if (offerFits && !a.discount && a.paidSom == null && !discount) setDiscount(tagDraft(offer))
+    const first = prefillDraft(birthday.offer, offer && tagDraft(offer), Number(cost) || null, policy.data)
+    if (first && !a.discount && a.paidSom == null && !discount) setDiscount(first)
   }
   const [whole, setWhole] = useState(!hadDebt)
   const [paidNow, setPaidNow] = useState(hadDebt ? String(a.paidSom ?? '') : '')
@@ -503,11 +509,13 @@ function PayForm({ a, me, billOnly, parts: initialParts, spentHere = 0, onCancel
           <LinesSum a={a} cost={priceNum} onUse={(sum) => setCost(String(sum))} />
           {costField(discount ? 'Цена приёма до скидки, сом' : 'Стоимость приёма, сом')}
           <PriceChips onPick={pick} />
+          {birthday.offer && policy.data && <BirthdayGiftNote offer={birthday.offer} tag={offer && tagDraft(offer)} tagName={offer?.tag.name}
+            price={priceNum} policy={policy.data} discount={discount} onChange={setDiscount} />}
           {offer && policy.data && <TagDiscountNote offer={offer} fits={offerFits} canGive={Boolean(policy.data.canGive)}
             max={policy.data.myMaxPercent} discount={discount} onApply={() => setDiscount(tagDraft(offer))} />}
           {/* Подставленная по метке — без фокуса в поле: на телефоне не выскочит клавиатура */}
           <DiscountField price={priceNum} value={discount} onChange={setDiscount} policy={policy.data}
-            autoFocus={!(offer && sameDiscount(discount, offer))} />
+            autoFocus={!(offer && sameDiscount(discount, offer)) && !sameDraft(discount, birthday.offer?.draft ?? null)} />
           <PromoField a={a} me={me} onDiscount={(percent) => {
             // Код со скидкой в процентах — подставим её, если скидку ещё не вписали (решает сотрудник: можно убрать)
             if (!discount && policy.data?.canGive) setDiscount({ kind: 'percent', value: String(percent), reason: 'PROMO', comment: '' })
