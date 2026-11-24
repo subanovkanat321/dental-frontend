@@ -102,9 +102,9 @@ export function biggerDraft(gift: DiscountDraft | null, tag: DiscountDraft | nul
   return draftSomAt(price, tag) > draftSomAt(price, gift) ? 'tag' : 'gift'
 }
 
-/** В форме стоит именно эта скидка. */
+/** В форме стоит именно эта скидка (и с тем же комментарием: «Подарок…» и «Приведи друга…» — разные подсказки). */
 export function sameDraft(a: DiscountDraft | null, b: DiscountDraft | null): boolean {
-  return a != null && b != null && a.kind === b.kind && a.value === b.value && a.reason === b.reason
+  return a != null && b != null && a.kind === b.kind && a.value === b.value && a.reason === b.reason && a.comment.trim() === b.comment.trim()
 }
 
 /**

@@ -108,7 +108,7 @@ test('«⋯» шапки: задача и лаборатория; регистр
   const menu = within(panel).getByRole('menu', { name: 'Ещё действия' })
   // Сверху — чьё меню; пункты — значок, подпись и подсказка (единый вид меню действий)
   expect(within(menu).getByText('Нурлан К.')).toHaveClass('menu-title')
-  expect(within(menu).getAllByRole('menuitem').map((i) => i.querySelector('.menu-label')?.textContent)).toEqual(['Новая задача', 'Оформить договор'])
+  expect(within(menu).getAllByRole('menuitem').map((i) => i.querySelector('.menu-label')?.textContent)).toEqual(['Новая задача', 'Ссылка «Приведи друга»', 'Оформить договор'])
   for (const i of within(menu).getAllByRole('menuitem')) expect(i.querySelector('svg.menu-ico')).toHaveAttribute('aria-hidden', 'true')
 })
 

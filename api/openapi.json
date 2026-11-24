@@ -2670,6 +2670,93 @@
         }
       }
     },
+    "/api/patients/{id}/referral" : {
+      "get" : {
+        "tags" : [ "patient-referral-controller" ],
+        "operationId" : "card",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PatientReferralsCard"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "patient-referral-controller" ],
+        "operationId" : "setInviter",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PatientReferralControllerSetInviter"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PatientReferralsCard"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "patient-referral-controller" ],
+        "operationId" : "clear",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PatientReferralsCard"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/patients/{id}/guardian" : {
       "put" : {
         "tags" : [ "patient-controller" ],
@@ -4398,6 +4485,50 @@
         }
       }
     },
+    "/api/clinic/referral-settings" : {
+      "get" : {
+        "tags" : [ "patient-referral-controller" ],
+        "operationId" : "settings_3",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PatientReferralsSettingsView"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "patient-referral-controller" ],
+        "operationId" : "update_24",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PatientReferralsSettings"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PatientReferralsSettingsView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/clinic/recall-months" : {
       "put" : {
         "tags" : [ "clinic-controller" ],
@@ -4633,7 +4764,7 @@
     "/api/clinic/deposit" : {
       "get" : {
         "tags" : [ "deposit-controller" ],
-        "operationId" : "settings_3",
+        "operationId" : "settings_4",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -4793,7 +4924,7 @@
     "/api/clinic/birthday-settings" : {
       "get" : {
         "tags" : [ "birthday-controller" ],
-        "operationId" : "settings_4",
+        "operationId" : "settings_5",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -4809,7 +4940,7 @@
       },
       "put" : {
         "tags" : [ "birthday-controller" ],
-        "operationId" : "update_24",
+        "operationId" : "update_25",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -4881,7 +5012,7 @@
     "/api/clinic/audit/settings" : {
       "get" : {
         "tags" : [ "audit-controller" ],
-        "operationId" : "settings_5",
+        "operationId" : "settings_6",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -5045,7 +5176,7 @@
     "/api/care-memos/{id}" : {
       "put" : {
         "tags" : [ "care-memo-controller" ],
-        "operationId" : "update_25",
+        "operationId" : "update_26",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -5231,7 +5362,7 @@
     "/api/appointments/{id}/services/{lineId}" : {
       "put" : {
         "tags" : [ "appointment-lines-controller" ],
-        "operationId" : "update_26",
+        "operationId" : "update_27",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -6321,6 +6452,13 @@
         "operationId" : "info",
         "parameters" : [ {
           "name" : "code",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "ref",
           "in" : "query",
           "required" : false,
           "schema" : {
@@ -16136,7 +16274,7 @@
     "/api/settings" : {
       "get" : {
         "tags" : [ "settings-controller" ],
-        "operationId" : "settings_6",
+        "operationId" : "settings_7",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -16260,6 +16398,41 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/TimesheetControllerView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reports/referrals" : {
+      "get" : {
+        "tags" : [ "patient-referral-controller" ],
+        "operationId" : "report_2",
+        "parameters" : [ {
+          "name" : "from",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }, {
+          "name" : "to",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PatientReferralsReport"
                 }
               }
             }
@@ -17073,7 +17246,7 @@
     "/api/platform/ai-usage" : {
       "get" : {
         "tags" : [ "ai-usage-controller" ],
-        "operationId" : "report_2",
+        "operationId" : "report_3",
         "parameters" : [ {
           "name" : "month",
           "in" : "query",
@@ -17578,6 +17751,33 @@
         }
       }
     },
+    "/api/patients/{id}/referral/link" : {
+      "get" : {
+        "tags" : [ "patient-referral-controller" ],
+        "operationId" : "link_1",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PatientReferralsLink"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/patients/recent" : {
       "get" : {
         "tags" : [ "patient-list-controller" ],
@@ -17710,6 +17910,24 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/BookingViewsSlots"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/patient/referral" : {
+      "get" : {
+        "tags" : [ "patient-referral-controller" ],
+        "operationId" : "patientLink",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PatientReferralsPatientLink"
                 }
               }
             }
@@ -18593,7 +18811,7 @@
     "/api/diagnoses/report" : {
       "get" : {
         "tags" : [ "diagnosis-controller" ],
-        "operationId" : "report_3",
+        "operationId" : "report_4",
         "parameters" : [ {
           "name" : "from",
           "in" : "query",
@@ -19259,6 +19477,36 @@
         }
       }
     },
+    "/api/appointments/{id}/referral-offers" : {
+      "get" : {
+        "tags" : [ "patient-referral-controller" ],
+        "operationId" : "offers_1",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/PatientReferralsOffer"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/appointments/{id}/receipt" : {
       "get" : {
         "tags" : [ "receipt-controller" ],
@@ -19740,7 +19988,7 @@
     "/api/appointments/promo-codes" : {
       "get" : {
         "tags" : [ "promo-report-controller" ],
-        "operationId" : "report_4",
+        "operationId" : "report_5",
         "parameters" : [ {
           "name" : "from",
           "in" : "query",
@@ -19826,7 +20074,7 @@
     "/api/appointments/from-tish" : {
       "get" : {
         "tags" : [ "tish-report-controller" ],
-        "operationId" : "report_5",
+        "operationId" : "report_6",
         "parameters" : [ {
           "name" : "month",
           "in" : "query",
@@ -20185,7 +20433,7 @@
     "/api/appointments/by-patient/{patientId}" : {
       "get" : {
         "tags" : [ "appointment-controller" ],
-        "operationId" : "card",
+        "operationId" : "card_1",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "path",
@@ -23937,6 +24185,78 @@
           }
         }
       },
+      "PatientReferralControllerSetInviter" : {
+        "properties" : {
+          "inviterId" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "PatientReferralsCard" : {
+        "properties" : {
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "inviterId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "inviterName" : {
+            "type" : "string"
+          },
+          "channel" : {
+            "type" : "string",
+            "enum" : [ "SITE", "BOT", "STAFF" ]
+          },
+          "referredAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "invited" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "came" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "rewardsAvailable" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "rewardsUsed" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "friends" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PatientReferralsFriend"
+            }
+          }
+        },
+        "required" : [ "came", "enabled", "friends", "invited", "rewardsAvailable", "rewardsUsed" ]
+      },
+      "PatientReferralsFriend" : {
+        "properties" : {
+          "patientId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "fullName" : {
+            "type" : "string"
+          },
+          "referredAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "came" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "came", "fullName", "patientId", "referredAt" ]
+      },
       "PatientControllerGuardianRequest" : {
         "properties" : {
           "fullName" : {
@@ -25491,6 +25811,93 @@
           }
         }
       },
+      "PatientReferralsSettings" : {
+        "properties" : {
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "friendKind" : {
+            "type" : "string",
+            "enum" : [ "PERCENT", "SERVICE" ]
+          },
+          "friendPercent" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "friendServiceId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "inviterKind" : {
+            "type" : "string",
+            "enum" : [ "PERCENT", "SERVICE" ]
+          },
+          "inviterPercent" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "inviterServiceId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "validDays" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "enabled", "friendKind", "inviterKind", "validDays" ]
+      },
+      "PatientReferralsBonus" : {
+        "properties" : {
+          "kind" : {
+            "type" : "string",
+            "enum" : [ "PERCENT", "SERVICE" ]
+          },
+          "percent" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "serviceId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "serviceName" : {
+            "type" : "string"
+          },
+          "servicePriceSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "label" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "kind", "label" ]
+      },
+      "PatientReferralsSettingsView" : {
+        "properties" : {
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "friend" : {
+            "$ref" : "#/components/schemas/PatientReferralsBonus"
+          },
+          "inviter" : {
+            "$ref" : "#/components/schemas/PatientReferralsBonus"
+          },
+          "validDays" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "previewRu" : {
+            "type" : "string"
+          },
+          "previewKy" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "enabled", "friend", "inviter", "previewKy", "previewRu", "validDays" ]
+      },
       "ClinicControllerRecallRequest" : {
         "properties" : {
           "recallMonths" : {
@@ -27001,6 +27408,11 @@
           "from" : {
             "type" : "string",
             "maxLength" : 32,
+            "minLength" : 0
+          },
+          "ref" : {
+            "type" : "string",
+            "maxLength" : 16,
             "minLength" : 0
           }
         },
@@ -31034,6 +31446,12 @@
           },
           "telegramUrl" : {
             "type" : "string"
+          },
+          "referralBonus" : {
+            "type" : "string"
+          },
+          "referralBonusKy" : {
+            "type" : "string"
           }
         },
         "required" : [ "available", "daysAhead", "doctors", "services" ]
@@ -31865,6 +32283,68 @@
             }
           }
         }
+      },
+      "PatientReferralsInviter" : {
+        "properties" : {
+          "patientId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "fullName" : {
+            "type" : "string"
+          },
+          "invited" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "came" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "came", "fullName", "invited", "patientId" ]
+      },
+      "PatientReferralsReport" : {
+        "properties" : {
+          "from" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "to" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "invited" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "came" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "revenueSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "rewardsGiven" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "rewardsUsed" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "top" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PatientReferralsInviter"
+            }
+          }
+        },
+        "required" : [ "came", "enabled", "from", "invited", "revenueSom", "rewardsGiven", "rewardsUsed", "to", "top" ]
       },
       "PurchaseViewsDraftGroup" : {
         "properties" : {
@@ -34068,6 +34548,26 @@
         },
         "required" : [ "debtSom", "qr", "telegram" ]
       },
+      "PatientReferralsLink" : {
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "siteUrl" : {
+            "type" : "string"
+          },
+          "telegramUrl" : {
+            "type" : "string"
+          },
+          "textRu" : {
+            "type" : "string"
+          },
+          "textKy" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "code", "textKy", "textRu" ]
+      },
       "PatientMergesItem" : {
         "properties" : {
           "label" : {
@@ -34221,6 +34721,51 @@
           }
         },
         "required" : [ "a", "b", "reason" ]
+      },
+      "PatientReferralsPatientLink" : {
+        "properties" : {
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "code" : {
+            "type" : "string"
+          },
+          "siteUrl" : {
+            "type" : "string"
+          },
+          "telegramUrl" : {
+            "type" : "string"
+          },
+          "shareText" : {
+            "type" : "string"
+          },
+          "friendBonus" : {
+            "type" : "string"
+          },
+          "inviterBonus" : {
+            "type" : "string"
+          },
+          "validDays" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "invited" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "came" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "rewardsUntil" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "format" : "date"
+            }
+          }
+        },
+        "required" : [ "came", "enabled", "invited", "rewardsUntil", "validDays" ]
       },
       "BookingViewsPromo" : {
         "properties" : {
@@ -35783,6 +36328,32 @@
           }
         },
         "required" : [ "available" ]
+      },
+      "PatientReferralsOffer" : {
+        "properties" : {
+          "kind" : {
+            "type" : "string",
+            "enum" : [ "FRIEND", "REWARD" ]
+          },
+          "bonus" : {
+            "$ref" : "#/components/schemas/PatientReferralsBonus"
+          },
+          "until" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "friendName" : {
+            "type" : "string"
+          },
+          "count" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "usedHere" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "bonus", "count", "kind", "until", "usedHere" ]
       },
       "ReceiptsLine" : {
         "properties" : {

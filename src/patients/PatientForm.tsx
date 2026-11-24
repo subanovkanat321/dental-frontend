@@ -6,6 +6,7 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { PhoneInput } from '../clinic/PhoneInput'
 import { phoneFromInput, phoneFromText, phoneToInput } from '../clinic/phone'
 import { ContactPick } from './ContactPick'
+import { InviterField } from '../refer/ReferralBox'
 import { sourceChoices, useSources } from '../lib/sources'
 import { formatPhone, todayIn } from '../lib/time'
 import { useClose } from '../lib/useClose'
@@ -31,11 +32,16 @@ export function PatientForm({ patient: p, onSaved, onOpenOther, onCancel }: {
   const client = useQueryClient()
   const [f, setF] = useState({ fullName: p?.fullName ?? '', phone: phoneToInput(p?.phone), birthDate: p?.birthDate ?? '', workplace: p?.workplace ?? '', source: p?.sourceId != null ? String(p.sourceId) : '' })
   const sources = useSources()
+  // «Приведи друга» (2026-11-24): кто посоветовал — только у нового пациента; сохраняется сразу после карточки
+  const [inviter, setInviter] = useState<{ id: number; fullName: string } | null>(null)
   const save = useMutation<Patient, ApiError, boolean>({
-    mutationFn: (allowDuplicate) => {
+    mutationFn: async (allowDuplicate) => {
       const body = { fullName: f.fullName, phone: phoneFromInput(f.phone), allowDuplicate, birthDate: f.birthDate || undefined, workplace: f.workplace,
         sourceId: f.source ? Number(f.source) : undefined }
-      return unwrap(p ? api.PUT('/api/patients/{id}', { params: { path: { id: p.id } }, body }) : api.POST('/api/patients', { body }))
+      const saved = await unwrap(p ? api.PUT('/api/patients/{id}', { params: { path: { id: p.id } }, body }) : api.POST('/api/patients', { body }))
+      // Не сохранилось «пригласил» — карточка уже есть: выбрать можно в «Прочее → Приведи друга», форму не держим
+      if (!p && inviter) await api.PUT('/api/patients/{id}/referral', { params: { path: { id: saved.id } }, body: { inviterId: inviter.id } }).catch(() => {})
+      return saved
     },
     onSuccess: (saved) => {
       for (const key of ['patients', 'patient-card', 'appointments']) void client.invalidateQueries({ queryKey: [key] })
@@ -83,6 +89,12 @@ export function PatientForm({ patient: p, onSaved, onOpenOther, onCancel }: {
           {sourceChoices(sources.data, p?.sourceId).map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
         </Select></label>
       {err('sourceId') && <p className="error">{err('sourceId')}</p>}
+      {!p && <InviterField value={inviter} onChange={(v) => {
+        setInviter(v)
+        // Посоветовал пациент — «Откуда узнал»: «Посоветовали знакомые», если ещё не выбрано
+        const recommendation = (sources.data ?? []).find((o) => o.code === 'RECOMMENDATION' && o.active)
+        if (v && !f.source && recommendation) setF((cur) => ({ ...cur, source: String(recommendation.id) }))
+      }} />}
       {other ? (
         <div className="duplicate" role="alert">
           <p>{save.error?.message}: {other.fullName}, {other.phone ? formatPhone(other.phone) : ''}</p>

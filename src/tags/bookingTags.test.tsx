@@ -242,3 +242,26 @@ describe('«Настройки → Метки пациентов»: скидка
     expect(sent).toEqual(['defaults', { id: 4, name: 'Боится', color: 'violet', discountPercent: 7 }, { id: 2, name: 'Друг', color: 'green' }])
   })
 })
+
+test('карточка записи: «🏷 ＋ Метка» — те же чипы, нажатие сразу ставит метку пациенту', async () => {
+  const log: string[] = []
+  const a = appointment(30, 1, '10:00', 'Вымышленная Айгуль')
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(reception)),
+    http.get('*/api/appointments', () => HttpResponse.json([a])),
+    http.get('*/api/patient-tags', () => HttpResponse.json(TAGS)),
+    http.put('*/api/patients/:id/tags/:tagId', async ({ request, params }) => {
+      const body = (await request.json()) as { on: boolean }
+      log.push(`PUT ${String(params.id)}/${String(params.tagId)} ${body.on}`)
+      return HttpResponse.json({ ...a.patient, tagIds: [Number(params.tagId)] })
+    }),
+  )
+  renderApp()
+  await userEvent.click((await screen.findAllByRole('button', { name: /10:00.*Вымышленная Айгуль/ }))[0]!)
+  const panel = screen.getByRole('complementary', { name: 'Карточка приёма' })
+  await userEvent.click(within(panel).getByRole('button', { name: /＋ Метка/ }))
+  const row = await within(panel).findByRole('group', { name: 'Метки пациента' })
+  await userEvent.click(within(row).getByRole('button', { name: 'Боится' }))
+  await waitFor(() => expect(log).toEqual([`PUT ${a.patient.id}/4 true`]))
+  await waitFor(() => expect(within(row).getByRole('button', { name: 'Боится' })).toHaveAttribute('aria-pressed', 'true'))
+})

@@ -162,6 +162,15 @@ export function channelSlug(): string | null {
 }
 
 /**
+ * Код личной ссылки пациента «Приведи друга» (/c/<код>?ref=K7M4PQ2X, V260 бэкенда): кто пригласил, сайт не знает и не
+ * показывает — сервер по коду запишет «пригласил» в карточку нового пациента. Не код — null.
+ */
+export function referralCode(): string | null {
+  const ref = (new URLSearchParams(window.location.search).get('ref') ?? '').toUpperCase()
+  return /^[2-9A-HJ-NP-Z]{6,16}$/.test(ref) ? ref : null
+}
+
+/**
  * Ссылка на бота с меткой канала: start=c_<клиника>[-ПРОМОКОД] → …_<метка> (бот запомнит канал до записи). Нет
  * метки или ссылка не клиники — как была.
  */

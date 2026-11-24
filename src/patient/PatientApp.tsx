@@ -15,6 +15,7 @@ import { useClinicFilter, withCity } from '../lib/clinicSearch'
 import { BackButton, MainButton } from '../lib/MainButton'
 import { bookingDays, initials, normalizeLang, serviceEmoji, translator, whenAt, type Lang, type T } from './i18n'
 import { DayStrip, SlotGrid } from './SlotPicker'
+import { FriendCard } from '../refer/FriendCard'
 import { BookingWizard, type Chosen, type ContactsArgs } from './Wizard'
 import { PlanView } from './PlanView'
 import { minutesOf, stripLength } from './slots'
@@ -305,6 +306,8 @@ function Footer({ ctx }: { ctx: Ctx }) {
         <button type="button" className="btn" onClick={() => ctx.go({ name: 'plan', back: ctx.screen })}><span aria-hidden="true">📋 </span>{t('planMy')}</button>
       )}
       <button type="button" className="btn" onClick={() => ctx.go({ name: 'news', back: ctx.screen })}><span aria-hidden="true">📰 </span>{t('news')}</button>
+      {/* «🎁 Приведи друга» (2026-11-24) — только если клиника включила */}
+      <FriendCard t={t} />
       {(c?.supportUrl || c?.supportPhone) && (
         <p className="support-footer">{t('cantBook')}
           <button type="button" className="link" onClick={() => openLink(c.supportUrl || `${window.location.origin}/call.html#${c.supportPhone}`)}>{t('support')}</button>

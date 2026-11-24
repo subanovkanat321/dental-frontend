@@ -916,6 +916,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/patients/{id}/referral": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["card"];
+        put: operations["setInviter"];
+        post?: never;
+        delete: operations["clear"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/patients/{id}/guardian": {
         parameters: {
             query?: never;
@@ -1556,6 +1572,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/clinic/referral-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["settings_3"];
+        put: operations["update_24"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/clinic/recall-months": {
         parameters: {
             query?: never;
@@ -1659,7 +1691,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["settings_3"];
+        get: operations["settings_4"];
         put: operations["setSettings_1"];
         post?: never;
         delete?: never;
@@ -1723,8 +1755,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["settings_4"];
-        put: operations["update_24"];
+        get: operations["settings_5"];
+        put: operations["update_25"];
         post?: never;
         delete?: never;
         options?: never;
@@ -1755,7 +1787,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["settings_5"];
+        get: operations["settings_6"];
         put: operations["saveSettings"];
         post?: never;
         delete?: never;
@@ -1820,7 +1852,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_25"];
+        put: operations["update_26"];
         post?: never;
         delete?: never;
         options?: never;
@@ -1884,7 +1916,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_26"];
+        put: operations["update_27"];
         post?: never;
         delete: operations["remove_3"];
         options?: never;
@@ -6603,7 +6635,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["settings_6"];
+        get: operations["settings_7"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6668,6 +6700,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["get_11"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reports/referrals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["report_2"];
         put?: never;
         post?: never;
         delete?: never;
@@ -7147,7 +7195,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["report_2"];
+        get: operations["report_3"];
         put?: never;
         post?: never;
         delete?: never;
@@ -7396,6 +7444,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/patients/{id}/referral/link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["link_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/patients/recent": {
         parameters: {
             query?: never;
@@ -7468,6 +7532,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["slots_2"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/patient/referral": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["patientLink"];
         put?: never;
         post?: never;
         delete?: never;
@@ -8011,7 +8091,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["report_3"];
+        get: operations["report_4"];
         put?: never;
         post?: never;
         delete?: never;
@@ -8388,6 +8468,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/appointments/{id}/referral-offers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["offers_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/appointments/{id}/receipt": {
         parameters: {
             query?: never;
@@ -8603,7 +8699,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["report_4"];
+        get: operations["report_5"];
         put?: never;
         post?: never;
         delete?: never;
@@ -8635,7 +8731,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["report_5"];
+        get: operations["report_6"];
         put?: never;
         post?: never;
         delete?: never;
@@ -8763,7 +8859,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["card"];
+        get: operations["card_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -10378,6 +10474,37 @@ export interface components {
         PatientTagsControllerTagRequest: {
             on?: boolean;
         };
+        PatientReferralControllerSetInviter: {
+            /** Format: int64 */
+            inviterId?: number;
+        };
+        PatientReferralsCard: {
+            enabled: boolean;
+            /** Format: int64 */
+            inviterId?: number;
+            inviterName?: string;
+            /** @enum {string} */
+            channel?: "SITE" | "BOT" | "STAFF";
+            /** Format: date-time */
+            referredAt?: string;
+            /** Format: int32 */
+            invited: number;
+            /** Format: int32 */
+            came: number;
+            /** Format: int32 */
+            rewardsAvailable: number;
+            /** Format: int32 */
+            rewardsUsed: number;
+            friends: components["schemas"]["PatientReferralsFriend"][];
+        };
+        PatientReferralsFriend: {
+            /** Format: int64 */
+            patientId: number;
+            fullName: string;
+            /** Format: date-time */
+            referredAt: string;
+            came: boolean;
+        };
         PatientControllerGuardianRequest: {
             fullName?: string;
             /** @enum {string} */
@@ -10997,6 +11124,44 @@ export interface components {
             /** @enum {string} */
             reminderContact?: "CLINIC" | "DOCTOR";
         };
+        PatientReferralsSettings: {
+            enabled: boolean;
+            /** @enum {string} */
+            friendKind: "PERCENT" | "SERVICE";
+            /** Format: int32 */
+            friendPercent?: number;
+            /** Format: int64 */
+            friendServiceId?: number;
+            /** @enum {string} */
+            inviterKind: "PERCENT" | "SERVICE";
+            /** Format: int32 */
+            inviterPercent?: number;
+            /** Format: int64 */
+            inviterServiceId?: number;
+            /** Format: int32 */
+            validDays: number;
+        };
+        PatientReferralsBonus: {
+            /** @enum {string} */
+            kind: "PERCENT" | "SERVICE";
+            /** Format: int32 */
+            percent?: number;
+            /** Format: int64 */
+            serviceId?: number;
+            serviceName?: string;
+            /** Format: int32 */
+            servicePriceSom?: number;
+            label: string;
+        };
+        PatientReferralsSettingsView: {
+            enabled: boolean;
+            friend: components["schemas"]["PatientReferralsBonus"];
+            inviter: components["schemas"]["PatientReferralsBonus"];
+            /** Format: int32 */
+            validDays: number;
+            previewRu: string;
+            previewKy: string;
+        };
         ClinicControllerRecallRequest: {
             /** Format: int32 */
             recallMonths?: number;
@@ -11597,6 +11762,7 @@ export interface components {
             sourceId?: number;
             website?: string;
             from?: string;
+            ref?: string;
         };
         WebBookingServiceBooked: {
             /** Format: date-time */
@@ -13224,6 +13390,8 @@ export interface components {
             doctorServices?: components["schemas"]["DoctorServicesView"][];
             sources?: components["schemas"]["PatientSourcesChoice"][];
             telegramUrl?: string;
+            referralBonus?: string;
+            referralBonusKy?: string;
         };
         WebBookingServiceService: {
             /** Format: int64 */
@@ -13544,6 +13712,33 @@ export interface components {
             /** @enum {string} */
             group?: "EXAM" | "HYGIENE" | "THERAPY" | "SURGERY" | "PROSTHETICS" | "ORTHODONTICS" | "IMPLANTS" | "AESTHETICS" | "KIDS" | "XRAY" | "OTHER";
             items?: components["schemas"]["ServiceTypeServiceCatalogItem"][];
+        };
+        PatientReferralsInviter: {
+            /** Format: int64 */
+            patientId: number;
+            fullName: string;
+            /** Format: int32 */
+            invited: number;
+            /** Format: int32 */
+            came: number;
+        };
+        PatientReferralsReport: {
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            enabled: boolean;
+            /** Format: int32 */
+            invited: number;
+            /** Format: int32 */
+            came: number;
+            /** Format: int64 */
+            revenueSom: number;
+            /** Format: int32 */
+            rewardsGiven: number;
+            /** Format: int32 */
+            rewardsUsed: number;
+            top: components["schemas"]["PatientReferralsInviter"][];
         };
         PurchaseViewsDraftGroup: {
             /** Format: int64 */
@@ -14420,6 +14615,13 @@ export interface components {
             nextAt?: string;
             qr: boolean;
         };
+        PatientReferralsLink: {
+            code: string;
+            siteUrl?: string;
+            telegramUrl?: string;
+            textRu: string;
+            textKy: string;
+        };
         PatientMergesItem: {
             label: string;
             /** Format: int32 */
@@ -14478,6 +14680,22 @@ export interface components {
             b: components["schemas"]["PatientView"];
             /** @enum {string} */
             reason: "PHONE" | "NAME_BIRTH";
+        };
+        PatientReferralsPatientLink: {
+            enabled: boolean;
+            code?: string;
+            siteUrl?: string;
+            telegramUrl?: string;
+            shareText?: string;
+            friendBonus?: string;
+            inviterBonus?: string;
+            /** Format: int32 */
+            validDays: number;
+            /** Format: int32 */
+            invited: number;
+            /** Format: int32 */
+            came: number;
+            rewardsUntil: string[];
         };
         BookingViewsPromo: {
             code?: string;
@@ -15098,6 +15316,17 @@ export interface components {
             askedAt?: string;
             /** Format: date-time */
             nextAt?: string;
+        };
+        PatientReferralsOffer: {
+            /** @enum {string} */
+            kind: "FRIEND" | "REWARD";
+            bonus: components["schemas"]["PatientReferralsBonus"];
+            /** Format: date */
+            until: string;
+            friendName?: string;
+            /** Format: int32 */
+            count: number;
+            usedHere: boolean;
         };
         ReceiptsLine: {
             name?: string;
@@ -17639,6 +17868,76 @@ export interface operations {
             };
         };
     };
+    card: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatientReferralsCard"];
+                };
+            };
+        };
+    };
+    setInviter: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PatientReferralControllerSetInviter"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatientReferralsCard"];
+                };
+            };
+        };
+    };
+    clear: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatientReferralsCard"];
+                };
+            };
+        };
+    };
     guardian: {
         parameters: {
             query?: never;
@@ -19135,6 +19434,50 @@ export interface operations {
             };
         };
     };
+    settings_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatientReferralsSettingsView"];
+                };
+            };
+        };
+    };
+    update_24: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PatientReferralsSettings"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatientReferralsSettingsView"];
+                };
+            };
+        };
+    };
     recallMonths: {
         parameters: {
             query?: never;
@@ -19359,7 +19702,7 @@ export interface operations {
             };
         };
     };
-    settings_3: {
+    settings_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -19515,7 +19858,7 @@ export interface operations {
             };
         };
     };
-    settings_4: {
+    settings_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -19535,7 +19878,7 @@ export interface operations {
             };
         };
     };
-    update_24: {
+    update_25: {
         parameters: {
             query?: never;
             header?: never;
@@ -19603,7 +19946,7 @@ export interface operations {
             };
         };
     };
-    settings_5: {
+    settings_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -19743,7 +20086,7 @@ export interface operations {
             };
         };
     };
-    update_25: {
+    update_26: {
         parameters: {
             query?: never;
             header?: never;
@@ -19869,7 +20212,7 @@ export interface operations {
             };
         };
     };
-    update_26: {
+    update_27: {
         parameters: {
             query?: never;
             header?: never;
@@ -20755,6 +21098,7 @@ export interface operations {
         parameters: {
             query?: {
                 code?: string;
+                ref?: string;
             };
             header?: never;
             path?: never;
@@ -28501,7 +28845,7 @@ export interface operations {
             };
         };
     };
-    settings_6: {
+    settings_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -28605,6 +28949,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TimesheetControllerView"];
+                };
+            };
+        };
+    };
+    report_2: {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatientReferralsReport"];
                 };
             };
         };
@@ -29278,7 +29645,7 @@ export interface operations {
             };
         };
     };
-    report_2: {
+    report_3: {
         parameters: {
             query?: {
                 month?: string;
@@ -29675,6 +30042,28 @@ export interface operations {
             };
         };
     };
+    link_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatientReferralsLink"];
+                };
+            };
+        };
+    };
     recent: {
         parameters: {
             query?: {
@@ -29779,6 +30168,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BookingViewsSlots"];
+                };
+            };
+        };
+    };
+    patientLink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatientReferralsPatientLink"];
                 };
             };
         };
@@ -30488,7 +30897,7 @@ export interface operations {
             };
         };
     };
-    report_3: {
+    report_4: {
         parameters: {
             query: {
                 from: string;
@@ -31023,6 +31432,28 @@ export interface operations {
             };
         };
     };
+    offers_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatientReferralsOffer"][];
+                };
+            };
+        };
+    };
     receipt: {
         parameters: {
             query?: never;
@@ -31321,7 +31752,7 @@ export interface operations {
             };
         };
     };
-    report_4: {
+    report_5: {
         parameters: {
             query: {
                 from: string;
@@ -31369,7 +31800,7 @@ export interface operations {
             };
         };
     };
-    report_5: {
+    report_6: {
         parameters: {
             query?: {
                 month?: string;
@@ -31561,7 +31992,7 @@ export interface operations {
             };
         };
     };
-    card: {
+    card_1: {
         parameters: {
             query?: never;
             header?: never;
