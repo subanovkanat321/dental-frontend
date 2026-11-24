@@ -10954,6 +10954,27 @@
         }
       }
     },
+    "/api/patient-tags/defaults" : {
+      "post" : {
+        "tags" : [ "patient-tags-controller" ],
+        "operationId" : "addDefaults_2",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/PatientTagsTag"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/patient-sources" : {
       "get" : {
         "tags" : [ "patient-sources-controller" ],
@@ -23819,6 +23840,10 @@
           },
           "color" : {
             "type" : "string"
+          },
+          "discountPercent" : {
+            "type" : "integer",
+            "format" : "int32"
           }
         }
       },
@@ -23844,6 +23869,13 @@
           "patients" : {
             "type" : "integer",
             "format" : "int64"
+          },
+          "discountPercent" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "discountReason" : {
+            "type" : "string"
           }
         },
         "required" : [ "id", "patients", "position" ]

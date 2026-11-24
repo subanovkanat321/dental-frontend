@@ -3274,6 +3274,21 @@ button.cash-entry:hover, button.cash-entry.active { background: var(--sunken); }
 .tag-color:has(input:checked) { box-shadow: 0 0 0 2px var(--accent); }
 .tag-color:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
 .tag-actions .danger { color: var(--destructive); }
+.tag-row .tag-discount { color: var(--ok-ink); font-size: .85rem; white-space: nowrap; }
+.tag-discount-field { display: inline-flex; align-items: center; gap: 6px; font-size: .9rem; color: var(--hint); }
+.tag-edit-form input { font: inherit; padding: 7px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); min-width: 0; }
+.tag-edit-form .tag-discount-field input { width: 5.5em; }
+.tags-defaults { margin: 0 0 12px; }
+/* «Метки:» в «Новой записи» — чипы-переключатели одной строкой с переносом; точки цвета как в расписании */
+.booking-tags { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; }
+.booking-tags-title { font-size: .85rem; color: var(--hint); margin-right: 2px; }
+.booking-tags .tag-toggle { display: inline-flex; align-items: center; gap: 5px; min-height: 30px; padding: 0 10px 0 8px; border: 1px solid var(--line-strong);
+  border-radius: 999px; background: var(--card); color: var(--text); font: inherit; font-size: .85rem; cursor: pointer; white-space: nowrap; }
+.booking-tags .tag-toggle[aria-pressed=true] { border-color: var(--accent); background: var(--accent-soft); color: var(--link); font-weight: 600; }
+.booking-tags .tag-toggle:disabled { opacity: .6; cursor: progress; }
+.booking-tags-hint { flex-basis: 100%; margin: 0; }
+.pay-tag-note { margin: 4px 0 0; font-size: .88rem; color: var(--ok-ink); }
+.pay-tag-note.muted { color: var(--hint); }
 .pop-menu .menu-title { padding: 4px 10px 6px; font-weight: 600; font-size: .9rem; color: var(--text); border-bottom: 1px solid var(--separator); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* Скидка в оплате (шаг 3Б): «＋ Скидка» под стоимостью, % / сом, причина кнопками и итог «К оплате» */

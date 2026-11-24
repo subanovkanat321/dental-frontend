@@ -17,11 +17,13 @@ function percentOf(som: number, price: number): string {
  * «＋ Скидка» под стоимостью: % или сом, размер, причина кнопками, комментарий. Ниже — «Скидка 10 % — 600 сом ·
  * К оплате 5 400 сом». Кому скидку давать нельзя («Настройки → Скидки»), кнопки нет вовсе.
  */
-export function DiscountField({ price, value, onChange, policy }: {
+export function DiscountField({ price, value, onChange, policy, autoFocus = true }: {
   price: number | null
   value: DiscountDraft | null
   onChange: (d: DiscountDraft | null) => void
   policy?: Policy
+  /** Курсор в поле размера, когда блок открылся («＋ Скидка»); подставленная сама (по метке) — без фокуса */
+  autoFocus?: boolean
 }) {
   if (!policy?.canGive) return null
   if (!value) {
@@ -44,7 +46,7 @@ export function DiscountField({ price, value, onChange, policy }: {
         {/* Без max: браузер молча не отправил бы форму — предел объясняет подсказка и проверка под формой */}
         <input type="number" min={1} inputMode="numeric"
           className="pay-discount-value" aria-label={value.kind === 'percent' ? 'Скидка, %' : 'Скидка, сом'}
-          placeholder={value.kind === 'percent' ? '%' : 'сом'} autoFocus
+          placeholder={value.kind === 'percent' ? '%' : 'сом'} autoFocus={autoFocus}
           value={value.value} onChange={(e) => onChange({ ...value, value: e.target.value })} />
         <button type="button" className="link" onClick={() => onChange(null)}>Убрать</button>
       </div>

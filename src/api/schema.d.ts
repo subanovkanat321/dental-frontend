@@ -4260,6 +4260,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/patient-tags/defaults": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["addDefaults_2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/patient-sources": {
         parameters: {
             query?: never;
@@ -10324,6 +10340,8 @@ export interface components {
         PatientTagsRequest: {
             name?: string;
             color?: string;
+            /** Format: int32 */
+            discountPercent?: number;
         };
         PatientTagsTag: {
             /** Format: int64 */
@@ -10335,6 +10353,9 @@ export interface components {
             position: number;
             /** Format: int64 */
             patients: number;
+            /** Format: int32 */
+            discountPercent?: number;
+            discountReason?: string;
         };
         PatientSourcesRequest: {
             emoji?: string;
@@ -24264,6 +24285,26 @@ export interface operations {
         responses: {
             /** @description Created */
             201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatientTagsTag"][];
+                };
+            };
+        };
+    };
+    addDefaults_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
