@@ -383,6 +383,12 @@
   .print-sheet td { padding: 3px 3px; white-space: nowrap; }
   .print-sheet td:nth-child(3),
   .print-sheet td.assign { white-space: normal; }
+  /* План: колонки, кроме цены, и длинные строки итогов («Осталось оплатить за проведённое лечение: …») —
+     переносом, а не шире экрана: лист вылезал за край, и половину приходилось листать вбок (2026-11-24) */
+  .print-sheet .plan-table th,
+  .print-sheet .plan-table td:not(.r) { white-space: normal; }
+  .print-sheet p.r { white-space: normal; }
+  .print-sheet { max-width: 100%; }
 }
 
 @media print {
