@@ -55,10 +55,11 @@ test('Tish писал о приёме в WhatsApp: «📲 WhatsApp: достав
   ])
   const user = userEvent.setup()
   renderApp()
-  expect(await screen.findByText('📲 WhatsApp: доставлено')).toBeInTheDocument()
-  expect(screen.getByText('📲 WhatsApp: прочитано')).toBeInTheDocument()
-  expect(screen.getByText('📲 WhatsApp: не доставлено')).toHaveClass('tone-bad')
-  expect(screen.getAllByText(/📲 WhatsApp/)).toHaveLength(3)
+  // В строке «Дня» коротко — «WA», полностью — в подсказке
+  expect(await screen.findByText('📲 WA: доставлено')).toHaveAttribute('title', '📲 WhatsApp: доставлено')
+  expect(screen.getByText('📲 WA: прочитано')).toBeInTheDocument()
+  expect(screen.getByText('📲 WA: не доставлено').closest('.wa-mark')).toHaveClass('tone-bad')
+  expect(screen.getAllByText(/📲 WA:/)).toHaveLength(3)
 
   await user.click(screen.getAllByRole('button', { name: /Бакыт М\./ })[0]!)
   const panel = screen.getByRole('complementary', { name: 'Карточка приёма' })

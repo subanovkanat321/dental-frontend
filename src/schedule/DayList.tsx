@@ -407,7 +407,7 @@ function Row({ a, me, color, paint, chair, next, active, canEdit, money, onOpen,
             )}
             {/* Tish писал о приёме в WhatsApp (V256) — что с сообщением: доставлено, прочитано, не доставлено */}
             {a.whatsapp && ['REQUESTED', 'SCHEDULED'].includes(a.status) && (
-              <span className={`row-note wa-mark tone-${statusTone(a.whatsapp.status)}`}>{markText(a.whatsapp)}</span>
+              <span className={`row-note wa-mark tone-${statusTone(a.whatsapp.status)}`}><span title={markText(a.whatsapp) ?? undefined}>{markText(a.whatsapp, true)}</span></span>
             )}
           </span>
         </button>

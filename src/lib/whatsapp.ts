@@ -62,8 +62,9 @@ export function kindText(kind: string | undefined): string {
 }
 
 /** «📲 WhatsApp: прочитано» — у приёма, о котором Tish писал в WhatsApp; нет сообщения — null. */
-export function markText(mark: Mark | undefined | null): string | null {
-  return mark ? `📲 WhatsApp: ${statusText(mark.status)}` : null
+export function markText(mark: Mark | undefined | null, short = false): string | null {
+  // short — строка «Дня» на телефоне: «📲 WA: доставлено» влезает в одну строку
+  return mark ? `📲 ${short ? 'WA' : 'WhatsApp'}: ${statusText(mark.status)}` : null
 }
 
 /** Статус шаблона Meta словами. */
