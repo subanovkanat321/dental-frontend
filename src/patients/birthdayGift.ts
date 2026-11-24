@@ -46,7 +46,9 @@ export type CleaningLine = { name: string; priceSom: number }
 export function cleaningLine(a: Appointment, serviceId?: number | null): CleaningLine | null {
   const lines: { serviceTypeId?: number; name: string; priceSom?: number }[] = (a.services ?? []).map((l) => ({
     serviceTypeId: l.serviceTypeId, name: l.name,
-    priceSom: l.priceSom ?? (l.amountSom != null && l.qty > 0 ? Math.round(l.amountSom / l.qty) : undefined),
+    // Строку уже удешевили (скидка строки, V258) — дарим то, что за одну чистку осталось заплатить
+    priceSom: l.discountSom && l.netSom != null && l.qty > 0 ? Math.round(l.netSom / l.qty)
+      : l.priceSom ?? (l.amountSom != null && l.qty > 0 ? Math.round(l.amountSom / l.qty) : undefined),
   }))
   // Приём без строк — одна услуга приёма
   if (!lines.length && a.serviceName) lines.push({ name: a.serviceName, priceSom: a.servicePriceSom })

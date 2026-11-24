@@ -53,6 +53,9 @@ describe('срок и строка профчистки', () => {
     })
     expect(cleaningLine(a)).toEqual({ name: 'Ультразвуковая чистка', priceSom: 2500 })
     expect(cleaningLine(a, 13)).toEqual({ name: 'Air Flow', priceSom: 3000 })
+    // Скидка строки уже есть — дарим остаток за чистку
+    const lineOff = { ...a, services: [{ ...a.services![1]!, discountSom: 500, netSom: 2000 }] }
+    expect(cleaningLine(lineOff)).toEqual({ name: 'Ультразвуковая чистка', priceSom: 2000 })
     const cleaning = gift({ preset: 'CLEANING', code: 'ДРЧИСТКА', discountPercent: undefined, discountText: 'Бесплатная профчистка' })
     expect(giftOffer(cleaning, a)?.draft).toEqual({ kind: 'som', value: '2500', reason: 'PROMO', comment: 'Подарок на день рождения: профчистка' })
     const noCleaning = { ...a, services: [a.services![0]!] }
