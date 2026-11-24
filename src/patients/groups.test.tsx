@@ -61,9 +61,10 @@ function base() {
   )
 }
 
+/** «Позвать снова» → карточка «Не были 6+ месяцев» (до 2026-11-24 — «Группы» → группа). */
 async function openGroup(user: ReturnType<typeof userEvent.setup>) {
-  await user.click(await findSub('Группы'))
-  await user.click(await screen.findByRole('button', { name: 'Не были 6+ месяцев' }))
+  await user.click(await findSub('Позвать снова'))
+  await user.click(within(await screen.findByRole('group', { name: 'Кого позвать' })).getByRole('button', { name: /Не были 6\+ месяцев/ }))
   return screen.findByRole('list', { name: 'Не были 6+ месяцев' })
 }
 
@@ -78,24 +79,45 @@ test('слова и подстановки', () => {
   expect(filterText({ inBot: false, lastVisitOlderMonths: 6, notBooked: true }, {})).toBe('не были 6+ мес. · без бота · без записи')
 })
 
-test('список групп с числами, своя группа с ✏️; ассистенту подраздела нет', async () => {
+test('карточки групп с числами, пустые скрыты, своя группа с ✏️; старый адрес «Группы»; ассистенту нет', async () => {
   base()
+  const asked: string[] = []
+  server.use(http.get('*/api/patient-groups/members', ({ request }) => {
+    asked.push(new URL(request.url).searchParams.toString())
+    return HttpResponse.json(members)
+  }))
+  // Старая ссылка «Группы» (плитка «Аналитики», закладка) — «Позвать снова»
+  window.location.hash = '/patients/groups'
   const user = userEvent.setup()
   const { unmount } = renderApp()
-  await user.click(await findSub('Группы'))
-  const ready = await screen.findByRole('region', { name: 'Готовые группы' })
-  expect(within(ready).getAllByRole('listitem')[0]).toHaveTextContent('Не были 6+ месяцев')
-  expect(within(ready).getAllByRole('listitem')[0]).toHaveTextContent('2')
-  expect(screen.getByRole('region', { name: 'По меткам' })).toHaveTextContent('С меткой «Боится»')
-  const own = screen.getByRole('region', { name: 'Свои группы' })
-  expect(own).toHaveTextContent('были за 12 мес. · без бота')
-  expect(within(own).getByRole('button', { name: 'Изменить группу: Без бота, были за год' })).toBeInTheDocument()
+  const cards = await screen.findByRole('group', { name: 'Кого позвать' })
+  expect(window.location.hash).toBe('#/patients/comeback')
+  expect(querySub('Группы')).toBeNull()
+  await waitFor(() => expect(within(cards).getByRole('button', { name: /Не были 6\+ месяцев/ })).toHaveTextContent('2'))
+  // «Долг» пустой — не видно; карточек меток нет (метка — условие своей группы)
+  expect(within(cards).queryByRole('button', { name: /Долг/ })).toBeNull()
+  expect(within(cards).queryByRole('button', { name: /Боится/ })).toBeNull()
+  const own = within(cards).getByRole('button', { name: /Без бота, были за год/ })
+  expect(own).toHaveTextContent('1')
+  expect(own).toHaveAttribute('title', 'были за 12 мес. · без бота')
+  await user.click(own)
+  expect(own).toHaveAttribute('aria-pressed', 'true')
+  expect(window.location.hash).toBe('#/patients/comeback/group-7')
+  await waitFor(() => expect(asked.at(-1)).toContain('groupId=7'))
+  expect(screen.getByRole('button', { name: 'Изменить группу: Без бота, были за год' })).toBeInTheDocument()
+  // Своя группа — по адресу (обновили страницу)
   unmount()
-
-  server.use(http.get('*/api/patient/me', () => HttpResponse.json({ ...me, admin: false, doctorId: undefined, assistantOf: [1] })))
-  window.location.hash = '/patients'
   renderApp()
-  await findSub('Все')
+  expect(within(await screen.findByRole('group', { name: 'Кого позвать' })).getByRole('button', { name: /Без бота, были за год/ }))
+    .toHaveAttribute('aria-pressed', 'true')
+})
+
+test('ассистенту «Позвать снова» нет — у него «Профосмотр»', async () => {
+  base()
+  server.use(http.get('*/api/patient/me', () => HttpResponse.json({ ...me, admin: false, doctorId: undefined, assistantOf: [1] })))
+  renderApp()
+  await findSub('Профосмотр')
+  expect(querySub('Позвать снова')).toBeNull()
   expect(querySub('Группы')).toBeNull()
 })
 
@@ -116,8 +138,8 @@ test('редактор своей группы: условия, число по�
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await findSub('Группы'))
-  await user.click(await screen.findByRole('button', { name: '＋ Своя группа' }))
+  await user.click(await findSub('Позвать снова'))
+  await user.click(within(await screen.findByRole('group', { name: 'Кого позвать' })).getByRole('button', { name: /Своя группа/ }))
   const dialog = await screen.findByRole('dialog', { name: 'Своя группа' })
   await user.type(within(dialog).getByLabelText('Название'), 'Давно без бота')
   await choose(within(dialog).getByLabelText('Последний визит больше'), '6 мес. назад')
@@ -126,11 +148,11 @@ test('редактор своей группы: условия, число по�
   await waitFor(() => expect(counts.at(-1)).toEqual({ lastVisitOlderMonths: 6, inBot: false, notBooked: true }))
   await user.click(within(dialog).getByRole('button', { name: 'Сохранить' }))
   await waitFor(() => expect(saved).toEqual([{ name: 'Давно без бота', filter: { lastVisitOlderMonths: 6, inBot: false, notBooked: true } }]))
-  // Сохранили — сразу открылась группа
-  expect(await screen.findByRole('heading', { name: /Не были 6\+ месяцев|Давно без бота/ })).toBeInTheDocument()
+  // Сохранили — сразу открыта её карточка
+  await waitFor(() => expect(window.location.hash).toBe('#/patients/comeback/group-8'))
 })
 
-test('страница группы: пациенты, «Позвать группу» → задачи на обзвон одним нажатием', async () => {
+test('карточка группы: пациенты, «⋯» строки, «Позвать всех» → задачи на обзвон одним нажатием, «Что уже делали» внизу', async () => {
   base()
   const created: Schemas['SegmentServiceTasksRequest'][] = []
   server.use(http.post('*/api/patient-groups/tasks', async ({ request }) => {
@@ -145,9 +167,18 @@ test('страница группы: пациенты, «Позвать груп
   expect(items[0]).toHaveTextContent('не был 1 год 2 мес. · Дастан Т.')
   expect(items[1]).toHaveTextContent('без сообщений')
   expect(screen.getByLabelText('В группе')).toHaveTextContent('2 пациента · в боте 1')
+  // В строке — «Связаться» (есть номер); в «⋯» — записать и задача (у группы своих «Не звать» нет)
+  expect(within(items[0]!).getByRole('button', { name: /Связаться|Позвонить/ })).toBeInTheDocument()
+  await user.click(within(items[0]!).getByRole('button', { name: 'Ещё: Тест Бермет' }))
+  expect(within(items[0]!).getAllByRole('menuitem').map((i) => i.textContent)).toEqual(['＋ Записать', '＋ Задача'])
+  await user.click(within(items[0]!).getByRole('menuitem', { name: '＋ Задача' }))
+  expect(await screen.findByDisplayValue('Позвонить: давно не был — предложить осмотр')).toBeInTheDocument()
+  await user.keyboard('{Escape}')
+  // «Что уже делали» — внизу, свёрнуто
+  await user.click(screen.getByText('Что уже делали и кто вернулся'))
   expect(screen.getByRole('region', { name: 'Что уже делали' })).toHaveTextContent('записались 1')
 
-  await user.click(screen.getByRole('button', { name: 'Позвать группу' }))
+  await user.click(screen.getByRole('button', { name: 'Позвать всех 2' }))
   const dialog = await screen.findByRole('dialog', { name: 'Позвать группу' })
   expect(within(dialog).getByRole('radio', { name: /Задачи на обзвон/ })).toHaveAttribute('aria-checked', 'true')
   expect(within(dialog).getByDisplayValue('Позвонить: давно не был — предложить осмотр')).toBeInTheDocument()
@@ -180,7 +211,7 @@ test('«Сообщение»: подстановка, предпросмотр, 
   const user = userEvent.setup()
   renderApp()
   await openGroup(user)
-  await user.click(screen.getByRole('button', { name: 'Позвать группу' }))
+  await user.click(screen.getByRole('button', { name: 'Позвать всех 2' }))
   const dialog = await screen.findByRole('dialog', { name: 'Позвать группу' })
   await user.click(within(dialog).getByRole('radio', { name: /Сообщение/ }))
   const text = within(dialog).getByLabelText('Текст')
@@ -221,9 +252,55 @@ test('ошибка сервера под текстом — неизвестна
   const user = userEvent.setup()
   renderApp()
   await openGroup(user)
-  await user.click(screen.getByRole('button', { name: 'Позвать группу' }))
+  await user.click(screen.getByRole('button', { name: 'Позвать всех 2' }))
   const dialog = await screen.findByRole('dialog', { name: 'Позвать группу' })
   await user.click(within(dialog).getByRole('radio', { name: /Сообщение/ }))
   await user.click(within(dialog).getByRole('button', { name: 'Отправить' }))
   expect(await within(dialog).findByRole('alert')).toHaveTextContent('Неизвестная подстановка {имя }')
+})
+
+test('«Позвать всех» у карточек «Позвать снова»: «Отменили» — группа CANCELLED, «План отправлен» — PLAN_SENT', async () => {
+  base()
+  const day = 86_400_000
+  const asked: (string | null)[] = []
+  const created: Schemas['SegmentServiceTasksRequest'][] = []
+  server.use(
+    http.get('*/api/comebacks', () => HttpResponse.json({
+      patients: [{ patientId: 5, fullName: 'Тест Динара', phone: '996555000295', telegram: false, reason: 'CANCELLED', planSom: 0, plan: [], invites: 0,
+        planSentAt: '2026-11-03T05:00:00Z', cancelled: { at: new Date(Date.now() - 3 * day).toISOString(), source: 'PATIENT', service: 'Чистка', doctorId: 2,
+          doctor: 'Дастан Т.', startAt: '2026-11-08T05:00:00Z', minutes: 60 } }],
+      planSom: 0, planPatients: 0, noShows: 0, recalls: 0, cancelled: 1, total: 1, sent: 1, agreed: 0,
+    } satisfies Schemas['ComebacksBoard'])),
+    http.get('*/api/patient-groups/members', ({ request }) => {
+      const ready = new URL(request.url).searchParams.get('ready')
+      asked.push(ready)
+      return HttpResponse.json({ ...members, name: ready === 'CANCELLED' ? 'Отменили' : 'План отправлен', total: 1, patients: [],
+        taskTitle: ready === 'CANCELLED' ? 'Позвонить: отменил запись — предложить другое время' : 'Позвонить: обсудить отправленный план лечения', history: [] })
+    }),
+    http.post('*/api/patient-groups/tasks', async ({ request }) => {
+      created.push(await request.json() as Schemas['SegmentServiceTasksRequest'])
+      return HttpResponse.json({ actionId: 2, created: 1, skipped: 0, total: 1, auditText: 'задач 1' } satisfies Schemas['SegmentServiceTasksResult'])
+    }),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await findSub('Позвать снова'))
+  const cards = await screen.findByRole('group', { name: 'Кого позвать' })
+  await user.click(within(cards).getByRole('button', { name: /Отменили/ }))
+  // Строка «Отменили»: «Напомнить» в строке, в «⋯» — «Записать» и «Не звать»
+  const row = within(await screen.findByRole('list', { name: 'Кого вернуть' })).getAllByRole('listitem')[0]!
+  expect(within(row).getByRole('button', { name: 'Напомнить' })).toBeInTheDocument()
+  await user.click(within(row).getByRole('button', { name: 'Ещё: Тест Динара' }))
+  expect(within(row).getAllByRole('menuitem').map((i) => i.textContent)).toEqual(['Записать', 'Не звать'])
+  await user.keyboard('{Escape}')
+  await user.click(await screen.findByRole('button', { name: 'Позвать всех 1' }))
+  const dialog = await screen.findByRole('dialog', { name: 'Позвать группу' })
+  expect(dialog).toHaveTextContent('Отменили · 1 пациент')
+  await user.click(within(dialog).getByRole('button', { name: 'Создать 1 задача' }))
+  await waitFor(() => expect(created[0]).toMatchObject({ group: { ready: 'CANCELLED' }, title: 'Позвонить: отменил запись — предложить другое время' }))
+  await user.click(within(dialog).getByRole('button', { name: 'Готово' }))
+
+  await user.click(within(cards).getByRole('button', { name: /План отправлен/ }))
+  await waitFor(() => expect(asked.at(-1)).toBe('PLAN_SENT'))
+  expect(window.location.hash).toBe('#/patients/comeback/sent')
 })

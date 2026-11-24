@@ -1,10 +1,9 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { EmptyState } from '../layout/EmptyState'
 import { Loading, Spinner } from '../layout/Loading'
-import { HeadTools, SubHelp } from '../layout/PageHead'
 import { Segments } from '../layout/Segments'
 import { ask } from '../lib/confirm'
 import { PLAN_STATUS, progressText } from '../lib/planStatus'
@@ -17,6 +16,7 @@ import { talkItems, type ContactItem } from '../schedule/contactItems'
 import { TaskDialog } from '../tasks/TaskDialog'
 import { CalmRow, RowMenu } from './CalmList'
 import { continueText, patientsWord } from './dropped'
+import { GROUPS } from './groupsModel'
 
 type Me = Schemas['BookingViewsMe']
 type Row = Schemas['PlanStatesDropped']
@@ -24,18 +24,24 @@ type Patient = Schemas['PatientView']
 
 /** Сколько дней не был: три готовых срока — как просил владелец (30 по умолчанию). */
 const PERIODS = ['30', '60', '90'] as const
-type Period = (typeof PERIODS)[number]
+export type Period = (typeof PERIODS)[number]
 
 const PAGE = 50
 
 /**
- * «Пациенты → Бросили лечение»: план согласован или в работе, впереди ничего не записано, не был больше 30 / 60 / 90
+ * Карточка «Бросили лечение» вкладки «Позвать снова» (до 2026-11-24 — своя вкладка): план согласован или в работе, впереди ничего не записано, не был больше 30 / 60 / 90
  * дней. Возврат таких пациентов — прямые деньги клиники (идея — воронка «Дошедшие и повторные» у Dentist Plus).
  * Считает и решает, кого кому показать, сервер (PlanStates): врач — своих, регистратура и руководитель — всех.
  * Строка по DESIGN.md (спокойный список): одно действие — «📞 Связаться ▾» (звонок, WhatsApp с готовым текстом), остальное
  * в «⋯»: «Записать», «＋ Задача», «Не напоминать 30 дней», «Отказался от лечения».
  */
-export function DroppedTab({ me, onOpen, onBook }: { me: Me; onOpen: (patientId: number) => void; onBook: (p: Patient) => void }) {
+export function DroppedList({ me, onOpen, onBook, callAll }: {
+  me: Me
+  onOpen: (patientId: number) => void
+  onBook: (p: Patient) => void
+  /** «Позвать всех» — группа «Бросили лечение» на сервере считает 30 дней: кнопка — только на этом сроке */
+  callAll: (days: Period) => ReactNode
+}) {
   const client = useQueryClient()
   const [days, setDays] = useState<Period>('30')
   const [limit, setLimit] = useState(PAGE)
@@ -54,6 +60,7 @@ export function DroppedTab({ me, onOpen, onBook }: { me: Me; onOpen: (patientId:
       void client.invalidateQueries({ queryKey: ['dropped'] })
       void client.invalidateQueries({ queryKey: ['plan', patientId] })
       void client.invalidateQueries({ queryKey: ['comebacks'] })
+      void client.invalidateQueries({ queryKey: GROUPS })
     },
     onError: () => haptic('error'),
   })
@@ -76,10 +83,8 @@ export function DroppedTab({ me, onOpen, onBook }: { me: Me; onOpen: (patientId:
   }
 
   return (
-    <div className="calm-stack dropped">
-      <SubHelp title="Бросили лечение">Пациенты, которые согласились с планом или начали лечение, но не записаны и давно не были. «📞 Связаться» —
-        позвонить или WhatsApp с готовым текстом; в «⋯» — записать, задача, «Не напоминать» на 30 дней или «Отказался».</SubHelp>
-      <HeadTools>
+    <>
+      <div className="cb-tools">
         <Segments label="Не был больше" value={days} onChange={(d) => { setDays(d); setLimit(PAGE) }}
           options={PERIODS.map((d) => ({ value: d, label: `${d} дней`, text: `Не был больше ${d} дней` }))} />
         {total > 0 && (
@@ -87,7 +92,8 @@ export function DroppedTab({ me, onOpen, onBook }: { me: Me; onOpen: (patientId:
             {total} {patientsWord(total)}{board.data.leftSom > 0 && <> · не долечено на <b className="num">{somText(board.data.leftSom)}</b></>}
           </span>
         )}
-      </HeadTools>
+        {total > 0 && callAll(days)}
+      </div>
       {!rows.length ? (
         <EmptyState fill title={`Никто не бросил лечение дольше ${days} дней`}>Здесь появятся те, кто согласился с планом или начал лечение и пропал.</EmptyState>
       ) : (
@@ -138,6 +144,6 @@ export function DroppedTab({ me, onOpen, onBook }: { me: Me; onOpen: (patientId:
         <TaskDialog patient={{ id: task.patientId, fullName: task.fullName ?? 'Пациент' }}
           draft={{ kind: 'TASK', title: 'Позвонить: продолжить лечение по плану' }} onClose={() => setTask(null)} />
       )}
-    </div>
+    </>
   )
 }

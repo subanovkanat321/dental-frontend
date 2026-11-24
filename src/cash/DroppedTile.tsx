@@ -23,7 +23,7 @@ export function DroppedTile() {
       <p className="chart-headline"><b className="num">{r.total}</b> {patientsWord(r.total)}
         {r.leftSom > 0 && <span className="hint"> · не долечено на <span className="num">{somText(r.leftSom)}</span></span>}</p>
       <p className="hint small">Согласились с планом или начали лечение, не записаны и не были больше 30 дней.{' '}
-        <a href="#/patients/dropped">Открыть список</a> — позвонить, написать в WhatsApp, записать.</p>
+        <a href="#/patients/comeback/dropped">Открыть список</a> — позвонить, написать в WhatsApp, записать.</p>
     </section>
   )
 }

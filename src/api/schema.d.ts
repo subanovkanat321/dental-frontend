@@ -10439,7 +10439,7 @@ export interface components {
             /** @enum {string} */
             kind: "READY" | "TAG" | "CUSTOM";
             /** @enum {string} */
-            ready?: "LAPSED_6" | "LAPSED_12" | "DROPPED" | "PLAN_NOT_AGREED" | "ONE_VISIT" | "DEBT" | "BIRTHDAY_MONTH";
+            ready?: "LAPSED_6" | "LAPSED_12" | "DROPPED" | "PLAN_NOT_AGREED" | "ONE_VISIT" | "DEBT" | "BIRTHDAY_MONTH" | "CANCELLED" | "NO_SHOW" | "RECALL" | "PLAN_SENT";
             /** Format: int64 */
             tagId?: number;
             /** Format: int64 */
@@ -12335,7 +12335,7 @@ export interface components {
         };
         SegmentServiceGroupRef: {
             /** @enum {string} */
-            ready?: "LAPSED_6" | "LAPSED_12" | "DROPPED" | "PLAN_NOT_AGREED" | "ONE_VISIT" | "DEBT" | "BIRTHDAY_MONTH";
+            ready?: "LAPSED_6" | "LAPSED_12" | "DROPPED" | "PLAN_NOT_AGREED" | "ONE_VISIT" | "DEBT" | "BIRTHDAY_MONTH" | "CANCELLED" | "NO_SHOW" | "RECALL" | "PLAN_SENT";
             /** Format: int64 */
             tagId?: number;
             /** Format: int64 */
@@ -29971,7 +29971,7 @@ export interface operations {
     members: {
         parameters: {
             query?: {
-                ready?: "LAPSED_6" | "LAPSED_12" | "DROPPED" | "PLAN_NOT_AGREED" | "ONE_VISIT" | "DEBT" | "BIRTHDAY_MONTH";
+                ready?: "LAPSED_6" | "LAPSED_12" | "DROPPED" | "PLAN_NOT_AGREED" | "ONE_VISIT" | "DEBT" | "BIRTHDAY_MONTH" | "CANCELLED" | "NO_SHOW" | "RECALL" | "PLAN_SENT";
                 tagId?: number;
                 groupId?: number;
                 doctorId?: number;

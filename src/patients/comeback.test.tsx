@@ -56,10 +56,15 @@ test('«Позвать снова»: деньги на столе, «Tish вер
   )
   renderApp()
   await userEvent.click(await findSub('Позвать снова'))
-  // Отбор — одной строкой переключателей в шапке: «Все» и группы с числом (у планов — сумма на столе)
+  // Карточки «кого звать» с числом; «Все» — выбрана, в пояснении — сумма в планах
   const summary = await screen.findByRole('group', { name: 'Кого позвать' })
-  expect(within(summary).getByRole('button', { name: /Планы лечения/ })).toHaveTextContent(/Планы лечения\s*18\s000 сом/)
-  expect(within(summary).getByRole('button', { name: /^Все/ })).toHaveAttribute('aria-pressed', 'true')
+  const all = within(summary).getByRole('button', { name: /^Все/ })
+  expect(all).toHaveAttribute('aria-pressed', 'true')
+  expect(all).toHaveTextContent(/Все\s*2/)
+  expect(all).toHaveAttribute('title', expect.stringMatching(/в планах 18\s000 сом/))
+  expect(within(summary).getByRole('button', { name: /Не пришли/ })).toHaveTextContent('1')
+  // «Позвать всех» — у карточек, у «Все» нет
+  expect(screen.queryByRole('button', { name: /Позвать всех/ })).toBeNull()
   // Пустые группы не показываем
   expect(within(summary).queryByRole('button', { name: /Отменили/ })).toBeNull()
   expect(screen.getByLabelText('Tish вернул')).toHaveTextContent(/вернулись 2 из 5 приглашённых · в их планах 40\s000 сом · уже оплачено 12\s000 сом/)

@@ -237,7 +237,7 @@ export const TIPS: Tip[] = [
   {
     id: 'comeback',
     title: '«Позвать снова»',
-    text: 'Кто давно не приходил или не записался после плана — список с готовым приглашением в WhatsApp.',
+    text: 'Кто бросил лечение, отменил, не пришёл или давно не был — карточки с числом, приглашение в WhatsApp и «Позвать всех».',
     action: { show: 'patients/comeback' },
     show: (me) => hasSub(me, 'patients', 'comeback'),
   },
@@ -251,9 +251,9 @@ export const TIPS: Tip[] = [
   {
     id: 'dropped',
     title: '«Бросили лечение»',
-    text: 'Кто согласился с планом или начал лечение и пропал — список с суммой остатка, звонком и готовым текстом в WhatsApp.',
-    action: { show: 'patients/dropped' },
-    show: (me) => hasSub(me, 'patients', 'dropped'),
+    text: '«Позвать снова» → «Бросили лечение»: кто согласился с планом или начал лечение и пропал — с суммой остатка, звонком и готовым текстом в WhatsApp.',
+    action: { show: 'patients/comeback/dropped' },
+    show: (me) => hasSub(me, 'patients', 'comeback'),
   },
   {
     id: 'recall',

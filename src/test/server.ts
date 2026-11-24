@@ -124,6 +124,10 @@ export const server = setupServer(
   http.get('*/api/comebacks', () => HttpResponse.json({ patients: [], planSom: 0, planPatients: 0, noShows: 0, recalls: 0 })),
   http.get('*/api/dropped', () => HttpResponse.json({ patients: [], total: 0, leftSom: 0, days: 30 } satisfies Schemas['PlanStatesBoard'])),
   // «Пациенты → Группы» (шаг 9А): по умолчанию ничего не делали — плитки в «Аналитике» нет
+  // «Позвать снова»: числа карточек групп и группа карточки — пусто, пока тест не задал своё
+  http.get('*/api/patient-groups', () => HttpResponse.json({ ready: [], tags: [], custom: [] } satisfies Schemas['SegmentServiceGroups'])),
+  http.get('*/api/patient-groups/members', () => HttpResponse.json({ name: 'Группа', total: 0, inBot: 0, optedOut: 0, patients: [], taskTitle: 'Позвонить',
+    messageText: 'Здравствуйте, {имя}!', history: [] } satisfies Schemas['SegmentServiceMembers'])),
   http.get('*/api/patient-groups/results', () => HttpResponse.json({ days: 90, messaged: 0, messagedBooked: 0, called: 0, calledBooked: 0 } satisfies Schemas['SegmentServiceResults'])),
   http.get('*/api/comebacks/result', () => HttpResponse.json({ invited: 0, returned: 0, returnedPlanSom: 0, paidSom: 0 })),
   http.get('*/api/appointments/:id/visit-report', () => new HttpResponse(null, { status: 204 })),

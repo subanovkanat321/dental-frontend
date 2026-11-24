@@ -51,7 +51,7 @@ test('текст и прогресс: «выполнено 1 из 3 · 15 000 и
   expect(text).not.toMatch(/сом/)
 })
 
-test('«Бросили лечение»: список, итог, срок 30/60/90, WhatsApp с готовым текстом, «Не напоминать», «Отказался»', async () => {
+test('«Позвать снова» → «Бросили лечение» (старый адрес #/patients/dropped): список, итог, срок 30/60/90, WhatsApp, «Не напоминать», «Отказался», «Позвать всех»', async () => {
   const requests: string[] = []
   const hidden: string[] = []
   server.use(
@@ -61,10 +61,23 @@ test('«Бросили лечение»: список, итог, срок 30/60/
     http.post('*/api/dropped/:id/snooze', ({ params }) => { hidden.push(`snooze ${String(params.id)}`); return new HttpResponse(null, { status: 204 }) }),
     http.post('*/api/dropped/:id/refuse', ({ params }) => { hidden.push(`refuse ${String(params.id)}`); return new HttpResponse(null, { status: 204 }) }),
   )
+  server.use(
+    http.get('*/api/patient-groups', () => HttpResponse.json({ ready: [{ kind: 'READY', ready: 'DROPPED', name: 'Бросили лечение', count: 2, canEdit: false }],
+      tags: [], custom: [] } satisfies Schemas['SegmentServiceGroups'])),
+    http.get('*/api/patient-groups/members', ({ request }) => {
+      expect(new URL(request.url).searchParams.get('ready')).toBe('DROPPED')
+      return HttpResponse.json({ name: 'Бросили лечение', total: 2, inBot: 1, optedOut: 0, patients: [],
+        taskTitle: 'Позвонить: лечение не закончено — записать на следующий этап', messageText: 'Здравствуйте, {имя}!', history: [] } satisfies Schemas['SegmentServiceMembers'])
+    }),
+    http.get('*/api/tasks/assignees', () => HttpResponse.json([{ telegramId: 111, fullName: 'Айгерим', role: 'Руководитель', me: true }] satisfies Schemas['TaskControllerAssignee'][])),
+  )
+  // Старая ссылка (плитка «Аналитики», закладка) — новая вкладка с карточкой «Бросили лечение»
+  window.location.hash = '/patients/dropped'
   const user = userEvent.setup()
   renderApp()
-  await user.click(await findSub('Бросили лечение'))
   const list = await screen.findByRole('list', { name: 'Бросили лечение' })
+  expect(window.location.hash).toBe('#/patients/comeback/dropped')
+  expect(within(screen.getByRole('group', { name: 'Кого позвать' })).getByRole('button', { name: /Бросили лечение/ })).toHaveAttribute('aria-pressed', 'true')
   const items = within(list).getAllByRole('listitem')
   expect(items).toHaveLength(2)
   expect(items[0]).toHaveTextContent('Бакыт М.')
@@ -98,10 +111,18 @@ test('«Бросили лечение»: список, итог, срок 30/60/
   await waitFor(() => expect(hidden).toEqual(['snooze 3', 'refuse 2']))
   expect(vi.mocked(window.confirm).mock.calls[0]?.[0]).toContain('отказался от лечения')
 
-  // Срок 60 дней — новый запрос
+  // «Позвать всех 2» — «Позвать группу» для группы «Бросили лечение» (30 дней, как у сервера)
+  await user.click(screen.getByRole('button', { name: 'Позвать всех 2' }))
+  const dialog = await screen.findByRole('dialog', { name: 'Позвать группу' })
+  expect(within(dialog).getByDisplayValue('Позвонить: лечение не закончено — записать на следующий этап')).toBeInTheDocument()
+  await user.keyboard('{Escape}')
+  await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Позвать группу' })).toBeNull())
+
+  // Срок 60 дней — новый запрос; «Позвать всех» — только на 30 днях (группа на сервере — 30 дней)
   await user.click(screen.getByRole('button', { name: '60 дней' }))
   await waitFor(() => expect(requests.at(-1)).toContain('days=60'))
   await waitFor(() => expect(within(screen.getByRole('list', { name: 'Бросили лечение' })).getAllByRole('listitem')).toHaveLength(1))
+  expect(screen.queryByRole('button', { name: /Позвать всех/ })).toBeNull()
 })
 
 test('«＋ Задача» из «⋯» — окно задачи с пациентом и готовым текстом', async () => {
@@ -110,29 +131,37 @@ test('«＋ Задача» из «⋯» — окно задачи с пацие�
     http.get('*/api/patients/recent', () => HttpResponse.json([])),
     http.get('*/api/dropped', serve([])),
   )
+  window.location.hash = '/patients/comeback/dropped'
   const user = userEvent.setup()
   renderApp()
-  await user.click(await findSub('Бросили лечение'))
   await user.click(await screen.findByRole('button', { name: 'Ещё: Айгуль Т.' }))
   await user.click(screen.getByRole('menuitem', { name: '＋ Задача' }))
   expect(await screen.findByDisplayValue('Позвонить: продолжить лечение по плану')).toBeInTheDocument()
   expect(screen.getAllByText(/Айгуль Т\./).length).toBeGreaterThan(1)
 })
 
-test('пусто — одна фраза; ассистенту подраздела нет', async () => {
+test('пусто — одна фраза; отдельной вкладки больше нет; ассистенту «Позвать снова» нет', async () => {
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.get('*/api/patients/recent', () => HttpResponse.json([])),
   )
   const user = userEvent.setup()
   const { unmount } = renderApp()
-  await user.click(await findSub('Бросили лечение'))
-  expect(await screen.findByText('Никто не бросил лечение дольше 30 дней')).toBeInTheDocument()
+  await user.click(await findSub('Позвать снова'))
+  expect(querySub('Бросили лечение')).toBeNull()
+  await user.click(within(await screen.findByRole('group', { name: 'Кого позвать' })).getByRole('button', { name: /Все/ }))
+  // Пустая карточка не видна; по адресу — открыта и пустая
+  expect(within(screen.getByRole('group', { name: 'Кого позвать' })).queryByRole('button', { name: /Бросили лечение/ })).toBeNull()
   unmount()
+  window.location.hash = '/patients/comeback/dropped'
+  const second = renderApp()
+  expect(await screen.findByText('Никто не бросил лечение дольше 30 дней')).toBeInTheDocument()
+  second.unmount()
 
   server.use(http.get('*/api/patient/me', () => HttpResponse.json({ ...me, admin: false, doctorId: undefined, assistantOf: [1] })))
   window.location.hash = '/patients'
   renderApp()
   await findSub('Все')
   expect(querySub('Бросили лечение')).toBeNull()
+  expect(querySub('Позвать снова')).toBeNull()
 })

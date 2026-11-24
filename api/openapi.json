@@ -18034,7 +18034,7 @@
           "required" : false,
           "schema" : {
             "type" : "string",
-            "enum" : [ "LAPSED_6", "LAPSED_12", "DROPPED", "PLAN_NOT_AGREED", "ONE_VISIT", "DEBT", "BIRTHDAY_MONTH" ]
+            "enum" : [ "LAPSED_6", "LAPSED_12", "DROPPED", "PLAN_NOT_AGREED", "ONE_VISIT", "DEBT", "BIRTHDAY_MONTH", "CANCELLED", "NO_SHOW", "RECALL", "PLAN_SENT" ]
           }
         }, {
           "name" : "tagId",
@@ -24074,7 +24074,7 @@
           },
           "ready" : {
             "type" : "string",
-            "enum" : [ "LAPSED_6", "LAPSED_12", "DROPPED", "PLAN_NOT_AGREED", "ONE_VISIT", "DEBT", "BIRTHDAY_MONTH" ]
+            "enum" : [ "LAPSED_6", "LAPSED_12", "DROPPED", "PLAN_NOT_AGREED", "ONE_VISIT", "DEBT", "BIRTHDAY_MONTH", "CANCELLED", "NO_SHOW", "RECALL", "PLAN_SENT" ]
           },
           "tagId" : {
             "type" : "integer",
@@ -28770,7 +28770,7 @@
         "properties" : {
           "ready" : {
             "type" : "string",
-            "enum" : [ "LAPSED_6", "LAPSED_12", "DROPPED", "PLAN_NOT_AGREED", "ONE_VISIT", "DEBT", "BIRTHDAY_MONTH" ]
+            "enum" : [ "LAPSED_6", "LAPSED_12", "DROPPED", "PLAN_NOT_AGREED", "ONE_VISIT", "DEBT", "BIRTHDAY_MONTH", "CANCELLED", "NO_SHOW", "RECALL", "PLAN_SENT" ]
           },
           "tagId" : {
             "type" : "integer",

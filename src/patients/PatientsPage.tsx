@@ -26,9 +26,7 @@ import { HelpHint } from '../help/HelpHint'
 import { CalmRow } from './CalmList'
 import { TasksTab } from '../tasks/TasksTab'
 import { RatingsTab } from './RatingsTab'
-import { DroppedTab } from './DroppedTab'
 import { NoBotTab } from './NoBotTab'
-import { GroupsTab } from './GroupsTab'
 import { DuplicatePairs } from './Duplicates'
 import { useDuplicatePairs } from './duplicatesModel'
 import { LeadsTab } from './LeadsTab'
@@ -70,10 +68,11 @@ export function PatientsPage({ me, onBook, onBookLead, initialPatient, initialQu
   const [selected, setSelected] = useState<number | 'new' | null>(initialPatient ?? null)
   // Медкарта — на месте таблицы, во всю ширину: карте зубов нужно место
   const [medical, setMedical] = useState<Patient | null>(null)
-  // Подраздел (бывшие вкладки): все пациенты, записаны, лист ожидания, «позвать снова», вопросы —
+  // Подраздел (бывшие вкладки): все пациенты, записаны, лист ожидания, «позвать снова» (с 2026-11-24 — и бывшие «Бросили
+  // лечение» и «Группы»), вопросы —
   // в меню слева (на телефоне — лист из заголовка), адрес #/patients/<подраздел>
   const { sub, subTitle } = useSection('patients', me)
-  const tab = sub as 'all' | 'booked' | 'waitlist' | 'leads' | 'recall' | 'comeback' | 'dropped' | 'groups' | 'nobot' | 'questions' | 'tasks' | 'ratings'
+  const tab = sub as 'all' | 'booked' | 'waitlist' | 'leads' | 'recall' | 'comeback' | 'nobot' | 'questions' | 'tasks' | 'ratings'
   const close = useCallback(() => setSelected(null), [])
   // Вопрос пациента справа (вкладка «Вопросы»); открыли карточку пациента — вопрос закрываем, и наоборот
   const [question, setQuestion] = useState<number | null>(initialQuestion ?? null)
@@ -188,10 +187,8 @@ export function PatientsPage({ me, onBook, onBookLead, initialPatient, initialQu
         {tab === 'questions' && <QuestionsTab selected={question} onOpen={(id) => { setSelected(null); setQuestion(id) }} />}
         {tab === 'tasks' && <TasksTab onOpenPatient={setSelected} initialTask={initialTask} initialDraft={initialTaskDraft} />}
         {tab === 'ratings' && <RatingsTab me={me} onOpenAppointment={onOpenAppointment} onOpenPatient={setSelected} />}
-        {tab === 'dropped' && <DroppedTab me={me} onOpen={setSelected} onBook={onBook} />}
-        {tab === 'groups' && <GroupsTab me={me} onOpen={setSelected} />}
         {tab === 'nobot' && <NoBotTab onOpen={setSelected} />}
-        {tab === 'comeback' && <ComebackTab onOpen={setSelected} onBook={onBook} canEditServices={canEditServices(me)} />}
+        {tab === 'comeback' && <ComebackTab me={me} onOpen={setSelected} onBook={onBook} canEditServices={canEditServices(me)} />}
         {tab === 'all' && dupsOnly && <DuplicatePairs onOpen={setSelected} />}
         {tab === 'all' && birthdaysOnly && !dupsOnly && <section className="card-block" aria-label="Дни рождения сегодня"><BirthdayList onOpen={setSelected} /></section>}
         {tab === 'all' && !birthdaysOnly && !dupsOnly && recent.error && <p className="error">{recent.error.message}</p>}
