@@ -28,6 +28,7 @@ const HowToPage = lazy(() => import('./HowToPage').then((m) => ({ default: m.How
 const CalendarPage = lazy(() => import('./CalendarPage').then((m) => ({ default: m.CalendarPage })))
 const ProfilePage = lazy(() => import('./ProfilePage').then((m) => ({ default: m.ProfilePage })))
 const ReviewTimingPage = lazy(() => import('./ReviewTimingPage').then((m) => ({ default: m.ReviewTimingPage })))
+const ReferralPage = lazy(() => import('./ReferralPage').then((m) => ({ default: m.ReferralPage })))
 const WhatsAppPage = lazy(() => import('./WhatsAppPage').then((m) => ({ default: m.WhatsAppPage })))
 const BirthdaysPage = lazy(() => import('./BirthdaysPage').then((m) => ({ default: m.BirthdaysPage })))
 const DebtTextPage = lazy(() => import('./DebtTextPage').then((m) => ({ default: m.DebtTextPage })))
@@ -68,6 +69,7 @@ const RENDER: Record<string, (title: string) => Render> = {
   debt: () => (_me, back) => <DebtTextPage onBack={back} />,
   reviews: () => (_me, back) => <ReviewTimingPage onBack={back} />,
   birthdays: () => (_me, back) => <BirthdaysPage onBack={back} />,
+  referral: () => (_me, back) => <ReferralPage onBack={back} />,
   whatsapp: () => (_me, back) => <WhatsAppPage onBack={back} />,
   questions: (t) => clinic('questions', t),
   contract: () => (me, back) => <ContractTemplatePage me={me} onBack={back} />,

@@ -8,7 +8,7 @@ import { translator, whenAt, type Lang, type T } from '../patient/i18n'
 import { stripLength } from '../patient/slots'
 import { BookingWizard, type ContactsArgs } from '../patient/Wizard'
 import '../patient/patient.css'
-import { channelSlug, getJson, postJson, withChannel, type SiteProblem, type WebBooked, type WebBookingInfo } from './web'
+import { channelSlug, getJson, postJson, referralCode, withChannel, type SiteProblem, type WebBooked, type WebBookingInfo } from './web'
 import { Loading } from '../layout/Loading'
 
 type Slots = Schemas['BookingViewsSlots']
@@ -41,7 +41,8 @@ export default function WebBooking({ code, lang, onClose }: { code: string | nul
   const [booked, setBooked] = useState<WebBooked | null>(null)
 
   useEffect(() => {
-    void getJson<WebBookingInfo>(url('/web/booking', code)).then(({ data }) => setInfo(data ?? 'error'))
+    const ref = referralCode()
+    void getJson<WebBookingInfo>(url('/web/booking', code, ref ? { ref } : {})).then(({ data }) => setInfo(data ?? 'error'))
   }, [code])
 
   if (info === null) return <Loading className="site-message" text={t('loading')} />
@@ -102,6 +103,9 @@ export default function WebBooking({ code, lang, onClose }: { code: string | nul
         length={stripLength(info.daysAhead)} loadFreeDays={loadFreeDays} loadSlots={loadSlots}
         noneSoon={`${t('noFreeSoon')} ${callText(t, info.phones)}`} errorText={() => t('noConnection')}
         intro={<div><h2>{t('webTitle')}</h2><p className="hint">{t('webSub')}</p>
+          {(lang === 'ky' ? info.referralBonusKy ?? info.referralBonus : info.referralBonus) && (
+            <p className="notice tone-ok" role="note">{t('webReferral', { bonus: (lang === 'ky' ? info.referralBonusKy ?? info.referralBonus : info.referralBonus) ?? '' })}</p>
+          )}
           {info.whatsapp && <p className="hint">{t('webWaPrefer')} <a href={waLink(info.whatsapp, t('webWaAsk'))} target="_blank" rel="noopener noreferrer">{t('webWaPreferLink')}</a></p>}</div>}
         contacts={(args) => <WebContacts {...args} t={t} lang={lang} code={code} info={info} onBooked={(b) => {
           setBooked(b)
@@ -171,6 +175,8 @@ function WebContacts({ chosen, active, onTaken, t, lang, code, info, onBooked }:
       phone: phoneFromInput(phone), comment: commentRef.current?.value ?? '', consent: true, sourceId, website: websiteRef.current?.value ?? '',
       // Метка канала из ссылки (?from=instagram): заявка попадёт в «Пациенты от Tish» с этим каналом (V232)
       ...(channelSlug() ? { from: channelSlug() } : {}),
+      // «Приведи друга»: код ссылки друга (?ref=…) — сервер запишет, кто пригласил (только нового пациента)
+      ...(referralCode() ? { ref: referralCode() } : {}),
     })
     setSending(false)
     if (data) onBooked(data)

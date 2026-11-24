@@ -252,7 +252,7 @@ test('«Настройки» — вкладками, как другие раз�
   renderApp()
   let bar = await tabs('Настройки')
   expect(within(bar).getByRole('link', { name: 'Напоминание о приёме' })).toHaveAttribute('aria-current', 'page')
-  expect(within(bar).getAllByRole('link')).toHaveLength(19) // + «WhatsApp» (V256), «Дни рождения» (шаг 6Б), «Правка приёмов» (шаг 5А); «Отметки приёма» убраны 2026-11-21
+  expect(within(bar).getAllByRole('link')).toHaveLength(20) // + «Приведи друга» (V260), «WhatsApp» (V256), «Дни рождения» (шаг 6Б), «Правка приёмов» (шаг 5А); «Отметки приёма» убраны 2026-11-21
   expect(within(nav()).queryByRole('group', { name: 'Настройки' })).not.toBeInTheDocument()
   expect(within(nav()).getByRole('button', { name: 'Раскрыть подразделы: Настройки' })).toHaveAttribute('aria-expanded', 'false')
   await userEvent.click(within(bar).getByRole('link', { name: 'Памятки после процедур' }))

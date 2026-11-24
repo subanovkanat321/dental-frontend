@@ -13,6 +13,7 @@ import { TishChart } from './TishChart'
 import { DroppedTile } from './DroppedTile'
 import { BotTile } from './BotTile'
 import { GroupsTile } from './GroupsTile'
+import { ReferralTile } from '../refer/ReferralTile'
 import { LoadReports } from './LoadReports'
 import { Loading } from '../layout/Loading'
 import { EmptyState } from '../layout/EmptyState'
@@ -84,6 +85,8 @@ export function AnalyticsTab({ me, doctorId, seesAll }: { me: Me; doctorId: numb
       {/* Сколько пациентов в боте — вся клиника (ассистенту сервер считает только его врачей); выбран врач — не показываем */}
       {doctorId == null && <BotTile />}
       {(doctorId == null || doctorId === me.doctorId) && <GroupsTile />}
+      {/* «Приведи друга» (2026-11-24): выручка клиники — тому, кто видит всех врачей */}
+      {seesAll && doctorId == null && <ReferralTile from={period.from} to={period.to} />}
       {/* Загрузка врачей и кресел, конверсия (шаг 5Б) — свой период: неделя, месяц, даты; кто что видит — решает сервер */}
       <LoadReports doctorId={doctorId} leads={(me.admin || me.reception) === true} />
       <MonthsChart month={month ?? todayIn().slice(0, 7)} scope={scope} />

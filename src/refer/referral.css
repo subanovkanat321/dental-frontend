@@ -1,0 +1,15 @@
+/* «Приведи друга» (2026-11-24): блок в карточке пациента, ссылка для друзей, плитка аналитики, карточка Mini App */
+.referral-box { display: grid; gap: 8px; }
+.referral-box h3 { margin: 0; }
+.referral-box p { margin: 0; }
+.referral-link { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--separator); border-radius: var(--r-md, 12px); }
+.referral-link .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.referral-friends { display: grid; gap: 6px; }
+.referral-bonus { display: grid; gap: 8px; }
+.referral-top { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.referral-top li { display: flex; justify-content: space-between; gap: 8px; }
+.friend-card { display: grid; gap: 8px; padding: 12px; border-radius: 14px; background: var(--card); border: 1px solid var(--separator); }
+.friend-card h2 { margin: 0; font-size: 1.1rem; }
+.friend-card p { margin: 0; }
+.friend-actions { display: grid; gap: 8px; }
+.referral-friends .family-members { display: flex; flex-wrap: wrap; gap: 6px; }

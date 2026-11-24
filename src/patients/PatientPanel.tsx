@@ -21,6 +21,7 @@ import { VisitDocs } from '../print/VisitDocs'
 import { WaitlistBox } from './WaitlistTab'
 import { SourceLine } from './SourceLine'
 import { FamilyBox } from './FamilyBox'
+import { ReferralBox } from '../refer/ReferralBox'
 import { AdvanceBox } from './AdvanceBox'
 import { advanceText, useAdvance } from './advance'
 import { PatientTasks } from '../tasks/PatientTasks'
@@ -97,6 +98,8 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
   const [debtForm, setDebtForm] = useState<'remind' | 'promise' | null>(null)
   // Окно «＋ Задача» или «＋ Заказ в лабораторию» из строки ссылок
   const [adding, setAdding] = useState<'task' | 'lab' | null>(null)
+  // «⋯ → Ссылка «Приведи друга»» — открыть «Прочее» со ссылкой для друзей (2026-11-24)
+  const [referralLink, setReferralLink] = useState(false)
   // Деньги и заметки — админу и врачу; регистратуре сервер их не отдаст
   const staff = Boolean(me.admin || me.doctorId != null)
   // Медкарту сервер (ChartService) открывает админу клиники, врачам и ассистентам; регистратуре — никогда
@@ -276,6 +279,7 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
           {/* Редкие действия — в «⋯»: договор с пациентом (по желанию клиники, V209) */}
           {patient && (
             <MoreActions title={patient.fullName ?? 'Пациент'} onTask={() => setAdding('task')} onLab={labs ? () => setAdding('lab') : undefined}
+              onReferral={() => { setTab('more'); setReferralLink(true) }}
               onContract={mine && !isAssistant(me) ? () => {
                 setTab('more')
                 setContractAsked((a) => ({ id: patient.id, n: a?.id === patient.id ? a.n + 1 : 1 }))
@@ -362,6 +366,9 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
           {/* ⭐ ВИП — только меткой «ВИП» в шапке (одна дорога вместо двух, UX-аудит 2026-11-20); API /vip остаётся */}
           {/* «Откуда узнал» — всегда в «Прочем»: в шапке карточки занимал полэкрана */}
           {patient && <SourceLine patient={patient} canEdit={Boolean(mine)} admin={Boolean(mine && me.admin)} />}
+          {/* «Приведи друга»: кто пригласил, кого привёл, ссылка для друзей (из «⋯») */}
+          {patient && <ReferralBox key={patient.id} patient={patient} canEdit={Boolean(mine)} link={referralLink}
+            onCloseLink={() => setReferralLink(false)} onOpenPatient={onOpenPatient} />}
           {/* Лист ожидания — с подписью и пояснением: без заголовка «30 мин · к любому врачу» было непонятно, что это */}
           {patient && mine && (
             <section className="patient-waitlist" aria-label="Лист ожидания">
@@ -389,11 +396,14 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
  * и «Оформить договор» (договор по желанию: строки договора у каждого пациента нет; не ассистенту). Сверху — имя пациента.
  * Закрывается нажатием мимо, Esc и «назад» телефона — карточка пациента при этом остаётся.
  */
-function MoreActions({ title, onTask, onLab, onContract }: { title: string; onTask: () => void; onLab?: () => void; onContract?: () => void }) {
+function MoreActions({ title, onTask, onLab, onReferral, onContract }: {
+  title: string; onTask: () => void; onLab?: () => void; onReferral: () => void; onContract?: () => void
+}) {
   // Общее меню действий (layout/ActionMenu): компьютер — карточка у кнопки, телефон — лист; Esc закрывает только меню
   const items: ActionItem[] = [
     { label: 'Новая задача', hint: 'позвонить, напомнить', icon: 'task', onSelect: onTask },
     ...(onLab ? [{ label: 'Заказ в лабораторию', hint: 'работа технику', icon: 'lab' as const, onSelect: onLab }] : []),
+    { label: 'Ссылка «Приведи друга»', hint: 'отправить пациенту в WhatsApp', icon: 'send' as const, onSelect: onReferral },
     ...(onContract ? [{ label: 'Оформить договор', hint: 'на подпись пациенту', icon: 'contract' as const, onSelect: onContract }] : []),
   ]
   return (

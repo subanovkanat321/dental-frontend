@@ -23,6 +23,8 @@ import { draftOf, draftProblem, draftSom, useDiscountPolicy, type DiscountDraft 
 import { EditButton } from '../layout/EditButton'
 import { BirthdayGiftNote } from './BirthdayGiftNote'
 import { prefillDraft, sameDraft, useBirthdayOffer } from '../patients/birthdayGift'
+import { biggestCandidate, useReferralOffers, type Candidate } from '../refer/referral'
+import { NoStackNote, ReferralNote } from '../refer/ReferralNote'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
@@ -366,12 +368,21 @@ function PayForm({ a, me, billOnly, parts: initialParts, spentHere = 0, onCancel
   const offerFits = offer != null && Boolean(policy.data?.canGive) && offer.percent <= (policy.data?.myMaxPercent ?? 100)
   // Подарок на день рождения (2026-11-24): с меткой не складываем — подставляем бо́льшую, подсказываем обе
   const birthday = useBirthdayOffer(a)
+  // «Приведи друга» (2026-11-24): бонус новому пациенту и пригласившему — с подарком и меткой тоже не складываем
+  const referral = useReferralOffers(a)
+  const candidates: Candidate[] = [
+    ...(birthday.offer ? [{ label: 'подарок', draft: birthday.offer.draft }] : []),
+    ...(offer ? [{ label: `по метке «${offer.tag.name}»`, draft: tagDraft(offer) }] : []),
+    ...referral.hints.map((h) => ({ label: h.short, draft: h.draft })),
+  ]
   const tagsReady = !(a.patient?.tagIds?.length) || tagList.isFetched
   const [offerChecked, setOfferChecked] = useState(false)
-  if (!offerChecked && (offer || birthday.offer) && policy.data && tagsReady && birthday.ready) {
-    // Один раз, когда метки, подарок и политика загрузились (состояние по ходу рендера — без лишнего прохода эффекта)
+  if (!offerChecked && candidates.length > 0 && policy.data && tagsReady && birthday.ready && referral.ready) {
+    // Один раз, когда метки, подарок, «Приведи друга» и политика загрузились (состояние по ходу рендера — без лишнего прохода эффекта)
     setOfferChecked(true)
-    const first = prefillDraft(birthday.offer, offer && tagDraft(offer), Number(cost) || null, policy.data)
+    const first = referral.hints.length
+      ? biggestCandidate(candidates, Number(cost) || null, policy.data)?.draft ?? null
+      : prefillDraft(birthday.offer, offer && tagDraft(offer), Number(cost) || null, policy.data)
     if (first && !a.discount && a.paidSom == null && !discount) setDiscount(first)
   }
   const [whole, setWhole] = useState(!hadDebt)
@@ -513,13 +524,18 @@ function PayForm({ a, me, billOnly, parts: initialParts, spentHere = 0, onCancel
           <LinesSum a={a} cost={priceNum} onUse={(sum) => setCost(String(sum))} />
           {costField(discount ? 'Цена приёма до скидки, сом' : 'Стоимость приёма, сом')}
           <PriceChips onPick={pick} />
-          {birthday.offer && policy.data && <BirthdayGiftNote offer={birthday.offer} tag={offer && tagDraft(offer)} tagName={offer?.tag.name}
-            price={priceNum} policy={policy.data} discount={discount} onChange={setDiscount} />}
+          {/* Есть «Приведи друга» — сравнение всех скидок одной строкой ниже (NoStackNote), у подарка — без своей */}
+          {birthday.offer && policy.data && <BirthdayGiftNote offer={birthday.offer} tag={referral.hints.length ? null : offer && tagDraft(offer)}
+            tagName={offer?.tag.name} price={priceNum} policy={policy.data} discount={discount} onChange={setDiscount} />}
+          {policy.data && referral.hints.map((h) => <ReferralNote key={h.key} hint={h} price={priceNum} policy={policy.data}
+            discount={discount} onChange={setDiscount} />)}
+          {policy.data && referral.hints.length > 0 && <NoStackNote candidates={candidates} price={priceNum} policy={policy.data} />}
           {offer && policy.data && <TagDiscountNote offer={offer} fits={offerFits} canGive={Boolean(policy.data.canGive)}
             max={policy.data.myMaxPercent} discount={discount} onApply={() => setDiscount(tagDraft(offer))} />}
           {/* Подставленная по метке — без фокуса в поле: на телефоне не выскочит клавиатура */}
           <DiscountField price={priceNum} value={discount} onChange={setDiscount} policy={policy.data}
-            autoFocus={!(offer && sameDiscount(discount, offer)) && !sameDraft(discount, birthday.offer?.draft ?? null)} />
+            autoFocus={!(offer && sameDiscount(discount, offer)) && !sameDraft(discount, birthday.offer?.draft ?? null)
+              && !referral.hints.some((h) => sameDraft(discount, h.draft))} />
           <PromoField a={a} me={me} onDiscount={(percent) => {
             // Код со скидкой в процентах — подставим её, если скидку ещё не вписали (решает сотрудник: можно убрать)
             if (!discount && policy.data?.canGive) setDiscount({ kind: 'percent', value: String(percent), reason: 'PROMO', comment: '' })

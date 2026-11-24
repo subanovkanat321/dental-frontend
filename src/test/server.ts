@@ -12,6 +12,12 @@ export const SOURCES: Schemas['PatientSourcesOption'][] = [
   { id: 20, code: 'OTHER', emoji: '✨', title: 'Другое', titleKy: 'Башка', active: true, position: 100, patients: 0 },
 ]
 
+/** «Приведи друга» выключено — как у новой клиники. */
+export const REFERRAL_OFF: Schemas['PatientReferralsSettingsView'] = {
+  enabled: false, validDays: 60, previewRu: '', previewKy: '',
+  friend: { kind: 'PERCENT', percent: 10, label: 'скидка 10 %' }, inviter: { kind: 'PERCENT', percent: 10, label: 'скидка 10 %' },
+}
+
 /**
  * Фальшивый бэкенд для тестов: обработчики добавляет каждый тест (server.use). Здесь — только
  * фоновые запросы полосы «Сегодня» (склад, выручка, касса) и карточки приёма (материалы, услуги): пусто, если тест не задал своё.
@@ -54,6 +60,19 @@ export const server = setupServer(
   http.get('*/api/appointments/chair-options', () => HttpResponse.json([] satisfies Schemas['ChairOptionView'][])),
   // «🎁 Пригласите коллег» и /join?ref=…: по умолчанию нет — блоков нет (их тесты — account/invite.test.tsx, site/joinRef.test.tsx)
   http.get('*/api/clinic/referral', () => HttpResponse.json({ detail: 'нет' }, { status: 404 })),
+  // «Приведи друга» пациентов (V260): по умолчанию выключено — подсказок в оплате, блока в карточке и карточки Mini App нет
+  // (их тесты — refer/*.test.tsx)
+  http.get('*/api/clinic/referral-settings', () => HttpResponse.json(REFERRAL_OFF)),
+  http.get('*/api/appointments/:id/referral-offers', () => HttpResponse.json([] satisfies Schemas['PatientReferralsOffer'][])),
+  http.get('*/api/patients/:id/referral', () => HttpResponse.json({ enabled: false, invited: 0, came: 0, rewardsAvailable: 0, rewardsUsed: 0,
+    friends: [] } satisfies Schemas['PatientReferralsCard'])),
+  http.get('*/api/reports/referrals', ({ request }) => {
+    const q = new URL(request.url).searchParams
+    return HttpResponse.json({ from: q.get('from')!, to: q.get('to')!, enabled: false, invited: 0, came: 0, revenueSom: 0, rewardsGiven: 0,
+      rewardsUsed: 0, top: [] } satisfies Schemas['PatientReferralsReport'])
+  }),
+  http.get('*/api/patient/referral', () => HttpResponse.json({ enabled: false, validDays: 60, invited: 0, came: 0,
+    rewardsUntil: [] } satisfies Schemas['PatientReferralsPatientLink'])),
   http.get('*/web/referral', () => HttpResponse.json({ detail: 'Приглашение не найдено' }, { status: 404 })),
   // Кейс на /join не заполнен — блока нет; черновик в «Платформа → Настройки» — пустой
   // Демо-клиника без регистрации: по умолчанию выключена (как на сервере) — кнопок «Посмотреть демо» нет
