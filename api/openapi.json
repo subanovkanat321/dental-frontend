@@ -20817,6 +20817,18 @@
           "amountSom" : {
             "type" : "integer",
             "format" : "int32"
+          },
+          "discountPercent" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "discountSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "netSom" : {
+            "type" : "integer",
+            "format" : "int32"
           }
         },
         "required" : [ "id", "name", "qty", "teeth" ]
@@ -26007,6 +26019,18 @@
         },
         "required" : [ "number" ]
       },
+      "AppointmentLinesLineDiscount" : {
+        "properties" : {
+          "percent" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "som" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
       "AppointmentRequestsUpdateLine" : {
         "properties" : {
           "qty" : {
@@ -26023,6 +26047,9 @@
           "priceSom" : {
             "type" : "integer",
             "format" : "int32"
+          },
+          "discount" : {
+            "$ref" : "#/components/schemas/AppointmentLinesLineDiscount"
           }
         }
       },
@@ -35653,6 +35680,10 @@
           "amountSom" : {
             "type" : "integer",
             "format" : "int32"
+          },
+          "discountSom" : {
+            "type" : "integer",
+            "format" : "int32"
           }
         },
         "required" : [ "qty" ]
@@ -35759,6 +35790,14 @@
           },
           "telegramText" : {
             "type" : "string"
+          },
+          "linesDiscountSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "fullSom" : {
+            "type" : "integer",
+            "format" : "int32"
           }
         },
         "required" : [ "appointmentId", "debtSom", "paidSom", "telegram" ]

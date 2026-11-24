@@ -226,12 +226,20 @@ function ReceiptSheet({ r, narrow }: { r: Receipt; narrow: boolean }) {
             <ul className="receipt-lines" aria-label="Услуги">
               {r.lines!.map((l, i) => (
                 <li key={i}>{l.name}{l.teeth?.length ? ` (${l.teeth.join(', ')})` : ''}{l.qty > 1 ? ` × ${l.qty}` : ''}
-                  {l.amountSom != null ? ` — ${somText(l.amountSom)}` : ''}</li>
+                  {l.amountSom != null && l.discountSom ? ` — ${somText(l.amountSom)} → ${somText(l.amountSom - l.discountSom)} (скидка ${somText(l.discountSom)})`
+                    : l.amountSom != null ? ` — ${somText(l.amountSom)}` : ''}</li>
               ))}
             </ul>
           </dd>
         </> : r.service && <><dt>Услуга</dt><dd>{r.service}</dd></>}
-        {r.discount ? <>
+        {r.linesDiscountSom ? <>
+          {/* Скидки по строкам услуг (V258): стоимость до скидок, скидка по услугам, общая скидка, «Скидка всего», к оплате */}
+          <dt>Стоимость</dt><dd>{somText(r.fullSom ?? 0)}</dd>
+          <dt>Скидка по услугам</dt><dd>{somText(r.linesDiscountSom)}</dd>
+          {r.discount && <><dt>Скидка</dt><dd>{discountText(r.discount).replace(/^Скидка /, '')}</dd>
+            <dt>Скидка всего</dt><dd>{somText(r.linesDiscountSom + r.discount.som)}</dd></>}
+          <dt>К оплате</dt><dd>{somText(r.chargeSom ?? 0)}</dd>
+        </> : r.discount ? <>
           {/* Скидка (шаг 3Б): цена, скидка и к оплате; причину пациенту не печатаем */}
           <dt>Стоимость</dt><dd>{somText(r.discount.priceSom)}</dd>
           <dt>Скидка</dt><dd>{discountText(r.discount).replace(/^Скидка /, '')}</dd>

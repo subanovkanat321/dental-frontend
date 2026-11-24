@@ -21,6 +21,12 @@ const SERVICES: Schemas['ServiceTypeView'][] = [
 const line = (id: number, serviceTypeId: number, name: string, priceSom: number, qty = 1, teeth: number[] = []): Line =>
   ({ id, serviceTypeId, name, priceSom, qty, teeth, amountSom: priceSom * qty })
 
+/** Скидка строки (V258), как считает сервер: процент от цены × количество или сумма; итог — netSom. */
+function withOff(l: Line, d?: { percent?: number; som?: number }): Line {
+  const off = !d ? 0 : d.som ?? (d.percent ? Math.round(((l.amountSom ?? 0) * d.percent) / 100) : 0)
+  return off ? { ...l, discountSom: off, discountPercent: d?.percent, netSom: (l.amountSom ?? 0) - off } : l
+}
+
 /** Сервер строк, как AppointmentLines: главная — первая строка, сумма — цена × количество. */
 function backend(a: Appointment, who: Schemas['BookingViewsMe'] = me) {
   let current = a
@@ -29,7 +35,7 @@ function backend(a: Appointment, who: Schemas['BookingViewsMe'] = me) {
     const priced = lines.filter((l) => l.amountSom != null)
     current = {
       ...current, services: lines, serviceName: lines[0]?.name,
-      servicesTotalSom: priced.length ? priced.reduce((s, l) => s + (l.amountSom ?? 0), 0) : undefined, version: current.version + 1,
+      servicesTotalSom: priced.length ? priced.reduce((s, l) => s + (l.netSom ?? l.amountSom ?? 0), 0) : undefined, version: current.version + 1,
     }
     return HttpResponse.json(current)
   }
@@ -49,7 +55,7 @@ function backend(a: Appointment, who: Schemas['BookingViewsMe'] = me) {
       const b = await request.json() as Schemas['AppointmentRequestsUpdateLine']
       sent.push({ update: Number(params.lineId), ...b })
       return withLines((current.services ?? []).map((l) => (l.id === Number(params.lineId)
-        ? line(l.id, l.serviceTypeId!, l.name, b.priceSom ?? l.priceSom ?? 0, b.qty ?? l.qty, b.teeth ?? l.teeth) : l)))
+        ? withOff(line(l.id, l.serviceTypeId!, l.name, b.priceSom ?? l.priceSom ?? 0, b.qty ?? l.qty, b.teeth ?? l.teeth), b.discount) : l)))
     }),
     http.delete('*/api/appointments/:id/services/:lineId', ({ params }) => {
       sent.push({ remove: Number(params.lineId) })
@@ -94,7 +100,8 @@ test('«Услуги» в карточке: строка с зубами и ко
 
   await userEvent.click(within(block).getByRole('button', { name: 'Убрать: Профгигиена' }))
   expect(await within(block).findByText(/^Лечение кариеса$/)).toBeInTheDocument()
-  expect(sent).toEqual([{ update: 2, teeth: [36, 37, 46], qty: 3, priceSom: 6000 }, { remove: 1 }])
+  // Цену не трогали — её и скидку не шлём: сервер оставит как было
+  expect(sent).toEqual([{ update: 2, teeth: [36, 37, 46], qty: 3 }, { remove: 1 }])
 })
 
 test('прошлый состоявшийся приём: врачу — «🔒 изменить может руководитель», без правки услуг', async () => {
@@ -285,4 +292,40 @@ test('«＋ Услуга» той же услугой ещё раз — «× 2»
   await waitForSlow(() => expect(sent).toEqual([{ update: 1, qty: 2 }]))
   expect(await within(block).findByText(/×\s2/)).toBeInTheDocument()
   expect(within(block).getAllByRole('listitem')).toHaveLength(1)
+})
+
+test('скидка строки (V258): цена за коронку 7 000 → 6 000 × 4 — скидка 4 000 на строку; в строке — зачёркнутая сумма', async () => {
+  const sent = backend(appointment(10, 1, '10:00', 'Бакыт М.', {
+    version: 1, serviceName: 'Коронка', services: [line(1, 2, 'Коронка', 7000, 4, [14, 15, 24, 25])], servicesTotalSom: 28000,
+  }))
+  renderApp()
+  const panel = await card(/Бакыт М\./)
+  const block = within(panel).getByLabelText('Услуги')
+  await userEvent.click(within(block).getByRole('button', { name: 'Изменить: Коронка' }))
+  const edit = within(block).getByRole('form', { name: 'Услуга: Коронка' })
+  const price = within(edit).getByRole('spinbutton', { name: 'Цена за единицу, сом' })
+  await userEvent.clear(price)
+  await userEvent.type(price, '6000')
+  expect(within(edit).getByRole('note', { name: 'Скидка этапа' })).toHaveTextContent(/7\s000 сом → 6\s000 сом, скидка 1\s000 сом/)
+  expect(edit).toHaveTextContent(/Скидка на строку: 4\s000 сом \(× 4\)/)
+  await userEvent.click(within(edit).getByRole('button', { name: 'Сохранить' }))
+  expect(sent).toContainEqual({ update: 1, teeth: [14, 15, 24, 25], qty: 4, priceSom: 7000, discount: { som: 4000 } })
+  await waitForSlow(() => expect(within(panel).getByLabelText('Услуги')).toHaveTextContent(/28\s000 сом\s*24\s000 сом\s*\(скидка 4\s000 сом\)/))
+})
+
+test('оплата со скидками строк (V258): строка зачёркнута, «Скидка по услугам», цена — сумма уже со скидками', async () => {
+  backend(appointment(10, 1, '10:00', 'Бакыт М.', {
+    version: 1, status: 'DONE', serviceName: 'Коронка',
+    services: [{ ...line(1, 2, 'Коронка', 7000, 4, [14, 15, 24, 25]), discountSom: 4000, netSom: 24000 },
+      { ...line(2, 2, 'Лечение кариеса', 4000, 1, [36]), discountSom: 2000, discountPercent: 50, netSom: 2000 }],
+    servicesTotalSom: 26000,
+  }))
+  renderApp()
+  const panel = await card(/Бакыт М\./)
+  const form = await openPay(panel)
+  const lines = within(form).getByLabelText('Услуги приёма')
+  expect(lines).toHaveTextContent(/Коронка · 14, 15, 24, 25\s×\s4\s*28\s000 сом\s*24\s000 сом/)
+  expect(within(lines).getByRole('note')).toHaveTextContent(/Скидка по услугам: −6\s000 сом — уже в сумме/)
+  expect(lines).toHaveTextContent(/По услугам со скидкой\s*26\s000 сом/)
+  expect(within(form).getByLabelText('Сумма, сом')).toHaveValue(26000)
 })

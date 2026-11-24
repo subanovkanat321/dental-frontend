@@ -9133,6 +9133,12 @@ export interface components {
             teeth: number[];
             /** Format: int32 */
             amountSom?: number;
+            /** Format: int32 */
+            discountPercent?: number;
+            /** Format: int32 */
+            discountSom?: number;
+            /** Format: int32 */
+            netSom?: number;
         };
         WaitlistView: {
             /** Format: int64 */
@@ -11204,12 +11210,19 @@ export interface components {
             createdAt?: string;
             doctorName?: string;
         };
+        AppointmentLinesLineDiscount: {
+            /** Format: int32 */
+            percent?: number;
+            /** Format: int32 */
+            som?: number;
+        };
         AppointmentRequestsUpdateLine: {
             /** Format: int32 */
             qty?: number;
             teeth?: number[];
             /** Format: int32 */
             priceSom?: number;
+            discount?: components["schemas"]["AppointmentLinesLineDiscount"];
         };
         AppointmentRequestsService: {
             /** Format: int64 */
@@ -15043,6 +15056,8 @@ export interface components {
             teeth?: number[];
             /** Format: int32 */
             amountSom?: number;
+            /** Format: int32 */
+            discountSom?: number;
         };
         ReceiptsPay: {
             details?: string;
@@ -15084,6 +15099,10 @@ export interface components {
             lines?: components["schemas"]["ReceiptsLine"][];
             pay?: components["schemas"]["ReceiptsPay"];
             telegramText?: string;
+            /** Format: int32 */
+            linesDiscountSom?: number;
+            /** Format: int32 */
+            fullSom?: number;
         };
         PaymentQueryEntry: {
             /** Format: int64 */

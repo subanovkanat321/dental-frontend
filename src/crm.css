@@ -3399,6 +3399,7 @@ button.cash-entry:hover, button.cash-entry.active { background: var(--sunken); }
 .service-line > form { flex: 1; }
 .service-line-text { min-width: 0; overflow-wrap: anywhere; }
 .service-line-sum { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.service-line-sum.wrap { white-space: normal; }
 .service-line-actions { display: inline-flex; align-items: center; gap: 4px; flex: none; }
 .service-line-add { display: grid; grid-template-columns: 1fr auto; gap: 6px; align-items: center; }
 .service-line-plus { justify-self: start; }
@@ -3409,6 +3410,7 @@ button.cash-entry:hover, button.cash-entry.active { background: var(--sunken); }
 .pay-lines { display: grid; gap: 4px; padding: 8px 10px; border-radius: var(--r-md); background: var(--sunken); font-size: .9rem; }
 .pay-lines ul { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
 .pay-lines li, .pay-lines-total { display: flex; justify-content: space-between; gap: 8px; margin: 0; }
+.pay-lines-off { margin: 0; font-size: .85rem; color: var(--hint); }
 .pay-lines li span:first-child { min-width: 0; overflow-wrap: anywhere; }
 .pay-lines-total { border-top: 1px solid var(--separator); padding-top: 4px; align-items: baseline; }
 .pay-lines-total span { flex: 1; }

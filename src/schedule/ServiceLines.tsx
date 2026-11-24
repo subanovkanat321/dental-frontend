@@ -7,6 +7,9 @@ import { EditButton } from '../layout/EditButton'
 import { servicesOfDoctor } from '../lib/doctorServices'
 import { serviceEmoji } from '../lib/serviceEmoji'
 import { somText, timeOf } from '../lib/time'
+import { StepPrice } from '../medical/StepPrice'
+import { useDiscountPolicy } from './discountDraft'
+import { fromLine, lineMoney } from './lineDiscount'
 import { useAppointmentAction } from './useAppointmentAction'
 import { LOCKED_HINT, lockedForMe, parseTeeth } from './lineLabel'
 
@@ -16,7 +19,7 @@ type Me = Schemas['BookingViewsMe']
 
 function errorText(e: ApiError | null): string | null {
   if (!e) return null
-  return e.fieldErrors.teeth ?? e.fieldErrors.qty ?? e.fieldErrors.priceSom ?? e.fieldErrors.serviceTypeId ?? e.message
+  return e.fieldErrors.teeth ?? e.fieldErrors.qty ?? e.fieldErrors.priceSom ?? e.fieldErrors.discount ?? e.fieldErrors.serviceTypeId ?? e.message
 }
 
 /** «🦷 Лечение кариеса · 36, 37 · × 2 · 12 000 сом» */
@@ -26,7 +29,10 @@ function LineText({ line, prices }: { line: Line; prices: boolean }) {
       <span aria-hidden="true">{serviceEmoji(line.name)} </span><span>{line.name}</span>
       {line.teeth.length > 0 && <span className="hint"> · {line.teeth.join(', ')}</span>}
       {line.qty > 1 && <span className="hint"> ·{'\u00a0'}×{'\u00a0'}{line.qty}</span>}
-      {prices && line.amountSom != null && <span className="service-line-sum"> ·{'\u00a0'}{somText(line.amountSom)}</span>}
+      {prices && line.amountSom != null && line.netSom != null && line.discountSom ? (
+        <span className="service-line-sum wrap"> ·{'\u00a0'}<s className="hint nowrap">{somText(line.amountSom)}</s>{' '}<span className="nowrap">{somText(line.netSom)}</span>
+          {' '}<span className="hint small nowrap">(скидка {line.discountPercent != null ? `${line.discountPercent} %` : somText(line.discountSom)})</span></span>
+      ) : prices && line.amountSom != null && <span className="service-line-sum"> ·{'\u00a0'}{somText(line.amountSom)}</span>}
     </span>
   )
 }
@@ -38,6 +44,7 @@ function LineText({ line, prices }: { line: Line; prices: boolean }) {
  */
 export function ServiceLines({ appointment: a, me, canEdit, prices }: { appointment: Appointment; me: Me; canEdit: boolean; prices: boolean }) {
   const action = useAppointmentAction(a)
+  const policy = useDiscountPolicy()
   const [editing, setEditing] = useState<number | null>(null)
   const [adding, setAdding] = useState(false)
   // Старый ответ без строк (до V246) — главная услуга одной строкой без цены
@@ -50,10 +57,12 @@ export function ServiceLines({ appointment: a, me, canEdit, prices }: { appointm
     queryFn: () => unwrap(api.GET('/api/service-types')),
     staleTime: 5 * 60_000,
     // Нужен и для «услуги не помещаются в приём» — грузим, пока приём можно продлить
-    enabled: editable && (adding || a.status === 'SCHEDULED'),
+    enabled: editable && (adding || editing != null || a.status === 'SCHEDULED'),
   })
   const offered = servicesOfDoctor((services.data ?? []).filter((s) => s.active !== false), me.doctorServices, a.doctorId)
   const total = prices && lines.length > 1 && a.servicesTotalSom != null ? a.servicesTotalSom : null
+  // Скидки строк (V258) вместе — «итого 26 000 сом, скидка 6 000»
+  const linesOff = prices ? lines.reduce((sum, l) => sum + (l.discountSom ?? 0), 0) : 0
   // Услуги не помещаются в приём (2026-11-21, владелец: «коронка × 4 — сумма прибавилась, а время нет»): сколько займут
   // по длительностям прайса × количество — и «Продлить до …» (то же, что «Перенести» с той же датой; занято — скажет сервер)
   const needed = Math.min(lines.reduce((m, l) => m + (services.data?.find((sv) => sv.id === l.serviceTypeId)?.durationMinutes ?? 0) * l.qty, 0), 480)
@@ -66,7 +75,7 @@ export function ServiceLines({ appointment: a, me, canEdit, prices }: { appointm
       <p className="service-lines-head">
         <span className="hint">Услуги:</span>
         {lines.length === 0 && <span> —</span>}
-        {total != null && <span className="hint service-lines-total"> итого {somText(total)}</span>}
+        {total != null && <span className="hint service-lines-total"> итого {somText(total)}{linesOff > 0 ? `, скидка ${somText(linesOff)}` : ''}</span>}
         {locked && canEdit && <span className="hint small service-lock" title="Врач меняет состоявшийся приём только в день приёма">{LOCKED_HINT}</span>}
       </p>
       {lines.length > 0 && (
@@ -74,7 +83,8 @@ export function ServiceLines({ appointment: a, me, canEdit, prices }: { appointm
           {lines.map((line) => (
             <li key={line.id} className="service-line">
               {editing === line.id ? (
-                <LineEdit line={line} prices={prices} pending={action.isPending} error={errorText(action.error)}
+                <LineEdit line={line} prices={prices} pending={action.isPending} error={errorText(action.error)} policy={policy.data}
+                  listPrice={services.data?.find((sv) => sv.id === line.serviceTypeId)?.priceSom}
                   onCancel={() => setEditing(null)}
                   onSave={(body) => action.mutate({ kind: 'updateLine', lineId: line.id, body }, { onSuccess: () => setEditing(null) })} />
               ) : (
@@ -120,20 +130,26 @@ export function ServiceLines({ appointment: a, me, canEdit, prices }: { appointm
   )
 }
 
-/** Строка в правке: зубы («36, 37»), количество (− 1 +) и цена за единицу — тем, кто видит деньги. */
-function LineEdit({ line, prices, pending, error, onSave, onCancel }: {
-  line: Line; prices: boolean; pending: boolean; error: string | null
+/**
+ * Строка в правке: зубы («36, 37»), количество (− 1 +) и цена за единицу — тем, кто видит деньги. Цена ниже цены строки —
+ * скидка на разницу × количество (V258, как в плане лечения: «7 000 → 6 000», × 4 — скидка 4 000), кнопки процентов — там же
+ * (StepPrice). Скидку отправляем, только если цену или скидку трогали: иначе сервер оставит прежнюю.
+ */
+function LineEdit({ line, prices, pending, error, policy, listPrice, onSave, onCancel }: {
+  line: Line; prices: boolean; pending: boolean; error: string | null; policy?: Schemas['DiscountPoliciesPolicy']; listPrice?: number | null
   onSave: (body: Schemas['AppointmentRequestsUpdateLine']) => void; onCancel: () => void
 }) {
   const [teeth, setTeeth] = useState(line.teeth.join(', '))
   const [qty, setQty] = useState(line.qty)
-  const [price, setPrice] = useState(line.priceSom != null ? String(line.priceSom) : '')
+  const [money, setMoney] = useState(() => fromLine(line))
+  const [touched, setTouched] = useState(false)
   const parsed = parseTeeth(teeth)
+  const m = lineMoney(money, qty, policy)
   return (
     <form className="form sub-form service-line-edit" aria-label={`Услуга: ${line.name}`} onSubmit={(e) => {
       e.preventDefault()
       if (!parsed) return
-      onSave({ teeth: parsed, qty, priceSom: prices && price !== '' ? Number(price) : undefined })
+      onSave(prices && touched && money.price !== '' ? { teeth: parsed, qty, priceSom: m.priceSom, discount: m.discount } : { teeth: parsed, qty })
     }}>
       <p className="service-line-name">{serviceEmoji(line.name)} {line.name}</p>
       <label className="field"><span>Зубы</span>
@@ -153,11 +169,10 @@ function LineEdit({ line, prices, pending, error, onSave, onCancel }: {
         </div>
       </div>
       {prices && (
-        <label className="field"><span>Цена за единицу, сом</span>
-          <input type="number" min={0} max={10_000_000} inputMode="numeric" aria-label="Цена за единицу, сом" value={price}
-            onChange={(e) => setPrice(e.target.value)} />
-        </label>
+        <StepPrice value={money} onChange={(d) => { setMoney(d); setTouched(true) }} policy={policy} label="Цена за единицу, сом"
+          inputLabel="Цена за единицу, сом" listPrice={listPrice != null && listPrice > (line.priceSom ?? 0) ? listPrice : undefined} />
       )}
+      {prices && m.off > 0 && qty > 1 && <p className="hint small num">Скидка на строку: {somText(m.off)} (× {qty})</p>}
       {error && <p className="error" role="alert">{error}</p>}
       <div className="actions">
         <button type="submit" className="btn primary" disabled={pending || !parsed}>Сохранить</button>

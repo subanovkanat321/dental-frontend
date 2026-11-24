@@ -232,16 +232,20 @@ function PriceChips({ onPick }: { onPick: (price: number, add: boolean) => void 
 function LinesSum({ a, cost, onUse }: { a: Appointment; cost: number | null; onUse: (sum: number) => void }) {
   const lines = a.services ?? []
   const total = a.servicesTotalSom
-  if (total == null || (lines.length < 2 && (lines[0]?.qty ?? 1) < 2)) return null
+  // Скидки строк (V258): сумма строк уже с ними — показываем построчно и итогом, общая скидка (метка, промокод) — от неё
+  const off = lines.reduce((sum, l) => sum + (l.discountSom ?? 0), 0)
+  if (total == null || (lines.length < 2 && (lines[0]?.qty ?? 1) < 2 && off === 0)) return null
   return (
     <div className="pay-lines" aria-label="Услуги приёма">
       <ul>
         {lines.map((l) => (
           <li key={l.id}><span>{serviceEmoji(l.name)} {l.name}{l.teeth.length ? ` · ${l.teeth.join(', ')}` : ''}{l.qty > 1 ? `\u00a0×\u00a0${l.qty}` : ''}</span>
-            <span className="num">{l.amountSom != null ? somText(l.amountSom) : '—'}</span></li>
+            <span className="num">{l.amountSom != null && l.netSom != null && l.discountSom
+              ? <><s className="hint">{somText(l.amountSom)}</s> {somText(l.netSom)}</> : l.amountSom != null ? somText(l.amountSom) : '—'}</span></li>
         ))}
       </ul>
-      <p className="pay-lines-total"><span>По услугам</span> <b className="num">{somText(total)}</b>
+      {off > 0 && <p className="pay-lines-off" role="note">🏷 Скидка по услугам: −{somText(off)} — уже в сумме; общая скидка считается от неё</p>}
+      <p className="pay-lines-total"><span>По услугам{off > 0 ? ' со скидкой' : ''}</span> <b className="num">{somText(total)}</b>
         {cost !== total && <button type="button" className="link" onClick={() => onUse(total)}>Подставить</button>}</p>
     </div>
   )
