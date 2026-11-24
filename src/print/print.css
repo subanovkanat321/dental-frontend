@@ -389,6 +389,10 @@
   .print-sheet .plan-table td:not(.r) { white-space: normal; }
   .print-sheet p.r { white-space: normal; }
   .print-sheet { max-width: 100%; }
+  /* Шесть колонок со скидкой этапа («~~3 000~~ 2 850 сом (−5 %)») и длинным словом («Профессиональная») не влезали
+     в 390 px: слово переносим по слогам или где придётся, процент скидки — второй строкой под ценой (QA 2026-11-24) */
+  .print-sheet .plan-table td:not(.r) { overflow-wrap: anywhere; hyphens: auto; }
+  .print-sheet .plan-table td.r small { display: block; }
 }
 
 @media print {

@@ -87,6 +87,30 @@ test('«Приём состоялся» → «Что сделали сегодн
   expect(within(card).queryByRole('region', { name: 'Что сделали сегодня?' })).not.toBeInTheDocument()
 })
 
+test('отметили этап со скидкой — строка услуги в карточке сразу со скидкой (сервер перенёс её в строку)', async () => {
+  const line: Schemas['ServiceLine'] = { id: 7, serviceTypeId: 5, name: 'Лечение кариеса', priceSom: 3000, qty: 1, teeth: [], amountSom: 3000, netSom: 3000 }
+  const start = appointment(22, 1, '00:00', 'Айбек Т.', { serviceName: 'Лечение кариеса', services: [line] })
+  backend(start, { plan: [{ id: 1, tooth: 36, title: 'Лечение кариеса', stage: 1, serviceTypeId: 5, priceSom: 3000, discountSom: 300, netSom: 2700 }] })
+  // Сервер: после «состоялся» — DONE; после отметки этапа — строка со скидкой (и в дне, и в GET приёма)
+  let now: Appointment = start
+  server.use(
+    http.post('*/api/appointments/:id/status', () => { now = { ...now, status: 'DONE', version: now.version + 1 }; return HttpResponse.json(now) }),
+    http.get('*/api/appointments', ({ request }) => HttpResponse.json(new URL(request.url).searchParams.get('doctorId') === '1' ? [now] : [])),
+    http.get('*/api/appointments/22', () => {
+      now = { ...now, version: now.version + 1, services: [{ ...line, discountSom: 300, netSom: 2700 }] }
+      return HttpResponse.json(now)
+    }),
+  )
+  renderApp()
+  const card = await openCard('Айбек Т\\.')
+  await markDone(card)
+  const block = await within(card).findByRole('region', { name: 'Что сделали сегодня?' })
+  await waitFor(() => expect(within(block).getByRole('checkbox', { name: /Лечение кариеса/ })).toBeChecked())
+  expect(card.textContent).not.toContain('скидка 300 сом')
+  await userEvent.click(within(block).getByRole('button', { name: 'Отметить сделанным' }))
+  await waitFor(() => expect(card.textContent).toContain('(скидка 300 сом)'))
+})
+
 test('несделанных этапов нет — блока нет', async () => {
   const calls = backend(appointment(22, 1, '00:00', 'Айбек Т.'), { plan: [PLAN[3]!] })
   renderApp()

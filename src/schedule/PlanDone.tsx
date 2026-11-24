@@ -5,6 +5,7 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { Spinner } from '../layout/Loading'
 import { planSaved } from '../lib/planStatus'
 import { canMarkPlan, forgetPlanDone, preselected, stepsWord, useAskPlanDone, usePlanLeft } from './planDoneStore'
+import { applyUpdatedAppointment } from './useAppointmentAction'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
@@ -52,6 +53,10 @@ function PlanDoneForm({ a, me, steps, primary, onMarked }: {
       void client.invalidateQueries({ queryKey: ['dropped'] })
       onMarked(stepIds.length)
       forgetPlanDone(a.id)
+      // Скидка этапа сервер перенёс в строку услуги приёма (V258) — перечитать приём, иначе в карточке и в оплате
+      // оставалась старая цена строки без скидки, до повторного открытия (QA 2026-11-24)
+      void unwrap(api.GET('/api/appointments/{id}', { params: { path: { id: a.id } } }))
+        .then((fresh) => applyUpdatedAppointment(client, fresh)).catch(() => {})
     },
   })
   return (

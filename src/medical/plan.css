@@ -117,6 +117,8 @@
 .plan-variant-rename input { font: inherit; padding: 7px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); flex: 1 1 200px; }
 .plan-variant-chosen { margin: 0; font-weight: 600; }
 .plan-variant-sum { margin: 4px 0; padding: 8px 12px; border-radius: var(--r-md); background: var(--accent-soft); font-size: 1.05rem; }
+/* «8 500 сом, скидка −425 сом, к оплате 8 075 сом» в одну строку (.num — nowrap) вылезал за экран телефона */
+.plan-variant-sum .num { white-space: normal; }
 .plan-variant-others summary { cursor: pointer; color: var(--hint); }
 .plan-variant-others ul { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 6px; }
 .plan-variant-others li { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }

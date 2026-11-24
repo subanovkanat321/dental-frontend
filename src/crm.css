@@ -352,6 +352,12 @@
 .offer-doc td:first-child { white-space: nowrap; color: var(--hint); width: 70px; }
 .offer-doc .r { text-align: right; white-space: nowrap; }
 .offer-doc .total { font-weight: 600; }
+/* Телефон: со скидкой этапа («~~3 000~~ 2 850 сом (−5 %)») и итогом «…, скидка …, к оплате …» предпросмотр плана был
+   шире экрана (464 px при 390): процент — под ценой, длинные слова и итог переносятся (QA 2026-11-24) */
+.plan-offer-panel > * { min-width: 0; }
+.offer-doc td { overflow-wrap: anywhere; }
+.offer-doc td.r small { display: block; }
+.offer-doc .offer-subtotal .num { white-space: normal; }
 .plan-offer-done { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .plan-offer-done p { margin: 0; }
 .plan-add input, .upload input:not([type=file]) { font: inherit; padding: 7px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); min-width: 0; }

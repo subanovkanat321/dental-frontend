@@ -7,6 +7,7 @@ import { ChoiceCards, type Choice } from '../layout/ChoiceCards'
 import { Loading } from '../layout/Loading'
 import { Select } from '../layout/Select'
 import { discountText, usePromoCodes } from '../lib/promo'
+import { somText } from '../lib/time'
 import { GIFT_KEY, useBirthdayGift, type Gift, type GiftPreset } from '../patients/birthdayGift'
 
 type Request = Schemas['BirthdaysGiftRequest']
@@ -92,7 +93,7 @@ export function BirthdayGiftSection() {
           <Select aria-label="Услуга профчистки" value={g.serviceId ?? ''} disabled={save.isPending}
             onChange={(e) => save.mutate({ preset: 'CLEANING', serviceId: e.target.value ? Number(e.target.value) : undefined })}>
             <option value="">Найти в приёме по названию («чистка», «гигиена»)</option>
-            {active.map((s) => <option key={s.id} value={s.id}>{s.name}{s.priceSom != null ? ` · ${s.priceSom} сом` : ''}</option>)}
+            {active.map((s) => <option key={s.id} value={s.id}>{s.name}{s.priceSom != null ? ` · ${somText(s.priceSom)}` : ''}</option>)}
           </Select>
           <span className="hint small">В оплате Tish подставит скидку на цену этой услуги в приёме.</span>
         </label>

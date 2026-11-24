@@ -214,7 +214,7 @@ describe('«Настройки → Дни рождения» → «🎁 Пода
     // Профчистка — услуга прайса подставлена сама
     await userEvent.click(within(cards).getByRole('radio', { name: /Бесплатная профчистка/ }))
     await waitForSlow(() => expect(puts[2]).toEqual({ preset: 'CLEANING', serviceId: 22 }))
-    await waitForSlow(() => expect(chosen(within(box).getByLabelText('Услуга профчистки'))).toContain('Профчистка · 2500 сом'))
+    await waitForSlow(() => expect(chosen(within(box).getByLabelText('Услуга профчистки'))).toContain('Профчистка · 2\u00a0500 сом'))
   })
 })
 
