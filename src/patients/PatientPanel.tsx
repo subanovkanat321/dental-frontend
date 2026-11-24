@@ -5,7 +5,7 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { useAnamnesis } from '../api/anamnesis'
 import { MedAlertPill } from '../medical/Anamnesis'
 import { useClose } from '../lib/useClose'
-import { useFullView } from '../lib/fullView'
+import { useBigByDefault } from '../lib/fullView'
 import { canEditDoctor, isAssistant, seesAdvance, seesMoneyOf, seesAllMoney } from '../lib/roles'
 import { debtLine, remindedText, seesDebts } from '../lib/debt'
 import { DebtPromiseForm, DebtRemindForm } from '../cash/DebtRemind'
@@ -84,7 +84,7 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
 }) {
   useClose(onClose)
   // Компьютер — сразу большой, как карточка приёма (2026-11-23); свернули — запомнится на этом компьютере
-  const [full, toggleFull] = useFullView('patient', () => true)
+  const [full, toggleFull] = useBigByDefault()
   const [editing, setEditing] = useState(false)
   const [allPast, setAllPast] = useState(false)
   // Вкладка карточки: визиты, медкарта, деньги, прочее — одна за раз
