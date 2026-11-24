@@ -52,7 +52,9 @@ type Service = Schemas['ServiceTypeView']
  *
  * soft — врач подставлен по умолчанию, а не выбран колонкой сетки: выбрали пациента — врачом станет лечащий (врач его
  * последнего состоявшегося приёма). next — «Записать на следующий визит» / «Записать снова» из карточки приёма: услуга и
- * врач следующего этапа плана лечения, время — ближайшее свободное у врача (день — тот же или следующие).
+ * врач следующего этапа плана лечения, время — ближайшее свободное у врача (день — тот же или следующие). plan — «Записать»
+ * из «Пациентов» («Позвать снова», «Бросили лечение», карточка пациента): план согласован или в работе — услуга и врач
+ * следующего этапа (время — как обычно, сеткой).
  */
 /** «1 ч 45 мин», «45 мин» — длительность нескольких услуг. */
 function durationText(minutes: number): string {
@@ -61,9 +63,21 @@ function durationText(minutes: number): string {
   return h ? `${h} ч${m ? ` ${m} мин` : ''}` : `${m} мин`
 }
 
-export type Slot = { doctorId: number; date: string; minutes: number | null; duration?: number; serviceId?: number; soft?: boolean; next?: boolean }
+export type Slot = { doctorId: number; date: string; minutes: number | null; duration?: number; serviceId?: number; soft?: boolean; next?: boolean; plan?: boolean }
 
 const UNTOUCHED = { doctor: false, time: false, service: false, duration: false }
+
+/**
+ * Выбранная карточка «Из плана лечения» (QA 2026-11-24): этапы одной услуги в одном этапе лечения — одна строка × N с их
+ * зубами; сервер считает цену и переносит скидки этапов (lines[].planStepIds). known — зубы и число этапов известны (план
+ * виден); регистратуре — только номера этапов: зубы и количество подставит сервер.
+ */
+type PlanPick = { key: string; serviceId: number; stepIds: number[]; teeth: number[]; count: number; known: boolean }
+
+/** Длительность услуг с количеством (зубы из плана — × N), до 8 часов, как раньше. */
+function minutesOf(ids: number[], all: Service[], qty: (id: number) => number): number {
+  return Math.min(ids.reduce((m, id) => m + (all.find((sv) => sv.id === id)?.durationMinutes ?? 0) * qty(id), 0), 480)
+}
 
 /** Врачей не больше — чипами, а не списком (телефон: одно касание). */
 const DOCTOR_CHIPS = 6
@@ -167,6 +181,8 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
   const freeDays = useFreeDays(doctorId, calMonth, duration)
   // Несколько услуг на запись (шаг 5А): первая — главная; serviceId — она (подстановки этапа плана, «Записать снова»)
   const [serviceIds, setServiceIds] = useState<number[]>(slot.serviceId != null ? [slot.serviceId] : [])
+  // Карточки плана, выбранные к услугам: «Лечение кариеса · зубы 16, 26» — строка × 2
+  const [planPicks, setPlanPicks] = useState<PlanPick[]>([])
   const serviceId: number | '' = serviceIds[0] ?? ''
   const timeRef = useRef<HTMLDivElement>(null)
   const submitRef = useRef<HTMLButtonElement>(null)
@@ -221,13 +237,6 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
   // сервер отдаёт его тем, кто видит медкарту (врач, руководитель, ассистент); регистратуре — нет, тогда без этапа
   const card = usePatientCard(patient?.id)
   const seesPlan = seesAllMoney(me) || me.doctorId != null || isAssistant(me)
-  const planWanted = Boolean(shown.next) && patient?.id != null && seesPlan
-  const plan = useQuery({
-    queryKey: ['plan', patient?.id],
-    queryFn: () => unwrap(api.GET('/api/patients/{patientId}/plan', { params: { path: { patientId: patient!.id } } })),
-    enabled: planWanted,
-    retry: false,
-  })
   // Этапы плана для выбора услуг (2026-11-23, владелец: «записать из „Позвать снова“ — услуги сразу из плана или другая»):
   // тот же запрос и кэш, что у «следующего визита», но для любого выбранного пациента, кто видит план
   const planSteps = useQuery({
@@ -236,9 +245,10 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
     enabled: patient?.id != null && seesPlan,
     retry: false,
   })
-  // Регистратуре план закрыт — сервер отдаёт только следующий этап для записи: услугу, врача и срок (без названия,
-  // зуба и диагноза; GET /plan/next)
-  const nextWanted = Boolean(shown.next) && patient?.id != null && !seesPlan
+  // Следующий этап для записи — по правилу сервера (GET /plan/next, всем, кто записывает): первый несделанный с услугой
+  // прайса, его врач, срок, согласован ли план и этапы той же услуги в этом этапе лечения. Без названия, зуба и диагноза:
+  // регистратуре план закрыт; зубы — из плана тем, кто его видит
+  const nextWanted = Boolean(shown.next || shown.plan) && patient?.id != null
   const nextStep = useQuery({
     queryKey: ['plan-next', patient?.id],
     queryFn: () => unwrap(api.GET('/api/patients/{patientId}/plan/next', { params: { path: { patientId: patient!.id } } })),
@@ -247,13 +257,14 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
   })
   // Подстановка — один раз на слот и пациента, когда пришли данные: врач (лечащий / этапа плана), услуга этапа; время —
   // ближайшее свободное (запросом, ниже). Меняем состояние при отрисовке, как у нового слота выше: без лишнего круга
-  const presetKey = patient?.id != null && (shown.soft || shown.next) ? shown : null
-  const ready = card.isFetched && (!planWanted || plan.isFetched) && (!nextWanted || nextStep.isFetched) && services.data != null
+  const presetKey = patient?.id != null && (shown.soft || shown.next || shown.plan) ? shown : null
+  const ready = card.isFetched && (!nextWanted || nextStep.isFetched) && (!nextWanted || !seesPlan || planSteps.isFetched) && services.data != null
   if (presetKey && ready && patient?.id != null && !(presetDone?.slot === presetKey && presetDone.patientId === patient.id)) {
     setPresetDone({ slot: presetKey, patientId: patient.id })
     const bookable = (id?: number) => id != null && doctors.some((d) => d.id === id)
-    const step: { serviceTypeId?: number; doctorId?: number; dueOn?: string } | undefined = !presetKey.next ? undefined
-      : nextWanted ? nextStep.data : (plan.data ?? []).filter((s) => !s.doneAt).sort((x, y) => x.stage - y.stage)[0]
+    // «Следующий визит» — всегда по плану; «Записать» из «Пациентов» — если план согласован или в работе
+    const next = nextWanted ? nextStep.data : undefined
+    const step = presetKey.next || (presetKey.plan && next?.planActive) ? next : undefined
     let doctor = doctorId
     if (!touched.doctor) {
       const pick = [step?.doctorId, presetKey.next ? presetKey.doctorId : treatingDoctorId(card.data)].find(bookable)
@@ -266,9 +277,17 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
     if (step?.serviceTypeId != null && presetKey.serviceId == null && !touched.service) {
       const sv = servicesOfDoctor(services.data ?? [], me.doctorServices, doctor).find((x) => x.id === step.serviceTypeId)
       if (sv) {
+        // Вся группа этапа: два зуба одной услуги в этапе — карточка «× 2»
+        const ids = step.stepIds ?? []
+        const known = (planSteps.data ?? []).filter((st) => ids.includes(st.id))
+        const count = Math.max(1, ids.length)
         setServiceIds([sv.id])
+        setPlanPicks(ids.length ? [{
+          key: known[0] ? `${sv.id}:${known[0].stage}` : `${sv.id}:next`, serviceId: sv.id, stepIds: ids, count,
+          teeth: [...new Set(known.map((st) => st.tooth).filter((t): t is number => t != null))], known: known.length === ids.length,
+        }] : [])
         if (sv.durationMinutes && !touched.duration) {
-          length = sv.durationMinutes
+          length = Math.min(sv.durationMinutes * count, 480)
           setDuration(length)
         }
       }
@@ -340,6 +359,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
           durationMinutes: duration,
           serviceTypeId: serviceId === '' ? undefined : serviceId,
           serviceTypeIds: serviceIds.length > 1 ? serviceIds : undefined,
+          lines: linesOf(),
           comment: comment.trim() || undefined,
           promoCode: promoCode || undefined,
           confirmChairTime: confirm || undefined,
@@ -474,7 +494,10 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
     setServiceIds(serviceIds.filter((id) => activeServices.some((sv) => sv.id === id)))
   }
   const picked = serviceIds.map((id) => activeServices.find((sv) => sv.id === id)).filter((sv): sv is Service => sv != null)
-  const byServices = Math.min(picked.reduce((m, sv) => m + (sv.durationMinutes ?? 0), 0), 480)
+  // Карточки плана — только у выбранных услуг (врач сменился и услугу снял — её карточки не в счёт)
+  const activePicks = planPicks.filter((p) => serviceIds.includes(p.serviceId))
+  const qtyOf = (id: number, picks = activePicks) => Math.max(1, picks.filter((p) => p.serviceId === id).reduce((n, p) => n + p.count, 0))
+  const byServices = minutesOf(serviceIds, activeServices, qtyOf)
   const durationHint = touched.duration && byServices > 0 && byServices !== duration && (
     <p className="hint small duration-hint">По услугам — {durationText(byServices)}.{' '}
       <button type="button" className="link" onClick={() => {
@@ -483,36 +506,60 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
         setDuration(byServices)
       }}>Вернуть</button></p>
   )
-  // Несделанные этапы плана, сгруппированные по услуге прайса: «Пломба композит · 16, 17 · этап 1» — одно касание
-  // добавляет услугу (повторное — убирает). Этап без услуги из прайса (своё описание) — подсказкой: выбрать вручную
+  // Несделанные этапы плана, сгруппированные по услуге прайса и этапу лечения: «Пломба композит · этап 1 · зубы 16, 17» —
+  // одно касание добавляет услугу строкой × 2 (повторное — убирает). Этап без услуги из прайса — подсказкой: выбрать вручную
   const planGroups = (() => {
     const open = (planSteps.data ?? []).filter((st) => !st.doneAt).sort((x, y) => x.stage - y.stage)
-    const groups: { service: Service; teeth: number[]; stage: number }[] = []
+    const groups: PlanPick[] = []
     for (const st of open) {
       const sv = st.serviceTypeId != null ? activeServices.find((x) => x.id === st.serviceTypeId) : undefined
       if (!sv) continue
-      const g = groups.find((x) => x.service.id === sv.id)
-      if (g) {
-        if (st.tooth != null && !g.teeth.includes(st.tooth)) g.teeth.push(st.tooth)
-      }
-      else groups.push({ service: sv, teeth: st.tooth != null ? [st.tooth] : [], stage: st.stage })
+      const key = `${sv.id}:${st.stage}`
+      let g = groups.find((x) => x.key === key)
+      if (!g) groups.push(g = { key, serviceId: sv.id, stepIds: [], teeth: [], count: 0, known: true })
+      g.stepIds.push(st.id)
+      g.count++
+      if (st.tooth != null && !g.teeth.includes(st.tooth)) g.teeth.push(st.tooth)
     }
     const unpriced = open.filter((st) => st.serviceTypeId == null || !activeServices.some((x) => x.id === st.serviceTypeId))
     return { groups, unpriced }
   })()
-  const togglePlanService = (id: number) => pickServices(serviceIds.includes(id) ? serviceIds.filter((x) => x !== id) : [...serviceIds, id])
-  // Подсказка суммы — сумма цен «от» выбранных услуг (итог считает сервер в «Оплате»)
-  const pricedTotal = picked.some((sv) => sv.priceSom) ? picked.reduce((sum, sv) => sum + (sv.priceSom ?? 0), 0) : null
+  const serviceOf = (id: number) => activeServices.find((sv) => sv.id === id)
+  const chosenChip = (g: PlanPick) => activePicks.some((p) => p.key === g.key)
+  const togglePlanGroup = (g: PlanPick) => {
+    const on = chosenChip(g)
+    const picks = on ? activePicks.filter((p) => p.key !== g.key) : [...activePicks, g]
+    const keep = !on || picks.some((p) => p.serviceId === g.serviceId)
+    pickServices(keep ? (serviceIds.includes(g.serviceId) ? serviceIds : [...serviceIds, g.serviceId]) : serviceIds.filter((x) => x !== g.serviceId), picks)
+  }
+  // Подсказка суммы — сумма цен «от» выбранных услуг × количество (итог считает сервер в «Оплате»)
+  const pricedTotal = picked.some((sv) => sv.priceSom) ? picked.reduce((sum, sv) => sum + (sv.priceSom ?? 0) * qtyOf(sv.id), 0) : null
   // Услуги — одним полем с поиском (ServicePicker, 2026-11-20): несколько — чипами с ✕ и «＋ Ещё услуга…»
-  const pickServices = (next: number[]) => {
+  const pickServices = (next: number[], picks: PlanPick[] = activePicks) => {
     touch('service')
     const added = next.length > serviceIds.length
+    const kept = picks.filter((p) => next.includes(p.serviceId))
     setServiceIds(next)
-    // Длительность — сумма длительностей услуг (дальше её можно поправить), до 8 часов
-    const minutes = next.map((id) => activeServices.find((sv) => sv.id === id)?.durationMinutes ?? 0).reduce((a, b) => a + b, 0)
-    if (minutes > 0 && !touchedNow.current.duration) setDuration(Math.min(minutes, 480))
+    setPlanPicks(kept)
+    // Длительность — сумма длительностей услуг × количество (дальше её можно поправить), до 8 часов
+    const minutes = minutesOf(next, activeServices, (id) => qtyOf(id, kept))
+    if (minutes > 0 && !touchedNow.current.duration) setDuration(minutes)
     // Первую услугу выбрали — дальше время (на телефоне сам прокрутим к нему)
     if (added && next.length === 1) reveal(walkIn ? submitRef.current : timeRef.current, walkIn)
+  }
+  /**
+   * Строки записи с количеством, зубами и этапами плана — если выбрана хоть одна карточка плана; иначе — как раньше,
+   * serviceTypeIds. Две карточки одной услуги (этапы 1 и 2) — одна строка.
+   */
+  function linesOf() {
+    if (activePicks.length === 0) return undefined
+    return serviceIds.map((id) => {
+      const picks = activePicks.filter((p) => p.serviceId === id)
+      if (picks.length === 0) return { serviceTypeId: id }
+      const planStepIds = picks.flatMap((p) => p.stepIds)
+      if (!picks.every((p) => p.known)) return { serviceTypeId: id, planStepIds }
+      return { serviceTypeId: id, qty: qtyOf(id), teeth: [...new Set(picks.flatMap((p) => p.teeth))], planStepIds }
+    })
   }
 
   /** «⚡ Сейчас» — включить: сегодня, эта минута, врач по умолчанию; ещё раз — обратно к выбору времени. */
@@ -654,12 +701,12 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
               <span className="plan-pick" role="group" aria-label="Из плана лечения">
                 <span className="hint small">Из плана лечения — нажмите, чтобы добавить:</span>
                 {planGroups.groups.map((g) => (
-                  <button key={g.service.id} type="button" className="plan-pick-item" aria-pressed={serviceIds.includes(g.service.id)}
-                    onClick={() => togglePlanService(g.service.id)}>
-                    <span className="plan-pick-check" aria-hidden="true">{serviceIds.includes(g.service.id) ? '✓' : '＋'}</span>
+                  <button key={g.key} type="button" className="plan-pick-item" aria-pressed={chosenChip(g)}
+                    onClick={() => togglePlanGroup(g)}>
+                    <span className="plan-pick-check" aria-hidden="true">{chosenChip(g) ? '✓' : '＋'}</span>
                     <span className="plan-pick-text">
-                      <span className="plan-pick-name">{g.service.name}</span>
-                      <span className="hint small">этап {g.stage}{g.teeth.length ? ` · ${g.teeth.length === 1 ? 'зуб' : 'зубы'} ${g.teeth.join(', ')}` : ''}</span>
+                      <span className="plan-pick-name">{serviceOf(g.serviceId)?.name}</span>
+                      <span className="hint small">этап {g.key.split(':')[1]}{g.teeth.length ? ` · ${g.teeth.length === 1 ? 'зуб' : 'зубы'} ${g.teeth.join(', ')}` : ''}{g.count > 1 ? ` · × ${g.count}` : ''}</span>
                     </span>
                   </button>
                 ))}
@@ -670,9 +717,9 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
             )}
             <ServicePicker multiple aria-label="Услуга" services={activeServices} values={serviceIds} prices={!isAssistant(me)}
               placeholder={planGroups.groups.length > 0 ? 'Или другая услуга…' : 'Выберите услугу…'} onChange={pickServices} />
-            {picked.length > 1 && (
+            {(picked.length > 1 || picked.some((sv) => qtyOf(sv.id) > 1)) && (
               <span className="hint small" data-testid="services-sum">
-                {picked.length} услуги · {durationText(picked.reduce((m, sv) => m + (sv.durationMinutes ?? 0), 0))}
+                {picked.length > 1 ? `${picked.length} услуги` : `${picked[0]!.name} × ${qtyOf(picked[0]!.id)}`} · {durationText(byServices)}
                 {pricedTotal != null && !isAssistant(me) ? ` · от ${somText(pricedTotal)}` : ''}
               </span>
             )}

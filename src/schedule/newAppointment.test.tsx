@@ -109,6 +109,8 @@ test('«Записать на следующий визит»: услуга и �
       patient: done.patient, done: 1, noShow: 0, cancelled: 0, upcoming: [], past: [done],
     } satisfies Schemas['PatientCard'])),
     http.get('*/api/patients/10/plan', () => HttpResponse.json(plan)),
+    // Следующий этап — по правилу сервера: первый несделанный с услугой прайса и его группа
+    http.get('*/api/patients/10/plan/next', () => HttpResponse.json({ serviceTypeId: 7, doctorId: 2, planActive: true, stepIds: [2] } satisfies Schemas['TreatmentPlanNextStep'])),
     http.get('*/api/service-types', () => HttpResponse.json(services)),
     // У Дастана через неделю 10:00 занято: свободно 08:00 и 11:00 — ближе к 10:00 — 11:00
     http.get('*/api/slots', ({ request }) => {
@@ -214,7 +216,7 @@ test('регистратура: «Записать на следующий ви�
       planAsked = true
       return HttpResponse.json({ title: 'Нет доступа' }, { status: 403 })
     }),
-    http.get('*/api/patients/10/plan/next', () => HttpResponse.json({ serviceTypeId: 7, doctorId: 2, dueOn: due } satisfies Schemas['TreatmentPlanNextStep'])),
+    http.get('*/api/patients/10/plan/next', () => HttpResponse.json({ serviceTypeId: 7, doctorId: 2, dueOn: due, planActive: false, stepIds: [5] } satisfies Schemas['TreatmentPlanNextStep'])),
     http.get('*/api/service-types', () => HttpResponse.json(services)),
     // Срок этапа — через 3 дня, раньше недели: ищем время к сроку
     http.get('*/api/slots', ({ request }) => {
@@ -232,6 +234,91 @@ test('регистратура: «Записать на следующий ви�
   expect(chosenDoctor(form)).toBe('Дастан Т.')
   expect(await within(form).findByRole('button', { name: `Записать · ${shortDay(due)}, 11:00` })).toBeInTheDocument()
   expect(planAsked).toBe(false)
+})
+
+/** План в работе у Айгуль (вымышленная): снимок без услуги, пломба 16 и 26 в этапе 1, коронка — в этапе 2. */
+const PLAN_IN_WORK: Schemas['TreatmentStepView'][] = [
+  { id: 13, stage: 1, title: 'Снимок зуба' },
+  { id: 11, stage: 1, tooth: 16, title: 'Пломба', serviceTypeId: 5, doctorId: 2 },
+  { id: 12, stage: 1, tooth: 26, title: 'Пломба', serviceTypeId: 5, doctorId: 2 },
+  { id: 14, stage: 2, tooth: 46, title: 'Коронка', serviceTypeId: 7 },
+]
+
+function planPatient(next: Schemas['TreatmentPlanNextStep'], created: unknown[]) {
+  const today = todayIn()
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/patients/recent', () => HttpResponse.json([])),
+    http.get('*/api/appointments', () => HttpResponse.json([])),
+    http.get('*/api/dropped', () => HttpResponse.json({
+      patients: [{ patientId: 3, fullName: 'Айгуль Т.', phone: '996700333444', contactPhone: '996700333444', telegram: false, status: 'IN_PROGRESS',
+        done: 1, total: 4, leftSom: 9000, left: ['зуб 16 — Пломба'], doctorId: 2, doctor: 'Дастан Т.' }],
+      total: 1, leftSom: 9000, days: 30,
+    } satisfies Schemas['PlanStatesBoard'])),
+    http.get('*/api/appointments/by-patient/3', () => HttpResponse.json({
+      patient: { id: 3, fullName: 'Айгуль Т.', phone: '996700333444', telegram: false }, done: 0, noShow: 0, cancelled: 0, upcoming: [], past: [],
+    } satisfies Schemas['PatientCard'])),
+    http.get('*/api/patients/3/plan', () => HttpResponse.json(PLAN_IN_WORK)),
+    http.get('*/api/patients/3/plan/next', () => HttpResponse.json(next)),
+    http.get('*/api/service-types', () => HttpResponse.json(services)),
+    http.get('*/api/slots', () => HttpResponse.json({ workingDay: true, starts: [at(today, '16:00')] })),
+    http.post('*/api/appointments', async ({ request }) => {
+      const body = await request.json() as { doctorId: number }
+      created.push(body)
+      return HttpResponse.json(appointment(60, body.doctorId, '16:00', 'Айгуль Т.'))
+    }),
+  )
+}
+
+test('«Позвать снова» → «Бросили лечение» → «＋ Записать»: план в работе — карточка этапа «Пломба · зубы 16, 26» выбрана, одна строка × 2', async () => {
+  const created: unknown[] = []
+  planPatient({ serviceTypeId: 5, doctorId: 2, planActive: true, stepIds: [11, 12] }, created)
+  window.location.hash = '/patients/comeback/dropped'
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('button', { name: 'Ещё: Айгуль Т.' }))
+  await user.click(screen.getByRole('menuitem', { name: '＋ Записать' }))
+  const form = await screen.findByRole('complementary', { name: 'Новая запись' })
+  const fromPlan = await within(form).findByRole('group', { name: 'Из плана лечения' })
+  // Снимок без услуги пропущен: выбрана вся группа первого этапа с услугой — оба зуба, × 2; коронка этапа 2 — нет
+  await waitFor(() => expect(within(fromPlan).getByRole('button', { name: /Пломба.*зубы 16, 26 · × 2/ })).toHaveAttribute('aria-pressed', 'true'))
+  expect(within(fromPlan).getByRole('button', { name: /Коронка/ })).toHaveAttribute('aria-pressed', 'false')
+  expect(fromPlan).toHaveTextContent('Нет в прайсе: Снимок зуба')
+  // Врач этапа; длительность — 30 мин × 2
+  expect(chosenDoctor(form)).toBe('Дастан Т.')
+  expect(within(form).getByRole('combobox', { name: /Длительность/ })).toHaveAttribute('data-value', '60')
+  expect(within(form).getByTestId('services-sum')).toHaveTextContent('Пломба × 2 · 1 ч')
+  await user.click(await within(form).findByRole('button', { name: '16:00' }))
+  await user.click(within(form).getByRole('button', { name: /^Записать · / }))
+  await waitFor(() => expect(created).toEqual([expect.objectContaining({
+    doctorId: 2, serviceTypeId: 5, durationMinutes: 60, lines: [{ serviceTypeId: 5, qty: 2, teeth: [16, 26], planStepIds: [11, 12] }],
+  })]))
+})
+
+test('карточка плана × 2 вручную: коронка добавляется своей строкой; убрали карточку пломбы — строки по старинке', async () => {
+  const created: unknown[] = []
+  // План только предложен (не согласован) — ничего не выбираем сами
+  planPatient({ serviceTypeId: 5, doctorId: 2, planActive: false, stepIds: [11, 12] }, created)
+  window.location.hash = '/patients/comeback/dropped'
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('button', { name: 'Ещё: Айгуль Т.' }))
+  await user.click(screen.getByRole('menuitem', { name: '＋ Записать' }))
+  const form = await screen.findByRole('complementary', { name: 'Новая запись' })
+  const fromPlan = await within(form).findByRole('group', { name: 'Из плана лечения' })
+  const fill = within(fromPlan).getByRole('button', { name: /Пломба/ })
+  const crown = within(fromPlan).getByRole('button', { name: /Коронка/ })
+  expect(fill).toHaveAttribute('aria-pressed', 'false')
+  await user.click(fill)
+  await user.click(crown)
+  expect(fill).toHaveAttribute('aria-pressed', 'true')
+  // 30 × 2 + 60 = 2 ч
+  expect(within(form).getByRole('combobox', { name: /Длительность/ })).toHaveAttribute('data-value', '120')
+  await user.click(await within(form).findByRole('button', { name: '16:00' }))
+  await user.click(within(form).getByRole('button', { name: /^Записать · / }))
+  await waitFor(() => expect(created).toEqual([expect.objectContaining({
+    serviceTypeIds: [5, 7], lines: [{ serviceTypeId: 5, qty: 2, teeth: [16, 26], planStepIds: [11, 12] }, { serviceTypeId: 7, qty: 1, teeth: [46], planStepIds: [14] }],
+  })]))
 })
 
 test('пустой поиск — недавние; найденные — с возрастом, «был …» и представителем; номер без «·»; «Ещё» свёрнуто; после записи — тост', async () => {

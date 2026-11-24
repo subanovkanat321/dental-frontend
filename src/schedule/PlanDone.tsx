@@ -11,6 +11,14 @@ type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
 type Step = Schemas['TreatmentStepView']
 
+/** Итог «Отметить сделанным»: сколько этапов, какие строки добавились в услуги приёма, какие этапы — без услуги прайса. */
+type Marked = { count: number; added: string[]; unpriced: string[] }
+
+/** «Коронка (14, 15) × 2» — строка услуги, добавленная из плана. */
+function lineText(l: Schemas['ServiceLine']): string {
+  return `${l.name}${l.teeth.length ? ` (${l.teeth.join(', ')})` : ''}${l.qty > 1 ? ` × ${l.qty}` : ''}`
+}
+
 /**
  * Блок «Что сделали сегодня?» внутри карточки приёма (не отдельное окно: после «состоялся» в карточке уже
  * открывается оплата — второе окно поверх неё было бы лишним). Показывается, только если приём недавно
@@ -21,18 +29,24 @@ type Step = Schemas['TreatmentStepView']
 export function PlanDone({ appointment: a, me, primary }: { appointment: Appointment; me: Me; primary: boolean }) {
   const ask = useAskPlanDone(a.id)
   const allowed = a.status === 'DONE' && canMarkPlan(me, a)
-  const [marked, setMarked] = useState<number | null>(null)
+  const [marked, setMarked] = useState<Marked | null>(null)
   const left = usePlanLeft(a, allowed && ask)
   if (!allowed) return null
   if (marked != null) {
-    return <p className="tone-ok plan-done-ok" role="status">Отмечено сделанным: {marked} {stepsWord(marked)} плана</p>
+    return (
+      <div className="plan-done-ok">
+        <p className="tone-ok" role="status">Отмечено сделанным: {marked.count} {stepsWord(marked.count)} плана</p>
+        {marked.added.length > 0 && <p className="hint small">Добавлено в услуги приёма: {marked.added.join('; ')}</p>}
+        {marked.unpriced.map((t) => <p key={t} className="hint small">«{t}» нет в прайсе — добавьте услугу вручную</p>)}
+      </div>
+    )
   }
   if (!ask || left.length === 0) return null
   return <PlanDoneForm a={a} me={me} steps={left} primary={primary} onMarked={setMarked} />
 }
 
 function PlanDoneForm({ a, me, steps, primary, onMarked }: {
-  a: Appointment; me: Me; steps: Step[]; primary: boolean; onMarked: (n: number) => void
+  a: Appointment; me: Me; steps: Step[]; primary: boolean; onMarked: (m: Marked) => void
 }) {
   const client = useQueryClient()
   // Зубы этого приёма — тот же ключ, что у «Зубов» в карточке (обычно уже в кэше)
@@ -47,16 +61,19 @@ function PlanDoneForm({ a, me, steps, primary, onMarked }: {
   const toggle = (id: number) => setPicked(chosen.includes(id) ? chosen.filter((x) => x !== id) : [...chosen, id])
   const mark = useMutation<Step[], ApiError, number[]>({
     mutationFn: (stepIds) => unwrap(api.POST('/api/appointments/{id}/plan-done', { params: { path: { id: a.id } }, body: { stepIds } })),
-    onSuccess: (plan, stepIds) => {
+    onSuccess: async (plan, stepIds) => {
       planSaved(client, a.patient.id, plan)
       void client.invalidateQueries({ queryKey: ['comebacks'] })
       void client.invalidateQueries({ queryKey: ['dropped'] })
-      onMarked(stepIds.length)
+      // Этап без услуги прайса строку не добавит — подскажем добавить руками
+      const unpriced = steps.filter((s) => stepIds.includes(s.id) && s.serviceTypeId == null).map((s) => s.title ?? 'Этап')
+      // Скидку этапа сервер перенёс в строку услуги приёма (V258), а нет строки с услугой этапа — добавил строку: перечитать
+      // приём, иначе в карточке и в оплате оставалась старая цена до повторного открытия (QA 2026-11-24). Новые строки — в итог
+      const before = new Set((a.services ?? []).map((l) => l.id))
+      const fresh = await unwrap(api.GET('/api/appointments/{id}', { params: { path: { id: a.id } } })).catch(() => null)
+      if (fresh) applyUpdatedAppointment(client, fresh)
+      onMarked({ count: stepIds.length, added: (fresh?.services ?? []).filter((l) => !before.has(l.id)).map(lineText), unpriced })
       forgetPlanDone(a.id)
-      // Скидка этапа сервер перенёс в строку услуги приёма (V258) — перечитать приём, иначе в карточке и в оплате
-      // оставалась старая цена строки без скидки, до повторного открытия (QA 2026-11-24)
-      void unwrap(api.GET('/api/appointments/{id}', { params: { path: { id: a.id } } }))
-        .then((fresh) => applyUpdatedAppointment(client, fresh)).catch(() => {})
     },
   })
   return (

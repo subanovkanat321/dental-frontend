@@ -214,6 +214,7 @@ export const server = setupServer(
   // Статус плана (V236): плана нет — status пусто, нули
   // Варианты плана (V254): по умолчанию — пусто, план работает как один вариант
   http.get('*/api/patients/:id/plan/variants', () => HttpResponse.json({ variants: [], switchable: true } satisfies Schemas['PlanVariantsVariants'])),
+  http.get('*/api/patients/:id/plan/next', () => HttpResponse.json({ planActive: false, stepIds: [] } satisfies Schemas['TreatmentPlanNextStep'])),
   http.get('*/api/patients/:id/plan/status', () => HttpResponse.json({ done: 0, total: 0, doneSom: 0, totalSom: 0, manualAgreed: false } satisfies Schemas['PlanStatesProgress'])),
   http.get('*/api/patients/:id/expenses', () => HttpResponse.json([])),
   http.get('*/api/patients/:id/anamnesis', () => HttpResponse.json({ items: [] })),

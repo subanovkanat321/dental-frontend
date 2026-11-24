@@ -12961,6 +12961,15 @@ export interface components {
             serviceTypeIds?: number[];
             /** Format: int64 */
             fromLeadId?: number;
+            lines?: components["schemas"]["AppointmentRequestsLine"][];
+        };
+        AppointmentRequestsLine: {
+            /** Format: int64 */
+            serviceTypeId?: number;
+            /** Format: int32 */
+            qty?: number;
+            teeth?: number[];
+            planStepIds?: number[];
         };
         VisitTemplateControllerTeeth: {
             teeth?: number[];
@@ -14577,6 +14586,8 @@ export interface components {
             doctorId?: number;
             /** Format: date */
             dueOn?: string;
+            planActive: boolean;
+            stepIds?: number[];
         };
         VisitNoteView: {
             /** Format: int64 */

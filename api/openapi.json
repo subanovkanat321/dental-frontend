@@ -30299,9 +30299,43 @@
           "fromLeadId" : {
             "type" : "integer",
             "format" : "int64"
+          },
+          "lines" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AppointmentRequestsLine"
+            },
+            "maxItems" : 30,
+            "minItems" : 0
           }
         },
         "required" : [ "doctorId", "durationMinutes", "patientId", "startAt" ]
+      },
+      "AppointmentRequestsLine" : {
+        "properties" : {
+          "serviceTypeId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "qty" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "teeth" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int32"
+            }
+          },
+          "planStepIds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int64"
+            }
+          }
+        }
       },
       "VisitTemplateControllerTeeth" : {
         "properties" : {
@@ -34456,8 +34490,19 @@
           "dueOn" : {
             "type" : "string",
             "format" : "date"
+          },
+          "planActive" : {
+            "type" : "boolean"
+          },
+          "stepIds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int64"
+            }
           }
-        }
+        },
+        "required" : [ "planActive" ]
       },
       "VisitNoteView" : {
         "properties" : {

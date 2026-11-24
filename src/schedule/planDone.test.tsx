@@ -84,6 +84,9 @@ test('«Приём состоялся» → «Что сделали сегодн
   await userEvent.click(within(block).getByRole('button', { name: 'Отметить сделанным' }))
   expect(await within(card).findByText('Отмечено сделанным: 2 этапа плана')).toBeInTheDocument()
   expect(calls).toContain('done:21:2,3')
+  // Этапы без услуги прайса строку не добавят — подсказка добавить руками
+  expect(card).toHaveTextContent('«Пломба» нет в прайсе — добавьте услугу вручную')
+  expect(card).toHaveTextContent('«Коронка» нет в прайсе — добавьте услугу вручную')
   expect(within(card).queryByRole('region', { name: 'Что сделали сегодня?' })).not.toBeInTheDocument()
 })
 
@@ -109,6 +112,34 @@ test('отметили этап со скидкой — строка услуг�
   expect(card.textContent).not.toContain('скидка 300 сом')
   await userEvent.click(within(block).getByRole('button', { name: 'Отметить сделанным' }))
   await waitFor(() => expect(card.textContent).toContain('(скидка 300 сом)'))
+})
+
+test('услуги этапа в приёме нет — сервер добавил строку: «Добавлено в услуги приёма: Коронка (14, 15) × 2»', async () => {
+  const start = appointment(23, 1, '00:00', 'Айбек Т.', { serviceName: 'Лечение кариеса', services: [] })
+  backend(start, { plan: [
+    { id: 1, tooth: 14, title: 'Коронка', stage: 1, serviceTypeId: 6, priceSom: 7000, discountSom: 500, netSom: 6500 },
+    { id: 2, tooth: 15, title: 'Коронка', stage: 1, serviceTypeId: 6, priceSom: 7000, discountSom: 500, netSom: 6500 },
+    { id: 3, title: 'Снимок зуба', stage: 1 },
+  ] })
+  let now: Appointment = start
+  const added: Schemas['ServiceLine'] = { id: 9, serviceTypeId: 6, name: 'Коронка', priceSom: 7000, qty: 2, teeth: [14, 15], amountSom: 14000, discountSom: 1000, netSom: 13000 }
+  server.use(
+    http.post('*/api/appointments/:id/status', () => { now = { ...now, status: 'DONE', version: now.version + 1 }; return HttpResponse.json(now) }),
+    http.get('*/api/appointments', ({ request }) => HttpResponse.json(new URL(request.url).searchParams.get('doctorId') === '1' ? [now] : [])),
+    http.get('*/api/appointments/23', () => {
+      now = { ...now, version: now.version + 1, services: [added], servicesTotalSom: 13000 }
+      return HttpResponse.json(now)
+    }),
+  )
+  renderApp()
+  const card = await openCard('Айбек Т\\.')
+  await markDone(card)
+  const block = await within(card).findByRole('region', { name: 'Что сделали сегодня?' })
+  for (const box of within(block).getAllByRole('checkbox')) if (!(box as HTMLInputElement).checked) await userEvent.click(box)
+  await userEvent.click(within(block).getByRole('button', { name: 'Отметить сделанным' }))
+  expect(await within(card).findByText('Отмечено сделанным: 3 этапа плана')).toBeInTheDocument()
+  expect(card).toHaveTextContent('Добавлено в услуги приёма: Коронка (14, 15) × 2')
+  expect(card).toHaveTextContent('«Снимок зуба» нет в прайсе — добавьте услугу вручную')
 })
 
 test('несделанных этапов нет — блока нет', async () => {

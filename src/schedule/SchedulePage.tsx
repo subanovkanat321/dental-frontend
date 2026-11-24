@@ -158,8 +158,9 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
     if (!doctor || (!bookPatient && !bookContact && !bookPreset?.open)) return null
     // Время — только из черновика помощника (его выбрали в боте); иначе сетка свободного покажет, что есть
     // Врач не задан пресетом — по умолчанию (soft): выбран пациент — станет его лечащий врач
+    // «Записать» из «Пациентов» (plan): план согласован или в работе — услуга и врач следующего этапа (QA 2026-11-24)
     const slot = { doctorId: doctor.id, date: bookPreset?.date ?? today, minutes: bookPreset?.minutes ?? null, duration: bookPreset?.duration, serviceId: bookPreset?.serviceId,
-      soft: bookPreset?.doctorId == null }
+      soft: bookPreset?.doctorId == null, plan: bookPatient != null }
     if (bookPatient) return { kind: 'new', patient: bookPatient, slot, leadId: bookLeadId }
     return bookContact ? { kind: 'new', contact: bookContact, slot, leadId: bookLeadId } : { kind: 'new', slot }
   })
