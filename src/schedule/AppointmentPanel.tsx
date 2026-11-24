@@ -18,7 +18,7 @@ import { FreedHere } from './FreeWindows'
 import { agoText } from '../lib/texts'
 import { bookedByText } from '../lib/relations'
 import { useClose } from '../lib/useClose'
-import { useFullView } from '../lib/fullView'
+import { useBigByDefault } from '../lib/fullView'
 import { useNowMinutes } from './gridScale'
 import { addDays, dateOf, formatPhone, shortDayTitle, minutesOf, slotInstant, somText, timeOf, todayIn } from '../lib/time'
 import { ChairEdit, CommentEdit, PromoEdit, Reschedule, Supplies, VisitNote } from './AppointmentExtras'
@@ -130,7 +130,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
   // «Состоялся» сервер разрешает с дня приёма: будущий приём ещё не мог пройти
   const started = date <= todayIn()
   // На компьютере — сразу большой (2026-11-23, владелец: «все модалки сначала большие»); свернули — запомнится
-  const [full, toggleFull] = useFullView('appointment', () => true)
+  const [full, toggleFull] = useBigByDefault()
   // Этап приёма: заметка, материалы и диктовка — когда приём начинается (за 15 минут) или прошёл;
   // утром карточка дневного приёма короткая: напомнить, перенести, связаться. «Показать сейчас» — если начали раньше
   const nowMinutes = useNowMinutes()
