@@ -3,7 +3,8 @@ import { ask } from '../lib/confirm'
 import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
-import { haptic } from '../lib/telegram'
+import { haptic, openLink } from '../lib/telegram'
+import { whatsappUrl } from '../lib/texts'
 import { formatPhone, shortDate } from '../lib/time'
 import { useClose } from '../lib/useClose'
 import { EmptyState } from '../layout/EmptyState'
@@ -92,6 +93,7 @@ export function QuestionsTab({ selected, onOpen }: { selected: number | null; on
               sub={q.text}
               meta={<>
                 <span>{shortDate(q.createdAt!, true)}</span>
+                {q.channel === 'WHATSAPP' && <span className="chip calm-flag">WhatsApp</span>}
                 {q.status === 'CLOSED' ? <span>без ответа</span> : done && aiMark(q) ? <span>{aiShort(q)}</span> : null}
               </>} />
           ))}
@@ -99,6 +101,16 @@ export function QuestionsTab({ selected, onOpen }: { selected: number | null; on
       )}
     </>
   )
+}
+
+/** Вопрос из WhatsApp, а окно 24 ч закрыто: из Tish не отправить — только вручную (wa.me). */
+function manualWhatsApp(q: Question): boolean {
+  return q.channel === 'WHATSAPP' && !q.waWindowOpen
+}
+
+function replyHint(q: Question): string {
+  if (q.channel !== 'WHATSAPP') return 'Ответ уйдёт пациенту в Telegram от имени клиники.'
+  return q.waWindowOpen ? 'Ответ уйдёт пациенту в WhatsApp с номера клиники (окно 24 ч открыто).' : 'Текст можно написать здесь — кнопка откроет WhatsApp с ним.'
 }
 
 /**
@@ -135,7 +147,11 @@ export function QuestionPanel({ questionId, onClose, onOpenPatient }: {
       haptic('success')
       void refresh()
     },
-    onError: () => haptic('error'),
+    onError: (e) => {
+      haptic('error')
+      // Окно 24 ч закрылось, пока писали ответ, — обновим вопрос: покажется кнопка «Ответить в WhatsApp» вручную
+      if (e.code === 'wa-window-closed') void refresh()
+    },
   })
   const dismiss = useMutation<Question, ApiError>({
     mutationFn: () => unwrap(api.POST('/api/patient-questions/{id}/close', { params: { path: { id: questionId } } })),
@@ -157,10 +173,12 @@ export function QuestionPanel({ questionId, onClose, onOpenPatient }: {
       {q && (
         <>
           <p className="hint small">
-            {shortDate(q.createdAt!, true)} · в Telegram
+            {shortDate(q.createdAt!, true)} · {q.channel === 'WHATSAPP' ? 'в WhatsApp' : 'в Telegram'}
             {q.patientId != null && <> · <button type="button" className="link" onClick={() => onOpenPatient(q.patientId!)}>Карточка пациента</button></>}
           </p>
-          {q.patientId == null && <p className="hint small">Человек написал боту впервые — его ещё нет в базе клиники.</p>}
+          {q.patientId == null && <p className="hint small">{q.channel === 'WHATSAPP'
+            ? 'Этого номера нет в базе клиники (или он общий у нескольких карточек).'
+            : 'Человек написал боту впервые — его ещё нет в базе клиники.'}</p>}
           <p className="question-text">{q.text}</p>
           {q.aiOutcome === 'ANSWERED' && (
             <section aria-label="Ответ ИИ">
@@ -202,11 +220,20 @@ export function QuestionPanel({ questionId, onClose, onOpenPatient }: {
               <div className="question-reply">
                 <textarea className="question-answer" aria-label="Ответ пациенту" rows={7} maxLength={4000} value={text} placeholder="Ответ пациенту"
                   onChange={(e) => setText(e.target.value)} />
-                <p className="hint small">Ответ уйдёт пациенту в Telegram от имени клиники.</p>
+                <p className="hint small">{replyHint(q)}</p>
               </div>
+              {manualWhatsApp(q) && (
+                <p className="notice tone-wait" role="note">Окно 24 ч закрыто — ответьте в WhatsApp вручную. WhatsApp разрешает клинике писать
+                  свободным текстом только в течение суток после сообщения пациента. Ответили — закройте вопрос.</p>
+              )}
               <div className="actions">
-                <button type="button" className="btn primary" disabled={answer.isPending || !text.trim()} onClick={() => answer.mutate()}>
-                  {answer.isPending ? <><Spinner />Отправляем…</> : 'Отправить'}</button>
+                {manualWhatsApp(q) ? (
+                  <button type="button" className="btn primary" disabled={!q.waPhone} onClick={() => openLink(whatsappUrl(q.waPhone!, text))}>
+                    Ответить в WhatsApp</button>
+                ) : (
+                  <button type="button" className="btn primary" disabled={answer.isPending || !text.trim()} onClick={() => answer.mutate()}>
+                    {answer.isPending ? <><Spinner />Отправляем…</> : 'Отправить'}</button>
+                )}
                 <button type="button" className="btn ghost" disabled={dismiss.isPending}
                   onClick={() => void ask('Закрыть вопрос без ответа? Пациент ничего не получит.').then((ok) => ok && dismiss.mutate())}>
                   Закрыть без ответа</button>

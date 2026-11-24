@@ -892,6 +892,34 @@
         }
       }
     },
+    "/api/platform/whatsapp/connection" : {
+      "put" : {
+        "tags" : [ "whats-app-controller" ],
+        "operationId" : "save",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/WhatsAppControllerConnection"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/WhatsAppAdminPlatformView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/platform/tariffs" : {
       "put" : {
         "tags" : [ "billing-controller" ],
@@ -4054,6 +4082,50 @@
         }
       }
     },
+    "/api/clinic/whatsapp" : {
+      "get" : {
+        "tags" : [ "whats-app-controller" ],
+        "operationId" : "clinic_1",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/WhatsAppAdminClinicView"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "whats-app-controller" ],
+        "operationId" : "kinds",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/WhatsAppControllerKinds"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/WhatsAppAdminClinicView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/clinic/visit-settings" : {
       "get" : {
         "tags" : [ "visit-settings-controller" ],
@@ -6219,6 +6291,73 @@
         }
       }
     },
+    "/api/whatsapp/webhook" : {
+      "get" : {
+        "tags" : [ "webhook-controller" ],
+        "operationId" : "verify",
+        "parameters" : [ {
+          "name" : "hub.mode",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "hub.verify_token",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "hub.challenge",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "text/plain" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "webhook-controller" ],
+        "operationId" : "receive",
+        "parameters" : [ {
+          "name" : "X-Hub-Signature-256",
+          "in" : "header",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "string",
+                "format" : "byte"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
     "/api/waitlist" : {
       "get" : {
         "tags" : [ "waitlist-controller" ],
@@ -7498,7 +7637,7 @@
     "/api/purchases/{id}/receive" : {
       "post" : {
         "tags" : [ "purchase-controller" ],
-        "operationId" : "receive",
+        "operationId" : "receive_1",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -12438,6 +12577,42 @@
         }
       }
     },
+    "/api/clinic/whatsapp/templates" : {
+      "post" : {
+        "tags" : [ "whats-app-controller" ],
+        "operationId" : "submit_1",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/WhatsAppAdminClinicView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clinic/whatsapp/templates/refresh" : {
+      "post" : {
+        "tags" : [ "whats-app-controller" ],
+        "operationId" : "refresh",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/WhatsAppAdminClinicView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/clinic/support-access" : {
       "get" : {
         "tags" : [ "platform-controller" ],
@@ -12930,7 +13105,7 @@
     "/api/clinic/export" : {
       "post" : {
         "tags" : [ "export-controller" ],
-        "operationId" : "clinic_1",
+        "operationId" : "clinic_2",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -14148,6 +14323,33 @@
         "responses" : {
           "204" : {
             "description" : "No Content"
+          }
+        }
+      }
+    },
+    "/api/appointments/{id}/remind-whatsapp" : {
+      "post" : {
+        "tags" : [ "patient-reminder-controller" ],
+        "operationId" : "remindWhatsApp",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AppointmentView"
+                }
+              }
+            }
           }
         }
       }
@@ -16034,6 +16236,24 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/PurchaseViewsCount"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/platform/whatsapp" : {
+      "get" : {
+        "tags" : [ "whats-app-controller" ],
+        "operationId" : "platform_1",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/WhatsAppAdminPlatformView"
                 }
               }
             }
@@ -18042,7 +18262,7 @@
     "/api/finance/net-month" : {
       "get" : {
         "tags" : [ "net-month-controller" ],
-        "operationId" : "clinic_2",
+        "operationId" : "clinic_3",
         "parameters" : [ {
           "name" : "month",
           "in" : "query",
@@ -18694,7 +18914,7 @@
     "/api/clinic/agreement" : {
       "get" : {
         "tags" : [ "agreement-controller" ],
-        "operationId" : "clinic_3",
+        "operationId" : "clinic_4",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -20385,6 +20605,9 @@
           "soonRemindedAt" : {
             "type" : "string",
             "format" : "date-time"
+          },
+          "whatsapp" : {
+            "$ref" : "#/components/schemas/MessengerMarksWhatsAppMark"
           }
         },
         "required" : [ "chairManual", "debtSom", "doctorId", "endAt", "firstVisit", "id", "lockedForDoctors", "patient", "source", "startAt", "status", "version" ]
@@ -20411,6 +20634,20 @@
           },
           "phone" : {
             "type" : "string"
+          }
+        }
+      },
+      "MessengerMarksWhatsAppMark" : {
+        "properties" : {
+          "kind" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "at" : {
+            "type" : "string",
+            "format" : "date-time"
           }
         }
       },
@@ -21472,6 +21709,111 @@
           }
         },
         "required" : [ "active", "appointments", "id" ]
+      },
+      "WhatsAppControllerConnection" : {
+        "properties" : {
+          "clinicId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "wabaId" : {
+            "type" : "string"
+          },
+          "phoneNumberId" : {
+            "type" : "string"
+          },
+          "displayPhone" : {
+            "type" : "string"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "clinicId" ]
+      },
+      "WhatsAppAdminConnectionView" : {
+        "properties" : {
+          "clinicId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "clinicName" : {
+            "type" : "string"
+          },
+          "wabaId" : {
+            "type" : "string"
+          },
+          "phoneNumberId" : {
+            "type" : "string"
+          },
+          "displayPhone" : {
+            "type" : "string"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "tokenOnServer" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "clinicId", "enabled", "tokenOnServer" ]
+      },
+      "WhatsAppAdminFailureView" : {
+        "properties" : {
+          "clinicId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "code" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "count" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "clinicId", "count" ]
+      },
+      "WhatsAppAdminPlatformView" : {
+        "properties" : {
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "webhookReady" : {
+            "type" : "boolean"
+          },
+          "tokenClinicId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "graphVersion" : {
+            "type" : "string"
+          },
+          "webhookPath" : {
+            "type" : "string"
+          },
+          "connections" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/WhatsAppAdminConnectionView"
+            }
+          },
+          "last24h" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "integer",
+              "format" : "int32"
+            }
+          },
+          "failures" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/WhatsAppAdminFailureView"
+            }
+          }
+        },
+        "required" : [ "enabled", "webhookReady" ]
       },
       "BillingControllerTariffsRequest" : {
         "properties" : {
@@ -24810,6 +25152,102 @@
           }
         },
         "required" : [ "independentDoctors", "listed", "ownHours", "recallMonths", "separateSupplies", "settingUp" ]
+      },
+      "WhatsAppControllerKinds" : {
+        "properties" : {
+          "confirmation" : {
+            "type" : "boolean"
+          },
+          "reminder" : {
+            "type" : "boolean"
+          },
+          "soon" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "WhatsAppAdminClinicView" : {
+        "properties" : {
+          "available" : {
+            "type" : "boolean"
+          },
+          "connected" : {
+            "type" : "boolean"
+          },
+          "displayPhone" : {
+            "type" : "string"
+          },
+          "confirmation" : {
+            "type" : "boolean"
+          },
+          "reminder" : {
+            "type" : "boolean"
+          },
+          "soon" : {
+            "type" : "boolean"
+          },
+          "templates" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/WhatsAppAdminTemplateView"
+            }
+          },
+          "recent" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/WhatsAppAdminMessageView"
+            }
+          }
+        },
+        "required" : [ "available", "confirmation", "connected", "reminder", "soon" ]
+      },
+      "WhatsAppAdminMessageView" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "kind" : {
+            "type" : "string",
+            "enum" : [ "CONFIRMATION", "REMINDER", "SOON", "REPLY", "ANSWER" ]
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "errorCode" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "appointmentId" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "id" ]
+      },
+      "WhatsAppAdminTemplateView" : {
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "kind" : {
+            "type" : "string",
+            "enum" : [ "CONFIRMATION", "REMINDER", "SOON", "REPLY", "ANSWER" ]
+          },
+          "lang" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "reason" : {
+            "type" : "string"
+          }
+        }
       },
       "VisitSettingsControllerVisitSettingsView" : {
         "properties" : {
@@ -28171,9 +28609,19 @@
           "aiAction" : {
             "type" : "string",
             "enum" : [ "BOOKED", "RESCHEDULED", "CANCELLED" ]
+          },
+          "channel" : {
+            "type" : "string",
+            "enum" : [ "TELEGRAM", "WHATSAPP" ]
+          },
+          "waWindowOpen" : {
+            "type" : "boolean"
+          },
+          "waPhone" : {
+            "type" : "string"
           }
         },
-        "required" : [ "id" ]
+        "required" : [ "channel", "id" ]
       },
       "QuestionControllerAnswer" : {
         "properties" : {

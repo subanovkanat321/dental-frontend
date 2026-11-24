@@ -948,7 +948,7 @@ html .analytics-filter.load-filter .segments > button { white-space: nowrap; pad
 .dbars { display: flex; align-items: stretch; gap: 2px; height: 150px; }
 .dbar { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: stretch; gap: 4px; padding: 0; border: 0; border-radius: 4px 4px 0 0;
   background: none; color: inherit; font: inherit; cursor: pointer; }
-.dbar-plot { flex: 1; display: flex; align-items: flex-end; justify-content: center; border-bottom: 1px solid var(--line); }
+.dbar-plot { flex: 1; display: flex; align-items: flex-end; justify-content: center; border-bottom: 1px solid var(--separator); }
 .dbar-fill { display: block; width: min(80%, 24px); min-height: 2px; border-radius: 4px 4px 0 0; background: var(--chart-1); }
 .dbar.zero .dbar-fill { height: 2px; border-radius: 0; background: var(--line-strong); }
 .dbar:hover .dbar-plot { background: var(--sunken); }
@@ -2671,7 +2671,7 @@ a.menu-item { box-sizing: border-box; text-decoration: none; }
    справа «Изменить / Убрать»; форма — поля с подписями, как в карточке пациента, без рамки-коробки. Правка строки —
    прямо в ней, на мягкой подложке: видно, что меняем. Телефон — кнопки на всю ширину, 46px (как .confirm.sheet) */
 .dir-list { list-style: none; margin: 0; padding: 0; display: grid; }
-.dir-list > li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.dir-list > li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--separator); }
 .dir-list > li:first-child { padding-top: 2px; }
 .dir-list > li.editing { display: block; margin: 6px 0; padding: 12px; border: 0; border-radius: var(--r-md); background: var(--sunken); }
 .dir-item { display: grid; gap: 2px; min-width: 0; }
@@ -3543,3 +3543,13 @@ button.history-link:hover .history-text { color: var(--link); }
 .pay-discount-quick { display: flex; flex-wrap: wrap; gap: 6px; }
 .pay-discount-quick .chip { padding: 4px 12px; border: 1px solid var(--line-strong); border-radius: 99px; background: var(--card); color: var(--text); font: inherit; font-weight: 600; cursor: pointer; }
 .pay-discount-quick .chip[aria-pressed=true] { border-color: var(--accent); background: var(--accent); color: var(--accent-text); }
+
+/* «Настройки → WhatsApp» (V256): шаблоны и последние сообщения — простая таблица без рамок у ячеек */
+.wa-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.wa-table th { text-align: left; font-weight: 600; color: var(--hint); padding: 6px 8px 6px 0; border-bottom: 1px solid var(--separator); }
+.wa-table td { padding: 8px 8px 8px 0; border-bottom: 1px solid var(--separator); vertical-align: top; }
+.wa-table tr:last-child td { border-bottom: none; }
+.wa-table td.tone-ok { color: var(--ok-ink); } .wa-table td.tone-bad { color: var(--bad-ink); } .wa-table td.tone-wait { color: var(--wait-ink); }
+.wa-table td.tone-hint { color: var(--hint); }
+.wa-mark { font-size: 13px; }
+.wa-mark.tone-ok { color: var(--ok-ink); } .wa-mark.tone-bad { color: var(--bad-ink); } .wa-mark.tone-wait { color: var(--wait-ink); }

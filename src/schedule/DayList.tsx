@@ -1,3 +1,4 @@
+import { markText, statusTone } from '../lib/whatsapp'
 import { ApptBadges } from './ApptBadges'
 import { CancelledList } from './CancelledList'
 import { useQueries, useQuery } from '@tanstack/react-query'
@@ -322,11 +323,11 @@ function Row({ a, me, color, paint, chair, next, active, canEdit, money, onOpen,
       setNotice({ text: NOWHERE_TEXT, tone: 'warn', card: true })
       return
     }
-    if (r.whatsapp()) setNotice({ text: 'WhatsApp открыт', tone: 'ok' })
+    if (r.whatsapp()) setNotice({ text: r.whatsappNotice, tone: 'ok' })
   }
   // Бот не доставил (409 not-delivered) — WhatsApp тем же текстом, если есть номер
   const fallbackWhatsapp = () => {
-    if (r.whatsapp()) setNotice({ text: 'WhatsApp открыт', tone: 'ok' })
+    if (r.whatsapp()) setNotice({ text: r.whatsappNotice, tone: 'ok' })
   }
   // Нажатие на «✓ отправлено»: тем же путём, с вопросом «Уже напоминали в 10:15. Отправить ещё раз?» и текстом
   // повтора (бот выбирает его сам по отметке; WhatsApp — useRepeatReminderText). Отметку «не ушло» снимать не нужно
@@ -340,7 +341,7 @@ function Row({ a, me, color, paint, chair, next, active, canEdit, money, onOpen,
       r.telegram(() => setNotice({ text: 'Напоминание отправлено в Telegram', tone: 'ok' }))
       return
     }
-    if (r.whatsapp()) setNotice({ text: 'WhatsApp открыт', tone: 'ok' })
+    if (r.whatsapp()) setNotice({ text: r.whatsappNotice, tone: 'ok' })
   }
   // Свайп вправо — то же, что быстрая кнопка; есть, пока она есть (не отправлено). Некуда — свайп покажет подсказку
   const canSwipeRemind = canRemind && !sent && !busy
@@ -404,6 +405,10 @@ function Row({ a, me, color, paint, chair, next, active, canEdit, money, onOpen,
                 Предоплата {somText(a.depositSom ?? 0)} · {a.depositStatus === 'RECEIVED' ? 'получена' : a.depositStatus === 'REPORTED' ? 'пациент оплатил — проверьте' : 'ждём'}
               </span>
             )}
+            {/* Tish писал о приёме в WhatsApp (V256) — что с сообщением: доставлено, прочитано, не доставлено */}
+            {a.whatsapp && ['REQUESTED', 'SCHEDULED'].includes(a.status) && (
+              <span className={`row-note wa-mark tone-${statusTone(a.whatsapp.status)}`}>{markText(a.whatsapp)}</span>
+            )}
           </span>
         </button>
         {canRemind && (sent ? (
@@ -424,7 +429,7 @@ function Row({ a, me, color, paint, chair, next, active, canEdit, money, onOpen,
             {viaBot && r.phone && (
               <button type="button" className="remind-quick" disabled={r.pending || r.text == null}
                 aria-label={`Напомнить в WhatsApp: ${a.patient.fullName}, ${timeOf(a.startAt)}`}
-                onClick={() => { notSent.undo.reset(); setNotice(null); if (r.whatsapp()) setNotice({ text: 'WhatsApp открыт', tone: 'ok' }) }}>WA</button>
+                onClick={() => { notSent.undo.reset(); setNotice(null); if (r.whatsapp()) setNotice({ text: r.whatsappNotice, tone: 'ok' }) }}>WA</button>
             )}
           </span>
         ))}

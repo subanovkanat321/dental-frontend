@@ -1,3 +1,4 @@
+import { kindText, markText, statusTone } from '../lib/whatsapp'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { KidInfo } from '../patients/KidInfo'
 import { ask } from '../lib/confirm'
@@ -338,6 +339,10 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
     <>
       {sourceHint && <p className="hint small">{sourceHint}</p>}
       {a.reminderOpenedAt && a.status === 'SCHEDULED' && <ReminderSent a={a} canEdit={canEdit} />}
+      {a.whatsapp && a.status === 'SCHEDULED' && (
+        <p className={`hint small wa-mark tone-${statusTone(a.whatsapp.status)}`} title={kindText(a.whatsapp.kind)}>{markText(a.whatsapp)}
+          <span className="hint"> · {kindText(a.whatsapp.kind).toLowerCase()}</span></p>
+      )}
     </>
   )
   // Комментарий записи («Боится уколов») — врачу на приёме у пациента, остальным — у услуги
@@ -718,7 +723,7 @@ function ReminderSent({ a, canEdit }: { a: Appointment; canEdit: boolean }) {
     if (!ok) return
     setSent('')
     if (r.viaBot) r.telegram(() => setSent('Напоминание отправлено в Telegram'))
-    else if (r.whatsapp()) setSent('WhatsApp открыт')
+    else if (r.whatsapp()) setSent(r.whatsappNotice)
   })
   const can = canEdit && (r.viaBot || Boolean(r.phone))
   return (

@@ -20,6 +20,11 @@ export const server = setupServer(
   // Отчёты об ошибках приложения (lib/clientErrors): сервер всегда отвечает 204
   http.post('*/web/client-error', () => new HttpResponse(null, { status: 204 })),
   http.get('*/api/supplies', () => HttpResponse.json([])),
+  // WhatsApp через Tish (V256): по умолчанию не подключён — напоминания как раньше (бот или WhatsApp вручную)
+  http.get('*/api/clinic/whatsapp', () => HttpResponse.json({ available: false, connected: false, confirmation: true, reminder: true, soon: true,
+    templates: [], recent: [] } satisfies Schemas['WhatsAppAdminClinicView'])),
+  http.get('*/api/platform/whatsapp', () => HttpResponse.json({ enabled: false, webhookReady: false, graphVersion: 'v23.0',
+    webhookPath: '/api/whatsapp/webhook', connections: [], last24h: {}, failures: [] } satisfies Schemas['WhatsAppAdminPlatformView'])),
   // «Кто может давать скидку» (форма оплаты): по умолчанию — только руководитель, и он же вошёл (fixtures.me — админ)
   http.get('*/api/clinic/discounts', () => HttpResponse.json(
     { who: 'ADMIN', maxPercent: 10, canGive: true, myMaxPercent: 100 } satisfies Schemas['DiscountPoliciesPolicy'])),

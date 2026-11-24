@@ -292,6 +292,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/platform/whatsapp/connection": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["save"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/platform/tariffs": {
         parameters: {
             query?: never;
@@ -1412,6 +1428,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/clinic/whatsapp": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["clinic_1"];
+        put: operations["kinds"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/clinic/visit-settings": {
         parameters: {
             query?: never;
@@ -2340,6 +2372,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/whatsapp/webhook": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["verify"];
+        put?: never;
+        post: operations["receive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/waitlist": {
         parameters: {
             query?: never;
@@ -2845,7 +2893,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["receive"];
+        post: operations["receive_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4932,6 +4980,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/clinic/whatsapp/templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["submit_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/clinic/whatsapp/templates/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["refresh"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/clinic/support-access": {
         parameters: {
             query?: never;
@@ -5069,7 +5149,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["clinic_1"];
+        post: operations["clinic_2"];
         delete?: never;
         options?: never;
         head?: never;
@@ -5567,6 +5647,22 @@ export interface paths {
         put?: never;
         post: operations["reminderOpened"];
         delete: operations["reminderNotSent"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/appointments/{id}/remind-whatsapp": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["remindWhatsApp"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -6572,6 +6668,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["count_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/platform/whatsapp": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["platform_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -7723,7 +7835,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["clinic_2"];
+        get: operations["clinic_3"];
         put?: never;
         post?: never;
         delete?: never;
@@ -8091,7 +8203,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["clinic_3"];
+        get: operations["clinic_4"];
         put?: never;
         post?: never;
         delete?: never;
@@ -8927,6 +9039,7 @@ export interface components {
             lockedForDoctors: boolean;
             /** Format: date-time */
             soonRemindedAt?: string;
+            whatsapp?: components["schemas"]["MessengerMarksWhatsAppMark"];
         };
         FamiliesBooker: {
             fullName?: string;
@@ -8938,6 +9051,12 @@ export interface components {
             /** @enum {string} */
             relation?: "MOTHER" | "FATHER" | "PARENT" | "GRANDMOTHER" | "GRANDFATHER" | "GUARDIAN" | "OTHER";
             phone?: string;
+        };
+        MessengerMarksWhatsAppMark: {
+            kind?: string;
+            status?: string;
+            /** Format: date-time */
+            at?: string;
         };
         PatientView: {
             /** Format: int64 */
@@ -9368,6 +9487,45 @@ export interface components {
             validUntil?: string;
             /** Format: int64 */
             appointments: number;
+        };
+        WhatsAppControllerConnection: {
+            /** Format: int64 */
+            clinicId: number;
+            wabaId?: string;
+            phoneNumberId?: string;
+            displayPhone?: string;
+            enabled?: boolean;
+        };
+        WhatsAppAdminConnectionView: {
+            /** Format: int64 */
+            clinicId: number;
+            clinicName?: string;
+            wabaId?: string;
+            phoneNumberId?: string;
+            displayPhone?: string;
+            enabled: boolean;
+            tokenOnServer: boolean;
+        };
+        WhatsAppAdminFailureView: {
+            /** Format: int64 */
+            clinicId: number;
+            /** Format: int32 */
+            code?: number;
+            /** Format: int32 */
+            count: number;
+        };
+        WhatsAppAdminPlatformView: {
+            enabled: boolean;
+            webhookReady: boolean;
+            /** Format: int64 */
+            tokenClinicId?: number;
+            graphVersion?: string;
+            webhookPath?: string;
+            connections?: components["schemas"]["WhatsAppAdminConnectionView"][];
+            last24h?: {
+                [key: string]: number;
+            };
+            failures?: components["schemas"]["WhatsAppAdminFailureView"][];
         };
         BillingControllerTariffsRequest: {
             /** Format: int32 */
@@ -10694,6 +10852,42 @@ export interface components {
             patientContracts?: boolean;
             googleReviewUrl?: string;
             markArrival?: boolean;
+        };
+        WhatsAppControllerKinds: {
+            confirmation?: boolean;
+            reminder?: boolean;
+            soon?: boolean;
+        };
+        WhatsAppAdminClinicView: {
+            available: boolean;
+            connected: boolean;
+            displayPhone?: string;
+            confirmation: boolean;
+            reminder: boolean;
+            soon: boolean;
+            templates?: components["schemas"]["WhatsAppAdminTemplateView"][];
+            recent?: components["schemas"]["WhatsAppAdminMessageView"][];
+        };
+        WhatsAppAdminMessageView: {
+            /** Format: int64 */
+            id: number;
+            /** Format: date-time */
+            createdAt?: string;
+            /** @enum {string} */
+            kind?: "CONFIRMATION" | "REMINDER" | "SOON" | "REPLY" | "ANSWER";
+            status?: string;
+            /** Format: int32 */
+            errorCode?: number;
+            /** Format: int64 */
+            appointmentId?: number;
+        };
+        WhatsAppAdminTemplateView: {
+            name?: string;
+            /** @enum {string} */
+            kind?: "CONFIRMATION" | "REMINDER" | "SOON" | "REPLY" | "ANSWER";
+            lang?: string;
+            status?: string;
+            reason?: string;
         };
         VisitSettingsControllerVisitSettingsView: {
             markArrival?: boolean;
@@ -12066,6 +12260,10 @@ export interface components {
             aiAnswer?: string;
             /** @enum {string} */
             aiAction?: "BOOKED" | "RESCHEDULED" | "CANCELLED";
+            /** @enum {string} */
+            channel: "TELEGRAM" | "WHATSAPP";
+            waWindowOpen?: boolean;
+            waPhone?: string;
         };
         QuestionControllerAnswer: {
             text?: string;
@@ -15936,6 +16134,30 @@ export interface operations {
             };
         };
     };
+    save: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WhatsAppControllerConnection"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WhatsAppAdminPlatformView"];
+                };
+            };
+        };
+    };
     updateTariffs: {
         parameters: {
             query?: never;
@@ -18483,6 +18705,50 @@ export interface operations {
             };
         };
     };
+    clinic_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WhatsAppAdminClinicView"];
+                };
+            };
+        };
+    };
+    kinds: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WhatsAppControllerKinds"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WhatsAppAdminClinicView"];
+                };
+            };
+        };
+    };
     visitSettings: {
         parameters: {
             query?: never;
@@ -20327,6 +20593,54 @@ export interface operations {
             };
         };
     };
+    verify: {
+        parameters: {
+            query?: {
+                "hub.mode"?: string;
+                "hub.verify_token"?: string;
+                "hub.challenge"?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/plain": string;
+                };
+            };
+        };
+    };
+    receive: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Hub-Signature-256"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": string;
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     list: {
         parameters: {
             query?: never;
@@ -21370,7 +21684,7 @@ export interface operations {
             };
         };
     };
-    receive: {
+    receive_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -25302,6 +25616,46 @@ export interface operations {
             };
         };
     };
+    submit_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WhatsAppAdminClinicView"];
+                };
+            };
+        };
+    };
+    refresh: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WhatsAppAdminClinicView"];
+                };
+            };
+        };
+    };
     supportAccess: {
         parameters: {
             query?: never;
@@ -25591,7 +25945,7 @@ export interface operations {
             };
         };
     };
-    clinic_1: {
+    clinic_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -26589,6 +26943,28 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    remindWhatsApp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppointmentView"];
+                };
             };
         };
     };
@@ -28085,6 +28461,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PurchaseViewsCount"];
+                };
+            };
+        };
+    };
+    platform_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WhatsAppAdminPlatformView"];
                 };
             };
         };
@@ -29693,7 +30089,7 @@ export interface operations {
             };
         };
     };
-    clinic_2: {
+    clinic_3: {
         parameters: {
             query: {
                 month: string;
@@ -30189,7 +30585,7 @@ export interface operations {
             };
         };
     };
-    clinic_3: {
+    clinic_4: {
         parameters: {
             query?: never;
             header?: never;

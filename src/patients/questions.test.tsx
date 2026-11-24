@@ -17,10 +17,10 @@ afterEach(() => {
 
 /** Вымышленные пациенты: один из базы, другой написал боту впервые. */
 const fromCard: Question = {
-  id: 5, patientId: 2, patientName: 'Айгуль Т.', patientPhone: '996700333444', status: 'NEW',
+  id: 5, channel: 'TELEGRAM', patientId: 2, patientName: 'Айгуль Т.', patientPhone: '996700333444', status: 'NEW',
   text: 'Здравствуйте\nСколько стоит чистка?', createdAt: '2026-11-03T04:10:00Z', updatedAt: '2026-11-03T04:11:00Z',
 }
-const stranger: Question = { id: 6, status: 'NEW', text: 'Вы работаете в субботу?', createdAt: '2026-11-03T05:00:00Z' }
+const stranger: Question = { id: 6, channel: 'TELEGRAM', status: 'NEW', text: 'Вы работаете в субботу?', createdAt: '2026-11-03T05:00:00Z' }
 
 function backend({ ai }: { ai: boolean }) {
   let questions = [fromCard, stranger]
@@ -114,11 +114,11 @@ test('кнопка уведомления «Открыть вопрос» (?ques
 test('ИИ-администратор бота: «🤖 Ответил ИИ» с текстом в «Отвеченных», «Передано сотрудникам» — в «Ждут ответа»', async () => {
   window.location.hash = '/patients'
   const byAi: Question = {
-    id: 7, status: 'ANSWERED', text: 'Где вы находитесь?', createdAt: '2026-11-03T04:00:00Z', answeredAt: '2026-11-03T04:00:05Z',
+    id: 7, channel: 'TELEGRAM', status: 'ANSWERED', text: 'Где вы находитесь?', createdAt: '2026-11-03T04:00:00Z', answeredAt: '2026-11-03T04:00:05Z',
     answer: 'Мы на Киевской, 1.', aiOutcome: 'ANSWERED', aiAnswer: 'Мы на Киевской, 1.',
   }
   const passed: Question = {
-    id: 8, status: 'NEW', text: 'Почему болит зуб?', createdAt: '2026-11-03T05:00:00Z', aiOutcome: 'ESCALATED',
+    id: 8, channel: 'TELEGRAM', status: 'NEW', text: 'Почему болит зуб?', createdAt: '2026-11-03T05:00:00Z', aiOutcome: 'ESCALATED',
     aiAnswer: 'Это лучше обсудить с врачом на приёме.\n\nПередал администратору — ответим здесь в рабочее время 🙏',
   }
   const questions = [byAi, passed]
@@ -162,7 +162,7 @@ test('ИИ-администратор бота: «🤖 Ответил ИИ» с 
 test('ИИ записал по «Да» пациента — пометка в списке и в вопросе', async () => {
   window.location.hash = '/patients'
   const booked: Question = {
-    id: 9, status: 'ANSWERED', text: 'Запишите на чистку', createdAt: '2026-11-03T04:00:00Z', answeredAt: '2026-11-03T04:00:05Z',
+    id: 9, channel: 'TELEGRAM', status: 'ANSWERED', text: 'Запишите на чистку', createdAt: '2026-11-03T04:00:00Z', answeredAt: '2026-11-03T04:00:05Z',
     answer: 'Могу записать вас 👍', aiOutcome: 'ANSWERED', aiAnswer: 'Могу записать вас 👍\n\nЗаписать вас: суббота, 9 ноября, в 10:00 · Профчистка · врач Айгерим?',
     aiAction: 'BOOKED', patientId: 3, patientName: 'Айпери Вымышленная',
   }
@@ -186,4 +186,53 @@ test('ИИ записал по «Да» пациента — пометка в �
   const answer = await within(panel).findByRole('region', { name: 'Ответ ИИ' })
   expect(answer).toHaveTextContent('заявка в расписании')
   expect(answer).toHaveTextContent('Записать вас: суббота, 9 ноября')
+})
+
+test('вопросы из WhatsApp: пометка в списке; окно 24 ч открыто — ответ из Tish, закрыто — «Ответить в WhatsApp» вручную', async () => {
+  window.location.hash = '/patients'
+  const open: Question = {
+    id: 21, channel: 'WHATSAPP', waWindowOpen: true, waPhone: '996555700001', patientId: 3, patientName: 'Асель В.',
+    patientPhone: '996555700001', status: 'NEW', text: 'Можно на пятницу?', createdAt: '2026-11-03T04:10:00Z',
+  }
+  const closed: Question = {
+    id: 22, channel: 'WHATSAPP', waWindowOpen: false, waPhone: '996555700050', status: 'NEW', text: 'Сколько стоит чистка?',
+    createdAt: '2026-11-02T04:10:00Z',
+  }
+  const answers: unknown[] = []
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/patients/recent', () => HttpResponse.json([])),
+    http.get('*/api/patient-questions/new-count', () => HttpResponse.json({ count: 2 })),
+    http.get('*/api/patient-questions', () => HttpResponse.json(
+      { questions: [closed, open], ai: false, aiAvailable: false, botAi: false } satisfies Schemas['QuestionControllerQuestionList'])),
+    http.get('*/api/patient-questions/:id', ({ params }) => HttpResponse.json(Number(params.id) === 21 ? open : closed)),
+    http.post('*/api/patient-questions/:id/answer', async ({ request }) => {
+      answers.push(await request.json())
+      return HttpResponse.json({ ...open, status: 'ANSWERED', answer: 'Да', answeredAt: '2026-11-03T06:00:00Z' } satisfies Question)
+    }),
+  )
+  const opened = vi.spyOn(window, 'open').mockReturnValue(null)
+  renderApp()
+  await userEvent.click(await findSub(/Вопросы/))
+  const list = await screen.findByRole('list', { name: 'Вопросы пациентов' })
+  expect(within(list).getAllByText('WhatsApp')).toHaveLength(2)
+
+  // Окно открыто — обычная отправка, ответ уйдёт в WhatsApp
+  await userEvent.click(within(list).getByRole('button', { name: 'Асель В.' }))
+  let panel = await screen.findByRole('complementary', { name: 'Вопрос пациента' })
+  expect(await within(panel).findByText(/· в WhatsApp/)).toBeInTheDocument()
+  expect(within(panel).getByText(/уйдёт пациенту в WhatsApp/)).toBeInTheDocument()
+  await userEvent.type(within(panel).getByLabelText('Ответ пациенту'), 'Да')
+  await userEvent.click(within(panel).getByRole('button', { name: 'Отправить' }))
+  await waitForSlow(() => expect(answers).toEqual([{ text: 'Да' }]))
+
+  // Окно закрыто — из Tish не отправить: подсказка и кнопка, которая открывает WhatsApp с текстом
+  await userEvent.click(within(list).getByRole('button', { name: 'Нет в базе клиники' }))
+  panel = await screen.findByRole('complementary', { name: 'Вопрос пациента' })
+  expect(await within(panel).findByText(/Окно 24 ч закрыто — ответьте в WhatsApp вручную/)).toBeInTheDocument()
+  expect(within(panel).queryByRole('button', { name: 'Отправить' })).not.toBeInTheDocument()
+  await userEvent.type(within(panel).getByLabelText('Ответ пациенту'), 'От 2000 сом')
+  await userEvent.click(within(panel).getByRole('button', { name: 'Ответить в WhatsApp' }))
+  expect(opened).toHaveBeenCalledWith(expect.stringContaining('996555700050'), '_blank', 'noopener')
+  expect(answers).toHaveLength(1)
 })
