@@ -199,7 +199,7 @@ function Editor({ me, settings }: { me: Me; settings: Settings }) {
           </figure>
           <figure className="reminder-preview" aria-label="За 2 часа до приёма">
             <figcaption>За 2 часа до приёма — в Telegram</figcaption>
-            <p className="reminder-bubble">{soonText(`${todayIn()}T06:00:00Z`, preview)}</p>
+            <p className="reminder-bubble">{soonText(`${todayIn()}T04:00:00Z`, preview)}</p>
           </figure>
         </div>
       </section>

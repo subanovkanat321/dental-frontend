@@ -67,7 +67,7 @@ test('«Напоминание о приёме»: для справки — по
   expect(await screen.findByText(/за 2 часа до приёма бот сам пишет/)).toBeInTheDocument()
   const others = screen.getByRole('region', { name: 'Другие сообщения о приёме' })
   expect(within(others).getByRole('figure', { name: 'За 2 часа до приёма' }))
-    .toHaveTextContent('⏰ Ждём вас сегодня в 12:00 на приёме у стоматолога 😊 📍 Адрес: Бишкек, ул. Тестовая 1')
+    .toHaveTextContent('⏰ Ждём вас сегодня в 10:00 на приёме у стоматолога 😊 📍 Адрес: Бишкек, ул. Тестовая 1')
   expect(within(others).getByRole('figure', { name: 'Повторное напоминание' }))
     .toHaveTextContent('Здравствуйте, Айгуль! 👋 Ещё раз напоминаем о приёме у стоматолога 🦷 🗓 Завтра, 10:00 👨‍⚕️ Врач:')
 })

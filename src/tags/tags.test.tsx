@@ -71,6 +71,7 @@ describe('«Настройки → Метки пациентов»', () => {
     expect(await within(tags).findByText('Опаздывает часто')).toBeInTheDocument()
 
     await userEvent.click(within(tags).getByRole('button', { name: 'Удалить метку Боится' }))
+    expect(await screen.findByText('Удалить метку «Боится»? Она снимется у всех пациентов (2 пац.).')).toBeInTheDocument()
     await userEvent.click(await screen.findByRole('button', { name: 'Удалить' }))
     await waitForSlow(() => expect(within(tags).queryByText('Боится')).not.toBeInTheDocument())
     expect(sent).toEqual([
@@ -78,6 +79,18 @@ describe('«Настройки → Метки пациентов»', () => {
       { method: 'PUT', body: { name: 'Опаздывает часто', color: 'orange' }, id: '3' },
       { method: 'DELETE', id: '2' },
     ])
+  })
+
+  test('метку ни у кого — спрашиваем без «снимется у всех пациентов (ни у кого)»', async () => {
+    server.use(
+      http.get('*/api/patient/me', () => HttpResponse.json({ ...me, admin: true })),
+      http.get('*/api/patient-tags', () => HttpResponse.json(TAGS)),
+    )
+    renderApp()
+    const tags = await screen.findByRole('list', { name: 'Метки клиники' })
+    await userEvent.click(within(tags).getByRole('button', { name: 'Удалить метку Опаздывает' }))
+    expect(await screen.findByText('Удалить метку «Опаздывает»?')).toBeInTheDocument()
+    expect(screen.queryByText(/ни у кого\)/)).not.toBeInTheDocument()
   })
 
   test('ошибка сервера (дубль) — под формой; двенадцать меток — формы нет', async () => {

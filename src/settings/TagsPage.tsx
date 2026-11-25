@@ -190,7 +190,9 @@ function TagRow({ tag, admin }: { tag: Tag; admin: boolean }) {
           {!vip && (
             <button type="button" className="link small danger" disabled={remove.isPending} aria-label={`Удалить метку ${tag.name}`}
               onClick={async () => {
-                if (await ask(`Удалить метку «${tag.name}»? Она снимется у всех пациентов (${count}).`, { ok: 'Удалить', danger: true })) remove.mutate()
+                // Ни у кого не стоит — без «снимется у всех пациентов (ни у кого)»
+                const question = tag.patients ? `Удалить метку «${tag.name}»? Она снимется у всех пациентов (${count}).` : `Удалить метку «${tag.name}»?`
+                if (await ask(question, { ok: 'Удалить', danger: true })) remove.mutate()
               }}>удалить</button>
           )}
         </span>
