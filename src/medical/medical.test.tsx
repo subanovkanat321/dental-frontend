@@ -148,3 +148,12 @@ test('отмеченные зубы списком; зуб → «В план л�
   expect(await within(plan).findByText('Пломба композит')).toBeInTheDocument()
   expect(sent).toContainEqual({ step: 1, tooth: 16, title: 'Пломба композит', priceSom: 3500, stage: 1, done: false, discount: {} })
 })
+
+test('«Заметки»: заметок нет — подсказка, где их пишут, а не пустая вкладка (QA 2026-11-25)', async () => {
+  backend()
+  server.use(http.get('*/api/patients/2/notes', () => HttpResponse.json([])))
+  await openMedical()
+  await medTab('Заметки')
+  expect(await screen.findByText('Заметок о визитах пока нет')).toBeInTheDocument()
+  expect(screen.getByText(/в карточке приёма/)).toBeInTheDocument()
+})

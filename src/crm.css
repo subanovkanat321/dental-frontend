@@ -962,7 +962,10 @@ html .analytics-filter.load-filter .segments > button { white-space: nowrap; pad
 .dbar:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .dbar-label { height: 1.2em; font-size: .75rem; line-height: 1.2; color: var(--hint); text-align: center; white-space: nowrap; overflow: visible; }
 .patient-pick { position: relative; min-width: 0; }
-.patient-pick input { width: 100%; }
+/* Поиск пациента в «Семье» и «Пригласил» — как остальные поля (QA 2026-11-25: была голая рамка браузера без отступов) */
+.patient-pick input { width: 100%; font: inherit; padding: 7px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md);
+  background: var(--card); color: var(--text); }
+.patient-pick input:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
 .picked-patient { align-self: center; background: var(--accent-soft); color: var(--link); }
 /* «День» в выручке: дата на всю ширину (iPhone растягивает поле даты), под ней — «Сегодня / Вчера» */
 .day-pick { display: grid; grid-template-columns: minmax(0, 220px) auto; align-items: end; gap: 8px 10px; margin-top: 10px; }

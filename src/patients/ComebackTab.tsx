@@ -1,5 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { EditButton } from '../layout/EditButton'
@@ -108,6 +108,21 @@ export function ComebackTab({ me, onOpen, onBook, canEditServices = false }: {
     setDoctorId(null)
     setComebackCardInHash(slugOf(f))
   }
+  // Карточку сменили адресом, пока вкладка открыта (совет «Бросили лечение», ссылка «Открыть список») — показать её
+  // (QA 2026-11-25: список оставался прежним, а в адресе — другая карточка)
+  useEffect(() => {
+    const onHash = () => {
+      const [name, item] = window.location.hash.replace(/^#\/?/, '').split('/')
+      if (name !== 'patients' || item !== 'comeback') return
+      const next = keyOfSlug(comebackCardInHash()) ?? 'ALL'
+      if (next === filter) return
+      choose(next)
+      setLimit(PAGE)
+      setDoctorId(null)
+    }
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
+  }, [filter])
   const source = sourceOf(filter)
   const ref = refOfCard(filter)
 

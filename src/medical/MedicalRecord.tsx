@@ -19,6 +19,8 @@ import { MultiToothPanel } from './MultiTeeth'
 import { ToothFullscreen } from './ToothFullscreen'
 import './toothChart.css'
 import { rowOpen } from '../lib/rowClick'
+import { EmptyState } from '../layout/EmptyState'
+import { Loading } from '../layout/Loading'
 
 type Patient = Schemas['PatientView']
 type Tooth = Schemas['ToothView']
@@ -282,7 +284,16 @@ function Notes({ patientId }: { patientId: number }) {
     queryKey: ['notes', patientId],
     queryFn: () => unwrap(api.GET('/api/patients/{patientId}/notes', { params: { path: { patientId } } })),
   })
-  if (!notes.data?.length) return null
+  // Пусто, загрузка или ошибка — не белый экран вкладки (QA 2026-11-25: было `return null`)
+  if (notes.isPending) return <Loading />
+  if (notes.error) return <p className="error" role="alert">{notes.error.message}</p>
+  if (!notes.data?.length) {
+    return (
+      <EmptyState compact title="Заметок о визитах пока нет">
+        Врач пишет заметку в карточке приёма, в блоке «Приём», — она появится здесь.
+      </EmptyState>
+    )
+  }
   return (
     <section className="card-block">
       <h2>Заметки о визитах</h2>

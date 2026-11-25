@@ -127,3 +127,14 @@ test('P2: номер в шапке — «Связаться ▾», рядом с
   expect(within(waitlist).getByRole('heading', { name: 'Лист ожидания' })).toBeInTheDocument()
   expect(waitlist).toHaveTextContent('освободится время')
 })
+
+test('«Прочее»: «Приведи друга» и «Договор» — без предупреждения React о двух детях с одним key (QA 2026-11-25)', async () => {
+  backend({ patient: { id: 3, fullName: 'Нурлан К.', phone: '996777555666', telegram: false }, done: 0, noShow: 0, cancelled: 0, upcoming: [], past: [] })
+  const errors = vi.spyOn(console, 'error')
+  renderApp()
+  const panel = await openCard('Нурлан К.')
+  await userEvent.click(within(panel).getByRole('tab', { name: 'Прочее' }))
+  expect(await within(panel).findByText(/Приведи друга/)).toBeInTheDocument()
+  expect(errors.mock.calls.filter((c) => String(c[0]).includes('same key'))).toEqual([])
+  errors.mockRestore()
+})

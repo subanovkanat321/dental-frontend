@@ -117,6 +117,8 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
   const debts = useQuery({
     queryKey: ['debts', 'patient', patientId],
     queryFn: () => unwrap(api.GET('/api/appointments/debts', { params: { query: { patientId } } })),
+    // Ассистент денег не видит — сервер ответит 403, не спрашиваем (QA 2026-11-25)
+    enabled: !isAssistant(me),
   })
   // Заметки о приёмах — медданные: сервер отдаст тем, кто видит медкарту (заметки всех врачей пациента), иначе — без них
   const notes = useQuery({
@@ -367,7 +369,7 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
           {/* «Откуда узнал» — всегда в «Прочем»: в шапке карточки занимал полэкрана */}
           {patient && <SourceLine patient={patient} canEdit={Boolean(mine)} admin={Boolean(mine && me.admin)} />}
           {/* «Приведи друга»: кто пригласил, кого привёл, ссылка для друзей (из «⋯») */}
-          {patient && <ReferralBox key={patient.id} patient={patient} canEdit={Boolean(mine)} link={referralLink}
+          {patient && <ReferralBox key={`referral-${patient.id}`} patient={patient} canEdit={Boolean(mine)} link={referralLink}
             onCloseLink={() => setReferralLink(false)} onOpenPatient={onOpenPatient} />}
           {/* Лист ожидания — с подписью и пояснением: без заголовка «30 мин · к любому врачу» было непонятно, что это */}
           {patient && mine && (
@@ -380,7 +382,7 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
           {patient && <GuardianBox patient={patient} canEdit={Boolean(mine)} />}
           {patient && mine && <FamilyBox patient={patient} me={me} onOpenPatient={onOpenPatient} />}
           {/* Договор и согласие на лечение: печать, подпись на экране, отметка и скан */}
-          {patient && mine && <ContractBox key={patient.id} patient={patient} me={me} defaultDoctorId={(next ?? past[0])?.doctorId}
+          {patient && mine && <ContractBox key={`contract-${patient.id}`} patient={patient} me={me} defaultDoctorId={(next ?? past[0])?.doctorId}
             offerAll={Boolean(me.clinic?.patientContracts)} opened={contractAsked?.id === patient.id ? contractAsked.n : 0} />}
         </section>
       )}
