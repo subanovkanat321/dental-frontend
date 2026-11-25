@@ -2645,6 +2645,7 @@ button.status-pill:focus-visible { outline: 2px solid var(--accent); outline-off
 .sub-bar-dot { flex: none; color: var(--hint); }
 .sub-bar-sub { min-width: 0; overflow: hidden; color: var(--accent-ink); font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
 .sub-bar-caret { flex: none; width: 18px; height: 18px; margin-left: 2px; color: var(--link); }
+.sub-bar-pick { display: contents; }
 
 /* Блок «Я» внизу меню (компьютер): аватар с инициалами, имя и роль; по нажатию — меню над ним.
    Меню «Я» и «Помощи» — карточкой у кнопки (телефон — листом снизу, как «Ещё») */

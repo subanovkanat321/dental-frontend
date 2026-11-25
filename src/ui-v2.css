@@ -1,0 +1,205 @@
+/*
+ * UI v2 — черновик нового оформления (docs/ui-v2.md, DESIGN.md → «UI v2 (черновик)»). Каждое правило — под
+ * `.ui-v2` (класс на <html>, lib/uiVersion.ts): без флага файл ничего не меняет. Токены `--v2-*` — в tokens.css.
+ *
+ * Принципы: светлый тонированный фон и белые карточки (радиус 20, мягкая тень, отступ 20); на телефоне — крупный
+ * заголовок раздела 34px, текст 17px, кнопки и поля от 48px; списки — сгруппированные строки с цветной плиткой-иконкой;
+ * нижнее меню — плавающая белая «таблетка». Цвета — наши (бирюзовый, оттенки разделов `--ico-*`).
+ */
+
+/* ── Везде (и компьютер): фон, карточки, кнопки, поля ─────────────────────────────────────────────── */
+.ui-v2 body { background: var(--v2-page); }
+.ui-v2 .card-block { border-radius: var(--v2-r-card); background: var(--v2-card); box-shadow: var(--v2-shadow); }
+.ui-v2 .calm-list { border: 0; border-radius: var(--v2-r-card); background: var(--v2-card); box-shadow: var(--v2-shadow); }
+.ui-v2 h1, .ui-v2 h2 { color: var(--v2-ink); }
+.ui-v2 .btn { border-radius: var(--r-md); font-weight: 600; }
+.ui-v2 .btn.primary { border-radius: var(--v2-r-pill); }
+.ui-v2 .search, .ui-v2 .field input, .ui-v2 .field textarea, .ui-v2 .ui-select { border-radius: var(--r-md); }
+
+/* Переключатель: белая дорожка, выбранный — залитая бирюзовая «таблетка» с белым текстом */
+.ui-v2 .segments { gap: 4px; padding: 4px; border-radius: var(--v2-r-pill); background: var(--v2-track); box-shadow: var(--v2-shadow); }
+.ui-v2 .segments button { border-radius: var(--v2-r-pill); color: var(--hint); font-weight: 500; }
+:root.ui-v2:has(.shell) .segments button[aria-pressed=true], .ui-v2 .segments button[aria-pressed=true] { background: var(--accent-hover); color: var(--accent-text); font-weight: 600; box-shadow: none; }
+.ui-v2 .segments button:hover:not([aria-pressed=true]):not(:disabled) { background: var(--sunken); }
+/* В белой карточке дорожка — серая подложка, иначе пропадает */
+.ui-v2 .card-block .segments, .ui-v2 .panel .segments { background: var(--sunken); box-shadow: none; }
+
+/* Пустое состояние: крупный мягкий значок, заголовок, 1–2 строки и кнопка-«таблетка» */
+.ui-v2 .empty-state:not(.compact) { gap: 12px; }
+.ui-v2 .empty-state:not(.compact) .empty-mark { width: 88px; height: 136px; }
+.ui-v2 .empty-state:not(.compact) .empty-title { color: var(--v2-ink); font-size: 1.35rem; font-weight: 700; }
+.ui-v2 .empty-state:not(.compact) .empty-body .hint { font-size: 1rem; }
+.ui-v2 .empty-state:not(.compact) .empty-action .btn { min-height: 48px; padding: 0 24px; border-radius: var(--v2-r-pill); font-size: 1rem; }
+
+/* Плитки-итоги: большое число и подпись; главная — залита бирюзовым */
+.ui-v2 .methods.cash-flow { gap: 10px; }
+.ui-v2 .methods.cash-flow > div { gap: 4px; padding: 14px 16px; border-radius: var(--v2-r-row); background: var(--sunken); color: var(--hint); font-size: .9rem; }
+.ui-v2 .methods.cash-flow > div b { color: var(--v2-ink); font: 700 1.35rem var(--display); letter-spacing: -.01em; }
+.ui-v2 .methods.cash-flow > div:first-child { background: var(--accent-hover); color: var(--accent-text); }
+.ui-v2 .methods.cash-flow > div:first-child b { color: var(--accent-text); }
+.ui-v2 .methods.cash-flow > div.tone-ok b { color: var(--status-ok); }
+.ui-v2 .methods.cash-flow > div.tone-bad b { color: var(--destructive); }
+
+/* Большие суммы */
+.ui-v2 .total { font-weight: 700; letter-spacing: -.02em; }
+.ui-v2 .money-cell h3 { color: var(--hint); font-size: .95rem; font-weight: 600; }
+
+/* Переключатели вместо галочек — у пунктов-настроек (страницы «Настроек» и «Клиники») */
+.ui-v2 .settings-item .check > input[type=checkbox] {
+  flex: none; position: relative; width: 51px; height: 31px; margin: 0; border-radius: 999px; background: var(--line-strong);
+  -webkit-appearance: none; appearance: none; cursor: pointer; transition: background .2s;
+}
+.ui-v2 .settings-item .check > input[type=checkbox]::before {
+  content: ''; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%; background: #FFFFFF;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, .2); transition: transform .2s;
+}
+.ui-v2 .settings-item .check > input[type=checkbox]:checked { background: var(--accent); }
+.ui-v2 .settings-item .check > input[type=checkbox]:checked::before { transform: translateX(20px); }
+.ui-v2 .settings-item .check > input[type=checkbox]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ui-v2 .settings-item .check > input[type=checkbox]:disabled { opacity: .5; cursor: default; }
+.ui-v2 .settings-item .check { gap: 12px; min-height: 48px; }
+
+/* «‹ Назад» в пунктах «Я» и «Помощи» — круглая кнопка (имя для читалок — прежнее «‹ Назад») */
+.ui-v2 .settings-back { width: 44px; min-height: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: var(--v2-card);
+  box-shadow: var(--v2-shadow); font-size: 0; }
+.ui-v2 .settings-back::before { content: '‹'; font-size: 30px; line-height: 1; margin-top: -3px; color: var(--v2-ink); }
+
+/* ── Компьютер: меню и вкладки чуть мягче ─────────────────────────────────────────────────────────── */
+@media (min-width: 761px) {
+  .ui-v2 .workspace { padding: 20px 28px; }
+  .ui-v2 .sub-tabs { background: var(--v2-page); border-bottom-color: transparent; }
+  .ui-v2 .sub-tab.active { border-radius: var(--v2-r-pill) var(--v2-r-pill) 0 0; }
+}
+
+/* ── Телефон ──────────────────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 760px) {
+  /* Текст крупнее: 17px основной (подписи и вторичное — от него в rem) */
+  :root.ui-v2 { font-size: calc(17px * var(--text-scale, 1)); }
+  .ui-v2 .workspace { padding: 16px 16px calc(112px + env(safe-area-inset-bottom) + var(--nav-gap, 0px)); }
+  .ui-v2 .shell:has(> .help-fab) .workspace { padding-bottom: calc(160px + env(safe-area-inset-bottom) + var(--nav-gap, 0px)); }
+  .ui-v2 .card-block { padding: var(--v2-pad); }
+  .ui-v2 .btn { min-height: var(--v2-control); }
+  .ui-v2 .segments button { min-height: 40px; }
+  .ui-v2 .total { font-size: 2.6rem; line-height: 1.1; }
+
+  /* Нижнее меню — плавающая белая «таблетка» с тенью, с полями по бокам */
+  /* z-index выше листов «Ещё» и подразделов: меню плавает и над ними (у листа снизу запас под меню) */
+  .ui-v2 .sidebar {
+    z-index: 36; left: 10px; right: 10px; bottom: calc(10px + env(safe-area-inset-bottom) - var(--nav-drop, 0px));
+    padding: 5px; border: 0; border-radius: var(--v2-tabbar-r); background: var(--v2-card); box-shadow: var(--v2-shadow-float);
+  }
+  .ui-v2 .sidebar::after { content: none; }
+  .ui-v2 .sidebar .nav { gap: 3px; min-height: 60px; padding: 6px 0 5px; border-radius: 26px; font-size: calc(12.5px / var(--text-scale, 1)); font-weight: 500; letter-spacing: -.01em; color: var(--hint); }
+  /* «Расписание» — самая длинная подпись: ячейке чуть больше места, чтобы не резалась многоточием */
+  .ui-v2 .sidebar .nav[data-section=schedule] { flex-grow: 1.3; }
+  .ui-v2 .sidebar .nav .icon { width: 28px; height: 28px; padding: 0; border-radius: 0; background: none !important; }
+  .ui-v2 .sidebar .nav.active, .ui-v2 .nav-item.sub-active > .nav-row > .nav.active, .ui-v2 .sidebar .nav[aria-expanded=true] {
+    background: var(--accent-soft); color: var(--accent-ink);
+  }
+  .ui-v2 .sidebar .nav.active .icon { color: var(--accent-ink); }
+  .ui-v2 .help-fab { bottom: calc(96px + env(safe-area-inset-bottom) - var(--nav-drop, 0px)); right: 16px; width: 52px; height: 52px; border: 0;
+    box-shadow: var(--v2-shadow-float); }
+
+  /* Листы «Ещё» и подразделов — над плавающим меню, на тонированном фоне, строки — сгруппированными карточками */
+  .ui-v2 .more-sheet, .ui-v2 .more-sheet.nav-sheet { bottom: 0; background: rgba(11, 34, 41, .32); }
+  .ui-v2 .more-card, .ui-v2 .nav-sheet-card.more-card {
+    bottom: 0; gap: 0; padding: 18px 16px calc(98px + env(safe-area-inset-bottom) - var(--nav-drop, 0px));
+    border-radius: 28px 28px 0 0; background: var(--v2-page); max-height: calc(100dvh - 24px);
+  }
+  .ui-v2 .sub-sheet-head { margin: 0 0 14px !important; }
+  .ui-v2 .sub-sheet-head .sub-bar-ico { display: none; }
+  .ui-v2 .sub-sheet-head h2 { color: var(--v2-ink); font: 700 var(--v2-title) / 1.1 var(--display); letter-spacing: -.02em; }
+  .ui-v2 .sub-sheet-close { width: 40px; height: 40px; background: var(--v2-card); box-shadow: var(--v2-shadow); color: var(--v2-ink); font-size: 1rem; }
+
+  .ui-v2 .nav-sheet-card .nav-group, .ui-v2 .sub-sheet .nav-group { margin: 22px 4px 10px; color: var(--v2-ink); font: 700 var(--v2-group) / 1.2 var(--display);
+    letter-spacing: -.01em; text-transform: none; }
+  .ui-v2 .nav-sheet-item {
+    gap: 14px; min-height: 76px; margin: 0; padding: 14px 16px; border-radius: 0; background: var(--v2-card);
+    position: relative;
+  }
+  /* Строки одной группы — одна карточка: скругления у первой и последней, тонкая линия между ними от текста */
+  .ui-v2 .nav-sheet-item.first, .ui-v2 .nav-sheet-item.first + .nav-sheet-item, .ui-v2 .nav-group + .nav-sheet-item {
+    border-top-left-radius: var(--v2-r-card); border-top-right-radius: var(--v2-r-card);
+  }
+  .ui-v2 .nav-sheet-item.first, .ui-v2 .nav-sheet-item:has(+ .nav-group), .ui-v2 .nav-sheet-item:last-child {
+    border-bottom-left-radius: var(--v2-r-card); border-bottom-right-radius: var(--v2-r-card);
+  }
+  .ui-v2 .nav-sheet-item:not(.first) + .nav-sheet-item::before { content: ''; position: absolute; top: 0; left: 74px; right: 0; height: 1px; background: var(--separator); }
+  .ui-v2 .nav-sheet-item.first { margin-bottom: 0; background: var(--v2-card); box-shadow: inset 0 0 0 2px var(--accent); }
+  .ui-v2 .nav-sheet-item.first + .nav-sheet-item:not(.nav-group + *) { margin-top: 14px; }
+  .ui-v2 .nav-sheet-item:active { background: var(--sunken); }
+  .ui-v2 .nav-sheet-item > .sub-ico, .ui-v2 .nav-sheet-item.first > .sub-ico {
+    width: var(--v2-tile); height: var(--v2-tile); padding: 10px; border-radius: var(--v2-r-tile);
+    background: var(--sub-ico, var(--accent)); color: var(--v2-tile-glyph); stroke-width: 2;
+  }
+  .ui-v2 .nav-sheet-title, .ui-v2 .nav-sheet-item.first .nav-sheet-title { color: var(--v2-ink); font-size: var(--v2-row-title); font-weight: 600; }
+  .ui-v2 .nav-sheet-hint { color: var(--hint); font-size: var(--v2-row-sub); }
+  .ui-v2 .nav-sheet-item:not(.first)::after { content: '›'; flex: none; margin-left: 2px; color: var(--faint); font-size: 26px; line-height: 1; }
+  .ui-v2 .nav-sheet-check { width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; background: var(--accent); color: var(--accent-text); font-size: .8rem; }
+
+  /* Лист «Ещё»: себя — карточкой, разделы — строками с плиткой */
+  .ui-v2 .more-who-btn { padding: 14px 16px; margin-bottom: 14px; border: 0; border-radius: var(--v2-r-card); background: var(--v2-card); box-shadow: none; }
+  .ui-v2 .more-item { gap: 14px; min-height: 64px; padding: 10px 16px; border-radius: 0; background: var(--v2-card); font-size: var(--v2-row-title); font-weight: 600; color: var(--v2-ink); position: relative; }
+  .ui-v2 .more-who-btn + .more-item { border-top-left-radius: var(--v2-r-card); border-top-right-radius: var(--v2-r-card); }
+  .ui-v2 .more-item:last-child { border-bottom-left-radius: var(--v2-r-card); border-bottom-right-radius: var(--v2-r-card); }
+  .ui-v2 .more-item + .more-item::before { content: ''; position: absolute; top: 0; left: 74px; right: 0; height: 1px; background: var(--separator); }
+  .ui-v2 .more-item::after { content: '›'; margin-left: auto; color: var(--faint); font-size: 26px; font-weight: 400; line-height: 1; }
+  .ui-v2 .more-item.active { background: var(--v2-card); color: var(--accent-ink); }
+  .ui-v2 .more-item .icon { width: var(--v2-tile); height: var(--v2-tile); padding: 10px; border-radius: var(--v2-r-tile); background: var(--tile, var(--accent)); color: var(--v2-tile-glyph) !important; stroke-width: 2; }
+  .ui-v2 .more-item[data-section=clinic] { --tile: var(--ico-clinic); }
+  .ui-v2 .more-item[data-section=learn] { --tile: var(--ico-learn); }
+  .ui-v2 .more-item[data-section=settings] { --tile: var(--ico-settings); }
+  .ui-v2 .more-item[data-section=platform] { --tile: var(--ico-platform); }
+  .ui-v2 .more-item[data-section=help] { --tile: var(--ico-help); }
+  .ui-v2 .more-item[data-section=team] { --tile: var(--ico-patients); }
+
+  /* Заголовок раздела: крупно 34px слева, подраздел — «таблеткой» под ним; уезжает при прокрутке, как в iOS */
+  .ui-v2 .sub-tabs-slot { position: static; margin: -16px -16px 4px; }
+  .ui-v2 .sub-bar { height: auto; padding: 18px 16px 6px; background: none; border: 0; box-shadow: none !important; align-items: flex-start; }
+  .ui-v2 .sub-bar-btn { flex-wrap: wrap; height: auto; margin: 0; padding: 0; gap: 8px; background: none !important; }
+  .ui-v2 .sub-bar:not(.v2-drill) .sub-bar-ico, .ui-v2 .sub-bar-dot { display: none; }
+  .ui-v2 .sub-bar-sect { flex-basis: 100%; color: var(--v2-ink); font: 700 var(--v2-title) / 1.12 var(--display); letter-spacing: -.02em; }
+  .ui-v2 .sub-bar-pick { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 12px 0 16px; border-radius: var(--v2-r-pill);
+    background: var(--v2-card); box-shadow: var(--v2-shadow); font-size: .95rem; }
+  .ui-v2 .sub-bar-btn[aria-expanded=true] .sub-bar-pick, .ui-v2 .sub-bar-btn:active .sub-bar-pick { background: var(--accent-soft); }
+  .ui-v2 .sub-bar .sub-tabs-helps { margin-top: 6px; }
+  .ui-v2 .sub-bar .sub-tabs-help .help-hint-btn { width: 36px; height: 36px; border: 0; background: var(--v2-card); box-shadow: var(--v2-shadow); }
+
+  /* Экран «внутрь» (пункт «Настроек», «Клиники»): круглая «‹» слева, название по центру; прилипает сверху */
+  .ui-v2 .sub-tabs-slot:has(.v2-drill) { position: sticky; top: 0; margin-bottom: 8px; }
+  .ui-v2 .sub-bar.v2-drill { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; gap: 8px; min-height: 64px; padding: 10px 16px;
+    background: color-mix(in srgb, var(--v2-page) 88%, transparent); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+  .ui-v2 .v2-drill .sub-bar-btn { grid-column: 1; grid-row: 1; justify-content: center; width: 44px; height: 44px; border-radius: 50%; background: var(--v2-card) !important;
+    box-shadow: var(--v2-shadow); color: var(--v2-ink); }
+  .ui-v2 .v2-drill .sub-bar-btn:active { background: var(--sunken) !important; }
+  .ui-v2 .v2-back-glyph { font-size: 32px; line-height: 1; margin: -4px 0 0 -2px; }
+  .ui-v2 .v2-drill-title { grid-column: 2; grid-row: 1; margin: 0; overflow: hidden; color: var(--v2-ink); font: 600 1.05rem / 1.25 var(--display); text-align: center;
+    text-overflow: ellipsis; white-space: nowrap; }
+  .ui-v2 .v2-drill .sub-tabs-helps { grid-column: 3; grid-row: 1; justify-self: end; margin: 0; }
+
+  /* Шапка страницы под крупным заголовком — без белой полосы */
+  .ui-v2 .toolbar.sticky-head { background: none; box-shadow: none !important; }
+
+  /* «Пациенты → Все»: большой круглый поиск, фильтры «таблетками», список — белой карточкой со строками 17px */
+  .ui-v2 .patients-head .search {
+    min-height: 52px; padding: 0 16px 0 46px; border: 0; border-radius: var(--v2-r-control); background: var(--v2-card) no-repeat 16px 50% / 20px 20px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2375898E' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E");
+    box-shadow: var(--v2-shadow); font-size: 17px !important;
+  }
+  .ui-v2 .patients-head .search:focus { outline: 2px solid var(--accent); outline-offset: 0; }
+  .ui-v2 .patients-head .head-filters { gap: 10px; }
+  .ui-v2 .page-head .ui-select { border: 0; background-color: var(--v2-card); box-shadow: var(--v2-shadow); }
+  .ui-v2 .patients-head .head-filters .ui-select { min-height: 40px; border: 0; border-radius: var(--v2-r-pill); background-color: var(--v2-card); box-shadow: var(--v2-shadow); font-size: 15px !important; }
+  .ui-v2 .patients-head .head-action { min-height: 52px; font-size: 1rem; }
+  .ui-v2 .schedule-main:has(> .empty-state.fill) .patients-head .head-action { display: none; }
+  .ui-v2 .calm-row { min-height: 72px; padding: 12px 18px; }
+  .ui-v2 .calm-name { font-size: var(--v2-row-title); color: var(--v2-ink); }
+  .ui-v2 .calm-sub, .ui-v2 .calm-meta { font-size: var(--v2-row-sub); }
+  .ui-v2 .calm-row + .calm-row { border-top: 0; box-shadow: inset 0 1px 0 var(--separator); }
+
+  /* «Касса → Деньги»: верхняя карточка — переключатель периода на всю ширину и крупная сумма */
+  .ui-v2 .cash .segments { width: 100%; }
+  .ui-v2 .money-cell .total { font-size: 2.75rem; margin: 4px 0 2px; }
+  .ui-v2 .methods.cash-flow { grid-template-columns: 1fr 1fr; }
+  .ui-v2 .methods.cash-flow > div:last-child { grid-column: 1 / -1; }
+}

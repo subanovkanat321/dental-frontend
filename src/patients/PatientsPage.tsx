@@ -20,6 +20,7 @@ import { useDebounced } from '../lib/useDebounced'
 import { phoneSearchDigits } from '../lib/phone'
 import { useHeadSlot } from '../layout/headSlot'
 import { EmptyState } from '../layout/EmptyState'
+import { isUiV2 } from '../lib/uiVersion'
 import { Select } from '../layout/Select'
 import { Spinner } from '../layout/Loading'
 import { HelpHint } from '../help/HelpHint'
@@ -193,7 +194,9 @@ export function PatientsPage({ me, onBook, onBookLead, initialPatient, initialQu
         {tab === 'all' && birthdaysOnly && !dupsOnly && <section className="card-block" aria-label="Дни рождения сегодня"><BirthdayList onOpen={setSelected} /></section>}
         {tab === 'all' && !birthdaysOnly && !dupsOnly && recent.error && <p className="error">{recent.error.message}</p>}
         {tab === 'all' && !birthdaysOnly && !dupsOnly && recent.isSuccess && sorted.length === 0 && (
-          <EmptyState fill title={text ? (remote.isFetching ? 'Ищем по всей клинике…' : `Никого не нашли по «${query.trim()}»`) : doctorId != null ? 'У этого врача пока не было пациентов' : 'Пациентов пока нет'}>
+          <EmptyState fill title={text ? (remote.isFetching ? 'Ищем по всей клинике…' : `Никого не нашли по «${query.trim()}»`) : doctorId != null ? 'У этого врача пока не было пациентов' : 'Пациентов пока нет'}
+            /* UI v2 (черновик): у пустого списка — своя кнопка-«таблетка», верхняя «Новый пациент» тогда прячется (ui-v2.css) */
+            action={isUiV2() && !text && doctorId == null ? <button type="button" className="btn primary" onClick={() => setSelected('new')}>＋ Добавить пациента</button> : undefined}>
             {text ? (remote.isFetching ? undefined : 'Попробуйте последние цифры телефона.') : doctorId == null ? 'Появятся с первой записью.' : undefined}
           </EmptyState>
         )}

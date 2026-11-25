@@ -20,6 +20,8 @@ import '@fontsource/golos-text/latin-700.css'
 // Стили — до компонентов: их собственные .css (pwa.css, timeinput.css…) должны идти после общих, как раньше
 import './tokens.css'
 import './crm.css'
+// Черновик нового оформления (docs/ui-v2.md): правила только под классом .ui-v2 на <html>, по умолчанию выключено
+import './ui-v2.css'
 
 import { createQueryClient } from './api/queryClient'
 import { App } from './App'
@@ -31,6 +33,7 @@ import { startErrorReports } from './lib/clientErrors'
 import { startTableLabels } from './lib/tableLabels'
 import { startVisualViewport } from './lib/visualViewport'
 import { applyLook } from './lib/theme'
+import { applyUi } from './lib/uiVersion'
 import { listenInstallPrompt } from './pwa/pwa'
 import { startVersionCheck } from './pwa/version'
 
@@ -47,6 +50,8 @@ listenInstallPrompt()
 startVersionCheck()
 // Тема и размер текста — до первой отрисовки; «как в Telegram/системе» следит за сменой
 applyLook()
+// Оформление v2 — по флагу устройства или ?ui=v2 (lib/uiVersion.ts), тоже до первой отрисовки
+applyUi()
 telegram()?.onEvent?.('themeChanged', applyLook)
 window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener?.('change', applyLook)
 

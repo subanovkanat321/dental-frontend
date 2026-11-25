@@ -5,6 +5,7 @@ import type { Page } from '../lib/route'
 import { useSectionActive } from '../lib/section'
 import { subHref } from '../lib/sub'
 import { matches, useMedia } from '../lib/useMedia'
+import { isUiV2 } from '../lib/uiVersion'
 import { countOf, isLoud, sumOf, type Sub } from './nav'
 import { NavCount } from './NavCount'
 import { Icon } from './Icon'
@@ -113,18 +114,27 @@ function SubTitleBar({ nav, page, title, subTitle, hint }: { nav: NavApi; page: 
   const others = subs.filter((s) => s.key !== active)
   const sum = sumOf(nav.counts, page, others, nav.loud)
   const open = nav.sheet === page
+  // UI v2 (черновик): пункт «Настроек» и «Клиники» — экран «внутрь»: круглая «‹» слева (открывает тот же список
+  // пунктов) и название по центру; разделы-списки — крупный заголовок и подраздел «таблеткой» (только CSS)
+  const drill = isUiV2() && (page === 'settings' || page === 'clinic')
   return (
-    <nav className="sub-tabs sub-bar" data-tour="sub-tabs" aria-label={`Подразделы: ${title}`} data-stuck={stuck || undefined}>
+    <nav className={drill ? 'sub-tabs sub-bar v2-drill' : 'sub-tabs sub-bar'} data-tour="sub-tabs" aria-label={`Подразделы: ${title}`} data-stuck={stuck || undefined}>
       <button type="button" className="sub-bar-btn" aria-haspopup="menu" aria-expanded={open}
         aria-label={`${title} · ${subTitle}: выбрать подраздел${sum.total ? ` (новое в других: ${sum.total})` : ''}`}
         onClick={() => { closeTip(); nav.openSheet(page) }}>
-        <span className="sub-bar-ico" style={{ color: `var(--ico-${page})` }}><Icon name={page} /></span>
-        <span className="sub-bar-sect">{title}</span>
-        <span className="sub-bar-dot" aria-hidden="true">·</span>
-        <strong className="sub-bar-sub">{subTitle}</strong>
-        <NavCount n={sum.total} loud={sum.loud} />
-        <svg className="sub-bar-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+        {drill ? <span className="v2-back-glyph" aria-hidden="true">‹</span> : <>
+          <span className="sub-bar-ico" style={{ color: `var(--ico-${page})` }}><Icon name={page} /></span>
+          <span className="sub-bar-sect">{title}</span>
+          <span className="sub-bar-dot" aria-hidden="true">·</span>
+          {/* Обёртка — для UI v2: подраздел «таблеткой» под крупным заголовком; в прежнем оформлении её как бы нет (display: contents) */}
+          <span className="sub-bar-pick">
+            <strong className="sub-bar-sub">{subTitle}</strong>
+            <NavCount n={sum.total} loud={sum.loud} />
+            <svg className="sub-bar-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+          </span>
+        </>}
       </button>
+      {drill && <p className="v2-drill-title" aria-hidden="true">{subTitle}</p>}
       <span className="sub-tabs-helps">
         {hint && !subHelp && <span className="sub-tabs-help">{hint}</span>}
         <span ref={setHelpSlot} className="sub-tabs-help sub-help" />

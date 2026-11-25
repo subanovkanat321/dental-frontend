@@ -490,3 +490,37 @@ input[type=date], input[type=month] { min-width: 0; max-width: 100%; }
 .empty-state .actions > .btn { width: 100%; justify-content: center; }
 @media (min-width: 761px) { .empty-state .actions { flex-direction: row; flex-wrap: wrap; justify-content: center; width: auto; }
   .empty-state .actions > .btn { width: auto; } }
+
+/*
+ * UI v2 (черновик, docs/ui-v2.md; DESIGN.md → «UI v2 (черновик)»): токены нового оформления. Действуют только
+ * с классом `ui-v2` на <html> (lib/uiVersion.ts: флаг `tish.ui` или `?ui=v2`), правила компонентов — src/ui-v2.css.
+ * Цвета — наши: фон — очень светлый оттенок бирюзово-серого из палитры, текст заголовков — тёмный сине-бирюзовый.
+ */
+:root.ui-v2 {
+  --v2-page: #EEF3F2;
+  --v2-card: #FFFFFF;
+  --v2-ink: #0B2229;
+  --v2-track: #FFFFFF;
+  --v2-tile-glyph: #FFFFFF;
+  --v2-shadow: 0 1px 2px rgba(11, 34, 41, .04), 0 4px 16px rgba(11, 34, 41, .06);
+  --v2-shadow-float: 0 10px 30px rgba(11, 34, 41, .14), 0 2px 6px rgba(11, 34, 41, .06);
+  --v2-r-card: 20px; --v2-r-row: 16px; --v2-r-tile: 12px; --v2-r-control: 14px; --v2-r-pill: 999px;
+  --v2-gap: 14px; --v2-pad: 20px;
+  --v2-title: 34px; --v2-group: 20px; --v2-row-title: 17px; --v2-row-sub: 15px;
+  --v2-tile: 44px; --v2-control: 48px; --v2-tabbar-r: 32px;
+  /* Старые имена — на значения v2: карточки, кнопки и поля всех экранов скругляются и получают мягкую тень */
+  --crm-page: var(--v2-page);
+  --radius: var(--v2-r-card);
+  --r-md: 12px;
+  --shadow: var(--v2-shadow);
+}
+:root.ui-v2[data-theme=dark] {
+  --v2-page: #0A1517; --v2-card: #13252A; --v2-ink: #EEF6F6; --v2-track: #13252A; --v2-tile-glyph: #0A1517;
+  --v2-shadow: 0 1px 2px rgba(0, 0, 0, .35); --v2-shadow-float: 0 10px 30px rgba(0, 0, 0, .55), 0 0 0 1px #21383E;
+}
+@media (prefers-color-scheme: dark) {
+  :root.ui-v2:not([data-theme]) {
+    --v2-page: #0A1517; --v2-card: #13252A; --v2-ink: #EEF6F6; --v2-track: #13252A; --v2-tile-glyph: #0A1517;
+    --v2-shadow: 0 1px 2px rgba(0, 0, 0, .35); --v2-shadow-float: 0 10px 30px rgba(0, 0, 0, .55), 0 0 0 1px #21383E;
+  }
+}
