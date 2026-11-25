@@ -3,6 +3,18 @@ import type { Schemas } from '../api/client'
 type Me = Schemas['BookingViewsMe']
 
 /** Ассистент врача (V68): закреплён за врачами, денег и настроек не видит. */
+/**
+ * Врач по умолчанию в фильтрах «Все врачи / врач» (2026-11-25, владелец: «по дефолту — по врачу авторизованному»):
+ * свой врач, если он среди врачей фильтра; ассистенту одного врача — этот врач; иначе null — «Все врачи».
+ * ids — врачи в выборе фильтра (нет — все активные врачи клиники).
+ */
+export function myDoctorDefault(me: Me, ids?: (number | undefined)[]): number | null {
+  const list = ids ?? (me.doctors ?? []).filter((d) => d.active !== false).map((d) => d.id)
+  if (me.doctorId != null && list.includes(me.doctorId)) return me.doctorId
+  if (me.assistantOf?.length === 1 && list.includes(me.assistantOf[0])) return me.assistantOf[0]!
+  return null
+}
+
 export function isAssistant(me: Me): boolean {
   return (me.assistantOf?.length ?? 0) > 0
 }

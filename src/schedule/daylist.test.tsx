@@ -41,7 +41,7 @@ function backend() {
 
 test('телефон, «Все врачи» — список: приёмы обоих врачей и свободные окна с именем врача', async () => {
   backend()
-  localStorage.setItem('crm.schedule.view', 'all')
+  localStorage.setItem('crm.schedule.view.v2', 'all')
   renderApp()
   // Как в прежнем приложении: открывается свой день, даже если в прошлый раз смотрели всех
   expect(await screen.findByRole('button', { name: /10:00–10:30, Бакыт М\./ })).toBeInTheDocument()
@@ -77,7 +77,7 @@ test('телефон, «Все врачи» — список: приёмы об�
 
 test('телефон, один врач — только его приёмы и окна', async () => {
   backend()
-  localStorage.setItem('crm.schedule.view', '1')
+  localStorage.setItem('crm.schedule.view.v2', '1')
   renderApp()
   expect(await screen.findByRole('button', { name: /10:00–10:30, Бакыт М\./ })).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: /12:00–12:30, Нурлан К\./ })).not.toBeInTheDocument()

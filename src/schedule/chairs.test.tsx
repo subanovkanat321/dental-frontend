@@ -8,6 +8,9 @@ import { me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 import { warmSchedule } from '../test/wait'
 
+// Сетка «Все врачи» на компьютере: с 2026-11-25 по умолчанию открывается свой врач — выбор «Все врачи» запомнен
+beforeEach(() => { localStorage.setItem('crm.schedule.view.v2', 'all') })
+
 /** Общее кресло (V185) в «Расписании» на компьютере. Врачи — вымышленные. */
 beforeAll(warmSchedule, 60_000)
 beforeEach(() => {

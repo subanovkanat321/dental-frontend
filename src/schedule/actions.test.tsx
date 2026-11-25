@@ -7,6 +7,9 @@ import { todayIn } from '../lib/time'
 import { appointment, me, renderApp, expand, openPay, pickStatus, statusMenu, chosenDoctor, pickDoctorChip, openBooked, openNewMore, serviceField, servicesChosen, pickService, serviceOptionsShown } from '../test/fixtures'
 import { server } from '../test/server'
 
+// Сетка «Все врачи» на компьютере: с 2026-11-25 по умолчанию открывается свой врач — выбор «Все врачи» запомнен
+beforeEach(() => { localStorage.setItem('crm.schedule.view.v2', 'all') })
+
 type Appointment = Schemas['AppointmentView']
 
 /** Фальшивый бэкенд с одним днём: список приёмов меняется, как на сервере. */

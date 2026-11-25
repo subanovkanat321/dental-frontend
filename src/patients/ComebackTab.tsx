@@ -13,6 +13,7 @@ import { ask } from '../lib/confirm'
 import { haptic, openLink } from '../lib/telegram'
 import { agoText, recentlyInvited, whatsappUrl } from '../lib/texts'
 import { comebackCardInHash, setComebackCardInHash } from '../lib/route'
+import { myDoctorDefault } from '../lib/roles'
 import { useMedia } from '../lib/useMedia'
 import { addDays, shortDate, somText, todayIn } from '../lib/time'
 import { dueText, monthsText } from '../clinic/services'
@@ -98,14 +99,16 @@ export function ComebackTab({ me, onOpen, onBook, canEditServices = false }: {
   // Карточка — из адреса (#/patients/comeback/dropped: старые ссылки «Бросили лечение», закладки), иначе «Все»
   const [filter, choose] = useState<CardKey>(() => keyOfSlug(comebackCardInHash()) ?? 'ALL')
   const [limit, setLimit] = useState(PAGE)
-  const [doctorId, setDoctorId] = useState<number | null>(null)
+  // Врач в своих группах — по умолчанию свой (руководитель-врач), «Все врачи» — выбором
+  const myDoctor = me.admin || me.reception ? myDoctorDefault(me) : null
+  const [doctorId, setDoctorId] = useState<number | null>(myDoctor)
   const [editing, setEditing] = useState<GroupItem | 'new' | null>(null)
   const [calling, setCalling] = useState(false)
   const [message, setMessage] = useState<number | null>(null)
   const setFilter = (f: CardKey) => {
     choose(f)
     setLimit(PAGE)
-    setDoctorId(null)
+    setDoctorId(myDoctor)
     setComebackCardInHash(slugOf(f))
   }
   // Карточку сменили адресом, пока вкладка открыта (совет «Бросили лечение», ссылка «Открыть список») — показать её
@@ -118,11 +121,11 @@ export function ComebackTab({ me, onOpen, onBook, canEditServices = false }: {
       if (next === filter) return
       choose(next)
       setLimit(PAGE)
-      setDoctorId(null)
+      setDoctorId(myDoctor)
     }
     window.addEventListener('hashchange', onHash)
     return () => window.removeEventListener('hashchange', onHash)
-  }, [filter])
+  }, [filter, myDoctor])
   const source = sourceOf(filter)
   const ref = refOfCard(filter)
 

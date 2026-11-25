@@ -6,7 +6,7 @@ import type { Schemas } from '../api/client'
 import { addDays, todayIn } from '../lib/time'
 import { appointment, me, renderApp, findSub } from '../test/fixtures'
 import { server } from '../test/server'
-import { choose } from '../test/select'
+import { choose, chosen } from '../test/select'
 import { waitForSlow } from '../test/wait'
 
 /** Приём через n дней в time — вымышленный пациент. */
@@ -39,6 +39,11 @@ test('«Пациенты → Записаны»: будущие записи в�
   await userEvent.click(await findSub('Записаны'))
   const list = await screen.findByRole('region', { name: 'Записанные пациенты' })
   expect(await within(list).findByText('Айгуль Т.')).toBeInTheDocument()
+  // По умолчанию — свой врач (2026-11-25): Нурлана (врач 2) нет, пока не выбрали «Все врачи»
+  expect(chosen(screen.getByRole('combobox', { name: 'Врач' }))).toContain('Айгерим')
+  expect(within(list).queryByText('Нурлан К.')).toBeNull()
+  await choose(screen.getByRole('combobox', { name: 'Врач' }), 'Все врачи')
+  expect(await within(list).findByText('Нурлан К.')).toBeInTheDocument()
   // Фильтры — в строке шапки «Пациентов» (PageHead); сколько — тихо у заголовка дня, общего счётчика нет
   expect(within(list).getAllByRole('heading', { level: 3 }).map((h) => h.textContent?.replace(/^.*·\s*/, ''))).toEqual(['2', '1'])
   expect(screen.queryByText(/Записей:/)).toBeNull()

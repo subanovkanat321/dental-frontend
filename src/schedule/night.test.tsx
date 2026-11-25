@@ -8,6 +8,9 @@ import { appointment, me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 import { offSpans, workSpans } from './workSpans'
 
+// Сетка «Все врачи» на компьютере: с 2026-11-25 по умолчанию открывается свой врач — выбор «Все врачи» запомнен
+beforeEach(() => { localStorage.setItem('crm.schedule.view.v2', 'all') })
+
 /**
  * Ночная смена (V186) в сетке «День» на компьютере: у врача №2 смена вчера 18:00 → 08:00 и сегодня
  * (завтра для теста) 18:00 → 08:00; приём вчера 23:30–00:30 виден утром «со вчера». Пациенты вымышленные.

@@ -77,7 +77,7 @@ test('долги: по умолчанию новые сверху, нажать 
   expect(first()).toBe('Давний')
 })
 
-test('расписание: «Все врачи» или один врач, выбор запоминается', async () => {
+test('расписание: по умолчанию свой врач; «Все врачи» или другой врач — выбор запоминается', async () => {
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.get('*/api/appointments', ({ request }) => HttpResponse.json(new URL(request.url).searchParams.get('doctorId') === '1'
@@ -86,11 +86,15 @@ test('расписание: «Все врачи» или один врач, вы
   const user = userEvent.setup()
   renderApp()
   const views = await screen.findByRole('group', { name: 'Чьё расписание' })
-  expect(await screen.findByRole('button', { name: /Айгуль Т\./ })).toBeInTheDocument()
+  // Вошёл врач (Айгерим, id 1) — открыто его расписание, не «Все врачи» (2026-11-25)
+  expect(await screen.findByRole('button', { name: /Бакыт М\./ })).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /Айгуль Т\./ })).not.toBeInTheDocument()
+  expect(within(views).getByRole('button', { name: 'Все врачи' })).toHaveAttribute('aria-pressed', 'false')
   await user.click(within(views).getByRole('button', { name: 'Дастан Т.' }))
   expect(screen.queryByRole('button', { name: /Бакыт М\./ })).not.toBeInTheDocument()
   expect(screen.getByRole('button', { name: /Айгуль Т\./ })).toBeInTheDocument()
-  expect(localStorage.getItem('crm.schedule.view')).toBe('2')
+  expect(localStorage.getItem('crm.schedule.view.v2')).toBe('2')
   await user.click(within(views).getByRole('button', { name: 'Все врачи' }))
-  expect(screen.getByRole('button', { name: /Бакыт М\./ })).toBeInTheDocument()
+  expect(await screen.findByRole('button', { name: /Бакыт М\./ })).toBeInTheDocument()
+  expect(localStorage.getItem('crm.schedule.view.v2')).toBe('all')
 })

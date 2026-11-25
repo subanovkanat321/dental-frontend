@@ -7,7 +7,7 @@ import { useReminderText } from '../api/settings'
 import { Segments } from '../layout/Segments'
 import { EmptyState } from '../layout/EmptyState'
 import { Select } from '../layout/Select'
-import { canEditDoctor, isAssistant } from '../lib/roles'
+import { canEditDoctor, isAssistant, myDoctorDefault } from '../lib/roles'
 import { openLink } from '../lib/telegram'
 import { whatsappUrl } from '../lib/texts'
 import { addDays, dateOf, dayTitle, timeOf, todayIn } from '../lib/time'
@@ -50,7 +50,7 @@ export function BookedTab({ me, initial, onOpenAppointment }: {
   const today = todayIn()
   // Врач из ссылки — если он в списке (скрытого врача или чужого ассистенту не выбираем)
   const [doctorId, setDoctorId] = useState<number | null>(() =>
-    initial?.doctorId != null && doctors.some((d) => d.id === initial.doctorId) ? initial.doctorId : null)
+    initial?.doctorId != null && doctors.some((d) => d.id === initial.doctorId) ? initial.doctorId : myDoctorDefault(me, doctors.map((d) => d.id)))
   const [period, setPeriod] = useState<Period>(() =>
     initial?.date === today ? 'today' : initial?.date === addDays(today, 1) ? 'tomorrow' : '7')
   const [onlyUnconfirmed, setOnlyUnconfirmed] = useState(Boolean(initial?.unconfirmed))

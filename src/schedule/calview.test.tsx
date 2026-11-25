@@ -11,6 +11,9 @@ import { me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 import { addMonths, daysInMonth, weekdayOf } from './month/monthModel'
 
+// Сетка «Все врачи» на компьютере: с 2026-11-25 по умолчанию открывается свой врач — выбор «Все врачи» запомнен
+beforeEach(() => { localStorage.setItem('crm.schedule.view.v2', 'all') })
+
 /** Стили — текстом: jsdom не применяет CSS, а штриховку и полоску задаёт именно он. */
 const styles = readFileSync('src/tokens.css', 'utf8') + readFileSync('src/crm.css', 'utf8')
 

@@ -8,6 +8,9 @@ import { appointment, me, openItem, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 import { warmSchedule } from '../test/wait'
 
+// Сетка «Все врачи» на компьютере: с 2026-11-25 по умолчанию открывается свой врач — выбор «Все врачи» запомнен
+beforeEach(() => { localStorage.setItem('crm.schedule.view.v2', 'all') })
+
 /**
  * Часы коллеги по креслу (V187) в «Расписании» на компьютере и «Настройки → Кресла». Врачи и пациенты —
  * вымышленные: у Дастана (№2) общее «Кресло 1» с Айгерим (№1), её часы — 15:00–18:00.

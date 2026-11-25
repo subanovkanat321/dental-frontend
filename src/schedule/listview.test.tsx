@@ -38,7 +38,7 @@ function backend() {
 
 test('компьютер: «Список» — только записи и «свободно до …», без сетки; вид запоминается, «День» — снова сетка', async () => {
   backend()
-  localStorage.setItem('crm.schedule.view', '1')
+  localStorage.setItem('crm.schedule.view.v2', '1')
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: 'Список' }))
   expect(await screen.findByRole('button', { name: /^Свободно с 13:00 до 18:00, записать/ })).toBeInTheDocument()

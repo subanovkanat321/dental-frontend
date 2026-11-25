@@ -16,7 +16,7 @@ beforeEach(() => {
     matches: query.includes('max-width'), media: query, addEventListener() {}, removeEventListener() {}, onchange: null,
     addListener() {}, removeListener() {}, dispatchEvent: () => false,
   }))
-  localStorage.setItem('crm.schedule.view', '1')
+  localStorage.setItem('crm.schedule.view.v2', '1')
 })
 afterEach(() => {
   vi.unstubAllGlobals()

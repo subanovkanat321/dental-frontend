@@ -1,0 +1,13 @@
+# Готовая сборка фронта (dist) — образ для сервера: GitHub Actions собирает его на каждый push в main
+# (.github/workflows/dist-image.yml) и кладёт в ghcr.io/subanovkanat321/dental-frontend-dist:<коммит>.
+# Сервер (deploy/update-crm.sh в репозитории dental) берёт из него /src/dist и не собирает фронт сам:
+# на сервере 2 ГБ памяти, а сборка — пик в сотни мегабайт. Внутри — только статика, без исходников и node.
+FROM node:22-alpine AS build
+WORKDIR /src
+COPY package.json package-lock.json ./
+RUN npm ci --no-audit --no-fund
+COPY . .
+RUN npx vite build
+
+FROM scratch
+COPY --from=build /src/dist /src/dist

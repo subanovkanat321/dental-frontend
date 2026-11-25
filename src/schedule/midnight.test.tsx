@@ -11,6 +11,9 @@ import { waitForSlow } from '../test/wait'
 import { PAD, PX, useFitToWindow } from './gridScale'
 import { gridRange, hourLabel } from './workSpans'
 
+// Сетка «Все врачи» на компьютере: с 2026-11-25 по умолчанию открывается свой врач — выбор «Все врачи» запомнен
+beforeEach(() => { localStorage.setItem('crm.schedule.view.v2', 'all') })
+
 type Appointment = Schemas['AppointmentView']
 
 /**

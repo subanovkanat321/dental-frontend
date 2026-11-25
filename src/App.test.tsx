@@ -5,6 +5,9 @@ import { http, HttpResponse } from 'msw'
 import { appointment, me, renderApp } from './test/fixtures'
 import { server } from './test/server'
 
+// Сетка «Все врачи» на компьютере: с 2026-11-25 по умолчанию открывается свой врач — выбор «Все врачи» запомнен
+beforeEach(() => { localStorage.setItem('crm.schedule.view.v2', 'all') })
+
 test('не вошли (401) — вход по номеру и паролю, кнопки «Войти через Telegram» нет; вошли — CRM', async () => {
   let session = false
   let posted: unknown = null
