@@ -22,7 +22,7 @@ export function FreeWindowsChip({ windows, compact, onOpen }: { windows: FreeWin
   return (
     <button type="button" className="stat s-request" onClick={onOpen}
       aria-label={`${freed ? 'Освободилось окно' : 'Свободные окна'}: ${fitsText(people)}`} title="Окна для листа ожидания — предложить">
-      🔔 {compact ? <>Лист ожидания: <b>{open.length}</b> {plural(open.length, 'окно', 'окна', 'окон')}{open.every((w) => dateOf(w.start) !== todayIn()) ? ' завтра' : ''}</> : <>{freed ? 'Освободилось окно' : 'Окна'} · <b>{people}</b> из листа</>}
+      🔔 {compact ? <>{open.every((w) => dateOf(w.start) !== todayIn()) ? 'Завтра' : 'Лист ожидания'}: <b>{open.length}</b> {plural(open.length, 'окно', 'окна', 'окон')}</> : <>{freed ? 'Освободилось окно' : 'Окна'} · <b>{people}</b> из листа</>}
     </button>
   )
 }

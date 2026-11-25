@@ -179,12 +179,14 @@ export function DayList({ me, doctors, date, onDate, onOpen, onQuick, onNew, onN
         </button>
         <button type="button" className="date-step" aria-label="Следующий день" onClick={() => onDate(addDays(date, 1))}>›</button>
         {date !== today && <button type="button" className="btn small date-today" onClick={() => onDate(today)}>Сегодня</button>}
+        {/* «＋ Новая запись» — круглой кнопкой в строке даты (владелец 2026-11-25: «верхние штучки занимают много места»;
+            была отдельной полосой во всю ширину). Пришёл без записи — та же «Новая запись», в ней «⚡ Сейчас» */}
+        {onNewHere && <button type="button" className="btn primary date-new" data-tour="new-appointment" aria-label="＋ Новая запись"
+          title="Новая запись" onClick={onNewHere}>＋</button>}
       </div>
       </>}
       {monthOpen && <MonthSheet date={date} today={today} doctorIds={doctors.map((d) => d.id)} onPick={onDate} onClose={() => setMonthOpen(false)} />}
       {single && !canEditDoctor(single.id) && <p className="readonly-note">Расписание коллеги — только просмотр</p>}
-      {/* Пришёл без записи — та же «Новая запись», в ней «⚡ Сейчас» */}
-      {onNewHere && <div className="day-actions"><button type="button" className="btn primary" data-tour="new-appointment" onClick={onNewHere}>＋ Новая запись</button></div>}
       {/* Одной строкой: «Не работают: … · Показано 6 из 10 · Выходной: … показать» */}
       {(note || doctorsNote) && <p className="hint day-note">{note}{note && doctorsNote ? ' · ' : ''}{doctorsNote}</p>}
       {pending ? <Loading />
