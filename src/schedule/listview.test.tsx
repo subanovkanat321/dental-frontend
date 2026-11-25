@@ -5,6 +5,7 @@ import { http, HttpResponse } from 'msw'
 import { slotInstant, todayIn } from '../lib/time'
 import { appointment, me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
+import { MODE_KEY, resetDefaultMode } from './viewMode'
 
 /** Компьютер: min-width-запросы совпадают, телефонные (max-width) — нет. */
 beforeEach(() => {
@@ -44,7 +45,7 @@ test('компьютер: «Список» — только записи и «с
   expect(await screen.findByRole('button', { name: /^Свободно с 13:00 до 18:00, записать/ })).toBeInTheDocument()
   expect(screen.getByText('свободно до 18:00')).toBeInTheDocument()
   expect(screen.getByRole('button', { name: /10:00–10:30, Бакыт М\./ })).toBeInTheDocument()
-  expect(localStorage.getItem('crm.schedule.mode')).toBe('list')
+  expect(localStorage.getItem(MODE_KEY)).toBe('list')
   // Шапка компьютерная — одна: одна строка дня и одна «Новая запись» (своих у списка нет)
   expect(screen.getAllByRole('button', { name: 'Предыдущий день' })).toHaveLength(1)
   expect(screen.getAllByRole('button', { name: '＋ Новая запись' })).toHaveLength(1)
@@ -53,4 +54,26 @@ test('компьютер: «Список» — только записи и «с
   await userEvent.click(screen.getByRole('button', { name: 'День' }))
   expect(document.querySelector('.grid-wrap')).not.toBeNull()
   expect(screen.queryByText('свободно до 18:00')).not.toBeInTheDocument()
+  expect(localStorage.getItem(MODE_KEY)).toBe('day')
+})
+
+test('компьютер: по умолчанию — «Список»; прежний выбор «День» (старый ключ) не действует, свой новый выбор запоминается', async () => {
+  resetDefaultMode()
+  backend()
+  localStorage.setItem('crm.schedule.view.v2', '1')
+  localStorage.setItem('crm.schedule.mode', 'day')
+  const { unmount } = renderApp()
+  expect(await screen.findByRole('button', { name: /^Свободно с 13:00 до 18:00, записать/ })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Список' })).toHaveAttribute('aria-pressed', 'true')
+  expect(document.querySelector('.grid-wrap')).toBeNull()
+  // Старый ключ стёрт: больше не мешает
+  expect(localStorage.getItem('crm.schedule.mode')).toBeNull()
+
+  // Выбрали «День» — в следующий раз откроется он
+  await userEvent.click(screen.getByRole('button', { name: 'День' }))
+  expect(document.querySelector('.grid-wrap')).not.toBeNull()
+  unmount()
+  renderApp()
+  expect(await screen.findByRole('button', { name: 'День' })).toHaveAttribute('aria-pressed', 'true')
+  expect(document.querySelector('.grid-wrap')).not.toBeNull()
 })

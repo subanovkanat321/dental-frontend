@@ -10,7 +10,8 @@ import { ChairTimeBands } from '../ChairTimeBands'
 import { colleagueTimeOf } from '../chairTime'
 import { addDays, dateOf, dayMinutes, dayTitle, minutesOf, timeOf } from '../../lib/time'
 import { apptSpan, DAY, fromYesterday, hourLabel, offSpans, touchesDay, untilTomorrow, workSpans } from '../workSpans'
-import { hhmm, PAD, PX, useFitToWindow, useNowMinutes } from '../gridScale'
+import { blockHeight, hhmm, PAD, PX, roomOf, useFitToWindow, useNowMinutes } from '../gridScale'
+import { serviceLabel } from '../lineLabel'
 import { isShaky, usePaintOf } from '../paint'
 import { statusOf } from '../status'
 import { useDrag } from './useDrag'
@@ -155,6 +156,8 @@ export function WeekGrid({ me, doctorId, monday, today, selectedId, onOpen, onNe
           // вчерашний приём целиком в своей колонке, здесь его продолжение не рисуем
           const own = list.filter((a) => touchesDay(a, date) && !(limit > DAY && fromYesterday(a, date)))
           const past = date < today ? height : date === today && showNow ? y(nowMinutes) : 0
+          // До следующего приёма дня: короткий приём — карточкой на 30 минут, но не поверх следующего (как в «Дне»)
+          const room = roomOf(own.map((a) => ({ id: a.id, start: apptSpan(a, date, limit)[0] })), to)
           return (
             <div key={date} ref={(el) => { columns.current[i] = el }} role="group" aria-label={dayTitle(date)}
               className={`grid-col week-col${isOff(sl) ? ' off' : ''}`} style={{ height }} onClick={pick(date)}
@@ -178,7 +181,7 @@ export function WeekGrid({ me, doctorId, monday, today, selectedId, onOpen, onNe
               <ChairTimeBands slots={sl} date={date} y={y} from={from} to={to} appointments={own} />
               {date === today && showNow && <div className="grid-now" style={{ top: y(nowMinutes) }} />}
               {own.map((a) => (
-                <Block key={a.id} a={a} date={date} limit={limit} me={me} y={y} selected={selectedId === a.id} hover={hover.bind(a)} paint={paintOf(a)}
+                <Block key={a.id} a={a} date={date} limit={limit} room={room.get(a.id) ?? 0} me={me} y={y} selected={selectedId === a.id} hover={hover.bind(a)} paint={paintOf(a)}
                   chair={colleagueTimeOf(a, sl?.chairTime)}
                   moving={ghost?.appointment.id === a.id || (move.isPending && move.variables?.appointment.id === a.id)}
                   drag={canDrag(a, me) && !fromYesterday(a, date) ? handlers(a) : undefined}
@@ -224,16 +227,18 @@ function Hours({ slots: sl, date, from, to, height, y }: {
   )
 }
 
-/** Ниже этой высоты блок недели — одной строкой (приём на 15 минут). */
+/** Ниже этой высоты блок недели — одной строкой (приём на 15–20 минут вплотную к следующему). */
 const WEEK_SHORT = 40
 
 /** Приём в колонке дня: заливка статуса, время и имя; можно тащить — курсор «рука». */
-function Block({ a, date, limit, me, y, selected, moving, drag, hover, onClick, chair, paint }: {
+function Block({ a, date, limit, room, me, y, selected, moving, drag, hover, onClick, chair, paint }: {
   a: Appointment
   /** «Красить по врачу / услуге»: цвет заливки (schedule/paint.ts); по статусу — undefined */
   paint?: string
   /** Докуда видно приём в своём дне: 1440 — полночь, больше — сетка продлена после полуночи. */
   limit: number
+  /** Минут от начала приёма до следующего в этот день (roomOf). */
+  room: number
   /** Часы коллеги по креслу, в которые попал приём (colleagueTimeOf), — значок 🪑 */
   chair?: Schemas['SlotsViewChairTime']
   /** День колонки: приём через полночь виден в обоих днях, каждый раз — своей частью. */
@@ -251,8 +256,8 @@ function Block({ a, date, limit, me, y, selected, moving, drag, hover, onClick, 
   const [start, end] = apptSpan(a, date, limit)
   const carried = fromYesterday(a, date)
   const continues = untilTomorrow(a, date, limit)
-  const h = Math.max((end - start) * PX - 2, carried || continues ? 24 : 22)
-  // Колонка недели уже, чем у «Дня»: приём на 30 минут — время и имя в две строки, статус — от 45 минут
+  // Карточка как в «Дне»: не ниже приёма на 30 минут (время и статус, имя, услуга), если до следующего есть место
+  const h = blockHeight(end - start, room, carried || continues)
   const short = h < WEEK_SHORT
   const range = `${timeOf(a.startAt)}–${timeOf(a.endAt)}`
   return (
@@ -268,7 +273,8 @@ function Block({ a, date, limit, me, y, selected, moving, drag, hover, onClick, 
       <span className="appt-name">{a.patient.fullName}</span>
       <ApptBadges appointment={a} money={seesMoneyOf(me, a.doctorId)} chair={chair} max={narrowAppt(a) ? 1 : MAX_BADGES} />
       {short && <span className="ico" aria-hidden="true">{s.icon}</span>}
-      {h > 56 && <span className="appt-state"><span className="ico" aria-hidden="true">{s.icon}</span> {s.label}</span>}
+      {!short && <span className="appt-state"><span className="ico" aria-hidden="true">{s.icon}</span> {s.label}</span>}
+      {!short && a.serviceName && <span className="appt-sub"><span className="appt-note">{serviceLabel(a)}</span></span>}
     </button>
   )
 }

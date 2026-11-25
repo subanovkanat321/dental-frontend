@@ -148,6 +148,15 @@
   .ui-v2 .nav-fly { width: 280px; padding: 10px; border: 0; border-radius: var(--v2-r-card); box-shadow: var(--v2-shadow-float); }
   .ui-v2 .nav-fly .nav-group, .ui-v2 .nav-sub .nav-group { color: var(--v2-ink); font-size: .85rem; font-weight: 700; }
   .ui-v2 .me-block { border-radius: 14px; }
+  /* Пункты — не вплотную (2026-11-25, владелец: «вкладки слева не прижимай к друг другу впритык»): 46px и 6px между ними,
+     подразделы — 40px через 3px. Все разделы, «Помощь» и профиль помещаются и на ноутбуке 1366×768 без прокрутки */
+  .ui-v2 .sidebar nav { display: grid; align-content: start; gap: 6px; }
+  .ui-v2 .sidebar .nav { min-height: 46px; }
+  .ui-v2 .nav-sub { gap: 3px; margin: 6px 0 4px 20px; padding-left: 10px; }
+  .ui-v2 .nav-subitem { min-height: 40px; }
+  .ui-v2 .nav-fly .nav-subitem + .nav-subitem { margin-top: 3px; }
+  .ui-v2 .shell.narrow .sidebar nav { justify-items: center; gap: 8px; }
+  .ui-v2 .shell.narrow .sidebar .nav { min-height: 48px; }
 
   /* Крупный заголовок раздела над вкладками (из data-title): уезжает при прокрутке, вкладки-«таблетки» прилипают.
      Полоса — 72px заголовок + 46px вкладки; top −72px оставляет у верха только вкладки (--tabs-h те же 46px) */

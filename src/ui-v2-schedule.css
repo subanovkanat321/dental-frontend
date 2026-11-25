@@ -41,8 +41,6 @@
 .ui-v2 .appt { border-radius: var(--v2-r-tile); }
 .ui-v2 .grid-free { border-radius: var(--v2-r-tile); border-color: color-mix(in srgb, var(--accent) 28%, var(--separator)); background: color-mix(in srgb, var(--accent-soft) 18%, transparent); }
 .ui-v2 .week-ghost { border-radius: var(--v2-r-tile); }
-.ui-v2 .month-grid { border: 0; box-shadow: var(--v2-shadow); }
-.ui-v2 .month-num { font-weight: 700; }
 
 /* «День» списком (телефон и «Список» на компьютере): строки — белые карточки радиус 16 без рамки */
 .ui-v2 .day-list .row { border: 0; border-radius: var(--v2-r-row); box-shadow: var(--v2-shadow); }
@@ -117,6 +115,87 @@
   .ui-v2 .grid-head { min-height: 56px; }
   .ui-v2 .grid-head .avatar { width: 30px; height: 30px; }
   .ui-v2 .week-head-day b { font-weight: 700; }
+
+  /* Карточка приёма в сетке «Дня» и «Недели» — одна раскладка у всех (2026-11-25, «одного размера, а то каша»):
+     строка 1 — время (значки — в правом верхнем углу), строка 2 — имя, строка 3 — статус «таблеткой» и услуга. Всё —
+     в одну строку с многоточием, без переносов. Высота — не ниже приёма на 30 минут (gridScale: blockHeight): 58px ровно
+     на три строки; длиннее — выше, раскладка сверху та же, услуга — своей строкой. Узкий блок (до 420px: несколько врачей,
+     неделя) — здесь; широкий (один врач) — строкой, как был (crm.css). Сетка, а не блок: у <button> с display: block
+     содержимое встаёт по центру высоты */
+  .ui-v2 .appt { padding: 4px 8px 3px 12px; line-height: 1.2; }
+  .ui-v2 .appt:not(.short) { display: grid; grid-template-columns: fit-content(100%) minmax(0, 1fr); grid-auto-rows: max-content; align-content: start; align-items: center; gap: 0; }
+  @container appt (max-width: 419.98px) {
+    .ui-v2 .appt:not(.short) > *, .ui-v2 .appt:not(.short) .appt-body > * { min-width: 0; }
+    .ui-v2 .appt:not(.short) .appt-time { grid-column: 1 / -1; grid-row: 1; height: 16px; padding-right: 40px; overflow: hidden; font-size: .78rem; line-height: 16px; font-weight: 600; opacity: .8; white-space: nowrap; text-overflow: ellipsis; }
+    .ui-v2 .appt:not(.short) .appt-badges { top: 5px; right: 7px; font-size: .72rem; }
+    .ui-v2 .appt:not(.short) .appt-name { grid-column: 1 / -1; grid-row: 2; height: 19px; font-size: .92rem; line-height: 19px; font-weight: 650; }
+    .ui-v2 .appt:not(.short) .appt-state, .ui-v2 .appt:not(.short) .appt-state.wide-only {
+      grid-column: 1; grid-row: 3; display: block; height: 16px; margin-right: 6px; padding: 0 7px; overflow: hidden; border-radius: var(--v2-r-pill);
+      background: color-mix(in srgb, var(--card) 72%, transparent); font-size: .72rem; font-weight: 500; line-height: 16px; white-space: nowrap; text-overflow: ellipsis; opacity: 1;
+    }
+    .ui-v2 .appt:not(.short) .appt-sub { grid-column: 2; grid-row: 3; display: block; overflow: hidden; font-size: .78rem; line-height: 16px; white-space: nowrap; text-overflow: ellipsis; opacity: .85; }
+    .ui-v2 .appt:not(.short) .appt-sub > .appt-note, .ui-v2 .appt:not(.short) .appt-sub > .appt-note.wide-only { display: inline; font-size: inherit; opacity: 1; }
+    .ui-v2 .appt:not(.short) .appt-sub > .appt-note + .appt-note::before { content: ' · '; }
+    /* Короткий (15–20 минут вплотную к следующему) — одной строкой: время, имя, значок статуса; слово — в подписи кнопки */
+    .ui-v2 .appt.short .appt-state { flex: none; font-size: 0; }
+    .ui-v2 .appt.short .appt-state .ico { font-size: .78rem; }
+  }
+  /* От 40 минут — услуга своей строкой под статусом */
+  @container appt (max-width: 419.98px) and (min-height: 76px) {
+    .ui-v2 .appt:not(.short) .appt-state { justify-self: start; }
+    .ui-v2 .appt:not(.short) .appt-sub { grid-column: 1 / -1; grid-row: 4; margin-top: 3px; }
+  }
+  .ui-v2 .appt.short { flex-wrap: nowrap; align-items: center; padding-block: 0; }
+  .ui-v2 .appt.short .appt-name { flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; }
+  /* Широкий блок (один врач) — прежняя строка, по центру высоты: обёртка на всю карточку */
+  @container appt (min-width: 420px) {
+    .ui-v2 .appt:not(.short) .appt-body { position: absolute; inset: 3px 10px 3px 14px; width: auto; margin: 0; align-content: center; }
+  }
+  @container appt (min-width: 420px) and (min-height: 110px) {
+    .ui-v2 .appt:not(.short) .appt-body { align-content: start; padding-top: 4px; }
+  }
+  /* Неделя: те же карточки (week.css задавал свои отступы) */
+  .ui-v2 .week-grid .appt { padding: 4px 7px 3px 11px; font-size: inherit; line-height: 1.2; }
+  .ui-v2 .week-grid .appt.short > .ico { flex: none; margin-left: auto; font-size: .78rem; }
+
+  /* «Месяц» (2026-11-25, владелец: «сделай красивее, очень простой дизайн»): дни — мягкие белые карточки с просветом
+     8px на фоне страницы; дни недели — мелкими заглавными, выходные — тёплым оттенком; число записей — бирюзовой
+     «таблеткой», загрузка — полоской 6px снизу; сегодня — коралловое число и коралловая рамка, выбранный — бирюзовая;
+     наведение — карточка приподнимается. Нерабочий — та же штриховка, без тени; дни соседних месяцев — бледно, без карточки */
+  .ui-v2 .month { gap: 12px; }
+  .ui-v2 .month-grid { gap: 8px; overflow: visible; border: 0; border-radius: 0; background: none; box-shadow: none; }
+  .ui-v2 .month-weekday { padding: 0 12px 2px; background: none; color: var(--hint); font-size: .76rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
+  .ui-v2 .month-weekday.weekend { color: color-mix(in srgb, var(--now) 65%, var(--hint)); }
+  .ui-v2 .month-day {
+    gap: 7px; min-height: 100px; padding: 10px 12px 18px; border-radius: var(--v2-r-row); background: var(--v2-card); box-shadow: var(--v2-shadow);
+    transition: background-color .15s ease-out, box-shadow .15s ease-out, transform .15s ease-out;
+  }
+  .ui-v2 .month-day:hover { z-index: 1; background: var(--v2-card); box-shadow: var(--v2-shadow-float); transform: translateY(-2px); }
+  .ui-v2 .month-day:focus-visible { outline-offset: 2px; }
+  .ui-v2 .month-day.past:not(.today, .off, .other) { background: color-mix(in srgb, var(--v2-card) 72%, var(--v2-page)); box-shadow: none; }
+  .ui-v2 .month-day.past:not(.today, .off, .other):hover { background: var(--v2-card); box-shadow: var(--v2-shadow-float); }
+  .ui-v2 .month-day.other { background: none; box-shadow: none; opacity: .5; }
+  .ui-v2 .month-day.other:hover { background: color-mix(in srgb, var(--v2-card) 60%, transparent); box-shadow: none; opacity: .8; }
+  .ui-v2 .month-day.off { background: var(--hatch), color-mix(in srgb, var(--sunken) 55%, var(--v2-card)); box-shadow: none; }
+  .ui-v2 .month-day.off:hover { background: var(--hatch), color-mix(in srgb, var(--accent-soft) 40%, var(--sunken)); box-shadow: none; transform: none; }
+  .ui-v2 .month-day.today { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--now) 60%, transparent), var(--v2-shadow); }
+  .ui-v2 .month-day.selected { box-shadow: inset 0 0 0 2px var(--accent), var(--v2-shadow-float); }
+  .ui-v2 .month-num { min-width: 32px; height: 32px; color: var(--v2-ink); font: 700 1.15rem var(--display); letter-spacing: -.01em; }
+  .ui-v2 .month-day.other .month-num, .ui-v2 .month-day.off .month-num { color: var(--hint); }
+  .ui-v2 .month-day.today .month-num { color: #fff; box-shadow: 0 2px 6px color-mix(in srgb, var(--now) 40%, transparent); }
+  .ui-v2 .month-count { padding: 3px 10px; border-radius: var(--v2-r-pill); background: var(--accent-soft); color: var(--accent-ink); font-size: .78rem; font-weight: 700; }
+  .ui-v2 .month-day.past:not(.today) .month-count { background: var(--sunken); color: var(--hint); }
+  .ui-v2 .month-off { padding: 2px 8px; border-radius: var(--v2-r-pill); background: var(--v2-card); box-shadow: var(--v2-shadow); color: var(--hint); font-weight: 500; }
+  .ui-v2 .month-dots { gap: 4px; }
+  .ui-v2 .month-dots .month-dot { padding: 1px 7px 1px 6px; border-radius: var(--v2-r-pill); background: var(--sunken); color: var(--text); font-size: .76rem; font-weight: 600; }
+  .ui-v2 .month-day.past:not(.today) .month-dots .month-dot { background: color-mix(in srgb, var(--sunken) 70%, transparent); color: var(--hint); }
+  .ui-v2 .month-load { left: 12px; right: 12px; bottom: 9px; height: 6px; background: var(--sunken); }
+  .ui-v2 .month-load > span { background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 55%, transparent), var(--accent)); }
+  .ui-v2 .month-load > span.full { background: linear-gradient(90deg, var(--accent), var(--accent-hover)); }
+  .ui-v2 .month-day.past .month-load > span { background: var(--line-strong); }
+  .ui-v2 .month-legend { gap: 6px 16px; padding: 0 4px; }
+  .ui-v2 .month-legend-load span { height: 6px; background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 55%, transparent), var(--accent)); }
+  .ui-v2 .month-legend-off span { border: 0; border-radius: 5px; }
 
   /* Карточки справа и «на весь экран»: тонированный фон, скругление 24, заметная тень */
   .ui-v2 .panel:is(.appt-card, .patient-card) { padding: 18px 18px 20px; border-radius: 24px; box-shadow: var(--v2-shadow-float); }

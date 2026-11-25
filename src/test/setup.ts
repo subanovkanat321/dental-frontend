@@ -54,3 +54,9 @@ afterEach(() => { setUpdating(false); resetUpdatingRecovery() })
 // в тестах — здесь, чтобы разметка (isUiV2(): пункты «Настроек», нижнее меню, пустой список) была как у людей.
 // Тест старого вида снимает класс сам
 beforeEach(() => { document.documentElement.classList.add('ui-v2') })
+
+// Вид расписания на компьютере по умолчанию — «Список» (с 2026-11-25, schedule/viewMode.ts). Тесты сетки написаны под
+// «День» — им умолчание «День» (многие тесты чистят localStorage, поэтому не ключом, а в модуле). Настоящее умолчание
+// проверяют тесты, которые зовут resetDefaultMode() (schedule/listview.test.tsx)
+import { setDefaultMode } from '../schedule/viewMode'
+beforeEach(() => { setDefaultMode('day') })

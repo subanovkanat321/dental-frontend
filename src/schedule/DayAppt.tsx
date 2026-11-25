@@ -6,7 +6,7 @@ import { TagDots } from '../tags/TagDots'
 import { ApptBadges } from './ApptBadges'
 import { MAX_BADGES, narrowAppt } from './badges'
 import { colleagueTimeOf } from './chairTime'
-import { PAD, PX, SHORT } from './gridScale'
+import { blockHeight, PAD, PX, SHORT } from './gridScale'
 import { isShaky } from './paint'
 import { statusOf } from './status'
 import type { useApptHover } from './useApptHover'
@@ -21,13 +21,15 @@ type Appointment = Schemas['AppointmentView']
  * сохраняет тот же объект, если приём не изменился), выбор или раскладка. Все props — значения или
  * стабильные функции (onOpen — useCallback, hover — из хранилища наведения).
  */
-export const DayAppt = memo(function DayAppt({ a, date, from, limit, active, money, chairTime, hover, onOpen, onQuick, paint }: {
+export const DayAppt = memo(function DayAppt({ a, date, from, limit, room = 0, active, money, chairTime, hover, onOpen, onQuick, paint }: {
   a: Appointment
   date: string
   /** Минута, с которой начинается сетка. */
   from: number
   /** Докуда видно приём в этом дне: 1440 — полночь, больше — сетка продлена после полуночи (gridRange). */
   limit: number
+  /** Минут от начала приёма до следующего в колонке (roomOf): короткий приём дорастает до карточки на 30 минут. */
+  room?: number
   active: boolean
   /** Видит ли сотрудник деньги этого врача (предоплата). */
   money: boolean
@@ -46,8 +48,9 @@ export const DayAppt = memo(function DayAppt({ a, date, from, limit, active, mon
   const carried = fromYesterday(a, date)
   const continues = untilTomorrow(a, date, limit)
   const top = PAD + (startMin - from) * PX
-  // Обрезанный кусок — не ниже строки текста (24 px): время, имя и значки одной строкой без наложений
-  const h = Math.max((endMin - startMin) * PX - 2, carried || continues ? 24 : 22)
+  // Карточка — не ниже приёма на 30 минут, если до следующего есть место (одна раскладка у всех: время и статус, имя,
+  // услуга); обрезанный кусок — не ниже строки текста (24 px)
+  const h = blockHeight(endMin - startMin, room, carried || continues)
   const short = h < SHORT
   return (
     <>

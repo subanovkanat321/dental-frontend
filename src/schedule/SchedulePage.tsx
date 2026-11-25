@@ -34,9 +34,10 @@ import { QuickMenu } from './QuickMenu'
 import { DoctorCalendar } from './DoctorCalendar'
 import { PaintSwitch } from './PaintSwitch'
 import { usePaintOf } from './paint'
-import { DAY, fromYesterday, gridRange, hourLabel, offSpans, slotsHoursText, workSpans } from './workSpans'
+import { apptSpan, DAY, fromYesterday, gridRange, hourLabel, offSpans, slotsHoursText, workSpans } from './workSpans'
 import { statusOf } from './status'
-import { PAD, PX, useFitToWindow, useNowMinutes } from './gridScale'
+import { PAD, PX, roomOf, useFitToWindow, useNowMinutes } from './gridScale'
+import { readMode, saveMode, type Mode } from './viewMode'
 import { useToolbarFit } from './useToolbarFit'
 import { useWeekAppointments } from './week/useWeek'
 import { WeekGrid } from './week/WeekGrid'
@@ -74,28 +75,15 @@ function isNarrow(): boolean {
   return typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 760px)').matches
 }
 
-type Mode = 'day' | 'list' | 'week' | 'month'
-
 /** До стольких врачей на компьютере — ряд чипов; больше — одна кнопка «Врачи: 4 из 10 ▾» (DoctorPicker). */
 const MAX_CHIPS = 6
 
-/** «День», «Список», «Неделя» или «Месяц» — запоминается на устройстве (только слово, не личные данные). */
+/** «День», «Список», «Неделя» или «Месяц» — запоминается на устройстве (viewMode.ts). */
 function useMode(): [Mode, (mode: Mode) => void] {
-  const [mode, setMode] = useState<Mode>(() => {
-    try {
-      const saved = localStorage.getItem('crm.schedule.mode')
-      return saved === 'week' || saved === 'month' || saved === 'list' ? saved : 'day'
-    } catch {
-      return 'day'
-    }
-  })
+  const [mode, setMode] = useState<Mode>(readMode)
   const change = (next: Mode) => {
     setMode(next)
-    try {
-      localStorage.setItem('crm.schedule.mode', next)
-    } catch {
-      // приватный режим
-    }
+    saveMode(next)
   }
   return [mode, change]
 }
@@ -714,6 +702,9 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
                 const sl = slots[doctors.indexOf(d)]?.data
                 const y = (minutes: number) => PAD + (Math.min(Math.max(minutes, from), to) - from) * PX
                 const off = sl?.workingDay ? offSpans(workSpans(sl, date), from, to) : []
+                const live = (q?.data ?? []).filter((a) => a.status !== 'CANCELLED')
+                // До следующего приёма: короткий приём — карточкой на 30 минут, но не поверх следующего
+                const room = roomOf(live.map((a) => ({ id: a.id, start: apptSpan(a, date, limit)[0] })), to)
                 return (
                   <div key={d.id} className="grid-col" style={{ height, '--doc': colorOf(d) } as CSSProperties} role="group" aria-label={d.fullName}
                     title={canEditDoctor(me, d.id) ? 'Нажмите на свободное время — новая запись' : 'Расписание коллеги — только просмотр'} onClick={pick(d.id)}>
@@ -773,8 +764,8 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
                     {nowTop != null && <div className="grid-now" style={{ top: nowTop }} />}
                     {q?.isPending && <Loading variant="inline" className="grid-loading" />}
                     {q?.error && <div className="error grid-loading">{q.error.message}</div>}
-                    {(q?.data ?? []).filter((a) => a.status !== 'CANCELLED').map((a) => (
-                      <DayAppt key={a.id} a={a} date={date} from={from} limit={limit} active={selected?.id === a.id} money={seesMoneyOf(me, a.doctorId)}
+                    {live.map((a) => (
+                      <DayAppt key={a.id} a={a} date={date} from={from} limit={limit} room={room.get(a.id)} active={selected?.id === a.id} money={seesMoneyOf(me, a.doctorId)}
                         chairTime={sl?.chairTime} hover={hover.bind} onOpen={openAppt} onQuick={openQuick} paint={paintOf(a)} />
                     ))}
                   </div>
