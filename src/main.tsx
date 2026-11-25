@@ -22,6 +22,9 @@ import './tokens.css'
 import './crm.css'
 // Черновик нового оформления (docs/ui-v2.md): правила только под классом .ui-v2 на <html>, по умолчанию выключено
 import './ui-v2.css'
+import './ui-v2-schedule.css'
+import './ui-v2-lists.css'
+import './ui-v2-forms.css'
 
 import { createQueryClient } from './api/queryClient'
 import { App } from './App'
