@@ -49,3 +49,8 @@ onConfirm(() => {
 import { setUpdating } from '../api/updating'
 import { resetUpdatingRecovery } from '../layout/useUpdatingRecovery'
 afterEach(() => { setUpdating(false); resetUpdatingRecovery() })
+
+// Оформление по умолчанию — v2 (lib/uiVersion.ts, с 2026-11-25): в приложении класс ставит applyUi() в main.tsx,
+// в тестах — здесь, чтобы разметка (isUiV2(): пункты «Настроек», нижнее меню, пустой список) была как у людей.
+// Тест старого вида снимает класс сам
+beforeEach(() => { document.documentElement.classList.add('ui-v2') })

@@ -182,6 +182,8 @@
   .ui-v2 .v2-drill .sub-tabs-helps { grid-column: 3; grid-row: 1; justify-self: end; }
   /* Содержимое пункта — колонкой по центру, как в «Настройках» iOS/macOS: на мониторе строки не растягиваются на 1600px */
   .ui-v2 .workspace:has(.v2-drill) .settings-item { max-width: 860px; margin: 0 auto; }
+  /* С открытой панелью справа (сотрудник, услуга, памятка) колонке нужно место и под список, и под панель */
+  .ui-v2 .workspace:has(.v2-drill) .settings-item:has(.with-panel) { max-width: 1280px; }
 
   /* Список пунктов — окном по центру: заголовок 34px, группы строк с плитками 44px */
   .ui-v2 .more-sheet.nav-sheet { display: block; position: fixed; inset: 0; z-index: 60; background: rgba(11, 34, 41, .32); }

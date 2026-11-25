@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { me, renderApp } from '../test/fixtures'
+import { findSubs, me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 
 /**
@@ -170,8 +170,8 @@ test('старые адреса и кнопки бота открывают ну
   // «Кто на смене» из бота — #/settings/shifts: «Клиника → Рабочее время → График», неделя по датам
   window.location.hash = '/settings/shifts'
   const first = renderApp()
-  const clinic = await tabs('Клиника')
-  expect(within(clinic).getByRole('link', { name: /Рабочее время/ })).toHaveAttribute('aria-current', 'page')
+  const clinic = await findSubs('Клиника')
+  expect(clinic.get(/Рабочее время/)).toHaveAttribute('aria-current', 'page')
   expect(window.location.hash).toBe('#/clinic/shifts')
   const nav = await screen.findByRole('group', { name: 'Рабочее время' })
   expect(within(nav).getByRole('button', { name: 'Неделя по датам' })).toHaveAttribute('aria-pressed', 'true')
@@ -194,12 +194,13 @@ test('«Клиника» — раздел меню: подразделы о кл
   expect(buttons.map((b) => b.textContent?.trim())).toEqual(['Склад', 'Клиника', 'Настройки'])
   await userEvent.click(within(nav()).getByRole('button', { name: 'Клиника' }))
   expect(window.location.hash).toBe('#/clinic')
-  const clinic = await tabs('Клиника')
-  expect(within(clinic).getAllByRole('link').map((a) => a.textContent)).toEqual(['О клинике', 'Персонал', 'Услуги и цены', 'Рабочее время', 'Кресла'])
+  // Пункты — вкладками (?ui=v1) или листом «‹» экрана «внутрь» (v2, по умолчанию)
+  const clinic = await findSubs('Клиника')
+  expect(clinic.titles()).toEqual(['О клинике', 'Персонал', 'Услуги и цены', 'Рабочее время', 'Кресла'])
   // Без пункта в адресе — первый, «О клинике»
-  expect(within(clinic).getByRole('link', { name: 'О клинике' })).toHaveAttribute('aria-current', 'page')
+  expect(clinic.get('О клинике')).toHaveAttribute('aria-current', 'page')
   expect(await screen.findByRole('form', { name: 'О клинике' })).toBeInTheDocument()
-  await userEvent.click(within(clinic).getByRole('link', { name: 'Персонал' }))
+  await userEvent.click(clinic.get('Персонал'))
   expect(window.location.hash).toBe('#/clinic/staff')
   expect(await screen.findByRole('heading', { name: 'Персонал' })).toBeInTheDocument()
   // В «Настройках» этих пунктов больше нет
@@ -211,9 +212,9 @@ test('старые адреса пунктов «Клиники»: #/settings/st
   for (const old of ['/settings/staff', '/settings/doctors', '/team']) {
     window.location.hash = old
     const view = renderApp()
-    const clinic = await tabs('Клиника')
+    const clinic = await findSubs('Клиника')
     expect(window.location.hash).toBe('#/clinic/staff')
-    expect(within(clinic).getByRole('link', { name: 'Персонал' })).toHaveAttribute('aria-current', 'page')
+    expect(clinic.get('Персонал')).toHaveAttribute('aria-current', 'page')
     expect((await screen.findAllByRole('heading', { name: 'Персонал' })).length).toBeGreaterThan(0)
     view.unmount()
   }
@@ -247,30 +248,51 @@ test('телефон: внизу четыре раздела и «Ещё»; в �
   expect(within(await screen.findByRole('navigation', { name: 'Подразделы: Клиника' })).getByRole('button', { name: /^Клиника · Рабочее время/ })).toBeInTheDocument()
 })
 
-test('«Настройки» — вкладками, как другие разделы: #/settings — первый пункт роли, старый адрес пункта — его вкладка, «‹ Настройки» нет', async () => {
+test('«Настройки» — пунктами над страницей (вкладки, в v2 — лист «‹»): #/settings — первый пункт роли, старый адрес пункта — его пункт, «‹ Настройки» нет', async () => {
   window.location.hash = '/settings'
   renderApp()
-  let bar = await tabs('Настройки')
-  expect(within(bar).getByRole('link', { name: 'Напоминание о приёме' })).toHaveAttribute('aria-current', 'page')
-  expect(within(bar).getAllByRole('link')).toHaveLength(20) // + «Приведи друга» (V260), «WhatsApp» (V256), «Дни рождения» (шаг 6Б), «Правка приёмов» (шаг 5А); «Отметки приёма» убраны 2026-11-21
+  const bar = await findSubs('Настройки')
+  expect(bar.get('Напоминание о приёме')).toHaveAttribute('aria-current', 'page')
+  expect(bar.titles()).toHaveLength(20) // + «Приведи друга» (V260), «WhatsApp» (V256), «Дни рождения» (шаг 6Б), «Правка приёмов» (шаг 5А); «Отметки приёма» убраны 2026-11-21
   expect(within(nav()).queryByRole('group', { name: 'Настройки' })).not.toBeInTheDocument()
   expect(within(nav()).getByRole('button', { name: 'Раскрыть подразделы: Настройки' })).toHaveAttribute('aria-expanded', 'false')
-  await userEvent.click(within(bar).getByRole('link', { name: 'Памятки после процедур' }))
+  await userEvent.click(bar.get('Памятки после процедур'))
   expect(window.location.hash).toBe('#/settings/memos')
   expect(await screen.findByRole('heading', { name: 'Памятки после процедур' })).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: '‹ Настройки' })).not.toBeInTheDocument()
   // Старые ссылки (бот, подсказки): #/settings/promo — вкладка «Откуда приходят пациенты»
   go('/settings/promo')
-  bar = await tabs('Настройки')
-  await waitFor(() => expect(within(bar).getByRole('link', { name: 'Откуда приходят пациенты' })).toHaveAttribute('aria-current', 'page'))
+  await waitFor(async () => expect((await findSubs('Настройки')).get('Откуда приходят пациенты')).toHaveAttribute('aria-current', 'page'))
 })
 
 test('«Настройки» у ассистента: только его пункты; пункт не для его роли — первый его пункт', async () => {
   server.use(http.get('*/api/patient/me', () => HttpResponse.json({ ...me, admin: false, doctorId: undefined, assistantOf: [2] })))
   window.location.hash = '/settings/plan'
   renderApp()
-  const bar = await tabs('Настройки')
+  const bar = await findSubs('Настройки')
   // Тарифа ассистенту нет — открыт первый его пункт
-  expect(within(bar).getAllByRole('link').map((a) => a.textContent)).toEqual(['Памятки после процедур', 'Откуда приходят пациенты'])
-  expect(within(bar).getByRole('link', { name: 'Памятки после процедур' })).toHaveAttribute('aria-current', 'page')
+  expect(bar.titles()).toEqual(['Памятки после процедур', 'Откуда приходят пациенты'])
+  expect(bar.get('Памятки после процедур')).toHaveAttribute('aria-current', 'page')
+})
+
+test('старый вид (?ui=v1): у «Настроек» и «Клиники» — вкладки-ссылки; v2: круглая «‹» с тем же именем открывает лист пунктов', async () => {
+  document.documentElement.classList.remove('ui-v2')
+  window.location.hash = '/clinic/staff'
+  const view = renderApp()
+  const clinic = await tabs('Клиника')
+  expect(clinic).not.toHaveClass('v2-drill')
+  expect(within(clinic).getAllByRole('link').map((a) => a.textContent)).toEqual(['О клинике', 'Персонал', 'Услуги и цены', 'Рабочее время', 'Кресла'])
+  expect(within(clinic).getByRole('link', { name: 'Персонал' })).toHaveAttribute('aria-current', 'page')
+  view.unmount()
+
+  document.documentElement.classList.add('ui-v2')
+  renderApp()
+  const drill = await tabs('Клиника')
+  expect(drill).toHaveClass('v2-drill')
+  expect(within(drill).queryAllByRole('link')).toHaveLength(0)
+  await userEvent.click(within(drill).getByRole('button', { name: 'Клиника · Персонал: выбрать подраздел' }))
+  const sheet = screen.getByRole('menu', { name: 'Подразделы: Клиника' })
+  expect(within(sheet).getByRole('menuitem', { name: 'Персонал · открыт сейчас' })).toHaveAttribute('aria-current', 'page')
+  await userEvent.click(within(sheet).getByRole('menuitem', { name: 'Кресла' }))
+  await waitFor(() => expect(window.location.hash).toBe('#/clinic/chairs'))
 })

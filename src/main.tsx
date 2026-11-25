@@ -20,7 +20,7 @@ import '@fontsource/golos-text/latin-700.css'
 // Стили — до компонентов: их собственные .css (pwa.css, timeinput.css…) должны идти после общих, как раньше
 import './tokens.css'
 import './crm.css'
-// Черновик нового оформления (docs/ui-v2.md): правила только под классом .ui-v2 на <html>, по умолчанию выключено
+// Оформление v2 (docs/ui-v2.md): правила под классом .ui-v2 на <html>; с 2026-11-25 по умолчанию, ?ui=v1 — старый вид
 import './ui-v2.css'
 import './ui-v2-schedule.css'
 import './ui-v2-lists.css'

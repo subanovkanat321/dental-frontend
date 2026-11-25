@@ -1,8 +1,8 @@
-import { act, screen, within } from '@testing-library/react'
+import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
-import { appointment, findSub, me, openItem, querySub, renderApp } from '../test/fixtures'
+import { appointment, findSub, findSubs, me, openItem, querySub, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 
 // Сетка «Все врачи» на компьютере: с 2026-11-25 по умолчанию открывается свой врач — выбор «Все врачи» запомнен
@@ -62,10 +62,9 @@ test('ассистент: без предоплаты и цен услуг, пе
   })
   expect(await findSub('Рабочее время')).toBeInTheDocument()
   expect(querySub(/^Услуги/)).not.toBeInTheDocument()
-  // «Настройки» (вкладками): ассистенту — памятки и «Откуда приходят пациенты», без анкеты
+  // «Настройки» (пункты над страницей; в v2 — лист «‹»): ассистенту — памятки и «Откуда приходят пациенты», без анкеты
   openItem('')
-  const tabs = await screen.findByRole('navigation', { name: 'Подразделы: Настройки' })
-  expect(within(tabs).getAllByRole('link').map((a) => a.textContent)).toEqual(['Памятки после процедур', 'Откуда приходят пациенты'])
+  await waitFor(async () => expect((await findSubs('Настройки')).titles()).toEqual(['Памятки после процедур', 'Откуда приходят пациенты']))
 })
 
 test('перенос: другой врач или длительность — выбранное время сбрасывается', async () => {

@@ -23,6 +23,15 @@
 .ui-v2 .field .ui-select[aria-expanded=true], .ui-v2 .phone:focus-within {
   border-color: var(--accent); background-color: var(--v2-card); outline: 3px solid var(--accent-soft); outline-offset: 0;
 }
+/* Свой выпадающий список (layout/Select.tsx): фон у него задан с !important (tokens.css, crm.css «.shell .ui-select») —
+   без !important заливка v2 не применялась, и списки в формах оставались белыми среди серых полей */
+.ui-v2 .field .ui-select:not(:focus, [aria-expanded=true], .phone .ui-select) { background-color: var(--v2-field) !important; }
+.ui-v2 .field .ui-select:is(:focus, [aria-expanded=true]):not(.phone .ui-select) { background-color: var(--v2-card) !important; }
+/* Номер телефона и дата (кнопка с календарём) — та же мягкая заливка без рамки, что у полей */
+.ui-v2 .field .phone:not(:focus-within, :hover), .ui-v2 .field .date-input:not(.icon-only, :focus-visible, [aria-expanded=true], :hover) {
+  border-color: transparent; background-color: var(--v2-field);
+}
+.ui-v2 .field .date-input:not(.icon-only) { border-radius: 12px; }
 /* Номер телефона — одно поле: внутренние части прозрачные */
 .ui-v2 .phone :is(input, select, button) { background: transparent; }
 .ui-v2 .phone input:focus { outline: 0; }
@@ -230,4 +239,54 @@
   .ui-v2 .shell:has(.nav.active[data-section=stock]) .workspace .table td.r:last-child::before { content: none; }
   .ui-v2 .shell:has(.nav.active[data-section=stock]) .workspace .table td.r:last-child .btn { min-width: 52px; min-height: 40px; border-radius: var(--v2-r-pill); }
   .ui-v2 .shell:has(.nav.active[data-section=stock]) .workspace .page-head .search { min-height: 52px; }
+}
+
+/* ── Остальные панели справа (новая запись, новый пациент, сотрудник, услуга, материал, вопрос…) — как карточка приёма:
+   тонированный фон, заголовок крупно, ✕ — круглой белой кнопкой, форма или раздел — белой карточкой радиус 20.
+   Карточка приёма и пациента — свои правила в ui-v2-schedule.css; чат помощника — свой вид */
+.ui-v2 .panel:not(.appt-card, .patient-card, .help-chat) { gap: 12px; border: 0; background: var(--v2-page); }
+.ui-v2 .panel:not(.appt-card, .patient-card, .help-chat) > .panel-head { align-items: flex-start; }
+.ui-v2 .panel:not(.appt-card, .patient-card, .help-chat) > .panel-head h2 { margin: 0; color: var(--v2-ink); font: 700 1.5rem / 1.2 var(--display); letter-spacing: -.015em; }
+.ui-v2 .panel:not(.appt-card, .patient-card, .help-chat) > .panel-head :is(.btn.ghost[aria-label=Закрыть], .panel-head-actions .btn) {
+  flex: none; width: 40px; min-width: 40px; height: 40px; min-height: 40px; padding: 0; justify-content: center; border: 0; border-radius: 50%;
+  background: var(--v2-card); box-shadow: var(--v2-shadow); color: var(--v2-ink); font-size: 1rem; line-height: 1;
+}
+.ui-v2 .panel:not(.appt-card, .patient-card, .help-chat) > .panel-head :is(.btn.ghost[aria-label=Закрыть], .panel-head-actions .btn):hover { background: var(--sunken); }
+.ui-v2 .panel:not(.appt-card, .patient-card, .help-chat) > :is(form, section, .fold, details:not(.inline)) {
+  margin: 0; padding: 16px; border: 0; border-radius: var(--v2-r-card); background: var(--v2-card); box-shadow: var(--v2-shadow);
+}
+.ui-v2 .panel:not(.appt-card, .patient-card, .help-chat) h3 { color: var(--v2-ink); font: 700 1.05rem / 1.3 var(--display); }
+.ui-v2 .panel:not(.appt-card, .patient-card, .help-chat) .btn.primary { min-height: 44px; }
+.ui-v2 .panel:not(.appt-card, .patient-card, .help-chat) .btn:not(.primary, .ghost, .small, .chip) { border-radius: var(--v2-r-pill); }
+/* Нижняя полоса «Новой записи» (✅ Записать) — низ той же белой карточки, прилипает к низу панели */
+.ui-v2 .panel.new-appt .new-appt-bar { margin: 4px -16px -16px; padding: 12px 16px 16px; border-top: 0; border-radius: 0 0 var(--v2-r-card) var(--v2-r-card);
+  background: var(--v2-card); box-shadow: 0 -1px 0 var(--separator); }
+.ui-v2 .panel.new-appt .new-appt-bar .btn { min-height: 48px; border-radius: var(--v2-r-pill); font-size: 1.02rem; }
+
+@media (min-width: 761px) {
+  .ui-v2 .panel:not(.appt-card, .patient-card, .help-chat) { padding: 18px 18px 20px; border-radius: 24px; box-shadow: var(--v2-shadow-float); }
+  .ui-v2 .panel:not(.appt-card, .patient-card, .help-chat) > .panel-head { padding: 2px 0 4px; }
+  .ui-v2 .panel.new-appt .new-appt-bar { bottom: -20px; }
+  /* Панель узкая (~340px): форма — карточкой с отступом 14, переключатель «Из пациентов / ＋ Новый пациент» помещается */
+  .ui-v2 .panel:not(.appt-card, .patient-card, .help-chat):not(.panel-full) > :is(form, section, .fold, details:not(.inline)) { padding: 14px; }
+  .ui-v2 .panel.new-appt:not(.panel-full) .new-appt-bar { margin: 4px -14px -14px; padding: 12px 14px 14px; }
+  .ui-v2 .panel .segments.patient-mode button { padding-inline: 8px; white-space: nowrap; }
+  /* Переключатель в узкой панели («Ссылка в Telegram | Номер телефона | Позже») — в одну дорожку, подписи переносятся внутри */
+  .ui-v2 .panel:not(.panel-full) .segments { flex-wrap: nowrap; }
+  .ui-v2 .panel:not(.panel-full) .segments button { flex: 1 1 0; min-width: 0; padding-inline: 8px; white-space: normal; line-height: 1.2; }
+}
+@media (max-width: 760px) {
+  /* На весь экран: шапка прилипает с размытием, кнопки 44–48px — пальцем */
+  .ui-v2 .panel:not(.appt-card, .patient-card, .help-chat) { padding: 14px 16px calc(20px + env(safe-area-inset-bottom)); border-radius: 0; box-shadow: none; }
+  .ui-v2 .panel:not(.appt-card, .patient-card, .help-chat) > .panel-head {
+    margin: -14px -16px 0; padding: 12px 16px; border-bottom: 0;
+    background: color-mix(in srgb, var(--v2-page) 86%, transparent); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+    box-shadow: 0 1px 0 color-mix(in srgb, var(--separator) 70%, transparent);
+  }
+  .ui-v2 .panel:not(.appt-card, .patient-card, .help-chat) > .panel-head h2 { font-size: 1.45rem; }
+  .ui-v2 .panel:not(.appt-card, .patient-card, .help-chat) > .panel-head :is(.btn.ghost[aria-label=Закрыть], .panel-head-actions .btn) { width: 44px; min-width: 44px; height: 44px; min-height: 44px; }
+  .ui-v2 .panel:not(.appt-card, .patient-card, .help-chat) .btn:not(.ghost, .small, .chip) { min-height: 48px; }
+  .ui-v2 .panel:not(.appt-card, .patient-card, .help-chat) form > .btn.primary:last-of-type { width: 100%; }
+  .ui-v2 .panel.new-appt .new-appt-bar { bottom: calc(-20px - env(safe-area-inset-bottom)); padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
+  .ui-v2 .panel.new-appt .new-appt-bar .btn { min-height: 52px; }
 }

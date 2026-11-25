@@ -879,6 +879,17 @@ button.grid-head:not(:disabled):hover .grid-head-name { color: var(--link); }
 .day-list.wide .doctor-columns .row:has(> .row-slide) .row-button { flex: 1; }
 .day-list.wide .doctor-columns .remind-quick { width: 40px; height: 40px; margin: 0; align-self: center; font-size: .75rem; }
 .day-list.wide .doctor-columns .remind-sent { align-self: center; margin: 0 8px 0 0; }
+/* Узкая колонка (6 врачей на 1366): кнопки TG/WA и «✓ отправлено» сбоку оставляли имени ~30px, и оно ломалось по буквам
+   («Бак/ыт Тест/ов», 2026-11-25). В колонке уже 400px они — отдельной строкой под записью, имя — во всю ширину */
+.day-list.wide .doctor-columns .doctor-day { container-type: inline-size; }
+@container (max-width: 400px) {
+  /* .row-slide без свайпа — display: contents, тогда строки переносит сама .row */
+  .day-list.wide .doctor-columns .row:has(> .row-slide):not(.swipe), .day-list.wide .doctor-columns .row.swipe > .row-slide { flex-wrap: wrap; row-gap: 0; }
+  .day-list.wide .doctor-columns .row:has(> .row-slide) .row-slide > .row-button { flex: 1 0 100%; }
+  .day-list.wide .doctor-columns .row-slide > :is(.remind-pair, .remind-quick, .remind-sent, .remind-sent-box) { align-self: flex-start; margin: -4px 0 8px 66px; }
+  .day-list.wide .doctor-columns .row-slide .remind-quick { width: 36px; height: 36px; }
+  .day-list.wide .doctor-columns .row .name, .day-list.wide .doctor-columns .row .name-text { overflow-wrap: normal; }
+}
 /* «Нажимается вся строка» (lib/rowClick.ts → rowOpen): строка списка открывает карточку кликом в любом месте,
    название — настоящая кнопка (Tab, скринридер). Подсветка наведения — только там, где есть мышь;
    на телефоне — короткий отклик на нажатие (:active), без «залипшего» hover после тапа */
@@ -2747,6 +2758,8 @@ a.menu-item { box-sizing: border-box; text-decoration: none; }
 .expense-form .expense-kind button { flex: 1; white-space: normal; line-height: 1.2; }
 .expense-dialog .expense-form { grid-template-columns: 1fr; }
 .expense-form input[type="checkbox"] { height: auto; padding: 0; }
+/* Галочка «Из кассы наличными» с пояснением — своей строкой во всю ширину: в ячейке 150px сетки она съезжала вбок */
+.expense-form > .check { grid-column: 1 / -1; align-items: center; }
 .split-box { display: grid; gap: 8px; margin: 0; padding: 10px 12px 12px; border: 1px solid var(--separator); border-radius: var(--r-md); }
 .split-box legend { padding: 0 4px; font-size: .85rem; color: var(--hint); }
 .split-manual { display: grid; gap: 6px; }

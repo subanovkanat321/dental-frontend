@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { me, openItem, renderApp } from '../test/fixtures'
+import { findSubs, me, openItem, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 
 type Me = Schemas['BookingViewsMe']
@@ -48,13 +48,12 @@ test('порядок: в «Настройках» группы — пациен�
   expect(screen.queryByRole('button', { name: 'Выйти на всех устройствах' })).not.toBeInTheDocument()
 })
 
-/** Пункты раздела «Клиника» — вкладками над страницей, как видит пользователь. */
+/** Пункты раздела «Клиника», как видит пользователь: лист «‹» (v2; первым — открытый «О клинике») или вкладки (?ui=v1). */
 async function clinicItems(who: Me): Promise<string[]> {
   server.use(http.get('*/api/patient/me', () => HttpResponse.json(who)))
   window.location.hash = '/clinic'
   renderApp()
-  const tabs = await screen.findByRole('navigation', { name: 'Подразделы: Клиника' })
-  return within(tabs).getAllByRole('link').map((a) => a.textContent ?? '')
+  return (await findSubs('Клиника')).titles()
 }
 
 test('роли: каждый видит те же пункты, что и раньше (с учётом переезда в «Клинику»)', async () => {

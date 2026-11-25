@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { me, openItem, renderApp } from '../test/fixtures'
+import { findSubs, me, openItem, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 import { waitForSlow } from '../test/wait'
 
@@ -90,9 +90,9 @@ test('пункт «ИИ в клинике» — только у админист
   backend({ available: true, on: false }, { available: true, on: false }, { ...me, admin: false })
   renderApp()
   openItem('')
-  const tabs = await screen.findByRole('navigation', { name: 'Подразделы: Настройки' })
-  expect(within(tabs).getByRole('link', { name: 'Памятки после процедур' })).toBeInTheDocument()
-  expect(within(tabs).queryByRole('link', { name: /ИИ в клинике/ })).not.toBeInTheDocument()
+  const tabs = await findSubs('Настройки')
+  expect(tabs.get('Памятки после процедур')).toBeInTheDocument()
+  expect(tabs.query(/ИИ в клинике/)).not.toBeInTheDocument()
 })
 
 test('лимит ИИ клинике пока не показываем: счётчика «N из M» нет', async () => {
