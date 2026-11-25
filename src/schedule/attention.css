@@ -17,9 +17,27 @@
 .bd-gift { margin: 6px 0 2px; }
 .bd-preview { display: grid; gap: 6px; margin-top: 8px; }
 .bd-preview-text { margin: 0; padding: 12px 14px; border-radius: var(--r-md); background: var(--surface-2, var(--accent-soft)); white-space: pre-wrap; line-height: 1.45; font-size: .92rem; overflow-wrap: anywhere; }
+/* Шапка окна: время и врач слева, «Записать на 14:00» справа */
+.fw-window-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px 12px; flex-wrap: wrap; }
+.fw-window-top .fw-window-head { flex: 1 1 200px; min-width: 0; }
+.fw-book { flex-shrink: 0; }
+.fw-lead { margin: 0; }
 @media (max-width: 600px) {
-  .fw-list li, .bd-list li { flex-direction: column; align-items: stretch; }
-  .fw-actions, .bd-actions { justify-content: flex-start; }
+  .bd-list li { flex-direction: column; align-items: stretch; }
+  .bd-actions { justify-content: flex-start; }
+  /* Телефон (владелец 2026-11-25: «окна для листа ожидания неудобно»): лист снизу на всю ширину, прокручивается
+     весь список, а не маленькая коробка внутри окна; пациент — имя и подпись строкой, под ними две кнопки поровну */
+  .attention-dialog.sheet { display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
+  .attention-dialog.sheet::before { flex-shrink: 0; align-self: center; }
+  .attention-dialog .attention-scroll { flex: 1 1 auto; min-height: 0; max-height: none; padding-bottom: 4px; }
+  .fw-window { padding: 12px 14px; border-radius: 16px; }
+  .fw-window-top { flex-direction: column; align-items: stretch; gap: 8px; }
+  .fw-window-top .fw-window-head { flex: none; }
+  .fw-book { min-height: 42px; justify-content: center; }
+  .fw-list li { display: grid; grid-template-columns: 1fr; gap: 8px; padding: 10px 0; }
+  .fw-actions { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 8px; }
+  .fw-actions .btn { min-height: 42px; justify-content: center; }
+  .fw-who strong { white-space: normal; }
 }
 .fw-who .tone-ok, .bd-who .tone-ok { color: var(--ok-ink); }
 .fw-who .tone-bad { color: var(--bad-ink); }

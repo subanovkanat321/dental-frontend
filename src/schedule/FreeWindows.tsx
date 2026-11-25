@@ -57,8 +57,8 @@ export function FreeWindowsDialog({ doctorName, onBook, onClose }: {
   const windows = useFreeWindows()
   return (
     <AttentionDialog title="🔔 Окна для листа ожидания" labelId="free-windows-title" onClose={onClose}>
-      <p className="hint">Свободное время сегодня и завтра и кто из листа ожидания в него подходит — по их «Когда удобно». Записывает
-        только сам пациент кнопкой в боте или вы — «Записать».</p>
+      {/* Коротко: на телефоне длинное пояснение занимало четверть экрана (владелец 2026-11-25: «окна неудобно в телефоне») */}
+      <p className="hint small fw-lead">Сегодня и завтра · кто подходит по своему «Когда удобно». Пациент записывается сам кнопкой в боте или вы — «Записать».</p>
       {windows.isPending && <p className="hint">Загружаем…</p>}
       {windows.error && <p className="error" role="alert">{windows.error.message}</p>}
       {windows.data && !windows.data.length && <p className="tone-ok" role="status">Подходящих окон нет ✓</p>}
@@ -74,14 +74,17 @@ export function FreeWindowsDialog({ doctorName, onBook, onClose }: {
 export function WindowCard({ w, doctorName, onBook }: { w: FreeWindow; doctorName: (id: number) => string; onBook?: () => void }) {
   return (
     <section className="fw-window" aria-label={windowTitle(w)}>
-      <span className="fw-window-head">
-        <strong className="num">{windowTitle(w)}</strong>
-        <span className="hint small">{doctorName(w.doctorId)} · {waitingCount(w) ? fitsText(waitingCount(w)) : 'все из листа отказались'}</span>
-      </span>
+      {/* «Записать на 14:00» — сразу в шапке окна (раньше — ссылкой в самом низу, после всех пациентов) */}
+      <div className="fw-window-top">
+        <span className="fw-window-head">
+          <strong className="num">{windowTitle(w)}</strong>
+          <span className="hint small">{doctorName(w.doctorId)} · {waitingCount(w) ? fitsText(waitingCount(w)) : 'все из листа отказались'}</span>
+        </span>
+        {onBook && <button type="button" className="btn small fw-book" onClick={onBook}>Записать на {timeOf(w.start)}</button>}
+      </div>
       <ul className="fw-list">
         {w.matches.map((m) => <MatchRow key={m.entryId} m={m} doctorId={w.doctorId} />)}
       </ul>
-      {onBook && <button type="button" className="link" onClick={onBook}>Записать на {timeOf(w.start)} ›</button>}
     </section>
   )
 }
@@ -117,7 +120,7 @@ function MatchRow({ m, doctorId }: { m: Match; doctorId: number }) {
         <span className="fw-actions">
           {m.patient.telegram && (
             <button type="button" className="btn small primary" disabled={offer.isPending}
-              aria-label={`Предложить в бот: ${m.patient.fullName}`} onClick={() => offer.mutate('TELEGRAM')}>Предложить в бот</button>
+              aria-label={`Предложить в бот: ${m.patient.fullName}`} onClick={() => offer.mutate('TELEGRAM')}>В бот</button>
           )}
           {contactPhone(m.patient) && (
             <button type="button" className={m.patient.telegram ? 'btn small' : 'btn small primary'} disabled={offer.isPending || !settings.data}

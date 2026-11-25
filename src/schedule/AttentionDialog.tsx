@@ -19,7 +19,7 @@ export function AttentionDialog({ title, labelId, onClose, children }: { title: 
   }, [])
   return createPortal(
     <div className="ui-select-backdrop confirm-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div ref={box} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={labelId} className="confirm attention-dialog"
+      <div ref={box} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={labelId} className="confirm sheet attention-dialog"
         onKeyDown={(e) => {
           if (e.key === 'Escape') {
             e.preventDefault()
