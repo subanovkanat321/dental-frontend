@@ -202,7 +202,10 @@
 /* ── Телефон ──────────────────────────────────────────────────────────────────────────────────────── */
 @media (max-width: 760px) {
   /* Текст крупнее: 17px основной (подписи и вторичное — от него в rem) */
-  :root.ui-v2 { font-size: calc(17px * var(--text-scale, 1)); }
+  :root.ui-v2 { font-size: calc(17px * var(--text-scale, 1));
+    /* Низ плавающего меню: на iPhone — прямо над полоской «домой» (было 10px + весь отступ полоски — меню висело высоко,
+       владелец 2026-11-25), без полоски — 8px от края */
+    --v2-tab-bottom: max(8px, calc(env(safe-area-inset-bottom) - 12px)); }
   .ui-v2 .workspace { padding: 16px 16px calc(112px + env(safe-area-inset-bottom) + var(--nav-gap, 0px)); }
   .ui-v2 .shell:has(> .help-fab) .workspace { padding-bottom: calc(160px + env(safe-area-inset-bottom) + var(--nav-gap, 0px)); }
   .ui-v2 .card-block { padding: var(--v2-pad); }
@@ -213,7 +216,7 @@
   /* Нижнее меню — плавающая белая «таблетка» с тенью, с полями по бокам */
   /* z-index выше листов «Ещё» и подразделов: меню плавает и над ними (у листа снизу запас под меню) */
   .ui-v2 .sidebar {
-    z-index: 36; left: 10px; right: 10px; bottom: calc(10px + env(safe-area-inset-bottom) - var(--nav-drop, 0px));
+    z-index: 36; left: 10px; right: 10px; bottom: calc(var(--v2-tab-bottom) - var(--nav-drop, 0px));
     padding: 5px; border: 0; border-radius: var(--v2-tabbar-r); background: var(--v2-card); box-shadow: var(--v2-shadow-float);
   }
   .ui-v2 .sidebar::after { content: none; }
@@ -225,13 +228,13 @@
     background: var(--accent-soft); color: var(--accent-ink);
   }
   .ui-v2 .sidebar .nav.active .icon { color: var(--accent-ink); }
-  .ui-v2 .help-fab { bottom: calc(96px + env(safe-area-inset-bottom) - var(--nav-drop, 0px)); right: 16px; width: 52px; height: 52px; border: 0;
+  .ui-v2 .help-fab { bottom: calc(86px + var(--v2-tab-bottom) - var(--nav-drop, 0px)); right: 16px; width: 52px; height: 52px; border: 0;
     box-shadow: var(--v2-shadow-float); }
 
   /* Листы «Ещё» и подразделов — над плавающим меню, на тонированном фоне, строки — сгруппированными карточками */
   .ui-v2 .more-sheet, .ui-v2 .more-sheet.nav-sheet { bottom: 0; background: rgba(11, 34, 41, .32); }
   .ui-v2 .more-card, .ui-v2 .nav-sheet-card.more-card {
-    bottom: 0; gap: 0; padding: 18px 16px calc(98px + env(safe-area-inset-bottom) - var(--nav-drop, 0px));
+    bottom: 0; gap: 0; padding: 18px 16px calc(88px + var(--v2-tab-bottom) - var(--nav-drop, 0px));
     border-radius: 28px 28px 0 0; background: var(--v2-page); max-height: calc(100dvh - 24px);
   }
 

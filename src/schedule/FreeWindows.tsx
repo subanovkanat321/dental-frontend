@@ -7,7 +7,7 @@ import { contactPhone } from '../lib/guardian'
 import { freeSlotText, whatsappUrl } from '../lib/texts'
 import { openLink } from '../lib/telegram'
 import { plural } from '../lib/plural'
-import { dateOf, minutesOf, shortDate, timeOf } from '../lib/time'
+import { dateOf, minutesOf, shortDate, timeOf, todayIn } from '../lib/time'
 import { AttentionDialog } from './AttentionDialog'
 import { fitsText, useFreeWindows, waitingCount, windowTitle, WINDOWS_KEY, type FreeWindow } from './windowsModel'
 
@@ -22,7 +22,7 @@ export function FreeWindowsChip({ windows, compact, onOpen }: { windows: FreeWin
   return (
     <button type="button" className="stat s-request" onClick={onOpen}
       aria-label={`${freed ? 'Освободилось окно' : 'Свободные окна'}: ${fitsText(people)}`} title="Окна для листа ожидания — предложить">
-      🔔 {compact ? <><b>{open.length}</b> {plural(open.length, 'окно', 'окна', 'окон')}</> : <>{freed ? 'Освободилось окно' : 'Окна'} · <b>{people}</b> из листа</>}
+      🔔 {compact ? <>Лист ожидания: <b>{open.length}</b> {plural(open.length, 'окно', 'окна', 'окон')}{open.every((w) => dateOf(w.start) !== todayIn()) ? ' завтра' : ''}</> : <>{freed ? 'Освободилось окно' : 'Окна'} · <b>{people}</b> из листа</>}
     </button>
   )
 }

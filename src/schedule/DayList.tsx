@@ -19,6 +19,8 @@ import { useRowSwipe } from './useRowSwipe'
 import { TagDots } from '../tags/TagDots'
 import { NOWHERE_TEXT, useRemind } from './useRemind'
 import { useMedia } from '../lib/useMedia'
+import { plural } from '../lib/plural'
+import type { FreeWindow } from './windowsModel'
 import { canEditDoctor as canEdit, seesMoneyOf, seesAllMoney as seesAllMoneyOf } from '../lib/roles'
 import { Loading } from '../layout/Loading'
 import { EmptyState } from '../layout/EmptyState'
@@ -63,7 +65,7 @@ function shortName(name: string): string {
  * Один врач — его день; «Все врачи» — все приёмы вместе, у строки имя врача, свободные окна
  * каждого врача отдельно. У приёма — быстрое напоминание (Telegram или WhatsApp). Завтра — «Готово X из Y».
  */
-export function DayList({ me, doctors, date, onDate, onOpen, onQuick, onNew, onNewHere, selectedId, all, doctorsNote, paintOf, onCalendar, inToolbar }: {
+export function DayList({ me, doctors, date, onDate, onOpen, onQuick, onNew, onNewHere, selectedId, all, doctorsNote, paintOf, onCalendar, inToolbar, windows = [], onWindows }: {
   me: Me
   doctors: Doctor[]
   date: string
@@ -85,6 +87,12 @@ export function DayList({ me, doctors, date, onDate, onOpen, onQuick, onNew, onN
   onCalendar?: (doctorId: number) => void
   /** «Список» на компьютере: день, стрелки и «Сегодня» — в шапке расписания, своей строки даты нет */
   inToolbar?: boolean
+  /**
+   * «🔔 Окна» листа ожидания: у свободного времени — «🔔 2 из листа» (нажать — предложить). Владелец 2026-11-25:
+   * отдельная плашка «5 окон» сверху непонятна — пометка теперь там, где само окно
+   */
+  windows?: FreeWindow[]
+  onWindows?: () => void
 }) {
   const today = todayIn()
   const many = all ?? doctors.length > 1
@@ -210,6 +218,7 @@ export function DayList({ me, doctors, date, onDate, onOpen, onQuick, onNew, onN
                       ) : (
                         <FreeRow key={`f${item.at}`} start={item.at} end={item.end} canEdit={canEditDoctor(item.doctorId)}
                           doctor={many ? g.doctor.name : undefined} short={many && !inToolbar}
+                          waiting={onWindows ? waitingIn(windows, item.doctorId, item.at, item.end) : 0} onWindows={onWindows}
                           onPick={() => onNew(item.doctorId, minutesOf(item.at))} />
                       ))}
                     {g.items.length === 0 && <li className="hint day-empty">Нет записей</li>}
@@ -250,7 +259,14 @@ export function DayList({ me, doctors, date, onDate, onOpen, onQuick, onNew, onN
   )
 }
 
-function FreeRow({ start, end, canEdit, doctor, short = false, onPick }: {
+/** Сколько пациентов из листа ожидания подходят в это свободное время врача (окна сервера, пересечение по времени). */
+function waitingIn(windows: FreeWindow[], doctorId: number, start: string, end: string): number {
+  const ids = new Set(windows.filter((w) => w.doctorId === doctorId && w.start < end && w.end > start)
+    .flatMap((w) => w.matches.filter((m) => !m.declined).map((m) => m.entryId)))
+  return ids.size
+}
+
+function FreeRow({ start, end, canEdit, doctor, short = false, onPick, waiting = 0, onWindows }: {
   start: string
   end: string
   canEdit: boolean
@@ -259,14 +275,22 @@ function FreeRow({ start, end, canEdit, doctor, short = false, onPick }: {
   /** Узкая колонка (телефон, «Все врачи»): коротко «до 13:00» */
   short?: boolean
   onPick: () => void
+  /** Подходят из листа ожидания — «🔔 2 из листа» справа, нажать — окна с «Предложить» */
+  waiting?: number
+  onWindows?: () => void
 }) {
   const text = <>{short ? 'до' : 'свободно до'} {timeOf(end)}</>
-  if (!canEdit) return <li className="row free readonly"><span className="time num">{timeOf(start)}</span><span className="hint">{text}</span></li>
+  const bell = waiting > 0 && onWindows ? (
+    <button type="button" className="free-waiting" aria-label={`Лист ожидания: ${waiting} ${plural(waiting, 'подходит', 'подходят', 'подходят')} на ${timeOf(start)} — предложить`}
+      onClick={onWindows}>🔔 {waiting}{short ? '' : ' из листа'}</button>
+  ) : null
+  if (!canEdit) return <li className="row free readonly"><span className="time num">{timeOf(start)}</span><span className="hint">{text}</span>{bell}</li>
   return (
-    <li className="row free">
+    <li className={bell ? 'row free with-waiting' : 'row free'}>
       <button type="button" className="row-button" aria-label={`Свободно с ${timeOf(start)} до ${timeOf(end)}${doctor ? ` у врача ${doctor}` : ''}, записать`} onClick={onPick}>
         <span className="time num">{timeOf(start)}</span><span className="hint">{text}</span><span className="plus" aria-hidden="true">＋</span>
       </button>
+      {bell}
     </li>
   )
 }
