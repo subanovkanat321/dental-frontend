@@ -1,1 +1,162 @@
-/* UI v2 — lists. Все правила под .ui-v2 (без флага файл ничего не меняет). План — docs/ui-v2.md */
+/*
+ * UI v2 — списки «Пациентов» (Записаны, Лист ожидания, Позвать снова, Обращения, Задачи, Вопросы, Оценки, Без бота) и
+ * «Касса» (Касса дня, Расходы, Должники, Зарплата, Отчёт, Мой заработок). Все правила под .ui-v2 (без флага файл ничего
+ * не меняет). План и токены — docs/ui-v2.md; общие компоненты (карточки, переключатель, строки CalmRow) — src/ui-v2.css.
+ *
+ * Приёмы: фильтры-галочки в шапке — «таблетки» (это всё тот же checkbox: роль, подпись и клавиатура прежние), чипы — «таблетки»,
+ * подписи групп — 20px 700, строки — группой в белой карточке; итоги — плитки радиуса 16 с крупным числом; таблицы на компьютере —
+ * выше и мягче, на телефоне — карточки-строки.
+ */
+
+/* ── Фильтры-галочки в шапке и над списком — «таблетки» ──────────────────────────────────────────── */
+:is(.ui-v2 .page-head, .ui-v2 .head-tools-inline, .ui-v2 .filters, .ui-v2 .debtors-tools) .check {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 14px 0 10px; border-radius: var(--v2-r-pill);
+  background: var(--v2-card); box-shadow: var(--v2-shadow); color: var(--v2-ink); font-size: .9rem; font-weight: 500; cursor: pointer; white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+:is(.ui-v2 .page-head, .ui-v2 .head-tools-inline, .ui-v2 .filters, .ui-v2 .debtors-tools) .check > input[type=checkbox] {
+  flex: none; width: 20px; height: 20px; margin: 0; border: 2px solid var(--line-strong); border-radius: 50%; background: var(--v2-card) no-repeat 50% / 12px 12px;
+  -webkit-appearance: none; appearance: none; cursor: pointer;
+}
+:is(.ui-v2 .page-head, .ui-v2 .head-tools-inline, .ui-v2 .filters, .ui-v2 .debtors-tools) .check > input[type=checkbox]:checked {
+  border-color: var(--accent-hover); background-color: var(--accent-hover);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%23FFFFFF' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.5 6.2l2.3 2.3 4.7-5'/%3E%3C/svg%3E");
+}
+:is(.ui-v2 .page-head, .ui-v2 .head-tools-inline, .ui-v2 .filters, .ui-v2 .debtors-tools) .check:has(> input:checked) { background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; box-shadow: none; }
+:is(.ui-v2 .page-head, .ui-v2 .head-tools-inline, .ui-v2 .filters, .ui-v2 .debtors-tools) .check:has(> input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+:is(.ui-v2 .page-head, .ui-v2 .head-tools-inline, .ui-v2 .filters, .ui-v2 .debtors-tools) .check > input:focus-visible { outline: 0; }
+/* В белой карточке — серая «таблетка» без тени */
+.ui-v2 .card-block .filters .check { background: var(--sunken); box-shadow: none; }
+
+/* ── Чипы выбора — «таблетки» ─────────────────────────────────────────────────────────────────────── */
+.ui-v2 :is(.chips-pick, .day-quick) .chip { min-height: 34px; padding: 0 14px; border: 0; border-radius: var(--v2-r-pill); background: var(--sunken); color: var(--v2-ink); font-weight: 500; }
+.ui-v2 :is(.chips-pick, .day-quick) .chip:hover:not([aria-pressed=true]) { background: color-mix(in srgb, var(--sunken) 80%, var(--line-strong)); }
+.ui-v2 :is(.chips-pick, .day-quick) .chip[aria-pressed=true] { background: var(--accent-hover); color: var(--accent-text); font-weight: 600; }
+.ui-v2 .calm-flag { padding: 1px 9px; border-radius: var(--v2-r-pill); }
+
+/* ── Подписи групп («Сегодня…», «Просрочено», «Новые») — как в «Настройках» iOS ──────────────────────── */
+.ui-v2 .calm-stack { gap: 24px; }
+.ui-v2 .calm-day { gap: 10px; }
+.ui-v2 .calm-day h3, .ui-v2 .debtors-block h3 { margin: 0 4px; color: var(--v2-ink); font: 700 1.15rem / 1.25 var(--display); letter-spacing: -.01em; }
+.ui-v2 .calm-day h3 .hint, .ui-v2 .debtors-block h3 .hint { color: var(--hint); font: 500 1rem var(--ui); }
+.ui-v2 .task-group.g-overdue h3 { color: var(--bad-ink); }
+.ui-v2 .calm-note { margin: 0 4px; }
+.ui-v2 .calm-row.active { background: var(--accent-soft); }
+.ui-v2 .row-menu-btn { border-radius: 50%; }
+.ui-v2 .row-menu-pop { border: 0; border-radius: var(--v2-r-row); box-shadow: var(--v2-shadow-float); padding: 6px; }
+.ui-v2 .row-menu-pop button { padding: 11px 14px; border-radius: 10px; }
+.ui-v2 .calm-act .btn:not(.primary) { border-radius: var(--v2-r-pill); }
+/* Свёрнутые блоки («Выполненные», «Кто вернулся после приглашения») — тихая строка-карточка */
+.ui-v2 .tasks .fold, .ui-v2 .cb-more { border-radius: var(--v2-r-card); }
+.ui-v2 .task-check { width: 28px; height: 28px; }
+
+/* «Позвать снова»: карточки «кого звать» — «таблетки», выбранная — залитая мягким бирюзовым */
+.ui-v2 .cb-card { min-height: 46px; border: 0; background: var(--v2-card); box-shadow: var(--v2-shadow); }
+.ui-v2 .cb-card[aria-pressed=true] { background: var(--accent-soft); box-shadow: inset 0 0 0 2px var(--accent); }
+.ui-v2 .cb-card-icon { background: var(--sunken); }
+.ui-v2 .cb-card[aria-pressed=true] .cb-card-icon { background: var(--v2-card); }
+.ui-v2 .cb-card-new { background: transparent; box-shadow: inset 0 0 0 1.5px var(--line-strong); }
+/* Телефон: выбранная карточка — белая плашка, лист — группа строк в одной карточке */
+.ui-v2 .choice-pick { min-height: 52px; border: 0; border-radius: var(--v2-r-control); background: var(--v2-card); box-shadow: var(--v2-shadow); }
+.ui-v2 .choice-icon { background: var(--sunken); }
+.ui-v2 .choice-list { gap: 0; overflow: hidden; border-radius: var(--v2-r-card); background: var(--v2-card); }
+.ui-v2 .choice-list > li + li { box-shadow: inset 0 1px 0 var(--separator); }
+.ui-v2 .choice-item { min-height: 64px; padding: 12px 16px; border: 0; border-radius: 0; background: none; }
+.ui-v2 .choice-item[aria-selected=true] { background: var(--accent-soft); box-shadow: none; }
+.ui-v2 .choice-check { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: var(--accent-text); font-size: .75rem; }
+
+/* «Оценки»: сводка — крупное число; жалоба — мягкой цитатой */
+.ui-v2 .rating-summary .total { color: var(--v2-ink); }
+.ui-v2 .rating-complaint { border-left: 0; border-radius: 12px; background: color-mix(in srgb, var(--bad-bg, #FFDCDC) 55%, var(--v2-card)); }
+
+/* ── «Касса»: плитки-итоги ────────────────────────────────────────────────────────────────────────── */
+.ui-v2 .survey-tile, .ui-v2 .salary-sums > div { padding: 12px 14px; border-radius: var(--v2-r-row); background: var(--sunken); }
+.ui-v2 .survey-tile b { color: var(--v2-ink); font-weight: 700; letter-spacing: -.01em; }
+.ui-v2 .survey-tile b.tone-bad, .ui-v2 .survey-tile .tone-bad b, .ui-v2 .survey-tile b .tone-bad { color: var(--destructive); }
+/* «Должники»: главная плитка («Должны всего») — залита бирюзовым, как «Приход» в «Деньгах» */
+.ui-v2 .debtors-tiles > .survey-tile:first-child { background: var(--accent-hover); color: var(--accent-text); }
+.ui-v2 .debtors-tiles > .survey-tile:first-child :is(b, .hint) { color: var(--accent-text); }
+.ui-v2 .salary-sums dt { font-size: .8rem; }
+.ui-v2 .salary-sums dd { margin-top: 4px; color: var(--v2-ink); font: 700 1.05rem var(--display); letter-spacing: -.01em; }
+.ui-v2 .salary-sums dd.strong { color: var(--accent-ink); }
+.ui-v2 .salary-sums dd.tone-bad { color: var(--destructive); }
+
+/* «Касса дня»: строки итога крупнее, «Должно быть в кассе» — плиткой; действия — мягкие карточки */
+.ui-v2 .cash-day-sum > div { padding: 11px 4px; }
+.ui-v2 .cash-day-sum dd { color: var(--v2-ink); font-weight: 500; }
+.ui-v2 .cash-day-sum .cash-day-total { margin-top: 10px; padding: 14px 16px; border-radius: var(--v2-r-row); background: var(--accent-soft); }
+.ui-v2 .cash-day-sum .cash-day-total :is(dt, dd) { color: var(--accent-ink); font-weight: 700; }
+.ui-v2 .cash-day-sum .cash-day-total dd { font: 700 1.3rem var(--display); letter-spacing: -.01em; }
+.ui-v2 .cash-day-sum .cash-day-total.tone-bad { background: color-mix(in srgb, var(--bad-bg, #FFDCDC) 60%, var(--v2-card)); }
+.ui-v2 .cash-day-sum .cash-day-total.tone-bad :is(dt, dd) { color: var(--destructive); }
+.ui-v2 .cash-act { min-height: 64px; padding: 12px 16px; border: 0; border-radius: var(--v2-r-row); background: var(--sunken); }
+.ui-v2 .cash-act:hover, .ui-v2 .cash-act:focus-visible { background: var(--accent-soft); box-shadow: inset 0 0 0 2px var(--accent); }
+.ui-v2 .cash-act-title { color: var(--v2-ink); }
+.ui-v2 .cash-day-close .btn { min-height: 48px; }
+.ui-v2 .cash-day h3 { margin: 22px 0 6px; color: var(--v2-ink); font: 700 1.1rem var(--display); }
+.ui-v2 .cash-day-list li { padding: 11px 4px; }
+.ui-v2 .cash-day-closed { padding: 14px 16px; border-radius: var(--v2-r-row); }
+
+/* ── Таблицы ──────────────────────────────────────────────────────────────────────────────────────── */
+.ui-v2 .table { border-radius: var(--v2-r-card); background: var(--v2-card); box-shadow: var(--v2-shadow); }
+.ui-v2 .card-block .table { box-shadow: none; }
+.ui-v2 .table th { background: var(--v2-card); color: var(--hint); font-size: .8rem; font-weight: 500; }
+
+/* ── Компьютер: строки таблиц выше и мягче ─────────────────────────────────────────────────────────── */
+@media (min-width: 761px) {
+  .ui-v2 .table th, .ui-v2 .table td { padding: 14px 16px; border-bottom-color: var(--separator); }
+  .ui-v2 .table th { padding-top: 12px; padding-bottom: 10px; }
+  .ui-v2 .table td { vertical-align: middle; }
+  .ui-v2 .table tbody tr { transition: background .12s; }
+  .ui-v2 .table tbody tr:hover { background: var(--sunken); }
+  .ui-v2 .table tbody tr.active { background: var(--accent-soft); }
+  .ui-v2 .card-block .table th:first-child, .ui-v2 .card-block .table td:first-child { padding-left: 4px; }
+  .ui-v2 .card-block .table th:last-child, .ui-v2 .card-block .table td:last-child { padding-right: 4px; }
+  .ui-v2 .table tr.group-row th { padding-top: 22px; color: var(--v2-ink); font: 700 1.05rem var(--display); }
+
+  /* Группы строк «Пациентов» — подписи крупнее; плитки-итоги — число крупнее */
+  .ui-v2 .survey-tile, .ui-v2 .salary-sums > div { padding: 14px 18px; }
+  .ui-v2 .tile-grid .survey-tile b { font-size: 1.6rem; }
+  .ui-v2 .salary-sums dd { font-size: 1.15rem; }
+  .ui-v2 .cash-day-actions { gap: 10px; }
+}
+
+/* ── Телефон ──────────────────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 760px) {
+  /* Фильтры шапки — в одну строку с прокруткой нет: переносятся «таблетками» */
+  .ui-v2 .page-head .check { gap: 6px; min-height: 38px; padding: 0 12px 0 8px; font-size: .85rem; }
+  .ui-v2 .calm-day h3, .ui-v2 .debtors-block h3 { font-size: 1.1rem; }
+  /* Длинная серая подпись справа («ждёт 2 дня · окно предложили вчера») не сжимает имя в столбик */
+  .ui-v2 .calm-meta { max-width: 11em; white-space: normal; line-height: 1.3; }
+  .ui-v2 .calm-act .btn { min-height: 38px; padding: 0 14px; }
+  .ui-v2 .cb-card { min-height: 44px; }
+
+  /* Таблицы — карточки-строки: белая карточка радиуса 16 без рамки; подпись слева серым, значение справа */
+  .ui-v2 .table tbody { gap: 10px; }
+  .ui-v2 .table tr { gap: 4px; padding: 14px 16px; border: 0; border-radius: var(--v2-r-row); background: var(--v2-card); box-shadow: var(--v2-shadow); }
+  .ui-v2 .table td { padding: 3px 0; color: var(--v2-ink); font-size: var(--v2-row-sub); }
+  .ui-v2 .table td::before { color: var(--hint); font-size: .85rem; }
+  .ui-v2 .table td:first-child { margin-bottom: 2px; font-size: var(--v2-row-title); font-weight: 600; }
+  .ui-v2 .table td.hint { color: var(--hint); }
+  .ui-v2 .table tr.group-row { padding: 14px 4px 0; box-shadow: none; background: none; }
+  .ui-v2 .table tr.group-row th { color: var(--v2-ink); font: 700 var(--v2-group) var(--display); }
+  .ui-v2 .table tbody tr:hover { background: var(--v2-card); }
+  .ui-v2 .table tbody tr.active { background: var(--accent-soft); }
+  /* В белой карточке — строки одной группой: линия между ними, без своей тени */
+  .ui-v2 .card-block .table tbody { gap: 0; }
+  .ui-v2 .card-block .table tr { padding: 14px 0; border-radius: 0; background: none; box-shadow: none; border-top: 1px solid var(--separator); }
+  .ui-v2 .card-block .table tbody tr:first-child { border-top: 0; }
+
+  /* Плитки-итоги: число крупнее, подпись в 2 строки */
+  .ui-v2 .salary-sums { gap: 8px; }
+  .ui-v2 .salary-sums > div { padding: 10px 12px; }
+  .ui-v2 .salary-sums dd { font-size: .98rem; }
+  .ui-v2 .cash-day-sum .cash-day-total dd { font-size: 1.25rem; white-space: nowrap; }
+}
+
+/* «Расходы» на телефоне: ✎ и ✕ — в правом верхнем углу карточки-строки, а не отдельной строкой внизу */
+@media (max-width: 760px) {
+  .ui-v2 .table[aria-label="Расходы"] tbody tr { position: relative; }
+  .ui-v2 .table[aria-label="Расходы"] tbody tr > td:last-child:has(button) { position: absolute; top: 8px; right: 0; padding: 0; }
+  .ui-v2 .table[aria-label="Расходы"] tbody tr > td:last-child:has(button)::before { content: none; }
+}
