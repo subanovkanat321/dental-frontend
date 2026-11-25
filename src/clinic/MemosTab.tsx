@@ -184,9 +184,9 @@ function MemoPanel({ memo: m, services, editable, onClose }: { memo?: Memo; serv
 type KyForm = { title: string; body: string; titleKy: string; bodyKy: string }
 
 /**
- * Вкладка «Кыргызский»: название и текст по-кыргызски и «✨ Перевести с ИИ» — перевод русского текста из
- * редактора кладётся в поля для правки, сам не сохраняется. Кнопка — если ИИ клиники включён; ключ на
- * сервере есть, а ИИ клиники выключен — подсказка, где включить.
+ * Вкладка «Кыргызский»: название и текст по-кыргызски и «✨ Перевести с ИИ» (ИИ клиники включён) или
+ * «📝 Перевести по шаблону» (без ИИ — строки стандартных памяток; незнакомая строка — 409 с подсказкой) — перевод
+ * русского текста из редактора кладётся в поля для правки, сам не сохраняется. ИИ не ответил — сервер сам берёт шаблон.
  */
 function KyFields({ form, memo: m, onChange, titleError, bodyError }: {
   form: KyForm
@@ -216,15 +216,15 @@ function KyFields({ form, memo: m, onChange, titleError, bodyError }: {
       {empty ? <p className="hint small">Пусто — пациентам с кыргызским языком будет отправлен русский текст.</p>
         : standard ? <p className="hint small">Перевод Tish стандартной памятки — можно поправить под клинику.</p>
           : <p className="hint small">{PHONE} оставьте как есть — заменится на телефон клиники (или врача приёма).</p>}
-      {ai.data?.on ? (
-        <div className="actions">
-          <button type="button" className="btn" disabled={translate.isPending || !form.title.trim() || !form.body.trim()}
-            onClick={() => translate.mutate()}>{translate.isPending ? 'Переводим…' : '✨ Перевести с ИИ'}</button>
-        </div>
-      ) : ai.data?.available ? (
-        <p className="hint small">✨ Перевести с ИИ — когда руководитель включит ИИ клиники в «Настройки → ИИ в клинике».</p>
-      ) : null}
-      {translate.isSuccess && <p className="hint small" role="status">Перевод ИИ — в полях выше. Проверьте и сохраните.</p>}
+      <div className="actions">
+        <button type="button" className="btn" disabled={translate.isPending || ai.isPending || !form.title.trim() || !form.body.trim()}
+          onClick={() => translate.mutate()}>{translate.isPending ? 'Переводим…' : ai.data?.on ? '✨ Перевести с ИИ' : '📝 Перевести по шаблону'}</button>
+      </div>
+      {!ai.data?.on && <p className="hint small">По шаблону переводятся строки стандартных памяток Tish; свою строку переведите сами.
+        {ai.data?.available ? ' Перевод с ИИ — когда руководитель включит ИИ клиники в «Настройки → ИИ в клинике».' : ''}</p>}
+      {translate.isSuccess && <p className="hint small" role="status">{translate.data.template
+        ? 'Перевод по шаблону стандартных памяток — в полях выше. Проверьте и сохраните.'
+        : 'Перевод ИИ — в полях выше. Проверьте и сохраните.'}</p>}
       {translate.error && <p className="error small" role="alert">{translate.error.message}</p>}
     </>
   )

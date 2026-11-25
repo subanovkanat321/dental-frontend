@@ -154,8 +154,9 @@ function Sections({ h }: { h: Health }) {
               </Row>
             )}
             {h.ai && (
-              <Row name="ИИ" tone={!h.ai.configured ? undefined : h.ai.errors24h > 0 ? 'wait' : 'ok'}>
-                {h.ai.configured ? 'ключ есть' : 'ключа нет — ИИ выключен'} · удачный вызов {when(h.ai.lastOkAt)} · ошибок за сутки {h.ai.errors24h}
+              <Row name="ИИ" tone={!h.ai.configured ? undefined : h.ai.pausedUntil || h.ai.errors24h > 0 ? 'wait' : 'ok'}>
+                {h.ai.configured ? 'ключ есть' : 'ключа нет — ИИ выключен, тексты по шаблонам'} · удачный вызов {when(h.ai.lastOkAt)} · ошибок за сутки {h.ai.errors24h}
+                {h.ai.pausedUntil && ` · пауза после ошибок подряд до ${when(h.ai.pausedUntil)} — тексты по шаблонам`}
                 {h.ai.lastErrorAt && ` · последняя ${when(h.ai.lastErrorAt)}${h.ai.lastError ? ` (${h.ai.lastError})` : ''}`}
               </Row>
             )}

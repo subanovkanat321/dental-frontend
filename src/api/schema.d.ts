@@ -12655,6 +12655,7 @@ export interface components {
         };
         QuestionControllerDraft: {
             text?: string;
+            template: boolean;
         };
         PatientQuestionsQuestionView: {
             /** Format: int64 */
@@ -12674,7 +12675,7 @@ export interface components {
             /** Format: date-time */
             answeredAt?: string;
             /** @enum {string} */
-            aiOutcome?: "ANSWERED" | "ESCALATED" | "HANDOFF";
+            aiOutcome?: "ANSWERED" | "ESCALATED" | "HANDOFF" | "TEMPLATE";
             aiAnswer?: string;
             /** @enum {string} */
             aiAction?: "BOOKED" | "RESCHEDULED" | "CANCELLED";
@@ -13041,6 +13042,7 @@ export interface components {
         MemoTranslationsTranslation: {
             title?: string;
             body?: string;
+            template: boolean;
         };
         CareMemoControllerLinked: {
             /** Format: int32 */
@@ -14052,6 +14054,8 @@ export interface components {
             /** Format: int64 */
             errors24h: number;
             lastError?: string;
+            /** Format: date-time */
+            pausedUntil?: string;
         };
         HealthServiceApp: {
             version?: string;

@@ -29584,8 +29584,12 @@
         "properties" : {
           "text" : {
             "type" : "string"
+          },
+          "template" : {
+            "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "template" ]
       },
       "PatientQuestionsQuestionView" : {
         "properties" : {
@@ -29627,7 +29631,7 @@
           },
           "aiOutcome" : {
             "type" : "string",
-            "enum" : [ "ANSWERED", "ESCALATED", "HANDOFF" ]
+            "enum" : [ "ANSWERED", "ESCALATED", "HANDOFF", "TEMPLATE" ]
           },
           "aiAnswer" : {
             "type" : "string"
@@ -30520,8 +30524,12 @@
           },
           "body" : {
             "type" : "string"
+          },
+          "template" : {
+            "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "template" ]
       },
       "CareMemoControllerLinked" : {
         "properties" : {
@@ -33178,6 +33186,10 @@
           },
           "lastError" : {
             "type" : "string"
+          },
+          "pausedUntil" : {
+            "type" : "string",
+            "format" : "date-time"
           }
         },
         "required" : [ "configured", "errors24h" ]
