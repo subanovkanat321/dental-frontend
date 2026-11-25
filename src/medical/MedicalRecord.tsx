@@ -26,6 +26,10 @@ type Patient = Schemas['PatientView']
 type Tooth = Schemas['ToothView']
 type State = ToothState
 
+/** Замок медкарты — тексты ChartService.requireAccess бэкенда (врачу и ассистенту). */
+const CHART_LOCK = 'Карту зубов видят врачи, у которых был приём с этим пациентом, и руководитель'
+const CHART_LOCK_ASSISTANT = 'Медкарту видят врачи пациента, их ассистенты и руководитель'
+
 /** 403 — не «нет доступа к CRM», а «не ваш пациент»: медкарту видят врач его приёмов и админ. */
 function denied(error: unknown): string | null {
   return error instanceof ApiError && error.status === 403 ? error.message : null
@@ -43,11 +47,15 @@ export function MedicalRecord({ patient, onBack, backLabel = '← К списк�
   const id = patient.id
   // Стрелка Telegram — туда же, откуда пришли (к приёму или к списку пациентов)
   useBack(onBack)
+  // Карточка пациента уже сказала «медкарты нет» (access.medical, те же правила, что у сервера) — не просим ничего и не ловим
+  // 403: сразу тот же замок, что ответил бы сервер (QA 2026-11-25)
+  const known = useQueryClient().getQueryData<Schemas['PatientCard']>(['patient-card', id])?.access?.medical
   const teeth = useQuery({
     queryKey: ['teeth', id],
     queryFn: () => unwrap(api.GET('/api/patients/{patientId}/teeth', { params: { path: { patientId: id } } })),
+    enabled: known !== false,
   })
-  const forbidden = denied(teeth.error)
+  const forbidden = known === false ? (readOnly ? CHART_LOCK_ASSISTANT : CHART_LOCK) : denied(teeth.error)
   // «В план лечения» из зуба: номер подставится в новый этап; счётчик — чтобы тот же зуб можно было ещё раз
   const [planTooth, setPlanTooth] = useState<{ tooth: number; n: number } | null>(null)
   // Медкарта — вкладками, а не простынёй: зубы (что есть) отдельно от плана (что сделать)

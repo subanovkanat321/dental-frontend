@@ -264,7 +264,7 @@ function Summary({ t, lang, steps, svc, doc, doctor, date, time, onChange }: {
       <h3>{t('wizSummary')}</h3>
       {svc && row('service', serviceEmoji(svc.name), t('wizStepService'), svc.name,
         <span className="wiz-row-meta num">{[price, svc.durationMinutes ? `${svc.durationMinutes} ${t('min')}` : ''].filter(Boolean).join(' · ')}</span>)}
-      {doc != null && row('doctor', '👩‍⚕️', t('wizStepDoctor'), doc === ANY ? t('anyDoctorShort') : doctor?.fullName ?? '')}
+      {doc != null && row('doctor', '🧑‍⚕️', t('wizStepDoctor'), doc === ANY ? t('anyDoctorShort') : doctor?.fullName ?? '')}
       {date && row('date', '📅', t('wizStepDate'), dayLong(lang, date))}
       {time && row('time', '🕐', t('wizStepTime'), <span className="num">{time}</span>)}
     </section>

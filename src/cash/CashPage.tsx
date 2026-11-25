@@ -228,7 +228,7 @@ export function CashPage({ me, onOpenPatient }: { me: Me; onOpenPatient?: (patie
                   <div className="money-cell">
                     <h3>По приёмам</h3>
                     <p className="total" aria-label="Выручка за период">{somText(r.totalSom)}</p>
-                    <p className="hint small">По приёмам — стоимость состоявшихся приёмов периода</p>
+                    <p className="hint small">По приёмам — оплачено за состоявшиеся приёмы периода (по дате приёма)</p>
                     <p className="hint">
                       Оплачено приёмов: {r.paidCount}
                       {/* Каждый приём — в одном счётчике: частичная оплата — «оплачен, из них с долгом», «всё в долг» — отдельно */}

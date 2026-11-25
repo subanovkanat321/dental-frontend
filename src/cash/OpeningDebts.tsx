@@ -64,8 +64,9 @@ export function OpeningDebtsList({ rows, onOpenPatient }: { rows: OpeningDebt[];
  * Карточка пациента («Деньги»): его долги из прежней программы — сумма, когда перенесли, «Погашен» → как отдали.
  * Нет долгов или нет прав — блока нет.
  */
-export function OpeningDebtsBox({ patientId }: { patientId: number }) {
-  const list = useOpeningDebts(patientId)
+/** @param allowed карточка пациента сказала «деньги клиники — да» (access.money); нет — не спрашиваем */
+export function OpeningDebtsBox({ patientId, allowed = true }: { patientId: number; allowed?: boolean }) {
+  const list = useOpeningDebts(patientId, allowed)
   const [paying, setPaying] = useState<number | null>(null)
   const pay = usePayOpening(() => setPaying(null))
   const rows = list.data ?? []

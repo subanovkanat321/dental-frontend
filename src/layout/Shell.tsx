@@ -20,7 +20,7 @@ import { Icon } from './Icon'
 import { SubIcon } from './subIcons'
 import { NavSheet } from './NavSheet'
 import { Avatar, HelpMenuItems, MeMenuItems, MenuPanel } from './MeMenu'
-import { whoAmI } from './me'
+import { useWhoAmI } from './me'
 import { useFitPanels } from './fitPanels'
 import { useSwipeDown } from './useSwipeDown'
 import { useNavGap } from './navGap'
@@ -354,7 +354,7 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
   const closeSheet = useCallback(() => setSheet(null), [])
   const nav: NavApi = { openSheet: setSheet, sheet, subs: (key) => subsBy[key] ?? [], active: activeSub, go: goSub, counts, loud, tabsSlot, helpSlot, setHelpSlot }
   const sheetSection = sheet ? sections.find((s) => s.key === sheet) : undefined
-  const { name } = whoAmI(me)
+  const { name } = useWhoAmI(me)
   const meHead = <><Avatar me={me} size="lg" /><p className="menu-who"><strong>{name}</strong><span className="hint">{role} · {clinic}</span></p></>
   const openMenu = (which: 'me' | 'help') => {
     setMore(false)

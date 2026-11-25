@@ -41,7 +41,7 @@ const openCard = async (name: string) => {
 }
 
 test('новый пациент: одно пустое состояние «Ещё не был в клинике» и «Пригласить в бот», без плиток и пустых разделов', async () => {
-  backend({ patient: { id: 3, fullName: 'Нурлан К.', phone: '996777555666', telegram: false }, done: 0, noShow: 0, cancelled: 0, upcoming: [], past: [] })
+  backend({ patient: { id: 3, fullName: 'Нурлан К.', phone: '996777555666', telegram: false }, done: 0, noShow: 0, cancelled: 0, access: { medical: true, money: true }, upcoming: [], past: [] })
   renderApp()
   const panel = await openCard('Нурлан К.')
   expect(await within(panel).findByText('Ещё не был в клинике')).toBeInTheDocument()
@@ -55,7 +55,7 @@ test('ребёнок без своего номера: шапка «Ребёно
   const birth = `${Number(todayIn().slice(0, 4)) - 7}-01-15`
   backend({
     patient: { id: 4, fullName: 'Алия Тестова', birthDate: birth, telegram: false, guardian: { fullName: 'Гульнара Тестова', relation: 'MOTHER', phone: '996777222333' } },
-    done: 1, noShow: 0, cancelled: 0, upcoming: [], past: [],
+    done: 1, noShow: 0, cancelled: 0, access: { medical: true, money: true }, upcoming: [], past: [],
   })
   renderApp()
   const panel = await openCard('Алия Тестова')
@@ -73,7 +73,7 @@ test('аллергия — пилюлей в шапке (как в карточ�
   }
   const start = new Date(`${addDays(todayIn(), -10)}T10:00:00+06:00`).toISOString()
   backend({
-    patient: { id: 2, fullName: 'Айгуль Т.', phone: '996700333444', telegram: true }, done: 1, noShow: 0, cancelled: 0, upcoming: [],
+    patient: { id: 2, fullName: 'Айгуль Т.', phone: '996700333444', telegram: true }, done: 1, noShow: 0, cancelled: 0, access: { medical: true, money: true }, upcoming: [],
     past: [{ id: 50, doctorId: 1, startAt: start, endAt: start, status: 'DONE', version: 0, source: 'DOCTOR', debtSom: 0, firstVisit: false, chairManual: false, lockedForDoctors: false,
       patient: { id: 2, fullName: 'Айгуль Т.', telegram: true } }],
   }, me, [
@@ -97,7 +97,7 @@ test('аллергия — пилюлей в шапке (как в карточ�
 })
 
 test('«⋯» шапки: задача и лаборатория; регистратуре — без «Заказа в лабораторию»; строки ссылок под сводкой нет', async () => {
-  backend({ patient: { id: 3, fullName: 'Нурлан К.', phone: '996777555666', telegram: false }, done: 0, noShow: 0, cancelled: 0, upcoming: [], past: [] },
+  backend({ patient: { id: 3, fullName: 'Нурлан К.', phone: '996777555666', telegram: false }, done: 0, noShow: 0, cancelled: 0, access: { medical: true, money: true }, upcoming: [], past: [] },
     { ...me, admin: false, reception: true, doctorId: undefined })
   const user = userEvent.setup()
   renderApp()
@@ -113,7 +113,7 @@ test('«⋯» шапки: задача и лаборатория; регистр
 })
 
 test('P2: номер в шапке — «Связаться ▾», рядом с «＋ Записать» — значок 📞; «Прочее»: лист ожидания с подписью', async () => {
-  backend({ patient: { id: 4, fullName: 'Нурлан К.', phone: '996777555666', telegram: false }, done: 0, noShow: 0, cancelled: 0, upcoming: [], past: [] },
+  backend({ patient: { id: 4, fullName: 'Нурлан К.', phone: '996777555666', telegram: false }, done: 0, noShow: 0, cancelled: 0, access: { medical: true, money: true }, upcoming: [], past: [] },
     me, [http.get('*/api/waitlist', () => HttpResponse.json([])), http.get('*/api/patients/:id/family', () => new HttpResponse(null, { status: 204 }))])
   renderApp()
   const panel = await openCard('Нурлан К.')
@@ -129,7 +129,7 @@ test('P2: номер в шапке — «Связаться ▾», рядом с
 })
 
 test('«Прочее»: «Приведи друга» и «Договор» — без предупреждения React о двух детях с одним key (QA 2026-11-25)', async () => {
-  backend({ patient: { id: 3, fullName: 'Нурлан К.', phone: '996777555666', telegram: false }, done: 0, noShow: 0, cancelled: 0, upcoming: [], past: [] })
+  backend({ patient: { id: 3, fullName: 'Нурлан К.', phone: '996777555666', telegram: false }, done: 0, noShow: 0, cancelled: 0, access: { medical: true, money: true }, upcoming: [], past: [] })
   const errors = vi.spyOn(console, 'error')
   renderApp()
   const panel = await openCard('Нурлан К.')
@@ -137,4 +137,24 @@ test('«Прочее»: «Приведи друга» и «Договор» — 
   expect(await within(panel).findByText(/Приведи друга/)).toBeInTheDocument()
   expect(errors.mock.calls.filter((c) => String(c[0]).includes('same key'))).toEqual([])
   errors.mockRestore()
+})
+
+test('чужой пациент врача (access.medical = false): анкету, план, заметки и долги прежней программы не просим, медкарта — замком без 403', async () => {
+  const asked: string[] = []
+  const doctor = { ...me, admin: false, doctorId: 2 } satisfies Schemas['BookingViewsMe']
+  const track = (path: string) => http.get(path, ({ request }) => {
+    asked.push(new URL(request.url).pathname)
+    return HttpResponse.json({ type: 'about:blank', status: 403, title: 'Forbidden', detail: 'нет' }, { status: 403 })
+  })
+  backend({ patient: { id: 8, fullName: 'Бакыт Вымышленный', phone: '996700000088', telegram: false }, done: 1, noShow: 0, cancelled: 0,
+    access: { medical: false, money: false }, upcoming: [], past: [] }, doctor, [
+    track('*/api/patients/8/anamnesis'), track('*/api/patients/8/notes'), track('*/api/patients/8/plan/status'),
+    track('*/api/patients/8/teeth'), track('*/api/opening-debts'),
+  ])
+  renderApp()
+  const panel = await openCard('Бакыт Вымышленный')
+  expect(within(panel).getByRole('heading', { name: 'Бакыт Вымышленный' })).toBeInTheDocument()
+  await userEvent.click(within(panel).getByRole('tab', { name: 'Медкарта' }))
+  expect(await screen.findByText('Карту зубов видят врачи, у которых был приём с этим пациентом, и руководитель')).toBeInTheDocument()
+  expect(asked).toEqual([])
 })

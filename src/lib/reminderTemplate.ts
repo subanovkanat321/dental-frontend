@@ -1,3 +1,5 @@
+import { hasQuotes } from './clinicName'
+
 /**
  * Свой текст напоминания клиники (V135 бэкенда, «Настройки» → «Напоминание о приёме»): шаблон с
  * переменными в фигурных скобках. Подстановка — та же, что ReminderTemplate.apply на сервере
@@ -63,11 +65,18 @@ export function usesVariable(template: string, variable: Variable | DebtVariable
   return [...template.matchAll(VARIABLE)].some((m) => m[1]!.toLowerCase() === variable)
 }
 
+const QUOTED = /«\{([^{}\s]{1,30})\}»/gu
+
 /** Подставить значения; нет значения или пусто — переменная убирается аккуратно. */
 export function applyTemplate<V extends string = Variable>(template: string, values: Partial<Record<V, string | null | undefined>>,
   names: readonly string[] = NAMES): string {
   const out: string[] = []
-  for (const line of template.replace(/\r\n/g, '\n').split('\n')) {
+  // «{клиника}» в шаблоне, а название уже в кавычках — кавычки шаблона убираем (ReminderTemplate.unquote бэкенда)
+  const unquoted = template.replace(QUOTED, (match, name: string) => {
+    const key = name.toLowerCase()
+    return names.includes(key) && hasQuotes(values[key as V]) ? `{${name}}` : match
+  })
+  for (const line of unquoted.replace(/\r\n/g, '\n').split('\n')) {
     let hadVariable = false
     let emptied = false
     let filled = false

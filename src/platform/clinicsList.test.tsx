@@ -14,7 +14,7 @@ const owner = { ...me, owner: true, platform: true }
 const manager = { ...me, owner: false, platform: true, admin: false }
 const clinic = (id: number, name: string, extra: Partial<Schemas['PlatformServiceClinicRow']> = {}) => ({
   id, name, code: `c${id}`, doctors: 1, staff: 1, patients: 3, appointments: 4, done30: 3, noShow30: 0, health: 'OK', billing: { state: 'FREE' },
-  bookedWeek: 0, selfBooked30: 0, unmarked: 0, hidden: false, listed: true, settingUp: false, selfSignup: false, ...extra,
+  bookedWeek: 0, selfBooked30: 0, unmarked: 0, hidden: false, listed: true, settingUp: false, selfSignup: false, demo: false, ...extra,
 }) satisfies Schemas['PlatformServiceClinicRow']
 
 const CLINICS = [

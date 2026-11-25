@@ -86,7 +86,8 @@ export function BroadcastTab() {
       void client.invalidateQueries({ queryKey: ['platform-broadcasts'] })
     },
   })
-  const list = clinics.data ?? []
+  // Демо-клинике сервер рассылку не шлёт — не считаем её во «Всем клиникам (N)» и не даём выбрать (иначе «выбрали» только её — 422)
+  const list = (clinics.data ?? []).filter((c) => !c.demo)
   const toggle = (id: number) => {
     const next = new Set(chosen)
     if (next.has(id)) next.delete(id)

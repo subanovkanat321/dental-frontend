@@ -72,7 +72,7 @@ test('частный врач: «Чистыми за месяц» столбик
   expect(block).not.toHaveTextContent('Техник и лаборатория')
   expect(block).not.toHaveTextContent('Доля общих расходов')
   expect(within(block).getByLabelText('Чистыми')).toHaveTextContent(/25\s700 сом/)
-  expect(block).toHaveTextContent('У 1 материала нет цены')
+  expect(block).toHaveTextContent('У 1 материала не указана цена — впишите сумму поставки в «Склад → Материалы», иначе расход не посчитать.')
   // 100% — строки «клинике по условиям» нет
   expect(block).not.toHaveTextContent('Клинике по условиям')
   expect(within(block).queryByRole('alert')).toBeNull()

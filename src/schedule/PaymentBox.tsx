@@ -7,6 +7,7 @@ import { debtLine } from '../lib/debt'
 import { serviceEmoji } from '../lib/serviceEmoji'
 import { dateOf, shortDate, somText, todayIn } from '../lib/time'
 import { useAppointmentAction } from './useAppointmentAction'
+import { servicesChanged } from './servicesChanged'
 import { DateInput } from '../layout/DateInput'
 import { Select } from '../layout/Select'
 import { serviceOptions, usePopularServices } from '../clinic/serviceOptions'
@@ -70,7 +71,9 @@ export function PaymentBox({ appointment: a, me, open, mainOutside = false, quie
   // Регистратура открывает счёт с кассы — сразу форма оплаты с суммой счёта
   // Не оплачено — одной строкой с кнопкой: форма с подставленной ценой на полэкрана сбивала с толку
   const [view, setViewState] = useState<View>(open ?? initialPayView(a, me))
-  const setView = (v: View) => { setViewState(v); onView?.(v) }
+  // «Пересчитать» (услуги изменились после оплаты): форма «Изменить оплату» с новой суммой услуг
+  const [prefill, setPrefill] = useState<number | undefined>()
+  const setView = (v: View) => { setViewState(v); onView?.(v); if (v !== 'edit') setPrefill(undefined) }
   const mainClass = quiet ? 'btn' : 'btn primary'
   const history = useQuery({
     queryKey: ['payments', a.id, a.version, a.paidSom],
@@ -91,7 +94,7 @@ export function PaymentBox({ appointment: a, me, open, mainOutside = false, quie
     return (
       <div className="payment">
         <PayForm a={a} me={me} billOnly={view === 'bill'} parts={needParts ? history.data ?? [] : []} spentHere={spentHere}
-          onCancel={back} />
+          prefillCost={view === 'edit' ? prefill : undefined} onCancel={back} />
       </div>
     )
   }
@@ -120,6 +123,7 @@ export function PaymentBox({ appointment: a, me, open, mainOutside = false, quie
   const allInDebt = a.paidSom === 0 && (a.chargeSom ?? 0) > 0
   // Оплачено полностью — одной строкой «✅ Оплачено 6 000 сом · наличные», без «6 000 из 6 000» и второй строки
   const fullyPaid = !debt && a.chargeSom != null && (a.paidSom ?? 0) > 0 && (a.paidSom ?? 0) >= a.chargeSom
+  const changed = servicesChanged(a)
   return (
     <div className="payment">
       <p className="payment-done">
@@ -139,6 +143,13 @@ export function PaymentBox({ appointment: a, me, open, mainOutside = false, quie
         </p>
       )}
       <EarningsGain a={a} me={me} />
+      {changed != null && (
+        <p className="tone-wait payment-changed" role="note">
+          Услуги изменились: теперь {somText(changed.now)}, в оплате {somText(changed.was)}
+          {installments ? ' — измените доплатой' : <> — <button type="button" className="link"
+            onClick={() => { setView('edit'); setPrefill(changed.now) }}>Пересчитать</button></>}
+        </p>
+      )}
       {installments && <p className="hint small">Есть доплаты — сумму меняют доплатой; ошиблись в платеже — напишите в техподдержку.</p>}
       {debt ? <p className={`tone-${debt.tone} payment-debt`}>{debt.text}</p>
         : a.chargeSom != null && !fullyPaid ? <p className="tone-ok">✅ Оплачено полностью</p> : null}
@@ -339,11 +350,13 @@ const SPLIT_LABEL: Record<Method, string> = { CASH: 'Наличными, сом'
  * 3) чем заплатил: наличные, перевод, карта или «разными способами» — сумма по каждому.
  * Одна сумма вводится один раз: «всё сразу» — оплачено = стоимость; части считаются от «заплатил».
  */
-function PayForm({ a, me, billOnly, parts: initialParts, spentHere = 0, onCancel }: {
+function PayForm({ a, me, billOnly, parts: initialParts, spentHere = 0, prefillCost, onCancel }: {
   a: Appointment
   me: Me
   billOnly: boolean
   parts: Entry[]
+  /** «Пересчитать»: стоимость — новая сумма услуг (как «Подставить»), а не прежняя из оплаты */
+  prefillCost?: number
   /** Этот приём уже оплачен с аванса на столько — при «Изменить» доступно снова */
   spentHere?: number
   onCancel?: () => void
@@ -357,7 +370,7 @@ function PayForm({ a, me, billOnly, parts: initialParts, spentHere = 0, onCancel
   const hadDebt = a.debtSom > 0
   // Со скидкой «стоимость» в форме — цена до скидки, к оплате — её посчитанный остаток
   // Услуги строками (шаг 5А): цена до скидки по умолчанию — сумма строк (цена × количество), её считает сервер
-  const [cost, setCost] = useState(String(a.discount?.priceSom ?? a.chargeSom ?? a.paidSom ?? a.servicesTotalSom ?? a.servicePriceSom ?? ''))
+  const [cost, setCost] = useState(String(prefillCost ?? a.discount?.priceSom ?? a.chargeSom ?? a.paidSom ?? a.servicesTotalSom ?? a.servicePriceSom ?? ''))
   const [discount, setDiscount] = useState<DiscountDraft | null>(() => draftOf(a.discount))
   const policy = useDiscountPolicy()
   // Скидка по метке (V255 бэкенда): у пациента «Друг» со скидкой 10 % — подставим её в новую оплату (ещё нет ни оплаты,

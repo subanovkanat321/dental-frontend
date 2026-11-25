@@ -304,7 +304,7 @@ export function ReportTab({ doctorId, onOpen, active }: { doctorId: number | nul
           <p className="money-cell"><span>Касса: <b className="num">{somText(sums.data.cash?.totalSom ?? 0)}</b></span>
             <span className="hint small">деньги, полученные за период</span></p>
           <p className="money-cell"><span>По приёмам: <b className="num">{somText(sums.data.totalSom)}</b></span>
-            <span className="hint small">стоимость состоявшихся приёмов периода</span></p>
+            <span className="hint small">оплачено за состоявшиеся приёмы периода (по дате приёма)</span></p>
         </div>
       )}
       {send.isSuccess && <p className="tone-ok" role="status">Отчёт отправлен в Telegram</p>}

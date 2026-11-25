@@ -93,6 +93,38 @@ test('услуги: таблица по группам, правка и нова
   expect(bodies[1]).toEqual({ name: 'Удаление зуба', group: 'SURGERY', durationMinutes: 30, active: true })
 })
 
+test('новая услуга: быстрое «Добавить» шлёт угаданный раздел, длительность — шагом 5 минут с подсказкой', async () => {
+  const bodies: Schemas['ServiceTypeControllerRequest'][] = []
+  server.use(
+    http.get('*/api/service-types', () => HttpResponse.json([])),
+    http.get('*/api/service-types/group-guess', ({ request }) => HttpResponse.json({
+      group: new URL(request.url).searchParams.get('name')?.startsWith('Удал') ? 'SURGERY' : 'OTHER',
+    } satisfies Schemas['ServiceTypeControllerGroupGuess'])),
+    http.post('*/api/service-types', async ({ request }) => {
+      const body = await request.json() as Schemas['ServiceTypeControllerRequest']
+      bodies.push(body)
+      return HttpResponse.json({ id: 9, active: true, ...body, group: body.group ?? 'OTHER' } satisfies Schemas['ServiceTypeView'], { status: 201 })
+    }),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('button', { name: '＋ Своя услуга' }))
+  const fresh = await screen.findByRole('complementary', { name: 'Новая услуга' })
+  const duration = within(fresh).getByRole('spinbutton', { name: 'Длительность, мин' })
+  expect(duration).toHaveAttribute('step', '5')
+  await user.clear(duration)
+  await user.type(duration, '22')
+  expect(within(fresh).getByRole('alert')).toHaveTextContent('Длительность — шагом 5 минут')
+  await user.clear(duration)
+  await user.type(duration, '25')
+  expect(within(fresh).queryByRole('alert')).not.toBeInTheDocument()
+  // Название и сразу «Добавить» — до паузы ввода и ответа подсказки: раздел всё равно угаданный, а не «Прочее»
+  await user.type(within(fresh).getByRole('textbox', { name: 'Название' }), 'Удаление импланта')
+  await user.click(within(fresh).getByRole('button', { name: 'Добавить' }))
+  await waitForSlow(() => expect(bodies).toHaveLength(1))
+  expect(bodies[0]).toEqual({ name: 'Удаление импланта', group: 'SURGERY', durationMinutes: 25, active: true })
+})
+
 /** ≈ прайс клиники: 12 услуг в 5 разделах (вымышленные). */
 const PRICE_LIST: Schemas['ServiceTypeView'][] = [
   ['Первичная консультация', 'EXAM'], ['Профессиональная чистка', 'HYGIENE'], ['Фторирование', 'HYGIENE'],

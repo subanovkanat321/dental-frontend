@@ -154,7 +154,7 @@ export const TIPS: Tip[] = [
   {
     id: 'plan-link',
     title: 'План лечения — по ссылке',
-    text: 'Отправьте план пациенту в Telegram или WhatsApp: он прочитает дома и нажмёт «Согласен».',
+    text: 'Отправьте план пациенту в Telegram или WhatsApp: пациент прочитает дома и нажмёт «Согласен».',
     action: { guide: 'pacienty/otpravit-plan-pacientu' },
     show: clinical,
     feature: 'plan-link',

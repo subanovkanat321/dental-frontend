@@ -267,6 +267,7 @@ test('новая запись: «Вернуть» — снова длитель�
 test('услуги не помещаются в приём (кариес × 2 = 90 мин, приём 30) — «Услуги займут … · Продлить до …» → перенос с той же даты на 90 мин', async () => {
   const a = appointment(10, 1, '10:00', 'Бакыт М.', { version: 1, serviceName: 'Лечение кариеса', services: [line(2, 2, 'Лечение кариеса', 6000, 2, [36, 37])] })
   backend({ ...a, endAt: new Date(Date.parse(a.startAt) + 30 * 60_000).toISOString() })
+  freeAfter(a, 30, 180)
   const moved: Schemas['AppointmentRequestsReschedule'][] = []
   server.use(http.post('*/api/appointments/:id/reschedule', async ({ request }) => {
     const b = await request.json() as Schemas['AppointmentRequestsReschedule']
@@ -279,6 +280,49 @@ test('услуги не помещаются в приём (кариес × 2 = 
   expect(note).toHaveTextContent(/Услуги займут 1 ч 30 мин, а приём — 30 мин\./)
   await userEvent.click(within(note).getByRole('button', { name: /^Продлить до 11:30$/ }))
   await waitForSlow(() => expect(moved).toEqual([expect.objectContaining({ startAt: a.startAt, durationMinutes: 90, version: 1 })]))
+})
+
+/** Свободное окно врача после приёма: с from до to минут от начала приёма (как /api/slots: приёмы, перерывы, часы). */
+function freeAfter(a: Appointment, from: number, to: number, extra: Partial<Schemas['SlotsView']> = {}) {
+  const at = (m: number) => new Date(Date.parse(a.startAt) + m * 60_000).toISOString()
+  server.use(http.get('*/api/slots', () => HttpResponse.json({
+    workingDay: true, starts: [], breaks: [], free: to > from ? [{ start: at(from), end: at(to) }] : [], ...extra,
+  } satisfies Schemas['SlotsView'])))
+}
+
+test('«Продлить до …» не залезает на следующую запись: до неё — «дальше занято», вплотную — подсказка вместо кнопки', async () => {
+  const a = appointment(10, 1, '10:00', 'Бакыт М.', { version: 1, serviceName: 'Лечение кариеса', services: [line(2, 2, 'Лечение кариеса', 6000, 2, [36, 37])] })
+  const short = { ...a, endAt: new Date(Date.parse(a.startAt) + 30 * 60_000).toISOString() }
+  backend(short)
+  // Свободно 10:30–11:00 (в 11:00 — следующая запись): нужно до 11:30, предлагаем 11:00
+  freeAfter(a, 30, 60)
+  const moved: Schemas['AppointmentRequestsReschedule'][] = []
+  server.use(http.post('*/api/appointments/:id/reschedule', async ({ request }) => {
+    moved.push(await request.json() as Schemas['AppointmentRequestsReschedule'])
+    return HttpResponse.json({ ...short, version: 2 })
+  }))
+  const { unmount } = renderApp()
+  const panel = await card(/Бакыт М\./)
+  const note = (await within(panel).findByText(/Услуги займут/)).closest('p')!
+  const button = await within(note).findByRole('button', { name: /^Продлить до 11:00$/ })
+  expect(note).toHaveTextContent('дальше занято')
+  expect(within(note).queryByRole('button', { name: /11:30/ })).not.toBeInTheDocument()
+  await userEvent.click(button)
+  await waitForSlow(() => expect(moved).toEqual([expect.objectContaining({ startAt: a.startAt, durationMinutes: 60 })]))
+  unmount()
+
+  // Сразу за приёмом — следующая запись: кнопки нет, подсказка
+  const next = appointment(11, 1, '10:30', 'Асель Т.', { version: 1 })
+  server.use(
+    http.get('*/api/appointments', ({ request }) => HttpResponse.json(
+      Number(new URL(request.url).searchParams.get('doctorId')) === 1 ? [short, next] : [])),
+  )
+  freeAfter(a, 30, 30)
+  renderApp()
+  const again = await card(/Бакыт М\./)
+  const hint = (await within(again).findByText(/Услуги займут/)).closest('p')!
+  await waitForSlow(() => expect(hint).toHaveTextContent('Следующая запись в 10:30 — перенесите или сократите услуги'))
+  expect(within(hint).queryByRole('button', { name: /Продлить/ })).not.toBeInTheDocument()
 })
 
 test('«＋ Услуга» той же услугой ещё раз — «× 2» в той же строке, а не вторая строка', async () => {

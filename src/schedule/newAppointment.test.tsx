@@ -44,7 +44,7 @@ test('из карточки пациента: уже записан на это�
     http.get('*/api/patients/recent', () => HttpResponse.json([{ id: 2, fullName: 'Айгуль Т.', phone: '996700333444', telegram: false }])),
     http.get('*/api/appointments', () => HttpResponse.json([])),
     http.get('*/api/appointments/by-patient/2', () => HttpResponse.json({
-      patient: { id: 2, fullName: 'Айгуль Т.', phone: '996700333444', telegram: false }, done: 1, noShow: 0, cancelled: 0, upcoming: [booked], past: [visit],
+      patient: { id: 2, fullName: 'Айгуль Т.', phone: '996700333444', telegram: false }, done: 1, noShow: 0, cancelled: 0, access: { medical: true, money: true }, upcoming: [booked], past: [visit],
     } satisfies Schemas['PatientCard'])),
     http.get('*/api/appointments/debts', ({ request }) => HttpResponse.json(
       new URL(request.url).searchParams.get('patientId') === '2' ? [{ appointmentId: 50, debtSom: 1500, startAt: visit.startAt }] : [])),
@@ -106,7 +106,7 @@ test('«Записать на следующий визит»: услуга и �
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.get('*/api/appointments', ({ request }) => HttpResponse.json(new URL(request.url).searchParams.get('doctorId') === '1' ? [done] : [])),
     http.get('*/api/appointments/by-patient/10', () => HttpResponse.json({
-      patient: done.patient, done: 1, noShow: 0, cancelled: 0, upcoming: [], past: [done],
+      patient: done.patient, done: 1, noShow: 0, cancelled: 0, access: { medical: true, money: true }, upcoming: [], past: [done],
     } satisfies Schemas['PatientCard'])),
     http.get('*/api/patients/10/plan', () => HttpResponse.json(plan)),
     // Следующий этап — по правилу сервера: первый несделанный с услугой прайса и его группа
@@ -153,7 +153,7 @@ test('«Записать на следующий визит»: в этот де�
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.get('*/api/appointments', ({ request }) => HttpResponse.json(new URL(request.url).searchParams.get('doctorId') === '1' ? [done] : [])),
     http.get('*/api/appointments/by-patient/10', () => HttpResponse.json({
-      patient: done.patient, done: 1, noShow: 0, cancelled: 0, upcoming: [], past: [done],
+      patient: done.patient, done: 1, noShow: 0, cancelled: 0, access: { medical: true, money: true }, upcoming: [], past: [done],
     } satisfies Schemas['PatientCard'])),
     // Плана нет — врач и услуга прежние; через неделю и на следующий день мест нет, через 9 дней — 09:30
     http.get('*/api/patients/10/plan', () => HttpResponse.json([])),
@@ -181,7 +181,7 @@ test('«＋ Новая запись» на всех врачах: выбрали
     http.get('*/api/appointments', () => HttpResponse.json([])),
     http.post('*/api/patients/search', () => HttpResponse.json([{ id: 50, fullName: 'Нурлан К.', phone: '996777555666' }])),
     http.get('*/api/appointments/by-patient/50', () => HttpResponse.json({
-      patient: { id: 50, fullName: 'Нурлан К.', phone: '996777555666', telegram: false }, done: 1, noShow: 0, cancelled: 0, upcoming: [], past: [visit],
+      patient: { id: 50, fullName: 'Нурлан К.', phone: '996777555666', telegram: false }, done: 1, noShow: 0, cancelled: 0, access: { medical: true, money: true }, upcoming: [], past: [visit],
     } satisfies Schemas['PatientCard'])),
     http.get('*/api/service-types', () => HttpResponse.json(services)),
     http.get('*/api/slots', () => HttpResponse.json({ workingDay: true, starts: [at(today, '12:00')] })),
@@ -209,7 +209,7 @@ test('регистратура: «Записать на следующий ви�
     http.get('*/api/patient/me', () => HttpResponse.json(reception)),
     http.get('*/api/appointments', ({ request }) => HttpResponse.json(['1', null].includes(new URL(request.url).searchParams.get('doctorId')) ? [done] : [])),
     http.get('*/api/appointments/by-patient/10', () => HttpResponse.json({
-      patient: done.patient, done: 1, noShow: 0, cancelled: 0, upcoming: [], past: [done],
+      patient: done.patient, done: 1, noShow: 0, cancelled: 0, access: { medical: true, money: true }, upcoming: [], past: [done],
     } satisfies Schemas['PatientCard'])),
     // План регистратуре закрыт — его и не спрашиваем; этап — без названия и зуба
     http.get('*/api/patients/10/plan', () => {
@@ -256,7 +256,7 @@ function planPatient(next: Schemas['TreatmentPlanNextStep'], created: unknown[])
       total: 1, leftSom: 9000, days: 30,
     } satisfies Schemas['PlanStatesBoard'])),
     http.get('*/api/appointments/by-patient/3', () => HttpResponse.json({
-      patient: { id: 3, fullName: 'Айгуль Т.', phone: '996700333444', telegram: false }, done: 0, noShow: 0, cancelled: 0, upcoming: [], past: [],
+      patient: { id: 3, fullName: 'Айгуль Т.', phone: '996700333444', telegram: false }, done: 0, noShow: 0, cancelled: 0, access: { medical: true, money: true }, upcoming: [], past: [],
     } satisfies Schemas['PatientCard'])),
     http.get('*/api/patients/3/plan', () => HttpResponse.json(PLAN_IN_WORK)),
     http.get('*/api/patients/3/plan/next', () => HttpResponse.json(next)),
@@ -341,7 +341,7 @@ test('пустой поиск — недавние; найденные — с в
       { id: 52, fullName: 'Бакыт Тестов', telegram: false, birthDate: kidBirth, guardian: { fullName: 'Гульнара Тестова', relation: 'MOTHER', phone: '996777222333' } },
     ] satisfies Schemas['PatientView'][])),
     http.get('*/api/appointments/by-patient/:id', () => HttpResponse.json({
-      patient: { id: 50, fullName: 'Бакыт Тестов', phone: '996555123456', telegram: false }, done: 0, noShow: 0, cancelled: 0, upcoming: [], past: [],
+      patient: { id: 50, fullName: 'Бакыт Тестов', phone: '996555123456', telegram: false }, done: 0, noShow: 0, cancelled: 0, access: { medical: true, money: true }, upcoming: [], past: [],
     } satisfies Schemas['PatientCard'])),
     http.get('*/api/service-types', () => HttpResponse.json(services)),
     http.get('*/api/slots', () => HttpResponse.json({ workingDay: true, starts: [at(today, '22:00')] })),

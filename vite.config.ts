@@ -182,11 +182,47 @@ const colorMixPostcss = {
   },
 }
 
+/**
+ * Короткие адреса страниц сайта → их HTML — как nginx на проде (deploy/nginx/default.conf.template бэкенда): /clinics,
+ * /c/<код>, /join, /go, /guide, /tour, /learn…, /plan, /r/<секрет>, /pay/<токен>, /about, /call.html. Без этого в
+ * `npm run dev` /clinics открывал index.html (Mini App) — а страница клиники при 404 уводит на /clinics, и
+ * Mini App без входа бесконечно просил /api/patient/me. null — не страница сайта (CRM, Mini App, файлы).
+ */
+export function sitePageFor(path: string): string | null {
+  const exact: Record<string, string> = {
+    '/clinics': 'clinics', '/clinic': 'clinic', '/join': 'join', '/go': 'go', '/guide': 'guide', '/tour': 'tour',
+    '/call.html': 'call', '/learn': 'learn', '/plan': 'plan', '/about': 'about',
+  }
+  const clean = path.length > 1 ? path.replace(/\/$/, '') : path
+  if (exact[clean]) return `/site/${exact[clean]}.html`
+  if (/^\/c\/[A-Za-z0-9_-]+$/.test(clean)) return '/site/clinic.html'
+  if (/^\/learn\/[^/]+$/.test(clean)) return '/site/learn.html'
+  if (/^\/r\/[^/]+$/.test(clean)) return '/site/review.html'
+  if (/^\/pay\/[^/]+$/.test(clean)) return '/site/pay.html'
+  return null
+}
+
+/** Только `npm run dev`: страницы сайта по коротким адресам ({@link sitePageFor}); в сборке адреса раскладывает nginx. */
+function sitePages(): Plugin {
+  return {
+    name: 'tish-site-pages-dev',
+    apply: 'serve',
+    configureServer(server) {
+      server.middlewares.use((req, _res, next) => {
+        const [path, query] = (req.url ?? '/').split('?', 2) as [string, string | undefined]
+        const page = req.method === 'GET' ? sitePageFor(path) : null
+        if (page) req.url = query == null ? page : `${page}?${query}`
+        next()
+      })
+    },
+  }
+}
+
 export default defineConfig({
   // Весь фронт — с корня домена (ADR 0002 бэкенда, этап 5): CRM и Mini App — index.html, страницы
   // сайта — site/*.html; nginx раскладывает адреса (deploy/nginx/default.conf.template бэкенда)
   base: '/',
-  plugins: [react(), serviceWorker(), versionFile(), sharePages()],
+  plugins: [react(), serviceWorker(), versionFile(), sharePages(), sitePages()],
   css: { postcss: { plugins: [colorMixPostcss] } },
   build: {
     // Самый большой чанк — three.js 3D-атласа (engine, около 615 КБ, 160 КБ gzip): грузится только

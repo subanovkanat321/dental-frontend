@@ -18,7 +18,7 @@ afterEach(() => {
 
 const owner = { ...me, owner: true, platform: true }
 const clinic = (id: number, name: string, extra: Partial<Schemas['PlatformServiceClinicRow']> = {}) => ({
-  id, name, code: `c${id}`, doctors: 2, staff: 1, patients: 30, appointments: 40, done30: 18, noShow30: 2, health: 'OK', billing: { state: 'FREE' }, bookedWeek: 0, selfBooked30: 0, unmarked: 0, hidden: false, listed: true, settingUp: false, selfSignup: false, ...extra,
+  id, name, code: `c${id}`, doctors: 2, staff: 1, patients: 30, appointments: 40, done30: 18, noShow30: 2, health: 'OK', billing: { state: 'FREE' }, bookedWeek: 0, selfBooked30: 0, unmarked: 0, hidden: false, listed: true, settingUp: false, selfSignup: false, demo: false, ...extra,
 }) satisfies Schemas['PlatformServiceClinicRow']
 
 function backend(clinics: Schemas['PlatformServiceClinicRow'][]) {
@@ -152,8 +152,8 @@ test('менеджер без клиники: только «Платформа�
   expect(within(panel).queryByText('Пригласить ещё одного руководителя')).not.toBeInTheDocument()
 })
 
-test('рассылка клиникам: подтверждение и итог', async () => {
-  backend([clinic(1, 'А'), clinic(2, 'Б')])
+test('рассылка клиникам: подтверждение и итог; демо-клинику не считаем и не предлагаем (ей сервер не шлёт)', async () => {
+  backend([clinic(1, 'А'), clinic(2, 'Б'), clinic(3, 'Стоматология «Демо»', { demo: true, hidden: true })])
   let sent: unknown = null
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(owner)),
@@ -169,8 +169,11 @@ test('рассылка клиникам: подтверждение и итог'
   await openPlatform('Рассылка клиникам', 'Всем сразу (руководителям)', user)
   const form = screen.getByRole('form', { name: 'Сообщение клиникам' })
   await user.type(within(form).getByRole('textbox'), 'Плановые работы в субботу')
+  expect(await within(form).findByRole('button', { name: 'Всем клиникам (2)' })).toBeInTheDocument()
   await user.click(within(form).getByRole('button', { name: 'Выбрать' }))
   await user.click(await within(form).findByRole('checkbox', { name: 'Б' }))
+  expect(within(form).getAllByRole('checkbox')).toHaveLength(2)
+  expect(within(form).queryByRole('checkbox', { name: /Демо/ })).not.toBeInTheDocument()
   await user.click(within(form).getByRole('button', { name: 'Отправить руководителям' }))
   expect(await within(form).findByText('Отправлено: дошло 1 из 1')).toBeInTheDocument()
   expect(sent).toEqual({ text: 'Плановые работы в субботу', clinicIds: [2] })

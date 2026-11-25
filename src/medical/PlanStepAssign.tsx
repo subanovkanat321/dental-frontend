@@ -11,7 +11,7 @@ import { addDays, todayIn } from '../lib/time'
 type Step = Schemas['TreatmentStepView']
 
 /**
- * Врач и срок у этапа плана (V241): «👤 Иванова А. · до 15 дек» под названием этапа; срок прошёл, а этап не сделан —
+ * Врач и срок у этапа плана (V241): «👤 Иванова А. · до 15 дек» (без врача — «📅 до 15 дек»; ⏱ — только длительность) под названием этапа; срок прошёл, а этап не сделан —
  * красная пометка «просрочен». Ничего не назначено — ничего не рисуем.
  */
 export function StepAssignMeta({ step: s }: { step: Step }) {
@@ -19,7 +19,7 @@ export function StepAssignMeta({ step: s }: { step: Step }) {
   if (!text) return null
   return (
     <span className={s.overdue ? 'plan-assign overdue' : 'plan-assign'}>
-      {s.doctorName ? '👤 ' : '⏱ '}{text}{s.overdue && <b className="plan-overdue"> · просрочен</b>}
+      {s.doctorName ? '👤 ' : '📅 '}{text}{s.overdue && <b className="plan-overdue"> · просрочен</b>}
     </span>
   )
 }

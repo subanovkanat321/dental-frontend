@@ -48,7 +48,7 @@ test('админ: выручка за месяц, по способам; выб�
   // Рядом — касса: деньги, полученные за период, с пояснением и по способам
   expect(screen.getByLabelText('Касса за период')).toHaveTextContent(/31\s000 сом/)
   expect(screen.getByText('Касса — деньги, полученные за период')).toBeInTheDocument()
-  expect(screen.getByText('По приёмам — стоимость состоявшихся приёмов периода')).toBeInTheDocument()
+  expect(screen.getByText('По приёмам — оплачено за состоявшиеся приёмы периода (по дате приёма)')).toBeInTheDocument()
   expect(screen.getByText(/Поступлений: 8 · Наличные: 16\s000 сом · Карта: 15\s000 сом · из них предоплаты: 1\s000 сом/)).toBeInTheDocument()
   expect(screen.getByText(/без оплаты: 1/)).toBeInTheDocument()
   // Отметки 0 сом — отдельно: бесплатно и оплачено заранее

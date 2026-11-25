@@ -10,12 +10,12 @@ import { seesAllMoney } from '../lib/roles'
  * в «Должниках» и в карточке пациента получал 403 — ошибка в консоли и в сети на каждом открытии.
  * Один ключ кэша на «Должников» и плитку итога.
  */
-export function useOpeningDebts(patientId?: number) {
+export function useOpeningDebts(patientId?: number, allowed = true) {
   const me = useMe().data
   return useQuery({
     queryKey: ['opening-debts', patientId ?? 'all'],
     queryFn: () => unwrap(api.GET('/api/opening-debts', { params: { query: patientId ? { patientId } : {} } })),
-    enabled: me != null && seesAllMoney(me),
+    enabled: allowed && me != null && seesAllMoney(me),
     retry: false,
   })
 }

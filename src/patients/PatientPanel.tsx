@@ -109,6 +109,11 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
     queryKey: ['patient-card', patientId],
     queryFn: () => unwrap(api.GET('/api/appointments/by-patient/{patientId}', { params: { path: { patientId } } })),
   })
+  // Что ещё этому сотруднику можно открыть у пациента — говорит сервер в карточке (правила ChartService и денег клиники):
+  // чужой пациент врача или «Врачи работают отдельно» — анкету, план, заметки и долги прежней программы не просим, а не ловим
+  // 403 в консоли (QA 2026-11-25). Пока карточки нет — ждём её; старый ответ без access — как раньше
+  const medicalOk = card.data != null && (card.data.access?.medical ?? true)
+  const moneyOk = card.data?.access?.money ?? true
   // «📲 Пригласить в Telegram-бот» в «Связаться» — пациенту без бота (хук — до ранних return)
   const botInviteOf = useBotInvite(card.data?.patient)
   // Аванс (V243): остаток счёта пациента или его семьи — в строке денег шапки и во вкладке «Деньги»
@@ -125,13 +130,13 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
     // Тот же ключ, что у медкарты: заметку сохранили на приёме (['notes']) — обновятся оба экрана
     queryKey: ['notes', patientId],
     queryFn: () => unwrap(api.GET('/api/patients/{patientId}/notes', { params: { path: { patientId } } })),
-    enabled: staff,
+    enabled: staff && medicalOk,
     retry: false,
   })
   const noteOf = new Map((notes.data ?? []).map((n) => [n.appointmentId, n.note]))
 
   // Плашка из анкеты — только тем, кто видит медкарту (врач и админ); регистратуре сервер не отдаст
-  const anamnesis = useAnamnesis(patientId, Boolean(me.admin || me.doctorId != null))
+  const anamnesis = useAnamnesis(patientId, Boolean(me.admin || me.doctorId != null) && medicalOk)
   const doctorName = (id?: number) => (me.doctors ?? []).find((d) => d.id === id)?.fullName
   const many = (me.doctors ?? []).length > 1
   const line = (a: Appointment) => {
@@ -307,7 +312,7 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
       {botInviteOf.sheet}
 
       {/* Прогресс плана лечения — тем, кто видит медкарту (сервер: ChartService); суммы — не ассистенту */}
-      {patient && <PlanProgressLine patientId={patient.id} enabled={clinical} />}
+      {patient && <PlanProgressLine patientId={patient.id} enabled={clinical && medicalOk} />}
 
       {/* «＋ Задача» и «＋ Заказ в лабораторию» — в «⋯» шапки; здесь — открытые задачи и работы техника, если есть */}
       {patient && <PatientTasks patient={{ id: patient.id, fullName: patient.fullName }} adding={adding === 'task'} onAdding={(on) => setAdding(on ? 'task' : null)} />}
@@ -348,7 +353,7 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
           {debtRows.length === 0 && <EmptyState compact title="Долгов нет" />}
           {/* Напомнить о долге (бот или WhatsApp) и «Обещал оплатить до…» — те же формы, что в «Должниках» */}
           {debtRows.length > 0 && patient?.id != null && seesDebts(me) && <DebtTools patientId={patient.id} name={patient.fullName} debts={debtRows} form={debtForm} setForm={setDebtForm} />}
-          {staff && patient?.id != null && <OpeningDebtsBox patientId={patient.id} />}
+          {staff && patient?.id != null && <OpeningDebtsBox patientId={patient.id} allowed={moneyOk} />}
           {debtRows.map((d) => {
             const debt = debtLine(d)!
             const text = `🧾 ${debt.text} — приём ${d.startAt ? shortDate(d.startAt) : ''}`

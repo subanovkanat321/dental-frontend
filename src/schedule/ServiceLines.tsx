@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
@@ -6,7 +6,8 @@ import { ServicePicker } from '../clinic/ServicePicker'
 import { EditButton } from '../layout/EditButton'
 import { servicesOfDoctor } from '../lib/doctorServices'
 import { serviceEmoji } from '../lib/serviceEmoji'
-import { somText, timeOf } from '../lib/time'
+import { dateOf, somText } from '../lib/time'
+import { extendOffer } from './extendOffer'
 import { StepPrice } from '../medical/StepPrice'
 import { useDiscountPolicy } from './discountDraft'
 import { fromLine, lineMoney } from './lineDiscount'
@@ -68,7 +69,20 @@ export function ServiceLines({ appointment: a, me, canEdit, prices }: { appointm
   const needed = Math.min(lines.reduce((m, l) => m + (services.data?.find((sv) => sv.id === l.serviceTypeId)?.durationMinutes ?? 0) * l.qty, 0), 480)
   const length = Math.round((Date.parse(a.endAt) - Date.parse(a.startAt)) / 60_000)
   const short = editable && a.status === 'SCHEDULED' && length > 0 && needed > length
-  const extend = () => action.mutate({ kind: 'reschedule', body: { version: a.version, startAt: a.startAt, durationMinutes: needed } })
+  // Куда можно продлить: свободные окна врача (тот же запрос и кэш, что у «Дня») и приёмы дня, если расписание их уже загрузило
+  const date = dateOf(a.startAt)
+  const slots = useQuery({
+    queryKey: ['slots', date, a.doctorId],
+    queryFn: () => unwrap(api.GET('/api/slots', { params: { query: { date, doctorId: a.doctorId } } })),
+    staleTime: 60_000,
+    enabled: short,
+  })
+  const client = useQueryClient()
+  const day = short ? client.getQueriesData<Appointment[]>({ queryKey: ['appointments', date, a.doctorId] })
+    .flatMap(([, list]) => list ?? []) : []
+  // Пока часы врача грузятся — не мигаем «Продлить до …», которое потом сменится; не загрузились — по приёмам дня
+  const offer = short && !slots.isPending ? extendOffer(a, needed, slots.data, day.length ? day : undefined) : null
+  const extend = (minutes: number) => action.mutate({ kind: 'reschedule', body: { version: a.version, startAt: a.startAt, durationMinutes: minutes } })
 
   return (
     <div className="service-lines" aria-label="Услуги">
@@ -118,11 +132,16 @@ export function ServiceLines({ appointment: a, me, canEdit, prices }: { appointm
       ) : (
         <button type="button" className="link service-line-plus" onClick={() => setAdding(true)}>＋ Услуга</button>
       ))}
-      {short && (
+      {short && offer && (
         <p className="service-lines-short tone-wait" role="note">
           Услуги займут {durationText(needed)}, а приём — {durationText(length)}.{' '}
-          <button type="button" className="link" disabled={action.isPending} onClick={extend}>
-            Продлить до {timeOf(new Date(Date.parse(a.startAt) + needed * 60_000).toISOString())}</button>
+          {offer.kind === 'none' ? offer.text : (
+            <>
+              <button type="button" className="link" disabled={action.isPending} onClick={() => extend(offer.minutes)}>
+                Продлить до {offer.until}</button>
+              {offer.kind === 'partial' && <span className="hint"> — дальше занято</span>}
+            </>
+          )}
         </p>
       )}
       {editing == null && action.error && <p className="error" role="alert">{errorText(action.error)}</p>}

@@ -380,3 +380,28 @@ test('«Выбрать из прайса…»: длинный прайс — «�
   await userEvent.click(within(screen.getByRole('listbox')).getByRole('option', { name: /Коронка/ }))
   expect(within(form).getByLabelText('Сумма, сом')).toHaveValue(7000)
 })
+
+test('услуги изменились после оплаты — «Услуги изменились: теперь 3 500 сом, в оплате 1 700 · Пересчитать» открывает форму с новой суммой', async () => {
+  backend(appointment(10, 1, '10:00', 'Бакыт М.', {
+    status: 'DONE', paidSom: 1700, chargeSom: 1700, debtSom: 0, paymentMethod: 'CASH', version: 1, servicesTotalSom: 3500,
+    services: [{ id: 1, serviceTypeId: 1, name: 'Пломба', qty: 1, teeth: [], priceSom: 3000, amountSom: 3000 },
+      { id: 2, serviceTypeId: 2, name: 'Снимок', qty: 1, teeth: [], priceSom: 500, amountSom: 500 }],
+  }), () => ({}), { payments: [{ id: 1, amountSom: 1700, method: 'CASH', paidAt: '2099-06-01T05:00:00Z' }] })
+  renderApp()
+  const panel = await card()
+  const note = await within(panel).findByText(/Услуги изменились/)
+  expect(note).toHaveTextContent(/^Услуги изменились: теперь 3\s500 сом, в оплате 1\s700 сом — Пересчитать$/)
+  await userEvent.click(within(note).getByRole('button', { name: 'Пересчитать' }))
+  const form = await openPay(panel)
+  expect(within(form).getByLabelText('Сумма, сом')).toHaveValue(3500)
+})
+
+test('сумма услуг совпадает с оплатой — подсказки «Услуги изменились» нет', async () => {
+  backend(appointment(10, 1, '10:00', 'Бакыт М.', {
+    status: 'DONE', paidSom: 3000, chargeSom: 3000, debtSom: 0, paymentMethod: 'CASH', version: 1, servicesTotalSom: 3000,
+  }), () => ({}))
+  renderApp()
+  const panel = await card()
+  expect(await within(panel).findByText(/Оплачено 3\s000 сом/)).toBeInTheDocument()
+  expect(within(panel).queryByText(/Услуги изменились/)).not.toBeInTheDocument()
+})

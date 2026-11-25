@@ -58,7 +58,7 @@ export function PlanView({ plan, t, onAgree, onAsk, onBook, busy = false, error 
               <button key={v.id} type="button" role="tab" aria-selected={v.id === variant!.id} onClick={() => { setVid(v.id); setTooth(null) }}>
                 <span>{label(v.number, v.name)}</span>
                 <b className="num">{somText(v.totalSom)}</b>
-                {v.discountSom ? <span className="hint small">{t('planDiscount')} −{somText(v.discountSom)}</span> : null}
+                {v.discountSom ? <span className="hint small nowrap">{t('planDiscount')} −{somText(v.discountSom)}</span> : null}
               </button>
             ))}
           </div>
@@ -115,7 +115,7 @@ function Stages({ stages, t, tooth }: { stages: NonNullable<Plan['stages']>; t: 
           </ul>
           {many && st.totalSom > 0 && (
             <p className="plan-view-sub">{t('planStageTotal')}: <b className="num">{somText(st.totalSom)}</b>
-              {st.discountSom ? <span className="hint"> ({t('planDiscount').toLowerCase()} −{somText(st.discountSom)})</span> : null}</p>
+              {st.discountSom ? <span className="hint"> <span className="nowrap">({t('planDiscount').toLowerCase()} −{somText(st.discountSom)})</span></span> : null}</p>
           )}
         </section>
       ))}

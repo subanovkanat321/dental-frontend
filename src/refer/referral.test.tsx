@@ -73,7 +73,7 @@ describe('оплата: «Приведи друга»', () => {
       http.get('*/api/patient-tags', () => HttpResponse.json(tags)),
       http.get('*/api/appointments', ({ request }) => HttpResponse.json(new URL(request.url).searchParams.get('doctorId') === '1' ? [a] : [])),
       http.get('*/api/appointments/:id/payments', () => HttpResponse.json([])),
-      http.get('*/api/appointments/by-patient/:id', () => HttpResponse.json({ patient: a.patient, done: 0, noShow: 0, cancelled: 0, upcoming: [], past: [a] } satisfies Schemas['PatientCard'])),
+      http.get('*/api/appointments/by-patient/:id', () => HttpResponse.json({ patient: a.patient, done: 0, noShow: 0, cancelled: 0, access: { medical: true, money: true }, upcoming: [], past: [a] } satisfies Schemas['PatientCard'])),
       http.get('*/api/service-types', () => HttpResponse.json([])),
       http.post('*/api/appointments/:id/payment', async ({ request }) => {
         sent.push((await request.json()) as Record<string, unknown>)

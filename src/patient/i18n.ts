@@ -64,7 +64,7 @@ const TEXTS: Record<Lang, Record<string, string>> = {
     reviewWhat: 'Что было не так?',
     reviewWhatHint: 'Врач прочитает и постарается исправить. Можно и не писать.',
     reviewSend: 'Отправить',
-    reviewSaved: 'Спасибо! 🙏 Передали врачу — он прочитает и постарается исправить.',
+    reviewSaved: 'Спасибо! 🙏 Передали врачу — врач прочитает и постарается исправить.',
     reviewAlsoPublic: 'Если захотите, можно также оставить отзыв о клинике:',
     reviewAlso2gis: 'в 2ГИС',
     reviewAlsoGoogle: 'в Google',

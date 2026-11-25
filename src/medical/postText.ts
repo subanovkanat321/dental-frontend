@@ -101,7 +101,7 @@ export function buildPost(style: PostStyle, input: PostInput): string {
       duration && `⏱ ${duration}`,
       `😁 ${first}`,
       second && `💎 ${second}`,
-      doctor && `👩‍⚕️ Врач: ${doctor}`,
+      doctor && `🧑‍⚕️ Врач: ${doctor}`,
       '',
       `📅 ${book}`,
       clinic && `🦷 ${clinic}`,

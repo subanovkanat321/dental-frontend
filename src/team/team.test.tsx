@@ -458,7 +458,7 @@ test('карточка врача без Telegram: привязать номер
   await user.type(within(panel).getByRole('textbox', { name: 'Номер телефона врача' }), '0700000022')
   await user.click(within(panel).getByRole('button', { name: 'Привязать номер' }))
   expect(await within(panel).findByText('+996 700 000 022')).toBeInTheDocument()
-  expect(panel).toHaveTextContent('Без Telegram это его единственный вход')
+  expect(panel).toHaveTextContent('Без Telegram это единственный вход')
   // Номер без Telegram — только сменить, «Убрать» нет
   expect(within(panel).getByRole('button', { name: 'Изменить' })).toBeInTheDocument()
   expect(within(panel).queryByRole('button', { name: 'Убрать номер' })).not.toBeInTheDocument()

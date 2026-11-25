@@ -150,7 +150,7 @@ function MonthsChart({ month, scope }: { month: string; scope: { doctorId?: numb
             <span className="hint"> по приёмам</span>
             <span className={`tone-${change.tone}`}> · {change.text}</span><span className="hint"> к прошлому месяцу ({somText(values[full - 1] ?? 0)})</span></p>
           <p className="hint" aria-label="Касса за месяц">Касса за {longMonth(months[full]!)}: <b className="num">{somText(data[full]?.data?.cash?.totalSom ?? 0)}</b>
-            {' '}— деньги, полученные за период; по приёмам — стоимость состоявшихся приёмов периода</p>
+            {' '}— деньги, полученные за период; по приёмам — оплачено за состоявшиеся приёмы периода (по дате приёма)</p>
           <div className="vbars" role="img" aria-label={months.map((m, k) => `${longMonth(m)}: ${somText(values[k] ?? 0)}`).join('; ')}>
             {months.map((m, k) => (
               <button key={m} type="button" className={['vbar', k === 5 && current ? 'partial' : '', k === i ? 'picked' : ''].join(' ').trim()}

@@ -356,7 +356,7 @@ export function About() {
           <div className="about-inner narrow" data-reveal>
             <h2 id="about-scale">И частному врачу, и большой клинике</h2>
             <div className="about-cards">
-              <div className="about-card"><span className="ico" aria-hidden="true">👩‍⚕️</span><strong>Частный врач</strong><span>одно кресло — запись, медкарта и касса в телефоне</span></div>
+              <div className="about-card"><span className="ico" aria-hidden="true">🧑‍⚕️</span><strong>Частный врач</strong><span>одно кресло — запись, медкарта и касса в телефоне</span></div>
               <div className="about-card"><span className="ico" aria-hidden="true">🏥</span><strong>Большая клиника</strong><span>десятки сотрудников — у каждого свои права</span></div>
             </div>
             <p className="about-lead">Начать можно сразу: работаете в другой программе или в Excel — <strong>перенесём пациентов и записи</strong>.

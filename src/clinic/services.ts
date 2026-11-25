@@ -63,3 +63,11 @@ export function dueText(date: string, today = todayIn()): string {
   return new Intl.DateTimeFormat('ru-RU', { timeZone: 'UTC', day: 'numeric', month: 'long', year: sameYear ? undefined : 'numeric' })
     .format(new Date(`${date}T00:00:00Z`)).replace(/ г\.?$/, '')
 }
+
+/** Длительность услуги — как принимает сервер (15–240 мин), шагом 5 минут; null — всё в порядке. */
+export function durationError(value: string): string | null {
+  const n = Number(value)
+  if (value.trim() === '' || !Number.isInteger(n) || n < 15 || n > 240) return 'Длительность — от 15 до 240 минут'
+  if (n % 5 !== 0) return 'Длительность — шагом 5 минут: например, 20, 25 или 45'
+  return null
+}

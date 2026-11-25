@@ -14,7 +14,7 @@ import { timelineText, timelineWho, type TimelineItem } from './timeline'
 
 type Card = Schemas['PatientCard']
 
-const card: Card = { patient: { id: 7, fullName: 'Айжан Тестова', phone: '996700000011', telegram: false }, done: 1, noShow: 0, cancelled: 0, upcoming: [], past: [] }
+const card: Card = { patient: { id: 7, fullName: 'Айжан Тестова', phone: '996700000011', telegram: false }, done: 1, noShow: 0, cancelled: 0, access: { medical: true, money: true }, upcoming: [], past: [] }
 
 function backend(extra: Parameters<typeof server.use> = []) {
   server.use(

@@ -1,6 +1,6 @@
 import { howToPay, STANDARD_DEBT } from './debt'
 import { applyTemplate, DEBT_VARIABLES, unknownVariables, usesVariable } from './reminderTemplate'
-import { appointmentPhone, forAppointment, reminderText, soonText, whenAt } from './texts'
+import { appointmentPhone, forAppointment, quoteClinic, reminderText, soonText, whenAt } from './texts'
 
 /**
  * Те же примеры, что ReminderTemplateTests бэкенда: бот и WhatsApp из CRM собирают текст одинаково.
@@ -93,7 +93,7 @@ test('напоминание о долге: стандартный текст, �
   const names = DEBT_VARIABLES.map(([name]) => name)
   const values = { имя: 'Асель Тестова', клиника: 'Тест', сумма: '500 сом', оплата: howToPay(null) }
   expect(applyTemplate(STANDARD_DEBT, values, names)).toBe([
-    'Здравствуйте, Асель Тестова!', 'Напоминаем об оплате за лечение в стоматологии «Тест».', 'К оплате: 500 сом.',
+    'Здравствуйте, Асель Тестова!', 'Напоминаем об оплате за лечение — Тест.', 'К оплате: 500 сом.',
     'Оплатить можно в клинике.', 'Если вы уже оплатили — спасибо, просто не обращайте внимания 🙏',
   ].join('\n'))
   expect(applyTemplate(STANDARD_DEBT, { ...values, врач: 'Айгерим Садыкова, Дастан Т.' }, names)).toContain('\nВрач: Айгерим Садыкова, Дастан Т.\n')
@@ -117,4 +117,14 @@ test('«Номер в напоминаниях»: клиники по умолч
   const std = reminderText(a, forAppointment({ ...clinic, reminderContact: 'DOCTOR' }, 1), null, new Date('2026-10-23T03:00:00Z'))
   expect(std).toContain('📞 +996 700 123 456')
   expect(std).not.toContain('+996 555 000 000')
+})
+
+test('название уже в кавычках — «{клиника}» шаблона не оборачивает его второй раз; quoteClinic — так же', () => {
+  expect(applyTemplate('Ждём вас в «{клиника}»!', { клиника: 'Стоматология «Улыбка»' })).toBe('Ждём вас в Стоматология «Улыбка»!')
+  expect(applyTemplate('Ждём вас в «{клиника}»!', { клиника: 'Улыбка' })).toBe('Ждём вас в «Улыбка»!')
+  expect(applyTemplate(STANDARD_DEBT, { имя: 'Асель', клиника: 'Стоматология «Улыбка»', сумма: '500 сом' }, DEBT_VARIABLES.map(([name]) => name)))
+    .toContain('Напоминаем об оплате за лечение — Стоматология «Улыбка».')
+  expect(quoteClinic('Улыбка')).toBe('«Улыбка»')
+  expect(quoteClinic('Стоматология «Улыбка»')).toBe('Стоматология «Улыбка»')
+  expect(quoteClinic('ООО "Дент"')).toBe('ООО "Дент"')
 })

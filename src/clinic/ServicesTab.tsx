@@ -10,7 +10,7 @@ import { canEditPrices, canEditServices, PRICES_BY_HEAD } from '../lib/roles'
 import { ServiceMemo } from './MemosTab'
 import { ServiceSupplies } from './ServiceSupplies'
 import { StarterCard, StarterPanel } from './StarterPanel'
-import { groupLabel, groupServices, monthsText, nameMatches, priceText, recallChoices, SERVICE_GROUPS, type ServiceGroup } from './services'
+import { durationError, groupLabel, groupServices, monthsText, nameMatches, priceText, recallChoices, SERVICE_GROUPS, type ServiceGroup } from './services'
 import { Select } from '../layout/Select'
 import { EmptyState } from '../layout/EmptyState'
 import { clearServiceToOpen, serviceToOpen } from '../lib/openService'
@@ -259,11 +259,31 @@ function ServicePanel({ me, service: s, onClose }: { me: Me; service?: Service; 
   })
   const guessed = guessName.length >= 3 ? guess.data?.group : undefined
   const group: ServiceGroup = form.group || guessed || 'OTHER'
+  const client = useQueryClient()
+  const durationProblem = durationError(form.duration)
+  /**
+   * Раздел для сохранения. Новая услуга без выбранного руками раздела: подсказку сервера по названию дожидаемся здесь —
+   * иначе быстрое «Добавить» (до ответа или до паузы ввода) уходило с «Прочее», а форма потом показывала угаданный (QA 2026-11-25).
+   */
+  const groupToSave = async (): Promise<ServiceGroup> => {
+    const name = form.name.trim()
+    if (s || form.group || name.length < 3) return group
+    if (guessName === name && guess.data) return (guess.data.group as ServiceGroup | undefined) ?? 'OTHER'
+    const found = await client.fetchQuery({
+      queryKey: ['service-group-guess', name],
+      queryFn: () => unwrap(api.GET('/api/service-types/group-guess', { params: { query: { name } } })),
+      staleTime: Infinity,
+    }).catch(() => undefined)
+    return (found?.group as ServiceGroup | undefined) ?? 'OTHER'
+  }
   const save = useMutation<Service, ApiError>({
-    mutationFn: () => {
+    mutationFn: async () => {
+      const chosen = await groupToSave()
+      // Форма показывает тот же раздел, что ушёл на сервер
+      if (!s && !form.group && chosen !== 'OTHER') setForm((f) => (f.group ? f : { ...f, group: chosen }))
       const body = {
         // Старую категорию (свободный текст) не шлём — сервер её сохранит как была
-        name: form.name, group, durationMinutes: Number(form.duration), active: form.active,
+        name: form.name, group: chosen, durationMinutes: Number(form.duration), active: form.active,
         priceSom: form.price === '' ? undefined : Number(form.price),
         // Пусто — срок клиники: поле не шлём, сервер ставит null
         recallMonths: form.recall === '' ? undefined : Number(form.recall),
@@ -296,6 +316,7 @@ function ServicePanel({ me, service: s, onClose }: { me: Me; service?: Service; 
   const submit = (e: FormEvent) => {
     e.preventDefault()
     setDone('')
+    if (durationProblem) return
     save.mutate()
   }
 
@@ -321,13 +342,16 @@ function ServicePanel({ me, service: s, onClose }: { me: Me; service?: Service; 
         {error('group') && <p className="error">{error('group')}</p>}
         <div className="row">
           <label className="field"><span>Длительность, мин</span>
-            <input type="number" min={15} max={240} step={15} required value={form.duration} onChange={set('duration')} />
+            <input type="number" min={15} max={240} step={5} required value={form.duration} aria-invalid={durationProblem ? true : undefined}
+              onChange={set('duration')} onInvalid={(e) => e.currentTarget.setCustomValidity(durationProblem ?? '')}
+              onInput={(e) => e.currentTarget.setCustomValidity('')} />
           </label>
           <label className="field"><span>Цена «от», сом</span>
             <input type="number" min={0} inputMode="numeric" placeholder="Не показывать" value={form.price} onChange={set('price')} />
           </label>
         </div>
-        {(error('durationMinutes') || error('priceSom')) && <p className="error">{error('durationMinutes') ?? error('priceSom')}</p>}
+        {durationProblem ? <p className="error" role="alert">{durationProblem}</p>
+          : (error('durationMinutes') || error('priceSom')) && <p className="error">{error('durationMinutes') ?? error('priceSom')}</p>}
         <div className="field"><span>Профосмотр через</span>
           <Select aria-label="Профосмотр через" value={form.recall} onChange={set('recall')}>
             <option value="">{`Как в клинике (${monthsText(clinicRecall)})`}</option>

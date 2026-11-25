@@ -1,5 +1,6 @@
 import type { Schemas } from '../api/client'
 import { applyTemplate, usesVariable } from './reminderTemplate'
+export { quoteClinic } from './clinicName'
 import { addDays, dateOf, timeOf, todayIn } from './time'
 
 /**

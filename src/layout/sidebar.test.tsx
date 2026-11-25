@@ -122,3 +122,15 @@ test('развёрнутое меню, мышь: наведение на раз�
   expect(stock).toHaveFocus()
   window.location.hash = ''
 })
+
+test('блок «Я» внизу меню: руководитель без имени в боте — имя из «Персонала», а не «Без имени»', async () => {
+  width(1400)
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json({ ...me, doctor: true, doctorId: undefined, fullName: undefined })),
+    http.get('*/api/me/name', () => HttpResponse.json({ fullName: 'Элиза Маматова', editable: true })),
+  )
+  renderApp()
+  const block = await screen.findByRole('button', { name: /^Элиза Маматова, .*профиль, оформление, выход$/ })
+  expect(block).toHaveTextContent('Элиза Маматова')
+  expect(screen.queryByText('Без имени')).not.toBeInTheDocument()
+})

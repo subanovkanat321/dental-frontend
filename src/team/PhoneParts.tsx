@@ -125,7 +125,7 @@ export function StaffPhone({ telegramId, phone, phoneOnly, name, compact = false
         {phone && <span>{phoneText(phone)}</span>}{' '}
         <button type="button" className={compact ? 'btn small ghost' : 'btn'}
           onClick={() => { save.reset(); setValue(phoneToInput(phone?.replace(/^\+/, ''))); setOpen(true) }}>Изменить</button>
-        {!compact && <p className="hint">Без Telegram это его единственный вход <HelpHint title="Телефон">{PHONE_HINT} Номер можно сменить, но не убрать.</HelpHint></p>}
+        {!compact && <p className="hint">Без Telegram это единственный вход <HelpHint title="Телефон">{PHONE_HINT} Номер можно сменить, но не убрать.</HelpHint></p>}
       </div>
     )
   }

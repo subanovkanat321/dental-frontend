@@ -10079,6 +10079,7 @@ export interface components {
             referredBy?: string;
             /** Format: int64 */
             referredById?: number;
+            demo: boolean;
         };
         AgreementControllerAssignment: {
             /** Format: int64 */
@@ -15802,6 +15803,11 @@ export interface components {
             past?: components["schemas"]["AppointmentView"][];
             /** Format: int64 */
             paidSom?: number;
+            access: components["schemas"]["PatientCardAccess"];
+        };
+        PatientCardAccess: {
+            medical: boolean;
+            money: boolean;
         };
         ServiceTypeControllerDeleted: {
             deleted: boolean;

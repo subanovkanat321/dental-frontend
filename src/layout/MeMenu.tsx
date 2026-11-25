@@ -12,13 +12,13 @@ import { startTour } from '../tour/state'
 import { useTipsOff, useTipsState } from '../tips/state'
 import { useSwipeDown } from './useSwipeDown'
 import { Icon } from './Icon'
-import { initials, whoAmI } from './me'
+import { initials, useWhoAmI } from './me'
 
 type Me = Schemas['BookingViewsMe']
 
 /** Кружок с фото врача или инициалами — блок «Я» внизу меню и шапка его листа. */
 export function Avatar({ me, size = 'md' }: { me: Me; size?: 'md' | 'lg' }) {
-  const { name, photo } = whoAmI(me)
+  const { name, photo } = useWhoAmI(me)
   return photo
     ? <img className={`me-avatar ${size}`} src={photo} alt="" />
     : <span className={`me-avatar ${size}`} aria-hidden="true">{initials(name)}</span>
