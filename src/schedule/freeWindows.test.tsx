@@ -69,3 +69,22 @@ test('отказался — без кнопок; окон, где все отк
   await screen.findAllByRole('group', { name: 'Требует внимания' })
   expect(screen.queryByRole('button', { name: /Освободилось окно/ })).toBeNull()
 })
+
+test('больше двух окон — каждое свёрнуто строкой «время · врач · подходят N ›»; нажать — пациенты и кнопки; «6 окон» в полосе на телефоне', async () => {
+  const many: Window[] = ['10:00', '11:00', '12:00'].map((t, i) => ({ ...windows[0]!, freed: false, start: at(t), end: at(`${10 + i}:30`),
+    matches: windows[0]!.matches.map((m) => ({ ...m, startAt: at(t) })) }))
+  backend(many)
+  const user = userEvent.setup()
+  renderApp()
+  await user.click((await screen.findAllByRole('button', { name: /Свободные окна: подходят 2 пациента/ }))[0]!)
+  const dialog = await screen.findByRole('dialog', { name: '🔔 Окна для листа ожидания' })
+  const first = within(dialog).getByRole('region', { name: 'Свободно 10:00–10:30' })
+  expect(within(first).queryByRole('button', { name: /Предложить в бот/ })).toBeNull()
+  const fold = within(first).getByRole('button', { expanded: false })
+  expect(fold).toHaveTextContent('подходят 2')
+  await user.click(fold)
+  const opened = within(dialog).getByRole('region', { name: 'Свободно 10:00–10:30' })
+  expect(within(opened).getByRole('button', { name: 'Предложить в бот: Тест Бакыт' })).toBeInTheDocument()
+  // Остальные — свёрнуты
+  expect(within(within(dialog).getByRole('region', { name: 'Свободно 11:00–11:30' })).queryByRole('button', { name: /Предложить в бот/ })).toBeNull()
+})

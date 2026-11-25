@@ -22,6 +22,13 @@
 .fw-window-top .fw-window-head { flex: 1 1 200px; min-width: 0; }
 .fw-book { flex-shrink: 0; }
 .fw-lead { margin: 0; }
+/* Свёрнутое окно (больше двух окон): одна строка-кнопка на всю карточку */
+.fw-window.folded { padding: 0; }
+.fw-fold { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; min-height: 56px; padding: 10px 14px;
+  border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; border-radius: inherit; }
+.fw-fold .fw-window-head { display: grid; gap: 2px; }
+.fw-fold-caret { color: var(--link); font-size: 1.4rem; line-height: 1; }
+.fw-unfold { justify-self: end; order: -1; font-size: .85rem; }
 @media (max-width: 600px) {
   .bd-list li { flex-direction: column; align-items: stretch; }
   .bd-actions { justify-content: flex-start; }

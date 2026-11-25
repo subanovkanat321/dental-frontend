@@ -6,6 +6,7 @@ import { useSettings } from '../api/settings'
 import { contactPhone } from '../lib/guardian'
 import { freeSlotText, whatsappUrl } from '../lib/texts'
 import { openLink } from '../lib/telegram'
+import { plural } from '../lib/plural'
 import { dateOf, minutesOf, shortDate, timeOf } from '../lib/time'
 import { AttentionDialog } from './AttentionDialog'
 import { fitsText, useFreeWindows, waitingCount, windowTitle, WINDOWS_KEY, type FreeWindow } from './windowsModel'
@@ -21,7 +22,7 @@ export function FreeWindowsChip({ windows, compact, onOpen }: { windows: FreeWin
   return (
     <button type="button" className="stat s-request" onClick={onOpen}
       aria-label={`${freed ? 'Освободилось окно' : 'Свободные окна'}: ${fitsText(people)}`} title="Окна для листа ожидания — предложить">
-      🔔 {compact ? <><b>{open.length}</b> {open.length === 1 ? 'окно' : 'окна'}</> : <>{freed ? 'Освободилось окно' : 'Окна'} · <b>{people}</b> из листа</>}
+      🔔 {compact ? <><b>{open.length}</b> {plural(open.length, 'окно', 'окна', 'окон')}</> : <>{freed ? 'Освободилось окно' : 'Окна'} · <b>{people}</b> из листа</>}
     </button>
   )
 }
@@ -55,6 +56,10 @@ export function FreeWindowsDialog({ doctorName, onBook, onClose }: {
   onClose: () => void
 }) {
   const windows = useFreeWindows()
+  // Окон больше двух — каждое свёрнуто строкой «время · врач · сколько подходят ›», раскрыть — пациенты и кнопки
+  // (владелец 2026-11-25: «6 окон — каждое занимает весь экран в телефоне»). Одно-два — сразу раскрыты
+  const [opened, setOpened] = useState<string | null>(null)
+  const fold = (windows.data?.length ?? 0) > 2
   return (
     <AttentionDialog title="🔔 Окна для листа ожидания" labelId="free-windows-title" onClose={onClose}>
       {/* Коротко: на телефоне длинное пояснение занимало четверть экрана (владелец 2026-11-25: «окна неудобно в телефоне») */}
@@ -63,17 +68,43 @@ export function FreeWindowsDialog({ doctorName, onBook, onClose }: {
       {windows.error && <p className="error" role="alert">{windows.error.message}</p>}
       {windows.data && !windows.data.length && <p className="tone-ok" role="status">Подходящих окон нет ✓</p>}
       <div className="attention-scroll">
-        {windows.data?.map((w) => <WindowCard key={`${w.doctorId}-${w.start}`} w={w} doctorName={doctorName}
-          onBook={onBook && (() => { onClose(); onBook(w.doctorId, dateOf(w.start), minutesOf(w.start)) })} />)}
+        {windows.data?.map((w) => {
+          const key = `${w.doctorId}-${w.start}`
+          return <WindowCard key={key} w={w} doctorName={doctorName}
+            collapsed={fold && opened !== key} onToggle={fold ? () => setOpened(opened === key ? null : key) : undefined}
+            onBook={onBook && (() => { onClose(); onBook(w.doctorId, dateOf(w.start), minutesOf(w.start)) })} />
+        })}
       </div>
     </AttentionDialog>
   )
 }
 
 /** Одно окно: заголовок и пациенты с «Предложить: В бот / WhatsApp». Тоже — в карточке отменённого приёма. */
-export function WindowCard({ w, doctorName, onBook }: { w: FreeWindow; doctorName: (id: number) => string; onBook?: () => void }) {
+export function WindowCard({ w, doctorName, onBook, collapsed = false, onToggle }: {
+  w: FreeWindow
+  doctorName: (id: number) => string
+  onBook?: () => void
+  /** Свёрнуто строкой: время, врач, сколько подходят — нажать, чтобы раскрыть */
+  collapsed?: boolean
+  onToggle?: () => void
+}) {
+  if (onToggle && collapsed) {
+    return (
+      <section className="fw-window folded" aria-label={windowTitle(w)}>
+        <button type="button" className="fw-fold" aria-expanded={false} onClick={onToggle}>
+          <span className="fw-window-head">
+            <strong className="num">{windowTitle(w)}</strong>
+            {/* Коротко — одной строкой: «Айгерим Т. · подходят 3» */}
+            <span className="hint small">{doctorName(w.doctorId)} · {waitingCount(w) ? `${plural(waitingCount(w), 'подходит', 'подходят', 'подходят')} ${waitingCount(w)}` : 'все отказались'}</span>
+          </span>
+          <span className="fw-fold-caret" aria-hidden="true">›</span>
+        </button>
+      </section>
+    )
+  }
   return (
     <section className="fw-window" aria-label={windowTitle(w)}>
+      {onToggle && <button type="button" className="link fw-unfold" aria-expanded onClick={onToggle}>Свернуть</button>}
       {/* «Записать на 14:00» — сразу в шапке окна (раньше — ссылкой в самом низу, после всех пациентов) */}
       <div className="fw-window-top">
         <span className="fw-window-head">
