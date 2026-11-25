@@ -7,6 +7,7 @@ import { closeHelpChat, openHelpChat, useHelpChat } from '../lib/helpChat'
 import type { Page } from '../lib/route'
 import { openSub, subHref, useSub } from '../lib/sub'
 import { matches, useMedia } from '../lib/useMedia'
+import { isUiV2 } from '../lib/uiVersion'
 import { useWaitlist } from '../api/settings'
 import { CLINIC_ALIAS, SETTINGS_ALIAS } from '../settings/items'
 import { countOf, currentSub, isLoud, LOUD, subsOf, sumOf, type Counts, type Sub } from './nav'
@@ -161,6 +162,8 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
   // Чат «Спросить помощника»: null — закрыт; открывают меню, круглая кнопка и страницы «Помощи» (lib/helpChat.ts)
   const help = useHelpChat()
   const phone = useMedia('(max-width: 760px)')
+  // UI v2: в нижнем меню телефона — залитые иконки (docs/ui-v2.md); подписи и роли кнопок прежние
+  const filled = phone && isUiV2()
   // Компьютер: меню можно свернуть до полосы иконок — расписанию больше места (выбор запоминается).
   // Кнопка — у логотипа, на одном месте в обоих видах; клавиша «[». Ноутбук до 1366px, пока ни разу не
   // выбирали, — свёрнуто: 220px меню там — шестая часть экрана, а расписанию нужна ширина
@@ -403,7 +406,7 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
                     onPointerDown={(e) => { pointer.current = e.pointerType }}
                     onKeyDown={(e) => flyKey(s.key, e)}
                     onClick={(e) => clickSection(s.key, e)}>
-                    <Icon name={s.key} /> <span>{s.title}</span>
+                    <Icon name={s.key} filled={filled} /> <span>{s.title}</span>
                     <NavCount badge n={total} loud={sum.loud} label={`${s.title}: новое — ${total}`} />
                   </button>
                   {subs.length > 0 && (
@@ -423,7 +426,7 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
           {/* Телефон: «Ещё» — остальные разделы, свой аватар и «Помощь» (на компьютере кнопки нет) */}
           <button type="button" className={extra.some((s) => s.key === page) || page === 'me' || page === 'help' || more ? 'nav more active' : 'nav more'}
             aria-expanded={more} data-tour="more" onClick={() => { setMenu(null); setSheet(null); setMore(!more) }}>
-            <Icon name="more" /> <span>Ещё</span>
+            <Icon name="more" filled={filled} /> <span>Ещё</span>
           </button>
         </nav>
         {me.doctor && !phone && (

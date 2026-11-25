@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react'
+
 /** Линейные иконки меню (24×24, stroke = цвет текста) — вместо эмодзи (DESIGN.md → Don'ts). */
 const PATHS = {
   schedule: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" /></>,
@@ -28,7 +30,51 @@ const PATHS = {
 
 type IconName = keyof typeof PATHS
 
-export function Icon({ name }: { name: IconName }) {
+/**
+ * Залитые иконки нижнего меню UI v2 (docs/ui-v2.md → «Залитые иконки нижнего меню»): свой простой набор 24×24, рисунок —
+ * вырезами (evenodd), без чужих брендовых значков. Есть не у всех — у остальных остаются линейные.
+ */
+const FILLED: Partial<Record<IconName, ReactNode>> = {
+  schedule: <>
+    <rect x="6.6" y="2" width="2.4" height="5" rx="1.2" /><rect x="15" y="2" width="2.4" height="5" rx="1.2" />
+    <path fillRule="evenodd" d="M6 4.5h12a3 3 0 0 1 3 3v11a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3v-11a3 3 0 0 1 3-3zM5 10v8.3c0 .7.5 1.2 1.2 1.2h11.6c.7 0 1.2-.5 1.2-1.2V10z" />
+    <rect x="7" y="12" width="2.6" height="2.4" rx=".7" /><rect x="10.7" y="12" width="2.6" height="2.4" rx=".7" /><rect x="14.4" y="12" width="2.6" height="2.4" rx=".7" />
+    <rect x="7" y="15.6" width="2.6" height="2.4" rx=".7" /><rect x="10.7" y="15.6" width="2.6" height="2.4" rx=".7" />
+  </>,
+  patients: <>
+    <circle cx="9" cy="7.8" r="4" />
+    <path d="M1.8 19.9c.7-4 3.6-6.4 7.2-6.4s6.5 2.4 7.2 6.4a1 1 0 0 1-1 1.1H2.8a1 1 0 0 1-1-1.1z" />
+    <circle cx="16.8" cy="7.4" r="3.1" />
+    <path d="M17.6 13.3c2.7.3 4.4 2.5 4.7 5.7a1 1 0 0 1-1 1.1h-3.6c-.3-2.6-1.5-4.9-3.3-6.3.9-.4 2-.6 3.2-.5z" />
+  </>,
+  cash: <>
+    <path d="M5 4.5h14A2.5 2.5 0 0 1 21.5 7v1.8h-19V7A2.5 2.5 0 0 1 5 4.5z" />
+    <path fillRule="evenodd" d="M2.5 11h19v6A2.5 2.5 0 0 1 19 19.5H5A2.5 2.5 0 0 1 2.5 17zM6 14.2v2h5v-2z" />
+  </>,
+  stock: <>
+    <path d="M12 2.6l8.2 4.6L12 11.7 3.8 7.2z" />
+    <path d="M3 8.7l8.1 4.5v8.5L3.9 17.6A1.8 1.8 0 0 1 3 16z" />
+    <path d="M21 8.7l-8.1 4.5v8.5l7.2-4.1A1.8 1.8 0 0 0 21 16z" />
+  </>,
+  clinic: <path fillRule="evenodd" d="M11 3.3a1.8 1.8 0 0 1 2 0l6.6 4.3c.6.4.9 1 .9 1.7V20a1.5 1.5 0 0 1-1.5 1.5h-5V17.8h-4v3.7H5A1.5 1.5 0 0 1 3.5 20V9.3c0-.7.3-1.3.9-1.7zM10.9 8.2v2.4H8.5v2.2h2.4v2.4h2.2v-2.4h2.4v-2.2h-2.4V8.2z" />,
+  learn: <>
+    <path d="M11.1 6.1C9.2 4.8 6.5 4.3 2.9 4.7a1 1 0 0 0-.9 1v12.6a1 1 0 0 0 1.1 1c3.4-.3 6 .1 8 1.4z" />
+    <path d="M12.9 6.1c1.9-1.3 4.6-1.8 8.2-1.4a1 1 0 0 1 .9 1v12.6a1 1 0 0 1-1.1 1c-3.4-.3-6 .1-8 1.4z" />
+  </>,
+  settings: <path fillRule="evenodd" d="M10.3 2.5h3.4l.6 2.6c.6.2 1.1.5 1.6.9l2.6-.8 1.7 2.9-2 1.8a6.8 6.8 0 0 1 0 1.9l2 1.8-1.7 2.9-2.6-.8c-.5.4-1 .7-1.6.9l-.6 2.6h-3.4l-.6-2.6a6.6 6.6 0 0 1-1.6-.9l-2.6.8-1.7-2.9 2-1.8a6.8 6.8 0 0 1 0-1.9l-2-1.8 1.7-2.9 2.6.8c.5-.4 1-.7 1.6-.9zM12 8.8a3.2 3.2 0 1 0 0 6.4 3.2 3.2 0 0 0 0-6.4z" />,
+  more: <><circle cx="5" cy="12" r="2.2" /><circle cx="12" cy="12" r="2.2" /><circle cx="19" cy="12" r="2.2" /></>,
+}
+
+/** `filled` — залитый вариант (нижнее меню UI v2), если он есть; иначе линейная. */
+export function Icon({ name, filled }: { name: IconName; filled?: boolean }) {
+  const solid = filled ? FILLED[name] : undefined
+  if (solid) {
+    return (
+      <svg className="icon filled" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" stroke="none">
+        {solid}
+      </svg>
+    )
+  }
   return (
     <svg className="icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth={1.8}
       strokeLinecap="round" strokeLinejoin="round">

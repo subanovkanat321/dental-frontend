@@ -1,1 +1,233 @@
-/* UI v2 — forms. Все правила под .ui-v2 (без флага файл ничего не меняет). План — docs/ui-v2.md */
+/* UI v2 — forms. Все правила под .ui-v2 (без флага файл ничего не меняет). План — docs/ui-v2.md
+ *
+ * Пункты «Настроек», «Клиники», «Я» и «Помощи» изнутри, «Склад», листы «Я» и «Помощь», вход, общие окна и поля —
+ * как «Настройки» iOS в наших цветах: белые карточки-группы, строки с тонкой линией между ними, выбор — галочкой
+ * справа, вкл/выкл — переключателем справа, поля — мягкой заливкой без рамки. Разметка и подписи прежние.
+ */
+
+:root.ui-v2 {
+  /* Заливка поля в белой карточке и линия между строками группы */
+  --v2-field: color-mix(in srgb, var(--v2-page) 75%, var(--v2-card));
+  --v2-row-line: var(--separator);
+}
+
+/* ── Поля ввода (везде): мягкая заливка без рамки, скругление 12; фокус — бирюзовая рамка ─────────────────── */
+.ui-v2 .field > span, .ui-v2 .field > legend { color: var(--hint); font-size: .875rem; font-weight: 500; }
+.ui-v2 :is(.field input:not([type=checkbox], [type=radio], .phone input), .field select, .field textarea, .field .ui-select, .phone) {
+  border-color: transparent; border-radius: 12px; background-color: var(--v2-field);
+}
+.ui-v2 :is(.field input:not([type=checkbox], [type=radio], .phone input), .field select, .field textarea, .field .ui-select, .phone):hover:not(:disabled, :focus) {
+  border-color: var(--line-strong);
+}
+.ui-v2 :is(.field input:not([type=checkbox], [type=radio], .phone input), .field select, .field textarea, .field .ui-select):focus,
+.ui-v2 .field .ui-select[aria-expanded=true], .ui-v2 .phone:focus-within {
+  border-color: var(--accent); background-color: var(--v2-card); outline: 3px solid var(--accent-soft); outline-offset: 0;
+}
+/* Номер телефона — одно поле: внутренние части прозрачные */
+.ui-v2 .phone :is(input, select, button) { background: transparent; }
+.ui-v2 .phone input:focus { outline: 0; }
+
+/* ── Пункт «Настроек» / «Клиники» / «Я» / «Помощи» ─────────────────────────────────────────────────────── */
+.ui-v2 .settings-item .card-block h2 { color: var(--v2-ink); font: 700 1.15rem / 1.25 var(--display); letter-spacing: -.01em; }
+.ui-v2 .settings-item .card-block h3 { color: var(--v2-ink); font-weight: 600; }
+/* Пояснения в карточке — вторичным текстом, как сноски iOS */
+.ui-v2 .settings-item .card-block > p.hint, .ui-v2 .settings-item .card-block > .hint { font-size: .9375rem; line-height: 1.45; }
+/* Подписи групп над карточками («Телефон», «Тема») — 20px, как подписи групп «Ещё» */
+.ui-v2 .settings-item .settings-group > h2 { margin: 6px 4px 0; color: var(--v2-ink); font: 700 var(--v2-group) / 1.2 var(--display); letter-spacing: -.01em; }
+
+/* Группа вариантов без рамки: подпись — заголовком группы */
+.ui-v2 .settings-item fieldset:not(.field, .form) { min-width: 0; margin: 0; padding: 0; border: 0; }
+.ui-v2 .settings-item fieldset:not(.field, .form) > legend { margin-bottom: 4px; padding: 0; color: var(--v2-ink); font-weight: 600; }
+
+/* Выбор одного из (радио): строки группы с линией между ними, выбранный — бирюзовый кружок с галочкой справа */
+.ui-v2 .settings-item :is(.radio-row, .check:has(> input[type=radio])) {
+  display: flex; align-items: center; gap: 14px; min-height: 52px; padding: 10px 0; font-size: 1rem; line-height: 1.35; cursor: pointer;
+}
+.ui-v2 .settings-item :is(.radio-row, .check:has(> input[type=radio])) + :is(.radio-row, .check:has(> input[type=radio])) { box-shadow: inset 0 1px 0 var(--v2-row-line); }
+.ui-v2 .settings-item .radio-list { gap: 0; }
+.ui-v2 .settings-item :is(.radio-row, .check) > input[type=radio] {
+  order: 2; flex: none; width: 24px; height: 24px; margin: 0 0 0 auto; border: 2px solid var(--line-strong); border-radius: 50%;
+  background: transparent no-repeat center / 14px 14px; -webkit-appearance: none; appearance: none; cursor: pointer; transition: background-color .15s, border-color .15s;
+}
+.ui-v2 .settings-item :is(.radio-row, .check) > input[type=radio]:checked {
+  border-color: var(--accent); background-color: var(--accent);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E");
+}
+.ui-v2 .settings-item :is(.radio-row, .check) > input[type=radio]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ui-v2 .settings-item :is(.radio-row, .check) > input[type=radio]:disabled { opacity: .5; cursor: default; }
+.ui-v2 .settings-item :is(.radio-row, .check:has(> input[type=radio])) :is(b, strong) { color: var(--v2-ink); font-weight: 600; }
+.ui-v2 .settings-item :is(.radio-row, .check:has(> input[type=radio])) .hint { font-size: .9375rem; }
+
+/* Вкл/выкл (переключатель — в ui-v2.css): строка «подпись слева — переключатель справа», как в «Настройках» iOS */
+.ui-v2 .settings-item .check:has(> input[type=checkbox]) { justify-content: space-between; min-height: 52px; padding: 8px 0; font-size: 1rem; line-height: 1.35; }
+.ui-v2 .settings-item .check > input[type=checkbox] { order: 2; margin-left: auto; }
+.ui-v2 .settings-item .check:has(> input[type=checkbox]) + .check:has(> input[type=checkbox]) { box-shadow: inset 0 1px 0 var(--v2-row-line); }
+
+/* Выбор карточками (ChoiceCards: подарок, режим клиники) — мягкие плитки без рамки; выбранная — бирюзовая рамка и ✓ в кружке */
+.ui-v2 .choice-cards { gap: 10px; }
+.ui-v2 .choice-card { padding: 14px 16px; border-color: transparent; border-radius: var(--v2-r-row); background: var(--v2-field); }
+.ui-v2 .choice-card:hover:not(:disabled) { border-color: var(--line-strong); }
+.ui-v2 .choice-card.on { border-color: var(--accent); background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent); }
+.ui-v2 .choice-card-head strong { color: var(--v2-ink); font-size: 1rem; font-weight: 600; }
+.ui-v2 .choice-card-text { font-size: .875rem; }
+.ui-v2 .choice-card.on .choice-card-mark { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: var(--accent-text); font-size: .75rem; }
+
+/* «‹ Назад» в пунктах «Я» и «Помощи» — как экран «внутрь» у «Настроек»: круглая «‹» слева, название по центру */
+.ui-v2 .page-head:has(> .settings-back) {
+  display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; gap: 8px; min-height: 64px;
+}
+.ui-v2 .page-head:has(> .settings-back) > .settings-back { grid-column: 1; grid-row: 1; justify-self: start; flex: none; justify-content: center; }
+.ui-v2 .page-head:has(> .settings-back) > .sub-titles { grid-column: 2; grid-row: 1; min-width: 0; text-align: center; }
+.ui-v2 .page-head:has(> .settings-back) > .sub-titles .sect-crumb { display: none; }
+.ui-v2 .page-head:has(> .settings-back) > .sub-titles h1 { margin: 0; overflow: hidden; color: var(--v2-ink); font: 600 1.05rem / 1.25 var(--display); text-overflow: ellipsis; white-space: nowrap; }
+.ui-v2 .page-head:has(> .settings-back) > .head-tools { grid-column: 3; grid-row: 1; justify-self: end; }
+.ui-v2 .page-head:has(> .settings-back) > .head-tools:empty { display: none; }
+
+/* ── Списки «Клиники»: персонал, услуги ──────────────────────────────────────────────────────────────────── */
+.ui-v2 .staff-line { min-height: 64px; }
+.ui-v2 .staff-line .avatar { width: 40px; height: 40px; font-size: 1rem; }
+.ui-v2 .staff-line .row-link { color: var(--v2-ink); font-size: 1.0625rem; font-weight: 600; }
+.ui-v2 .staff-lines > li + li { border-top-color: var(--v2-row-line); }
+.ui-v2 .staff-chev { color: var(--faint); font-size: 1.6rem; }
+
+/* ── Лист «Я» и «Помощь» (телефон) — строки-группой с цветной плиткой, как «Ещё»; компьютер — карточка над кнопкой ─ */
+.ui-v2 .menu-item[data-icon=profile] { --tile: var(--ico-patients); }
+.ui-v2 .menu-item[data-icon=appearance] { --tile: var(--ico-appearance); }
+.ui-v2 .menu-item[data-icon=notifications] { --tile: var(--ico-stock); }
+.ui-v2 .menu-item[data-icon=calendar] { --tile: var(--ico-schedule); }
+.ui-v2 .menu-item[data-icon=install] { --tile: var(--ico-learn); }
+.ui-v2 .menu-item[data-icon=logout] { --tile: var(--ico-logout); }
+.ui-v2 .menu-item[data-icon=chat] { --tile: var(--ico-help); }
+.ui-v2 .menu-item[data-icon=guide] { --tile: var(--ico-learn); }
+.ui-v2 .menu-item[data-icon=videos] { --tile: var(--ico-appearance); }
+.ui-v2 .menu-item[data-icon=support] { --tile: var(--ico-support); }
+.ui-v2 .menu-item[data-icon=survey] { --tile: var(--ico-stock); }
+.ui-v2 .menu-item[data-icon=privacy] { --tile: var(--ico-settings); }
+.ui-v2 .menu-item[data-icon=tour] { --tile: var(--ico-schedule); }
+.ui-v2 .menu-item[data-icon=tips] { --tile: var(--ico-stock); }
+.ui-v2 .menu-item[data-icon=group] { --tile: var(--ico-patients); }
+.ui-v2 .menu-item[data-icon=instagram] { --tile: var(--ico-instagram); }
+.ui-v2 :is(.pop-menu:not(.action-menu), .menu-sheet) .menu-item[data-icon] .menu-ico {
+  flex: none; display: grid; place-items: center; border-radius: 9px; background: var(--tile, var(--accent)); color: var(--v2-tile-glyph);
+}
+.ui-v2 :is(.pop-menu:not(.action-menu), .menu-sheet) .menu-item[data-icon] .menu-ico .icon { stroke-width: 2; }
+.ui-v2 :is(.pop-menu:not(.action-menu), .menu-sheet) .menu-title { color: var(--v2-ink); font-weight: 600; }
+.ui-v2 :is(.pop-menu:not(.action-menu), .menu-sheet) .menu-out { margin-left: auto; color: var(--faint); }
+
+/* Компьютер: карточка-меню над «Я»/«Помощью» — радиус 20, плитки 30px */
+.ui-v2 .pop-menu:not(.action-menu) { width: 300px; gap: 2px; padding: 8px; border: 0; border-radius: var(--v2-r-card); background: var(--v2-card); box-shadow: var(--v2-shadow-float); }
+.ui-v2 .pop-menu:not(.action-menu) .menu-item { gap: 12px; min-height: 44px; padding: 7px 10px; border-radius: 12px; }
+.ui-v2 .pop-menu:not(.action-menu) .menu-item[data-icon] .menu-ico { width: 30px; height: 30px; }
+.ui-v2 .pop-menu:not(.action-menu) .menu-item[data-icon] .menu-ico .icon { width: 18px; height: 18px; }
+.ui-v2 .pop-menu:not(.action-menu) .menu-hint { font-size: .8125rem; }
+.ui-v2 .pop-menu:not(.action-menu) .menu-title { margin: 0; padding: 0; border: 0; font-size: .95rem; white-space: normal; }
+.ui-v2 .pop-menu:not(.action-menu) .menu-text { display: grid; gap: 1px; min-width: 0; }
+
+/* Меню действий «⋯» и выпадающие списки — мягче: радиус 16, без рамки, заметная тень */
+.ui-v2 .pop-menu.action-menu:not(.sheet), .ui-v2 .ui-select-pop:not(.sheet) { border: 0; border-radius: 16px; box-shadow: var(--v2-shadow-float); }
+.ui-v2 .pop-menu.action-menu .menu-item, .ui-v2 .ui-select-pop li { border-radius: 10px; }
+.ui-v2 .pop-menu.action-menu.sheet, .ui-v2 .ui-select-pop.sheet { border-radius: 28px 28px 0 0; }
+
+/* ── Окна и листы (Confirm, Sheet, подтверждения): радиус 24, заголовок 20px, ✕ — серым кружком ──────────── */
+.ui-v2 .confirm { border-radius: 24px; box-shadow: var(--v2-shadow-float); }
+.ui-v2 .sheet-head-title, .ui-v2 .tool-sheet-title { color: var(--v2-ink); font-size: 1.25rem; font-weight: 700; letter-spacing: -.01em; }
+.ui-v2 .x-btn { width: 36px; height: 36px; margin: 4px; background: var(--sunken); color: var(--hint); }
+.ui-v2 .x-btn svg { width: 16px; height: 16px; stroke-width: 2.6; }
+.ui-v2 .confirm-actions .btn { min-height: 44px; border-radius: var(--v2-r-pill); }
+
+/* ── Вход для клиники ───────────────────────────────────────────────────────────────────────────────────── */
+.ui-v2 .center.login h1 { color: var(--v2-ink); font: 700 1.9rem / 1.15 var(--display); letter-spacing: -.02em; }
+.ui-v2 .center.login .btn.tg-login, .ui-v2 .center.login .btn.primary { min-height: 52px; border-radius: var(--v2-r-pill); }
+
+/* ── Компьютер ──────────────────────────────────────────────────────────────────────────────────────────── */
+@media (min-width: 761px) {
+  .ui-v2 :is(.field input:not([type=checkbox], [type=radio], .phone input), .field select, .field .ui-select, .phone) { min-height: 44px; }
+  .ui-v2 .settings-item .card-block { gap: 12px; }
+  .ui-v2 .settings-item .settings-group { gap: 10px; }
+  /* «Я»/«Помощь»: шапка как у пункта «Настроек» — «‹» 48px и название 1.6rem по центру */
+  .ui-v2 .page-head:has(> .settings-back) { grid-template-columns: 48px minmax(0, 1fr) 48px; min-height: 76px; }
+  .ui-v2 .page-head:has(> .settings-back) > .settings-back { width: 48px; height: 48px; }
+  .ui-v2 .page-head:has(> .settings-back) > .sub-titles h1 { font: 700 1.6rem / 1.2 var(--display); letter-spacing: -.01em; }
+  .ui-v2 .workspace:has(.page-head > .settings-back) .settings-item { max-width: 860px; margin: 0 auto; }
+  /* Вход — карточкой 28px без рамки */
+  .ui-v2 .login-card { border: 0; border-radius: 28px; background: var(--v2-card); box-shadow: var(--v2-shadow-float); }
+}
+
+/* ── Телефон ────────────────────────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 760px) {
+  .ui-v2 :is(.field input:not([type=checkbox], [type=radio], .phone input), .field select, .field .ui-select, .phone) { min-height: 48px; }
+  .ui-v2 .field textarea { padding: 12px 14px; }
+  .ui-v2 .settings-item .card-block { gap: 12px; }
+  /* Главная кнопка формы в карточке — на всю ширину, 50px, как в iOS */
+  .ui-v2 .settings-item :is(.card-block, .form) > .btn.primary, .ui-v2 .settings-item .card-block > .actions > .btn.primary { justify-self: stretch; width: 100%; min-height: 50px; }
+
+  /* Лист «Я»/«Помощь»: строки — одной белой карточкой, плитка 40px, линия от текста; «Выйти» — отдельной карточкой */
+  .ui-v2 .menu-sheet .more-card { gap: 0; }
+  .ui-v2 .menu-sheet .sub-sheet-head { align-items: center; margin-bottom: 14px !important; }
+  .ui-v2 .menu-sheet .sub-sheet-head > .icon { display: none; }
+  .ui-v2 .menu-sheet .sub-sheet-head .me-avatar.lg { width: 56px; height: 56px; font-size: 1.2rem; }
+  .ui-v2 .menu-sheet .menu-who strong { color: var(--v2-ink); font: 700 1.25rem / 1.25 var(--display); }
+  .ui-v2 .menu-sheet .menu-who .hint { font-size: .9375rem; }
+  .ui-v2 .menu-sheet .menu-item {
+    position: relative; gap: 14px; min-height: 60px; padding: 10px 16px; border-radius: 0; background: var(--v2-card); color: var(--v2-ink);
+  }
+  .ui-v2 .menu-sheet .menu-item:active { background: var(--sunken); }
+  .ui-v2 .menu-sheet .menu-item[data-icon] .menu-ico { width: 40px; height: 40px; border-radius: 11px; }
+  .ui-v2 .menu-sheet .menu-item[data-icon] .menu-ico .icon { width: 22px; height: 22px; }
+  .ui-v2 .menu-sheet .menu-title { font-size: var(--v2-row-title); }
+  .ui-v2 .menu-sheet .menu-hint { font-size: .875rem; line-height: 1.3; }
+  .ui-v2 .menu-sheet .menu-item:not(:has(.menu-out))::after { content: '›'; margin-left: auto; padding-left: 4px; color: var(--faint); font-size: 26px; line-height: 1; }
+  .ui-v2 .menu-sheet .menu-item + .menu-item::before { content: ''; position: absolute; top: 0; left: 70px; right: 0; height: 1px; background: var(--v2-row-line); }
+  .ui-v2 .menu-sheet .sub-sheet-head + .menu-item, .ui-v2 .menu-sheet .menu-sep + .menu-item { border-top-left-radius: var(--v2-r-card); border-top-right-radius: var(--v2-r-card); }
+  .ui-v2 .menu-sheet .menu-item:has(+ .menu-sep), .ui-v2 .menu-sheet .menu-item:last-child { border-bottom-left-radius: var(--v2-r-card); border-bottom-right-radius: var(--v2-r-card); }
+  .ui-v2 .menu-sheet .menu-sep { height: 14px; margin: 0; border: 0; }
+  .ui-v2 .menu-sheet .menu-item[data-icon=logout] .menu-title { color: var(--destructive); }
+  .ui-v2 .menu-sheet .menu-item[data-icon=logout]::after { content: none; }
+
+  /* Окно снизу (Sheet, подтверждения): радиус 28, кнопки 50px «таблетками» */
+  .ui-v2 .confirm.sheet { border-radius: 28px 28px 0 0; padding-top: 10px; }
+  .ui-v2 .confirm.sheet .confirm-actions .btn { min-height: 50px; }
+
+  /* Вход: поля и кнопки крупные, поле — белое на тонированном фоне */
+  .ui-v2 .center.login { gap: 14px; }
+  .ui-v2 .center.login :is(.field input:not([type=checkbox], [type=radio], .phone input), .phone) { min-height: 52px; background-color: var(--v2-card); box-shadow: var(--v2-shadow); }
+}
+
+/* ── Склад: поиск — белым круглым полем, переключатели вместо галочек, материалы — одной карточкой-группой ── */
+.ui-v2 .shell:has(.nav.active[data-section=stock]) .workspace .page-head .search {
+  min-height: 44px; padding: 0 16px 0 46px; border: 0; border-radius: var(--v2-r-control); background: var(--v2-card) no-repeat 16px 50% / 20px 20px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2375898E' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E");
+  box-shadow: var(--v2-shadow);
+}
+.ui-v2 .shell:has(.nav.active[data-section=stock]) .workspace .page-head .search:focus { outline: 2px solid var(--accent); outline-offset: 0; }
+.ui-v2 .shell:has(.nav.active[data-section=stock]) .workspace .page-head .check > input[type=checkbox] {
+  flex: none; position: relative; width: 51px; height: 31px; margin: 0; border-radius: 999px; background: var(--line-strong);
+  -webkit-appearance: none; appearance: none; cursor: pointer; transition: background .2s;
+}
+.ui-v2 .shell:has(.nav.active[data-section=stock]) .workspace .page-head .check > input[type=checkbox]::before {
+  content: ''; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%; background: #FFFFFF;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, .2); transition: transform .2s;
+}
+.ui-v2 .shell:has(.nav.active[data-section=stock]) .workspace .page-head .check > input[type=checkbox]:checked { background: var(--accent); }
+.ui-v2 .shell:has(.nav.active[data-section=stock]) .workspace .page-head .check > input[type=checkbox]:checked::before { transform: translateX(20px); }
+.ui-v2 .shell:has(.nav.active[data-section=stock]) .workspace .page-head .check > input[type=checkbox]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ui-v2 .shell:has(.nav.active[data-section=stock]) .workspace .page-head .check { gap: 10px; min-height: 44px; font-size: 1rem; }
+
+@media (max-width: 760px) {
+  /* Таблица материалов на телефоне: одна белая карточка, строки с линией; название крупно, «−1» справа по центру */
+  .ui-v2 .shell:has(.nav.active[data-section=stock]) .workspace .table tbody { display: block; overflow: hidden; border-radius: var(--v2-r-card); background: var(--v2-card); box-shadow: var(--v2-shadow); }
+  .ui-v2 .shell:has(.nav.active[data-section=stock]) .workspace .table { gap: 0; background: none; box-shadow: none; }
+  .ui-v2 .shell:has(.nav.active[data-section=stock]) .workspace .table tr {
+    grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; row-gap: 1px; margin: 0; padding: 12px 16px; border: 0; border-radius: 0; background: none; box-shadow: none;
+  }
+  .ui-v2 .shell:has(.nav.active[data-section=stock]) .workspace .table tr + tr { box-shadow: inset 0 1px 0 var(--v2-row-line); }
+  .ui-v2 .shell:has(.nav.active[data-section=stock]) .workspace .table td { grid-column: 1; padding: 0; font-size: .9375rem; text-align: left; }
+  .ui-v2 .shell:has(.nav.active[data-section=stock]) .workspace .table td::before { float: none; margin-right: 6px; color: var(--hint); font-size: .9375rem; font-weight: 400; }
+  .ui-v2 .shell:has(.nav.active[data-section=stock]) .workspace .table td:empty { display: none; }
+  .ui-v2 .shell:has(.nav.active[data-section=stock]) .workspace .table td:first-child { margin-bottom: 2px; }
+  .ui-v2 .shell:has(.nav.active[data-section=stock]) .workspace .table td:first-child .row-link { color: var(--v2-ink); font-size: var(--v2-row-title); font-weight: 600; }
+  .ui-v2 .shell:has(.nav.active[data-section=stock]) .workspace .table td.r:last-child { grid-column: 2; grid-row: 1 / span 4; align-self: center; }
+  .ui-v2 .shell:has(.nav.active[data-section=stock]) .workspace .table td.r:last-child::before { content: none; }
+  .ui-v2 .shell:has(.nav.active[data-section=stock]) .workspace .table td.r:last-child .btn { min-width: 52px; min-height: 40px; border-radius: var(--v2-r-pill); }
+  .ui-v2 .shell:has(.nav.active[data-section=stock]) .workspace .page-head .search { min-height: 52px; }
+}
