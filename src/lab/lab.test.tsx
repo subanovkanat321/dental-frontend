@@ -134,6 +134,27 @@ test('карточка приёма: «＋ В лабораторию» — па�
   } })
 })
 
+test('карточка приёма: приём уже отметили состоявшимся до его времени — он не примерка (сервер ответил бы 422)', async () => {
+  const visit = appointment(10, 1, '15:00', 'Бакыт Тестов', { status: 'DONE' })
+  const calls = backend([])
+  server.use(
+    http.get('*/api/appointments', ({ request }) => HttpResponse.json(new URL(request.url).searchParams.get('doctorId') === '1' ? [visit] : [])),
+    http.get('*/api/lab-orders/visits', () => HttpResponse.json([])),
+  )
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: /Бакыт Тестов/ }))
+  const panel = screen.getByRole('complementary', { name: 'Карточка приёма' })
+  // Врачу на состоявшемся приёме «＋ В лабораторию» — в «О записи»
+  await userEvent.click(await within(panel).findByRole('button', { name: /О записи/ }))
+  await userEvent.click(await within(panel).findByRole('button', { name: '＋ В лабораторию' }))
+  const dialog = await screen.findByRole('dialog', { name: 'Заказ в лабораторию' })
+  await userEvent.click(within(dialog).getByRole('button', { name: 'Создать заказ' }))
+  await waitForSlow(() => expect(screen.queryByRole('dialog')).toBeNull())
+  expect(calls).toContainEqual({ path: 'create', body: {
+    patientId: 10, doctorId: 1, labId: 5, kind: 'CROWN', sentOn: todayIn(), dueOn: addDays(todayIn(), 7),
+  } })
+})
+
 test('карточка приёма: на примерку работа ещё не пришла — предупреждение и WhatsApp технику с именем пациента', async () => {
   const visit = appointment(10, 1, '15:00', 'Бакыт Тестов')
   const calls = backend([{ ...base, id: 9, patientId: 10, fittingAppointmentId: 10, fittingAt: visit.startAt, fittingStatus: 'SCHEDULED' }])

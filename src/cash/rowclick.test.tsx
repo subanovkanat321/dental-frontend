@@ -49,7 +49,8 @@ test('«Касса»: строка долга и строка оплаты от�
 })
 
 test('«Должники»: строка открывает пациента; «Принять оплату» — самый давний приём; «⋯» — пациент и визиты; старый долг — так же', async () => {
-  server.use(http.get('*/api/opening-debts', () => HttpResponse.json([
+  // Старые долги спрашивает только тот, кто видит деньги всей клиники (руководитель)
+  server.use(http.get('*/api/patient/me', () => HttpResponse.json(me)), http.get('*/api/opening-debts', () => HttpResponse.json([
     { id: 3, patientId: 9, patient: 'Пример Старый', amountSom: 2500, createdAt: '2026-11-10T06:00:00Z' },
   ] satisfies Schemas['OpeningDebtsView'][])))
   const onOpen = vi.fn()

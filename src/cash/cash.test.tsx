@@ -249,6 +249,23 @@ test('«Должники»: долг из прежней программы — 
   expect(paid).toEqual([{ id: '7', method: 'TRANSFER' }])
 })
 
+test('«Должники» врача: долги из прежней программы не спрашиваем — сервер ответил бы 403', async () => {
+  const asked: string[] = []
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json({ ...me, admin: false })),
+    http.get('*/api/appointments/debts', () => HttpResponse.json([debt(7, 'Бакыт М.', { debtSom: 2000 })])),
+    http.get('*/api/opening-debts', ({ request }) => {
+      asked.push(request.url)
+      return HttpResponse.json({ status: 403, title: 'Forbidden' }, { status: 403 })
+    }),
+  )
+  renderApp()
+  await userEvent.click(await findSub('Должники'))
+  expect(await screen.findByText('Бакыт М.')).toBeInTheDocument()
+  expect(screen.queryByRole('region', { name: 'Старые долги из прежней программы' })).not.toBeInTheDocument()
+  expect(asked).toEqual([])
+})
+
 test('«Должники»: семья — одной строкой, «Семьи вместе» можно выключить', async () => {
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),

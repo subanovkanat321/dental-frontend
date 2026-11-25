@@ -32,7 +32,10 @@ export function ApptBadges({ appointment, money, chair, max = MAX_BADGES }: { ap
   )
 }
 
-/** Легенда значков — одной строкой под расписанием; 🪑 — только в клинике с общими креслами. */
-export function BadgesLegend({ chair = false }: { chair?: boolean }) {
-  return <p className="badges-legend hint small">❗ важно для врача · 🧾 долг · ½ частично · ✓ оплачено · ⭐ ВИП · 🆕 первый визит · 💬 комментарий{chair ? ' · 🪑 в часы коллеги по креслу' : ''}</p>
+/**
+ * Легенда значков — одной строкой под расписанием; 🪑 — только в клинике с общими креслами. Без денег
+ * (ассистент) — без значков оплаты: их у него на приёмах нет, а легенда про долги лишь путала.
+ */
+export function BadgesLegend({ chair = false, money = true }: { chair?: boolean, money?: boolean }) {
+  return <p className="badges-legend hint small">❗ важно для врача{money ? ' · 🧾 долг · ½ частично · ✓ оплачено' : ''} · ⭐ ВИП · 🆕 первый визит · 💬 комментарий{chair ? ' · 🪑 в часы коллеги по креслу' : ''}</p>
 }

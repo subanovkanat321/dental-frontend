@@ -34,7 +34,8 @@
   .debtors .calm-row .calm-extra { grid-row: 4; }
   .debtors .row-menu-pop button { white-space: normal; }
   .debtors .row-menu-pop { max-width: calc(100vw - 48px); }
-  .debtors-tiles .survey-tile b { font-size: 1.2rem; }
+  /* .num не переносит строку: «7 · 102 225 сом» в трети ширины телефона вылезал за экран (QA 2026-11-25) */
+  .debtors-tiles .survey-tile b { font-size: 1.2rem; white-space: normal; }
   .debtors-tiles.n3 .survey-tile b { font-size: 1.05rem; }
   .debtors-tiles.n3 .survey-tile > .hint:first-child { font-size: .78rem; }
 }

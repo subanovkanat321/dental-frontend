@@ -278,6 +278,12 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
           )}
         </div>
         <div className="panel-head-actions">
+          {/* ✏️ — данные пациента на виду (2026-11-25, владелец: «добавь возможность редактировать данные пациента» — ссылка
+              пряталась во вкладке «Прочее»): открывает ту же форму в «Прочем» */}
+          {mine && patient && (
+            <button type="button" className="btn ghost" aria-label="Изменить данные пациента" title="Изменить данные пациента"
+              onClick={() => { setTab('more'); setEditing(true) }}>✏️</button>
+          )}
           {/* Редкие действия — в «⋯»: договор с пациентом (по желанию клиники, V209) */}
           {patient && (
             <MoreActions title={patient.fullName ?? 'Пациент'} onTask={() => setAdding('task')} onLab={labs ? () => setAdding('lab') : undefined}
@@ -362,7 +368,6 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
           {editing && patient ? <PatientForm patient={patient} onSaved={() => setEditing(false)} onCancel={() => setEditing(false)} /> : (
             <>
               {about && <p>{about}</p>}
-              {mine && <button type="button" className="link" onClick={() => setEditing(true)}>Изменить данные пациента</button>}
             </>
           )}
           {/* ⭐ ВИП — только меткой «ВИП» в шапке (одна дорога вместо двух, UX-аудит 2026-11-20); API /vip остаётся */}

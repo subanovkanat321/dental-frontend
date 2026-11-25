@@ -83,8 +83,10 @@ function EarningsView({ e }: { e: Earnings }) {
         )}
         {e.changePercent != null && (
           <p className="compare" aria-label="Сравнение с прошлым месяцем">
-            Как в прошлом месяце к этой дате: <b className={e.changePercent > 0 ? 'tone-ok' : 'tone-quiet'}>{changeText(e.changePercent)}</b>
-            <span className="hint"> · было {somText(e.previousMonthSom)}</span>
+            {/* Процент — по выручке (сервер: оклад одинаков и сглаживал бы разницу), а «было» — заработок. С условиями
+                зарплаты это разные числа: «+820% · было 39 400 сом» при 280 593 сом сейчас не сходилось — подписываем оба */}
+            Как в прошлом месяце к этой дате: {e.hasTerms && 'выручка '}<b className={e.changePercent > 0 ? 'tone-ok' : 'tone-quiet'}>{changeText(e.changePercent)}</b>
+            <span className="hint"> · {e.hasTerms ? 'заработок тогда' : 'было'} {somText(e.previousMonthSom)}</span>
           </p>
         )}
       </section>
