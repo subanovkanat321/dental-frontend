@@ -150,7 +150,8 @@ export function DayList({ me, doctors, date, onDate, onOpen, onQuick, onNew, onN
     : off.length ? `Не работают: ${off.map((d) => nameOf.get(d.id)).join(', ')}` : null
   const note = [
     offText,
-    date === addDays(today, 1) && scheduled.length ? `Готово ${ready} из ${scheduled.length}` : null,
+    // Скольким на завтра уже напомнили (или пациент сам ответил). Было «Готово 1 из 2» — владелец 2026-11-25: «что это?»
+    date === addDays(today, 1) && scheduled.length ? `Напомнили: ${ready} из ${scheduled.length}` : null,
     revenue.data?.totalSom ? `За день: ${somText(revenue.data.totalSom)}` : null,
   ].filter(Boolean).join(' · ')
   const title = dayTitle(date, today)
