@@ -30,7 +30,6 @@ export type SiteProblem = { code?: string; detail?: string; errors?: { field: st
 /** Контакты платформы: supportPhones — телефоны по порядку, supportWhatsapp — свой номер или null. */
 export type Links = Schemas['LinksControllerLinks']
 
-export type Tariffs = Schemas['Tariffs']
 /**
  * Ролик и презентация для /join (/web/materials/public, файлы бэкенд отдаёт из MARKETING_DIR).
  * null — файла нет (каталог не подключён), блок не показываем.
@@ -39,7 +38,7 @@ export type PublicMaterials = Schemas['MaterialsPublicMaterials']
 /** Кейс на /join (/web/case): shown — заголовок и текст заполнены, блок показываем. */
 export type JoinCase = Schemas['JoinCaseCase']
 
-/** /join?ref=…: какая клиника пригласила и сколько месяцев бесплатно («Клиника приводит клинику», V231). */
+/** /join?ref=…: какая клиника пригласила («Клиника приводит клинику», V231; freeMonths с 2026-11-25 не показываем). */
 export type ReferralInvite = Schemas['ClinicReferralsInvite']
 
 /**

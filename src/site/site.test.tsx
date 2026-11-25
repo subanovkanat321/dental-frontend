@@ -2,7 +2,7 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
-import { OFFER } from '../lib/brand'
+import { FREE_LINE, OFFER } from '../lib/brand'
 import { server } from '../test/server'
 import { Call } from './Call'
 import { ClinicSite } from './ClinicSite'
@@ -134,12 +134,17 @@ test('заявка клиники: ошибки полей с сервера, п
   )
   const user = userEvent.setup()
   render(<Join />)
-  // Цены и срок пилота не показываем — только «попробовать бесплатно»
+  // Tish бесплатный (2026-11-25): вместо «Сколько стоит» — блок «Бесплатно», ни цен, ни срока пилота
   // Оффер — одна фраза, как на /go, /start и /about
-  expect(await screen.findByText(`${OFFER}: всё приложение, без ограничений и без предоплаты.`, { exact: false })).toBeInTheDocument()
+  expect(await screen.findByText(FREE_LINE, { exact: false })).toBeInTheDocument()
   expect(screen.queryByText(/месяц[а-я]* — бесплатно/)).not.toBeInTheDocument()
+  const free = screen.getByRole('region', { name: 'Бесплатно' })
+  expect(free).toHaveTextContent('Все функции: запись, бот, напоминания')
+  expect(free).toHaveTextContent('Без ограничений по врачам')
+  expect(screen.queryByRole('heading', { name: 'Сколько стоит' })).not.toBeInTheDocument()
+  expect(document.body.textContent).not.toMatch(/\d\s?сом|сом\/мес|в месяц|договоримся об условиях|пробн[а-я]* период/)
   // Главный путь — регистрация самим; заявка — «помогите подключить»
-  for (const a of screen.getAllByRole('link', { name: 'Попробовать бесплатно' })) expect(a).toHaveAttribute('href', '/start')
+  for (const a of screen.getAllByRole('link', { name: 'Начать бесплатно' })) expect(a).toHaveAttribute('href', '/start')
   expect(screen.getByRole('heading', { name: 'Хочу, чтобы помогли подключить' })).toBeInTheDocument()
   // «Тур по Tish» — под «Что умеет» и в подвале
   for (const a of screen.getAllByRole('link', { name: /Тур по Tish/ })) expect(a).toHaveAttribute('href', '/tour')
@@ -181,7 +186,7 @@ test('/go: сначала клиникам (оффер → /start, ролик, W
   const links = within(clinics).getAllByRole('link')
   expect(links.map((a) => a.getAttribute('href'))).toEqual(['/start', '/tour', '/join#materials', 'https://wa.me/996770444555', 'https://t.me/tish_support', '/login'])
   expect(links[0]).toHaveAccessibleName(expect.stringContaining(`Подключить клинику — ${OFFER.toLowerCase()}`))
-  expect(links[0]).toHaveAccessibleName(expect.stringContaining('Без предоплаты'))
+  expect(links[0]).toHaveAccessibleName(expect.stringContaining('Tish бесплатный'))
   expect(container.textContent).not.toMatch(/дней|месяц/)
   expect(links[0]).toHaveClass('main')
   // Первая ссылка страницы — подключение клиники; пациентам — своим блоком ниже, строкой «Записаться к стоматологу»
@@ -332,6 +337,6 @@ test('/join: «Посмотрите за минуту» — ролик без п
   server.use(http.get('*/web/materials/public', () => HttpResponse.json({ video: null, poster: null, presentation: null })))
   render(<Join />)
   // Оффер — одна фраза, как на /go, /start и /about
-  expect(await screen.findByText(`${OFFER}: всё приложение, без ограничений и без предоплаты.`, { exact: false })).toBeInTheDocument()
+  expect(await screen.findByText(FREE_LINE, { exact: false })).toBeInTheDocument()
   expect(screen.queryByRole('region', { name: 'Посмотрите за минуту' })).not.toBeInTheDocument()
 })

@@ -219,7 +219,7 @@ export function isDownloadPath(path = window.location.pathname): boolean {
   return /^\/(app|download|скачать)\/?$/i.test(p)
 }
 
-/** Самостоятельная регистрация клиники («Попробовать бесплатно»): /start — без входа. */
+/** Самостоятельная регистрация клиники («Начать бесплатно»): /start — без входа. */
 export function isSignupPath(path = window.location.pathname): boolean {
   return /^\/start\/?$/i.test(path)
 }

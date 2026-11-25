@@ -204,8 +204,8 @@ export const TIPS: Tip[] = [
   },
   {
     id: 'referral',
-    title: 'Пригласите коллег — +3 месяца',
-    text: 'Клиника по вашей ссылке пробует Tish дольше, а когда оплатит — вам +3 месяца бесплатно.',
+    title: 'Tish бесплатный — пригласите коллег',
+    text: 'Отправьте коллегам из других клиник свою ссылку: Tish для них тоже бесплатный, подключение — 5 минут.',
     action: { show: 'settings/plan' },
     show: (me) => hasSub(me, 'settings', 'plan'),
     feature: 'referral',

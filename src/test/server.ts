@@ -228,7 +228,6 @@ export const server = setupServer(
   // Опрос команды Tish (src/survey): по умолчанию ответа никто не ждёт — приглашения нет
   http.get('*/api/surveys/current', () => HttpResponse.json({} satisfies Schemas['SurveyAnswersCurrent'])),
   // Напоминания админу (AdminNotices): по умолчанию всё в порядке — напоминаний нет
-  http.get('*/api/clinic/billing', () => HttpResponse.json({ state: 'FREE' })),
   http.get('*/api/clinic/agreement', () => HttpResponse.json({ scans: [] })),
   http.get('*/api/clinic', () => HttpResponse.json({ legalName: 'ИП Тест', address: 'Бишкек' })),
   // «Перерывы и выходные» (их видят и часы работы): по умолчанию нет; врач работает каждый день 09–18

@@ -88,9 +88,9 @@ test('/start открывается без входа — форма регис�
   server.use(http.get('*/api/patient/me', () => HttpResponse.json({ detail: 'Войдите' }, { status: 401 })))
   window.history.replaceState(null, '', '/start')
   renderApp()
-  expect(await screen.findByRole('heading', { name: 'Попробовать Tish бесплатно' })).toBeInTheDocument()
-  // Оффер — «Попробовать бесплатно», как на /go, /join и /about; срок не обещаем
-  expect(screen.getByText(/без заявки, звонка и предоплаты/)).toBeInTheDocument()
+  expect(await screen.findByRole('heading', { name: 'Подключить Tish бесплатно' })).toBeInTheDocument()
+  // Оффер — «Начать бесплатно», как на /go, /join и /about; срок не обещаем
+  expect(screen.getByText(/Tish бесплатный: всё приложение, без оплаты, пробного срока/)).toBeInTheDocument()
   expect(screen.queryByText(/дней|месяц/)).not.toBeInTheDocument()
   // Выбора «частный врач / клиника» и галочки «тоже веду приём» нет: кто регистрируется — руководитель и врач
   const form = screen.getByRole('form', { name: 'Регистрация клиники' })
@@ -140,7 +140,7 @@ test('/start?ref=… по приглашению: сверху — кто при
   try {
     const user = userEvent.setup()
     show()
-    expect(await screen.findByRole('note')).toHaveTextContent('🎁 Вас пригласила клиника «Стоматология Тест» — 3 месяца бесплатно')
+    expect(await screen.findByRole('note')).toHaveTextContent('🎁 Вас пригласила клиника «Стоматология Тест»')
     const form = await fill(user)
     await user.click(within(form).getByRole('button', { name: 'Получить код по SMS' }))
     expect(await screen.findByRole('heading', { name: 'Код из SMS' })).toBeInTheDocument()

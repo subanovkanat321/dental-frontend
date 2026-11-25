@@ -6,7 +6,6 @@ import type { Schemas } from '../api/client'
 import { me, renderApp, openItem } from '../test/fixtures'
 import { server } from '../test/server'
 import { agreementBlocks, billingLine, fillAgreement } from './texts'
-import { waitForSlow } from '../test/wait'
 
 beforeEach(() => {
   window.location.hash = '/settings/plan'
@@ -17,7 +16,7 @@ afterEach(() => {
 })
 
 test('строка оплаты и разбор договора', () => {
-  expect(billingLine({ state: 'FREE' }).tone).toBe('hint')
+  expect(billingLine({ state: 'FREE' })).toEqual({ text: 'бесплатно', tone: 'hint' })
   expect(billingLine({ state: 'ACTIVE', paidUntil: '2026-11-05', daysLeft: 5 })).toEqual({ text: 'оплачено до 5 нояб 2026', tone: 'wait' })
   expect(billingLine({ state: 'PAUSED', paidUntil: '2026-10-01' }).tone).toBe('bad')
   expect(fillAgreement('Клиника {{clinic.name}}, ИНН {{ clinic.inn }}', { 'clinic.name': 'ИП Тест' })).toBe('Клиника ИП Тест, ИНН ________________')
@@ -26,34 +25,24 @@ test('строка оплаты и разбор договора', () => {
   ])
 })
 
-test('админ: тариф, оплата за 3 месяца с отметкой «Я оплатил(а)»', async () => {
-  let paid: string | null = null
+test('админ: «Пригласить коллег» вместо «Тариф и оплата» — Tish бесплатный, ни цен, ни оплаты', async () => {
+  const asked: string[] = []
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
-    http.get('*/api/clinic/plan', () => HttpResponse.json({
-      billing: { state: 'ACTIVE', paidUntil: '2026-12-01', daysLeft: 30 }, doctors: 2,
-      tariff: { code: 'SMALL', name: 'Кабинет', monthSom: 1500, yearSom: 0 },
-      tariffs: { pilotMonths: 3, tariffs: [{ code: 'SMALL', name: 'Кабинет', who: '1–2 врача', monthSom: 1500, yearSom: 15000 }] },
-      payments: [{ id: 1, paidOn: '2026-11-01', amountSom: 1500, months: 1, paidUntil: '2026-12-01' }],
-    } satisfies Schemas['ClinicPaymentsPlan'])),
-    http.get('*/api/clinic/pay', () => HttpResponse.json({
-      settings: { details: 'MBank 0555 000 000', hasQr: false, hasRequisites: false },
-      periods: [{ months: 1, amountSom: 1500 }, { months: 3, amountSom: 4500 }],
-    } satisfies Schemas['PayRequestsClinicView'])),
-    http.post('*/api/clinic/pay/requests', ({ request }) => {
-      paid = new URL(request.url).searchParams.get('months')
-      return HttpResponse.json({ id: 5, months: 3, amountSom: 4500, status: 'PENDING', clinicId: 0, hasReceipt: false } satisfies Schemas['PayRequestsRequest'])
-    }),
+    http.get('*/api/clinic/plan', () => { asked.push('plan'); return HttpResponse.json({}) }),
+    http.get('*/api/clinic/pay', () => { asked.push('pay'); return HttpResponse.json({}) }),
   )
-  const user = userEvent.setup()
   renderApp()
-  expect(await screen.findByRole('heading', { name: 'Приложение: оплачено до 1 дек 2026' })).toBeInTheDocument()
-  expect(screen.getByText('ваш тариф')).toBeInTheDocument()
-  await user.click(screen.getByRole('button', { name: '3 месяца' }))
-  expect(screen.getByText(/К оплате: 4\s500 сом/)).toBeInTheDocument()
-  await user.click(screen.getByRole('button', { name: 'Я оплатил(а)' }))
-  await waitForSlow(() => expect(paid).toBe('3'))
-  expect(screen.getByRole('table', { name: 'Оплаты' })).toBeInTheDocument()
+  const free = await screen.findByRole('region', { name: 'Tish бесплатный' })
+  expect(within(free).getByRole('heading', { name: 'Tish бесплатный 🎉' })).toBeInTheDocument()
+  expect(free).toHaveTextContent('Платить ничего не нужно')
+  expect(screen.getByRole('heading', { name: 'Пригласить коллег' })).toBeInTheDocument()
+  expect(screen.queryByText('Тариф и оплата')).not.toBeInTheDocument()
+  expect(screen.queryByText(/сом/)).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Я оплатил(а)' })).not.toBeInTheDocument()
+  expect(screen.queryByText(/Оплачено до|ваш тариф|К оплате/)).not.toBeInTheDocument()
+  // Тариф и оплату клиники даже не спрашиваем
+  expect(asked).toEqual([])
 })
 
 test('договор: реквизиты подставляются в текст, подписать', async () => {

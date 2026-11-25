@@ -147,7 +147,7 @@ test('права в дереве: ассистент — без «Кассы» �
   await userEvent.click(within(nav()).getByRole('button', { name: 'Раскрыть подразделы: Настройки' }))
   const settings = within(nav()).getByRole('group', { name: 'Настройки' })
   expect(within(settings).getByRole('link', { name: /Памятки после процедур/ })).toBeInTheDocument()
-  expect(within(settings).queryByRole('link', { name: /Тариф и оплата/ })).not.toBeInTheDocument()
+  expect(within(settings).queryByRole('link', { name: /Пригласить коллег/ })).not.toBeInTheDocument()
   // Группы — подписями внутри раздела; «Аккаунт клиники» у ассистента пуст — подписи нет
   expect(within(settings).getByText('Что получают пациенты')).toBeInTheDocument()
   expect(within(settings).queryByText('Аккаунт клиники')).not.toBeInTheDocument()

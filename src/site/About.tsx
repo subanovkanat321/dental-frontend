@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 
-import { OFFER, TISH_INSTAGRAM, TISH_INSTAGRAM_NAME } from '../lib/brand'
+import { FREE_LINE, TISH_INSTAGRAM, TISH_INSTAGRAM_NAME } from '../lib/brand'
 import { DEMO_PATH } from '../lib/demo'
 import { CaseBlock } from './CaseBlock'
 import { getJson, useDemoEnabled, type JoinCase } from './web'
@@ -11,8 +11,8 @@ import './about.css'
  * (docs/marketing/video/promo-v6/README.md бэкенда) и сам ролик 4:5; ниже — подробно по частям, как
  * в ролике v4. С ней идём в клиники и даём ссылку в Instagram и в первом сообщении клинике. Каждая
  * часть — «слайд» на весь экран компьютера; на телефоне — своей высоты. Картинки — кадры записи ролика
- * на вымышленной клинике (public/about). Контакты владелец дал для публикации. Главная кнопка — «Попробовать
- * бесплатно»: клиника регистрируется сама на /start (с 2026-11-16, без заявки); срок пробного периода не называем.
+ * на вымышленной клинике (public/about). Контакты владелец дал для публикации. Главная кнопка — «Начать
+ * бесплатно»: клиника регистрируется сама на /start (с 2026-11-16, без заявки). С 2026-11-25 Tish бесплатный для всех.
  */
 
 const IMG = `${import.meta.env.BASE_URL}about/`
@@ -171,15 +171,16 @@ const HERO_POINTS: ReactNode[] = [
 
 /** «Как начать за 5 минут» — те же шаги, что на /start. */
 const HOW: [string, string][] = [
-  ['Нажмите «Попробовать бесплатно»', ' — название клиники, город, ваше имя и телефон.'],
+  ['Нажмите «Начать бесплатно»', ' — название клиники, город, ваше имя и телефон.'],
   ['Подтвердите, что это вы', ' — кодом из SMS или кнопкой в Telegram. Клиника создана, вы уже внутри — руководитель и врач: услуги с ценами «от» и часы работы готовы.'],
   ['Отправьте ссылку пациентам и пригласите коллег', ' — запись по ссылке работает сразу. Подсказки «Что настроить» — прямо в приложении.'],
 ]
 
 /** Частые вопросы клиник — коротко и только правда (договор: docs бэкенда agreement/template.md). */
 const FAQ: [string, ReactNode][] = [
-  ['Сколько стоит?', <>{OFFER}: всё приложение, без ограничений и без предоплаты. Понравится — договоримся об условиях
-    (цена зависит от числа врачей); нет — просто перестанете пользоваться.</>],
+  ['Сколько стоит?', <>Нисколько — Tish бесплатный для любой клиники и частного врача: всё приложение, без пробного срока,
+    оплаты и ограничений по числу врачей. Платно — только сторонние сервисы, если подключите их сами: за сообщения официального
+    WhatsApp Meta берёт с клиники около $5–10 в месяц.</>],
   ['Данные в безопасности?', <>Данные клиники видит только клиника, у каждого сотрудника — свои права, важные действия — в журнале.
     Соединение защищено (HTTPS), резервная копия — каждый день, зашифрована и хранится отдельно от сервера.</>],
   ['Где хранятся данные и можно ли их забрать?', <>На сервере Tish, не на компьютере клиники — ничего не пропадёт, если сломается
@@ -281,7 +282,7 @@ function useScrollState() {
 
 /**
  * Сайт-визитка Tish для клиник: всё главное из ролика — сверху вниз, «Как начать за 5 минут», вопросы,
- * «Попробовать бесплатно» (регистрация /start) и контакты. Единственный запрос — кейс клиники (если опубликован):
+ * «Начать бесплатно» (регистрация /start) и контакты. Единственный запрос — кейс клиники (если опубликован):
  * страница открывается сразу, кейс дорисуется.
  */
 export function About() {
@@ -300,7 +301,7 @@ export function About() {
           <a href="/tour">Тур по Tish</a>
           <a href="#contacts">Контакты</a>
           <a href="/login">Вход для клиники</a>
-          <a className="about-btn primary small" href={START}>Попробовать бесплатно</a>
+          <a className="about-btn primary small" href={START}>Начать бесплатно</a>
         </nav>
       </header>
 
@@ -314,12 +315,12 @@ export function About() {
                 частного врача и для большой клиники.</p>
               <ul className="about-points hero-points">{HERO_POINTS.map((x, i) => <li key={i}>{x}</li>)}</ul>
               <div className="about-ctas">
-                <a className="about-btn primary" href={START}>Попробовать бесплатно</a>
+                <a className="about-btn primary" href={START}>Начать бесплатно</a>
                 {demo && <a className="about-btn" href={DEMO_PATH}><span aria-hidden="true">👀</span> Посмотреть демо</a>}
                 <a className="about-btn" href={ABOUT_CONTACTS.whatsapp} target="_blank" rel="noopener noreferrer">
                   <span aria-hidden="true">💬</span> Написать нам в WhatsApp</a>
               </div>
-              <p className="about-note">{OFFER} — без предоплаты, клиника готова за 5 минут, с телефона или компьютера</p>
+              <p className="about-note">Tish бесплатный — без оплаты и пробного срока, клиника готова за 5 минут, с телефона или компьютера</p>
               <p className="about-note"><a className="about-tour-link" href="/tour">▶ Тур по Tish — 2 минуты</a>: 10 шагов со скриншотами</p>
             </div>
             <HeroVideo />
@@ -379,7 +380,7 @@ export function About() {
                 <li key={title}><span className="num" aria-hidden="true">{i + 1}</span><span><strong>{title}</strong>{text}</span></li>
               ))}
             </ol>
-            <div className="about-ctas center"><a className="about-btn primary" href={START}>Попробовать бесплатно</a></div>
+            <div className="about-ctas center"><a className="about-btn primary" href={START}>Начать бесплатно</a></div>
             <p className="about-note">Хотите, чтобы помогли подключить и перенесли пациентов? <a href="/join#form">Оставьте заявку</a> — позвоним.</p>
           </div>
         </section>
@@ -396,10 +397,10 @@ export function About() {
         <section id="contacts" className="about-slide about-final" aria-labelledby="about-final">
           <div className="about-inner narrow" data-reveal>
             <h2 id="about-final">Меньше рутины — <span className="about-hl">больше пациентов и спокойствия</span></h2>
-            <p className="about-lead">{OFFER}: всё приложение, без ограничений и без предоплаты. Клиника создаётся за пару минут,
+            <p className="about-lead">{FREE_LINE} Клиника создаётся за пару минут,
               а с переносом данных и настройкой поможем — просто напишите.</p>
             <div className="about-ctas center">
-              <a className="about-btn primary big" href={START}>Попробовать бесплатно</a>
+              <a className="about-btn primary big" href={START}>Начать бесплатно</a>
               {demo && <a className="about-btn big" href={DEMO_PATH}><span aria-hidden="true">👀</span> Посмотреть демо</a>}
               <a className="about-btn big" href={ABOUT_CONTACTS.whatsapp} target="_blank" rel="noopener noreferrer">
                 <span aria-hidden="true">💬</span> Написать нам в WhatsApp</a>
@@ -434,7 +435,7 @@ export function About() {
       {/* Телефон: кнопки всегда под пальцем — после первого экрана и до контактов */}
       <div className={`about-sticky${pastHero && !atContacts ? ' shown' : ''}`} aria-hidden={!pastHero || atContacts}>
         <a className="about-btn" href={ABOUT_CONTACTS.whatsapp} target="_blank" rel="noopener noreferrer" tabIndex={pastHero && !atContacts ? 0 : -1}>WhatsApp</a>
-        <a className="about-btn primary" href={START} tabIndex={pastHero && !atContacts ? 0 : -1}>Попробовать бесплатно</a>
+        <a className="about-btn primary" href={START} tabIndex={pastHero && !atContacts ? 0 : -1}>Начать бесплатно</a>
       </div>
     </div>
   )

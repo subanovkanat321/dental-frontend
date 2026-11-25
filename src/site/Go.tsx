@@ -49,7 +49,7 @@ export function Go() {
       <section className="site-section" aria-labelledby="go-clinics">
         <h2 id="go-clinics">Для клиник и частных врачей</h2>
         {/* Оффер — сама кнопка: нажали — сразу регистрация клиники (/start, без заявки) */}
-        <GoLink icon="🎁" title={`Подключить клинику — ${OFFER.toLowerCase()}`} sub="Без предоплаты — клиника готова за 5 минут" href="/start" main />
+        <GoLink icon="🎁" title={`Подключить клинику — ${OFFER.toLowerCase()}`} sub="Tish бесплатный — клиника готова за 5 минут" href="/start" main />
         {/* Тур — 10 шагов со скриншотами (/tour): главное «как это выглядит» для владельца клиники */}
         <GoLink icon="▶" title="Тур по Tish — 2 минуты" sub="10 шагов со скриншотами: запись, медкарта, касса" href="/tour" />
         {/* Демо-клиника без регистрации — только если включена на сервере (GET /web/demo) */}

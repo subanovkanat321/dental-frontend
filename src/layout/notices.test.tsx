@@ -9,15 +9,18 @@ afterEach(() => {
   window.location.hash = ''
 })
 
-test('админу: оплата кончается и новый договор — напоминания ведут в «Настройки»', async () => {
+test('админу: новый договор — напоминание ведёт в «Настройки»; об оплате не напоминаем (Tish бесплатный)', async () => {
+  let billingAsked = false
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.get('*/api/appointments', () => HttpResponse.json([])),
-    http.get('*/api/clinic/billing', () => HttpResponse.json({ state: 'ACTIVE', paidUntil: '2026-11-03', daysLeft: 3 })),
+    http.get('*/api/clinic/billing', () => { billingAsked = true; return HttpResponse.json({ state: 'ACTIVE', paidUntil: '2026-11-03', daysLeft: 3 }) }),
     http.get('*/api/clinic/agreement', () => HttpResponse.json({ current: { version: 2 }, last: { version: 1 }, scans: [] })),
   )
   renderApp()
-  expect(await screen.findByRole('button', { name: /Приложение: оплачено до 3 нояб 2026/ })).toBeInTheDocument()
+  expect(await screen.findByRole('button', { name: /Договор с платформой обновился/ })).toBeInTheDocument()
+  expect(screen.queryByText(/Приложение:|Продлить|оплат/)).not.toBeInTheDocument()
+  expect(billingAsked).toBe(false)
   await userEvent.click(await screen.findByRole('button', { name: /Договор с платформой обновился \(версия 2\)/ }))
   expect(window.location.hash).toBe('#/settings/agreement')
 })
@@ -44,10 +47,9 @@ test('напоминание скрывается ✕ до конца сеанс
   renderApp()
   await screen.findByRole('button', { name: /Договор с платформой обновился/ })
   const close = screen.getAllByRole('button', { name: 'Скрыть напоминание до конца сеанса' })
-  expect(close).toHaveLength(2)
-  await userEvent.click(close[1]!)
+  expect(close).toHaveLength(1)
+  await userEvent.click(close[0]!)
   expect(screen.queryByRole('button', { name: /Договор с платформой обновился/ })).not.toBeInTheDocument()
-  expect(screen.getByRole('button', { name: /Приложение: оплачено до/ })).toBeInTheDocument()
   expect(JSON.parse(sessionStorage.getItem('crm.notices.hidden') ?? '[]')).toEqual(['agreement:2'])
   sessionStorage.clear()
 })

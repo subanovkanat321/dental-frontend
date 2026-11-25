@@ -5,7 +5,7 @@ import { api, unwrap, type Schemas } from '../api/client'
 import { SubHeader } from '../settings/SubHeader'
 import { AgreementTab } from './AgreementTab'
 import { DataTab } from './DataTab'
-import { PlanTab } from './PlanTab'
+import { FreeTab } from './FreeTab'
 import { PrivacyTab } from './PrivacyTab'
 import { SupportTab } from './SupportTab'
 import { seesAllMoney } from '../lib/roles'
@@ -15,7 +15,7 @@ export type AccountTab = 'plan' | 'agreement' | 'data' | 'support' | 'privacy'
 type Tab = AccountTab
 
 /**
- * «Аккаунт»: отношения клиники с платформой. Админу — тариф и оплата, договор, данные (выгрузка
+ * «Аккаунт»: отношения клиники с платформой. Админу — «Пригласить коллег» (Tish бесплатный), договор, данные (выгрузка
  * и журнал); всем — техподдержка и конфиденциальность. Права проверяет и сервер.
  */
 export function AccountPage({ me, initialTab, initialTicket, initialHelp, only, title, onBack }: {
@@ -30,7 +30,7 @@ export function AccountPage({ me, initialTab, initialTicket, initialHelp, only, 
 }) {
   const seesAll = seesAllMoney(me)
   const tabs: [Tab, string][] = [
-    ...(me.admin ? [['plan', 'Тариф и оплата'], ['agreement', 'Договор с Tish']] as [Tab, string][] : []),
+    ...(me.admin ? [['plan', 'Пригласить коллег'], ['agreement', 'Договор с Tish']] as [Tab, string][] : []),
     ...(me.admin || seesAll ? [['data', 'Импорт, выгрузка, журнал']] as [Tab, string][] : []),
     ['support', 'Написать в Tish'], ['privacy', 'Конфиденциальность'],
   ]
@@ -55,7 +55,7 @@ export function AccountPage({ me, initialTab, initialTicket, initialHelp, only, 
       {tab === 'support' ? <SupportTab me={me} clinic={clinic.data} header={header} onPanel={setPanel} initialTicket={initialTicket} initialHelp={initialHelp} /> : (
         <section className="schedule-main">
           {header}
-          {tab === 'plan' && <PlanTab />}
+          {tab === 'plan' && <FreeTab />}
           {tab === 'agreement' && <AgreementTab />}
           {tab === 'data' && <DataTab me={me} seesAll={seesAll} />}
           {tab === 'privacy' && <PrivacyTab me={me} />}

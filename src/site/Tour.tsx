@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react'
 
-import { OFFER } from '../lib/brand'
+import { FREE_LINE, OFFER } from '../lib/brand'
 import { DEMO_PATH } from '../lib/demo'
 import { TOUR_START, TOUR_STEPS } from './tourSteps'
 import { getJson, useDemoEnabled, type Links } from './web'
@@ -10,7 +10,7 @@ import './tour.css'
  * «Тур по Tish» (/tour) — для владельцев клиник, которые ещё не клиенты (шаг 7А, по опыту Dentist Plus: их публичный
  * «Тур по системе» — для продаж). Десять коротких шагов: большой скриншот телефона, заголовок в одну строку и польза
  * в 1–2 предложения — не список функций. На телефоне — карусель на весь экран (свайп, точки, стрелки, клавиши ←/→) и
- * липкая кнопка «Попробовать бесплатно» внизу; на компьютере — простой список сверху вниз. Подробности для тех, кто
+ * липкая кнопка «Начать бесплатно» внизу; на компьютере — простой список сверху вниз. Подробности для тех, кто
  * уже работает, — в руководстве (/guide); здесь — только то, что помогает решиться.
  * Кнопка ведёт на регистрацию с меткой канала: /start?from=tour → «Платформа → Аналитика → Откуда пришли клиники»
  * (V237 бэкенда; метка tour — только для регистрации, ClinicSignups.SIGNUP_ONLY). Скриншоты — на вымышленной клинике
@@ -132,8 +132,8 @@ export function Tour() {
         </section>
 
         <section ref={final} className="tour-final" aria-labelledby="tour-final">
-          <h2 id="tour-final">Попробуйте на своей клинике</h2>
-          <p className="tour-lead">{OFFER}: всё приложение, без ограничений и без предоплаты. Клиника создаётся за пару минут — с телефона или компьютера.</p>
+          <h2 id="tour-final">Начните на своей клинике — бесплатно</h2>
+          <p className="tour-lead">{FREE_LINE} Клиника создаётся за пару минут — с телефона или компьютера.</p>
           <div className="tour-ctas">
             <a className="tour-btn primary big" href={TOUR_START}>{OFFER}</a>
             {demo && <a className="tour-btn big" href={DEMO_PATH}><span aria-hidden="true">👀</span> Посмотреть демо</a>}

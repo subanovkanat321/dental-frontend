@@ -5,7 +5,7 @@ import type { JoinCase } from './web'
 import { server } from '../test/server'
 
 import { About } from './About'
-import { OFFER } from '../lib/brand'
+import { FREE_LINE } from '../lib/brand'
 
 test('сайт-визитка /about: герой, части ролика, заявка и контакты — кликабельные ссылки', () => {
   render(<About />)
@@ -21,8 +21,8 @@ test('сайт-визитка /about: герой, части ролика, за�
     /настоящие зубы/, /Зуб в разрезе/, /Вся история/, /деньги, которые уже ваши/, /В цифрах/, /свои права/, /частному врачу/]) {
     expect(screen.getByRole('heading', { level: 2, name: title })).toBeInTheDocument()
   }
-  // «Попробовать бесплатно» — регистрация клиники самой (/start): вверху, в «Как начать» и внизу
-  const tries = screen.getAllByRole('link', { name: 'Попробовать бесплатно' })
+  // «Начать бесплатно» — регистрация клиники самой (/start): вверху, в «Как начать» и внизу
+  const tries = screen.getAllByRole('link', { name: 'Начать бесплатно' })
   expect(tries.length).toBeGreaterThanOrEqual(4)
   for (const a of tries) expect(a).toHaveAttribute('href', '/start')
   // «Тур по Tish» (/tour): в шапке, под первым экраном и в подвале
@@ -36,8 +36,8 @@ test('сайт-визитка /about: герой, части ролика, за�
   expect(screen.queryByText(/дней бесплатно|Оставьте заявку — мы позвоним и/)).not.toBeInTheDocument()
   expect(screen.getByRole('link', { name: 'Оставьте заявку' })).toHaveAttribute('href', '/join#form')
   // Оффер — одна фраза, как на /go, /start и /join: под кнопкой вверху, внизу и в «Сколько стоит?»
-  expect(screen.getByText(`${OFFER} — без предоплаты, клиника готова за 5 минут, с телефона или компьютера`)).toBeInTheDocument()
-  expect(screen.getAllByText(new RegExp(`^${OFFER}: всё приложение, без ограничений`)).length).toBeGreaterThanOrEqual(2)
+  expect(screen.getByText('Tish бесплатный — без оплаты и пробного срока, клиника готова за 5 минут, с телефона или компьютера')).toBeInTheDocument()
+  expect(screen.getAllByText(new RegExp(`^${FREE_LINE}`)).length).toBeGreaterThanOrEqual(1)
   // Сегодняшние функции: кресла, «Что сделали сегодня?», ИИ-сообщение, общие расходы
   for (const point of [/Два врача на одном кресле/, /Что сделали сегодня\?/, /После приёма ИИ готовит/, /Общие расходы клиники/]) {
     expect(screen.getByText(point)).toBeInTheDocument()
@@ -46,6 +46,9 @@ test('сайт-визитка /about: герой, части ролика, за�
   const how = within(screen.getByRole('region', { name: 'Как начать за 5 минут' }))
   expect(how.getAllByRole('listitem')).toHaveLength(3)
   const faq = within(screen.getByRole('region', { name: 'Частые вопросы' }))
+  // Tish бесплатный (2026-11-25): ни цен, ни «договоримся», WhatsApp — честно, это плата Meta
+  expect(faq.getByText(/Нисколько — Tish бесплатный/)).toHaveTextContent('Meta')
+  expect(document.body.textContent).not.toMatch(/договоримся об условиях|цена зависит|сом\/мес/)
   for (const q of ['Сколько стоит?', 'Данные в безопасности?', 'Где хранятся данные и можно ли их забрать?', 'Нужен ли Telegram?']) {
     expect(faq.getByText(q)).toBeInTheDocument()
   }
