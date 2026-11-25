@@ -64,7 +64,7 @@ test('карточка пациента: изменить место работ�
   renderApp()
   await user.click(await screen.findByRole('button', { name: 'Айгуль Т.' }))
   const panel = screen.getByRole('complementary', { name: 'Карточка пациента' })
-  await user.click(await within(panel).findByRole('tab', { name: 'Прочее' }))
+  // ✏️ в шапке карточки — с любой вкладки сразу форма данных пациента
   await user.click(await within(panel).findByRole('button', { name: 'Изменить данные пациента' }))
   const form = within(panel).getByRole('form', { name: 'Данные пациента' })
   expect(within(form).getByRole('textbox', { name: 'Телефон' })).toHaveValue('700 333 444')
