@@ -5,6 +5,9 @@ import { http, HttpResponse } from 'msw'
 import { appointment, findSub, me, openItem, querySub, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 
+// Сетка «Все врачи» на компьютере: с 2026-11-25 по умолчанию открывается свой врач — выбор «Все врачи» запомнен
+beforeEach(() => { localStorage.setItem('crm.schedule.view.v2', 'all') })
+
 /** Вымышленные сотрудники: врач Айгерим без прав админа, ассистент Дастана, регистратура. */
 const doctor = { ...me, admin: false }
 const assistant = { ...me, admin: false, doctorId: undefined, fullName: 'Асель', assistantOf: [2] }

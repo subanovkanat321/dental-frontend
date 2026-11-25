@@ -1,6 +1,7 @@
 import { useState } from 'react'
 
 import type { Schemas } from '../api/client'
+import { myDoctorDefault } from '../lib/roles'
 import { somText } from '../lib/time'
 import { DirectorySheet } from '../clinic/DirectorySheet'
 import { EmptyState } from '../layout/EmptyState'
@@ -29,7 +30,7 @@ export function LabTab({ me, initialOrder, onOpenPatient }: {
   onOpenPatient?: (patientId: number) => void
 }) {
   const [labId, setLabId] = useState<number | ''>('')
-  const [doctorId, setDoctorId] = useState<number | ''>('')
+  const [doctorId, setDoctorId] = useState<number | ''>(() => (me.admin || me.reception ? myDoctorDefault(me) ?? '' : ''))
   const filter = { labId: labId === '' ? undefined : labId, doctorId: doctorId === '' ? undefined : doctorId }
   const open = useLabOrders({ fitted: false, ...filter })
   const [showFitted, setShowFitted] = useState(false)

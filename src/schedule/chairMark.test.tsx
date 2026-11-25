@@ -7,6 +7,9 @@ import { slotInstant, todayIn } from '../lib/time'
 import { appointment, me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 
+// Сетка «Все врачи» на компьютере: с 2026-11-25 по умолчанию открывается свой врач — выбор «Все врачи» запомнен
+beforeEach(() => { localStorage.setItem('crm.schedule.view.v2', 'all') })
+
 /**
  * Приём в рабочих часах коллеги по креслу (V187) — пометка «🪑 время …» на самой записи и полосы/строки «время …»
  * по всему дню, и вне часов врача (жалоба 2026-11-09: «в уже созданных тоже нет предупреждения»). Врачи и пациенты

@@ -9,6 +9,9 @@ import { server } from '../test/server'
 import { DOCTOR_HIDDEN_KEY, visibleDoctors } from './doctorVisibility'
 import { waitForSlow } from '../test/wait'
 
+// Сетка «Все врачи» на компьютере: с 2026-11-25 по умолчанию открывается свой врач — выбор «Все врачи» запомнен
+beforeEach(() => { localStorage.setItem('crm.schedule.view.v2', 'all') })
+
 /** Вымышленная клиника: врачей — сколько нужно тесту; входит админ-врач Айгерим (id 1). */
 const NAMES = ['Айгерим Садыкова', 'Дастан Т.', 'Эрмек Н.', 'Жылдыз К.', 'Бакыт А.', 'Нурлан С.', 'Гульнара М.', 'Тимур Ж.', 'Асель Б.', 'Улан Р.']
 const clinic = (n: number): Schemas['BookingViewsMe'] => ({
@@ -82,7 +85,7 @@ test('компьютер: скрытый в «Врачи в расписании
 test('телефон: скрытый — не колонкой в «Все врачи», но есть в выборе врача', async () => {
   screenSize(true)
   localStorage.setItem(DOCTOR_HIDDEN_KEY, '[3]')
-  localStorage.setItem('crm.schedule.view', 'all')
+  localStorage.setItem('crm.schedule.view.v2', 'all')
   backend(clinic(3))
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: /^Чьё расписание: Айгерим Садыкова \(я\)/ }))
@@ -161,7 +164,7 @@ test('выходной у всех — колонки остаются, как �
 
 test('телефон: выходной без приёмов — колонки нет, «показать» возвращает', async () => {
   screenSize(true)
-  localStorage.setItem('crm.schedule.view', 'all')
+  localStorage.setItem('crm.schedule.view.v2', 'all')
   backend(clinic(3), { off: [2] })
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: /^Чьё расписание: Айгерим Садыкова \(я\)/ }))
@@ -190,6 +193,7 @@ test('компьютер: больше 6 врачей — одна кнопка 
   unmount()
 
   localStorage.clear()
+  localStorage.setItem('crm.schedule.view.v2', 'all')
   backend(clinic(6))
   renderApp()
   await screen.findByRole('group', { name: 'Нурлан С.' })

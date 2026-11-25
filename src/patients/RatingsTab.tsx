@@ -7,7 +7,7 @@ import { Loading, Spinner } from '../layout/Loading'
 import { HeadTools, SubHelp } from '../layout/PageHead'
 import { Segments } from '../layout/Segments'
 import { Select } from '../layout/Select'
-import { seesAllMoney } from '../lib/roles'
+import { myDoctorDefault, seesAllMoney } from '../lib/roles'
 import { shortDate } from '../lib/time'
 import { CalmRow } from './CalmList'
 import { averageText, LONG_COMPLAINT, lowCount } from './ratings'
@@ -34,10 +34,10 @@ export function RatingsTab({ me, onOpenAppointment, onOpenPatient }: {
   onOpenPatient: (patientId: number) => void
 }) {
   const [days, setDays] = useState('90')
-  const [doctorId, setDoctorId] = useState<number | null>(null)
   const [low, setLow] = useState(false)
   // Выбор врача — у руководителя, который видит всех врачей (остальным сервер и так отдаёт только их приёмы)
   const doctors = seesAllMoney(me) ? (me.doctors ?? []).filter((d) => d.active !== false) : []
+  const [doctorId, setDoctorId] = useState<number | null>(() => myDoctorDefault(me, doctors.map((d) => d.id)))
   const list = useInfiniteQuery<Page, ApiError>({
     queryKey: ['ratings', 'list', days, doctorId, low],
     queryFn: ({ pageParam }) => unwrap(api.GET('/api/appointments/ratings/list', {

@@ -10,6 +10,9 @@ import { server } from '../test/server'
 import { waitForSlow, warmSchedule } from '../test/wait'
 import { GROUP_COLORS, isShaky, PAINT_KEY } from './paint'
 
+// Сетка «Все врачи» на компьютере: с 2026-11-25 по умолчанию открывается свой врач — выбор «Все врачи» запомнен
+beforeEach(() => { localStorage.setItem('crm.schedule.view.v2', 'all') })
+
 /**
  * Шаг 6А — читаемость расписания: штриховка непрочных записей, полоска цвета врача в «Все врачи», «чем красить
  * запись», мини-календарь врача. Пациенты вымышленные.
@@ -85,7 +88,7 @@ test('компьютер, «Все врачи»: непрочные — штри
 
 test('компьютер, один врач: сетка без multi — полоска слева снова цвет статуса', async () => {
   screenSize(false)
-  localStorage.setItem('crm.schedule.view', '1')
+  localStorage.setItem('crm.schedule.view.v2', '1')
   backend()
   renderApp()
   await block('Заявка Тестова')

@@ -214,7 +214,7 @@ describe('телефон: свайп «состоялся»', () => {
       addListener() {}, removeListener() {}, dispatchEvent: () => false,
     }))
     vi.stubGlobal('innerWidth', 390)
-    localStorage.setItem('crm.schedule.view', '1')
+    localStorage.setItem('crm.schedule.view.v2', '1')
   })
   afterEach(() => {
     vi.unstubAllGlobals()

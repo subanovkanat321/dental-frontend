@@ -31,7 +31,7 @@ beforeEach(() => {
   vi.spyOn(swipeClock, 'now').mockImplementation(() => clock)
   screenOf('phone')
   vi.stubGlobal('innerWidth', 390) // ширина строки в jsdom 0 — порог от ширины экрана: min(35% ≈ 137, 90) = 90 px
-  localStorage.setItem('crm.schedule.view', '1')
+  localStorage.setItem('crm.schedule.view.v2', '1')
 })
 afterEach(() => {
   vi.unstubAllGlobals()

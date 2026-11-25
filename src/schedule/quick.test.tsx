@@ -8,6 +8,9 @@ import { server } from '../test/server'
 import { waitForSlow } from '../test/wait'
 import { LONG_MS, swipeClock } from './useRowSwipe'
 
+// Сетка «Все врачи» на компьютере: с 2026-11-25 по умолчанию открывается свой врач — выбор «Все врачи» запомнен
+beforeEach(() => { localStorage.setItem('crm.schedule.view.v2', 'all') })
+
 // Меню быстрых действий на записи в расписании (2026-11-20): «⋯» и правая кнопка в сетке, долгое нажатие в списке дня.
 // Пациенты вымышленные
 type Appointment = Schemas['AppointmentView']

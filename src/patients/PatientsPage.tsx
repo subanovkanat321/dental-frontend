@@ -14,7 +14,7 @@ import { ComebackTab, type BookPreset } from './ComebackTab'
 import { QuestionPanel, QuestionsTab } from './QuestionsTab'
 import { SectionTitle } from '../layout/section'
 import { useSection } from '../layout/useSection'
-import { canEditServices, isAssistant } from '../lib/roles'
+import { canEditServices, isAssistant, myDoctorDefault } from '../lib/roles'
 import { HeadSlotProvider, PageHead } from '../layout/PageHead'
 import { useDebounced } from '../lib/useDebounced'
 import { phoneSearchDigits } from '../lib/phone'
@@ -82,7 +82,7 @@ export function PatientsPage({ me, onBook, onBookLead, initialPatient, initialQu
   // Ассистенту — только его врачи
   const doctors = (me.doctors ?? []).filter((d) => d.active !== false && (!isAssistant(me) || me.assistantOf!.includes(d.id)))
   // Ассистент сразу видит пациентов своего врача
-  const [doctorId, setDoctorId] = useState<number | null>(() => (me.assistantOf?.length === 1 ? me.assistantOf[0]! : null))
+  const [doctorId, setDoctorId] = useState<number | null>(() => myDoctorDefault(me, doctors.map((d) => d.id)))
   const [slot, setSlot] = useHeadSlot()
   // Фильтр «🎂 Сегодня» (шаг 6Б): именинники сегодня с «Поздравить»; кнопка — только когда они есть
   const [birthdaysOnly, setBirthdaysOnly] = useState(false)

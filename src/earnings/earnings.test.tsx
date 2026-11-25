@@ -144,6 +144,7 @@ test('карточка своего оплаченного приёма: «+3 00
     const doctor = Number(new URL(request.url).searchParams.get('doctorId'))
     return HttpResponse.json(doctor === 1 ? [own] : [colleague])
   }))
+  localStorage.setItem('crm.schedule.view.v2', 'all') // сетка всех врачей: свой приём и приём коллеги
   const user = userEvent.setup()
   renderApp()
   await user.click(await screen.findByRole('button', { name: /Бакыт М\./ }))

@@ -7,6 +7,9 @@ import { appointment, me, renderApp, statusMenu } from '../test/fixtures'
 import { server } from '../test/server'
 import { cancelledText, cancelledWhen } from './cancelled'
 
+// Сетка «Все врачи» на компьютере: с 2026-11-25 по умолчанию открывается свой врач — выбор «Все врачи» запомнен
+beforeEach(() => { localStorage.setItem('crm.schedule.view.v2', 'all') })
+
 /**
  * «Было 4 пациента, вижу 2»: отменённые не пропадают молча — внизу дня «Отменено: N ›», раскрыть — кто и
  * когда отменил, нажать — карточка со строкой «Отменён: …» и «Записан» (восстановить).
@@ -52,7 +55,7 @@ test('кто и когда отменил — словами', () => {
 test('телефон: внизу дня «Отменено: 2 ›» — раскрыть, кто отменил; нажать — карточка «Отменён: …» и «Записан» (восстановить)', async () => {
   screenWidth(true)
   backend([appointment(10, 1, '10:00', 'Бакыт М.'), byPatient, byStaff])
-  localStorage.setItem('crm.schedule.view', '1')
+  localStorage.setItem('crm.schedule.view.v2', '1')
   renderApp()
   expect(await screen.findByRole('button', { name: /10:00–10:30, Бакыт М\./ })).toBeInTheDocument()
   // Отменённые — не строками дня
@@ -82,7 +85,7 @@ test('телефон: внизу дня «Отменено: 2 ›» — раск
 test('телефон: в дне только отменённые — «записей нет», но «Отменено: 1» видно', async () => {
   screenWidth(true)
   backend([byPatient])
-  localStorage.setItem('crm.schedule.view', '1')
+  localStorage.setItem('crm.schedule.view.v2', '1')
   renderApp()
   expect(await screen.findByText('На сегодня записей нет')).toBeInTheDocument()
   expect(screen.getByRole('button', { name: /Отменено: 1/ })).toBeInTheDocument()

@@ -42,7 +42,7 @@ import { useWeekAppointments } from './week/useWeek'
 import { WeekGrid } from './week/WeekGrid'
 import { useEarnings } from '../earnings/earnings'
 import { EarningsChip } from '../earnings/EarningsWidgets'
-import { canEditDoctor, isAssistant, seesMoneyOf, seesToPay, seesAllMoney } from '../lib/roles'
+import { canEditDoctor, isAssistant, myDoctorDefault, seesMoneyOf, seesToPay, seesAllMoney } from '../lib/roles'
 import { HelpHint } from '../help/HelpHint'
 import { Icon } from '../layout/Icon'
 import { useApptHover } from './useApptHover'
@@ -120,6 +120,9 @@ function useNarrow(): boolean {
 /** Сводка дня справа открыта или скрыта — на этом устройстве (не персональные данные). */
 const SUMMARY_KEY = 'crm.daySummary'
 
+/** Выбор «Чьё расписание» на компьютере (2026-11-25: .v2 — после смены умолчания на своего врача) */
+export const VIEW_KEY = 'crm.schedule.view.v2'
+
 export function SchedulePage({ me, bookPatient = null, bookContact = null, bookPreset, bookLeadId, onBookingShown, onNavigate, onOpenEarnings, initialDate, initialDoctor, openAppointment, onOpenPatient }: {
   /** Кнопка бота «приёмы коллеги» (?doctor=ID): сразу этот врач. */
   initialDoctor?: number
@@ -186,28 +189,31 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
   // Мини-календарь врача: шапка колонки (компьютер — окно под ней) или кнопка 📅 у выбора врача (телефон — лист снизу)
   const [calendar, setCalendar] = useState<{ id: number; anchor: DOMRect | null } | null>(null)
   const calendarDoctor = calendar ? doctors.find((d) => d.id === calendar.id) : undefined
-  // Чьё расписание: все врачи колонками или один. Выбор запоминается на устройстве (только id врача —
-  // не личные данные). По умолчанию на телефоне — свой врач, на компьютере — все
+  // Чьё расписание: все врачи колонками или один. По умолчанию врач (и ассистент одного врача) видит своё — на телефоне
+  // и на компьютере (владелец 2026-11-25: «по дефолту — по врачу авторизованному»). На компьютере свой выбор
+  // («Все врачи» или другой врач) запоминается на устройстве — только id врача, не личные данные; ключ .v2 — прежние
+  // выборы (до смены умолчания) не действуют. Телефон — как в прежнем приложении: каждый раз свой день
   const [view, setViewState] = useState<number | 'all'>(() => {
     if (initialDoctor && doctors.some((d) => d.id === initialDoctor)) return initialDoctor
-    // Телефон — как в прежнем приложении: каждый раз открывается свой день
-    if (isNarrow() && doctors.some((d) => d.id === me.doctorId)) return me.doctorId!
+    const mine = myDoctorDefault(me, doctors.map((d) => d.id))
+    if (isNarrow() && mine != null) return mine
     if (isNarrow() && isAssistant(me) && doctors[0]) return doctors[0].id
     try {
-      const saved = localStorage.getItem('crm.schedule.view')
+      const saved = localStorage.getItem(VIEW_KEY)
       if (saved === 'all') return 'all'
       if (saved && doctors.some((d) => String(d.id) === saved)) return Number(saved)
     } catch {
       // приватный режим
     }
-    // На телефоне — один врач списком, как в прежнем приложении: свой, а у админа — первый
+    if (mine != null) return mine
+    // Админ без кресла: компьютер — все врачи, телефон — первый врач списком
     if (!isNarrow()) return 'all'
-    return doctors.find((d) => d.id === me.doctorId)?.id ?? doctors[0]?.id ?? 'all'
+    return doctors[0]?.id ?? 'all'
   })
   const setView = (next: number | 'all') => {
     setViewState(next)
     try {
-      localStorage.setItem('crm.schedule.view', String(next))
+      localStorage.setItem(VIEW_KEY, String(next))
     } catch {
       // приватный режим
     }

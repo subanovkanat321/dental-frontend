@@ -9,6 +9,9 @@ import { appointment, me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 import { DOCTOR_ORDER_KEY, orderDoctors } from './doctorOrder'
 
+// Сетка «Все врачи» на компьютере: с 2026-11-25 по умолчанию открывается свой врач — выбор «Все врачи» запомнен
+beforeEach(() => { localStorage.setItem('crm.schedule.view.v2', 'all') })
+
 /** Вымышленная клиника на троих; входит третий врач — Эрмек. */
 const three: Schemas['BookingViewsMe'] = {
   ...me, doctorId: 3, fullName: 'Эрмек',
