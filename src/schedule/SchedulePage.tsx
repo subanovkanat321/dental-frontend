@@ -54,7 +54,7 @@ import { addMonths, monthTitle } from './month/monthModel'
 import { useMonthData } from './month/useMonth'
 import { ReviewAsksChip, ReviewAsksDialog } from './AskReview'
 import { useReviewAsks } from './reviewLinks'
-import { FreeWindowsChip, FreeWindowsDialog, FreeWindowsHint } from './FreeWindows'
+import { FreeWindowsDialog, FreeWindowsHint } from './FreeWindows'
 import { useFreeWindows } from './windowsModel'
 import { BirthdaysChip, BirthdaysDialog } from '../patients/Birthdays'
 import { useBirthdays } from '../patients/birthdaysModel'
@@ -584,7 +584,7 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
             {!summary && !weekMode && !monthMode && (
               <div className="today-strip" role="group" aria-label="Требует внимания">
                 {tasksChip(false)}
-                <FreeWindowsChip windows={shownWindows} onOpen={() => setWindowsOpen(true)} />
+                {/* «🔔 Окна» плашкой больше нет (владелец 2026-11-25): окна — в «Пациенты → Лист ожидания» и «Сводке дня» */}
                 <BirthdaysChip rows={shownBirthdays} onOpen={() => setBirthdaysOpen(true)} />
                 {requests.length > 0 && (
                   <button type="button" className="stat s-request" onClick={firstOf(requests)}

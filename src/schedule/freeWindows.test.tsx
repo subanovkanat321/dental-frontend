@@ -26,6 +26,9 @@ function backend(list: Window[] = windows) {
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.get('*/api/appointments', () => HttpResponse.json([])),
     http.get('*/api/waitlist/windows', () => HttpResponse.json(list)),
+    http.get('*/api/patients/recent', () => HttpResponse.json([])),
+    http.get('*/api/waitlist', () => HttpResponse.json(list.flatMap((w) => w.matches).filter((m, i, all) => all.findIndex((x) => x.entryId === m.entryId) === i)
+      .map((m) => ({ id: m.entryId, doctorId: 1, patient: m.patient, durationMinutes: m.durationMinutes, createdAt: '2026-11-01T04:00:00Z' })) satisfies Schemas['WaitlistView'][])),
     http.post('*/api/waitlist/:id/offer', async ({ params, request }) => {
       offers.push({ id: Number(params.id), body: await request.json() })
       return new HttpResponse(null, { status: 204 })
@@ -40,14 +43,14 @@ beforeEach(() => {
 })
 afterEach(() => vi.unstubAllGlobals())
 
-test('«Освободилось окно» в «Требует внимания»: «Предложить в бот» — у пациента в боте, WhatsApp — готовый текст', async () => {
+test('«Лист ожидания» → «🔔 Свободные окна»: «Предложить в бот» — у пациента в боте, WhatsApp — готовый текст', async () => {
   const offers = backend()
   const user = userEvent.setup()
+  // Окна — вверху «Пациенты → Лист ожидания» (плашки «🔔 Окна» в «Расписании» с 2026-11-25 нет)
+  window.location.hash = '/patients/waitlist'
   renderApp()
-  const chips = await screen.findAllByRole('button', { name: /Освободилось окно: подходят 2 пациента из листа ожидания/ })
-  await user.click(chips[0]!)
-  const dialog = await screen.findByRole('dialog', { name: '🔔 Окна для листа ожидания' })
-  const card = within(dialog).getByRole('region', { name: 'Освободилось 15:00–16:00' })
+  const section = await screen.findByRole('region', { name: 'Свободные окна для листа ожидания' })
+  const card = within(section).getByRole('region', { name: 'Освободилось 15:00–16:00' })
   expect(card).toHaveTextContent('подходят 2 пациента из листа ожидания')
   // Без бота — только WhatsApp
   expect(within(card).queryByRole('button', { name: 'Предложить в бот: Тест Айгуль' })).toBeNull()
@@ -63,21 +66,22 @@ test('«Освободилось окно» в «Требует внимания
   expect(url).toContain('Освободилось время у стоматолога')
 })
 
-test('отказался — без кнопок; окон, где все отказались, в полосе нет', async () => {
-  backend([{ ...windows[0]!, matches: [{ ...windows[0]!.matches[0]!, declined: true, offeredAt: at('09:00'), offeredVia: 'TELEGRAM' }] }])
+test('плашки «🔔 Окна» в «Расписании» нет (окна — в «Листе ожидания» и «🔔» у свободного времени)', async () => {
+  backend()
+  window.location.hash = '/schedule'
   renderApp()
-  await screen.findAllByRole('group', { name: 'Требует внимания' })
-  expect(screen.queryByRole('button', { name: /Освободилось окно/ })).toBeNull()
+  await screen.findAllByRole('button', { name: /Новая запись/ })
+  expect(screen.queryByRole('button', { name: /Освободилось окно|Свободные окна/ })).toBeNull()
 })
 
-test('больше двух окон — каждое свёрнуто строкой «время · врач · подходят N ›»; нажать — пациенты и кнопки; «6 окон» в полосе на телефоне', async () => {
+test('больше двух окон — каждое свёрнуто строкой «время · врач · подходят N ›»; нажать — пациенты и кнопки (вверху «Листа ожидания»)', async () => {
   const many: Window[] = ['10:00', '11:00', '12:00'].map((t, i) => ({ ...windows[0]!, freed: false, start: at(t), end: at(`${10 + i}:30`),
     matches: windows[0]!.matches.map((m) => ({ ...m, startAt: at(t) })) }))
   backend(many)
   const user = userEvent.setup()
+  window.location.hash = '/patients/waitlist'
   renderApp()
-  await user.click((await screen.findAllByRole('button', { name: /Свободные окна: подходят 2 пациента/ }))[0]!)
-  const dialog = await screen.findByRole('dialog', { name: '🔔 Окна для листа ожидания' })
+  const dialog = await screen.findByRole('region', { name: 'Свободные окна для листа ожидания' })
   const first = within(dialog).getByRole('region', { name: 'Свободно 10:00–10:30' })
   expect(within(first).queryByRole('button', { name: /Предложить в бот/ })).toBeNull()
   const fold = within(first).getByRole('button', { expanded: false })

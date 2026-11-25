@@ -64,3 +64,7 @@
   html .wish-fields .segments.segments { flex-wrap: wrap; }
   html .wish-fields .segments.segments > button { flex: 1 0 auto; white-space: nowrap; overflow-wrap: normal; padding-inline: 8px; }
 }
+
+/* «🔔 Свободные окна» вверху «Листа ожидания» (patients/WaitlistTab.tsx) */
+.waitlist-windows { display: grid; gap: 10px; margin-bottom: 12px; }
+.waitlist-windows-title { margin: 0; font-size: 1rem; }

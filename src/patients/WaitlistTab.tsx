@@ -20,6 +20,8 @@ import { DAY_PARTS, dayPartOf, hhmm, WEEKDAYS, wishText, type Wish } from './wis
 import { EditButton } from '../layout/EditButton'
 import { CloseButton } from '../layout/SheetHead'
 import type { BookPreset } from './ComebackTab'
+import { WindowCard } from '../schedule/FreeWindows'
+import { useFreeWindows, waitingCount } from '../schedule/windowsModel'
 
 type Me = Schemas['BookingViewsMe']
 type Patient = Schemas['PatientView']
@@ -28,7 +30,7 @@ type Patient = Schemas['PatientView']
  * «Лист ожидания»: кто хочет прийти раньше или ждёт свободного окна. Переделано 2026-11-21 (владелец: «что нажать —
  * непонятно»): у каждой строки одна понятная кнопка — «Записать» (новая запись с врачом, услугой и длительностью из листа);
  * уже записан — зелёная отметка «✅ Записан …» и «Убрать». В «⋯» — изменить пожелания (карточка пациента) и убрать.
- * Подходящее окно освободится — «🔔 Окна» в «Расписании» предложат пациента сами.
+ * Подходящее окно освободится — «🔔 Свободные окна» вверху вкладки и «🔔» у свободного времени в «Расписании».
  */
 export function WaitlistTab({ me, onOpen, onBook }: { me: Me; onOpen: (patientId: number) => void; onBook: (p: Patient, preset?: BookPreset) => void }) {
   const client = useQueryClient()
@@ -48,7 +50,7 @@ export function WaitlistTab({ me, onOpen, onBook }: { me: Me; onOpen: (patientId
   if (list.isPending) return <Loading />
   if (list.error) return <p className="error">{list.error.message}</p>
   const help = <SubHelp title="Лист ожидания">Сюда — тех, кто хочет прийти раньше или ждёт удобного времени. Освободится подходящее окно —
-    в «Расписании» появится «🔔 Окна» с «Предложить» (бот или WhatsApp). Записали пациента — нажмите «Убрать».</SubHelp>
+    оно появится здесь сверху («🔔 Свободные окна») и «🔔» у свободного времени в «Расписании», с «Предложить» (бот или WhatsApp). Записали пациента — нажмите «Убрать».</SubHelp>
   if (!list.data.length) {
     return <>{help}<WaitlistAdd me={me} /><EmptyState fill title="Пока никто не ждёт">
       Пациент хочет раньше, а мест нет? «＋ Добавить в лист ожидания» — Tish подскажет, когда освободится время.</EmptyState></>
@@ -57,7 +59,8 @@ export function WaitlistTab({ me, onOpen, onBook }: { me: Me; onOpen: (patientId
     <>
       {help}
       <WaitlistAdd me={me} />
-      <p className="hint small waitlist-hint">Освободится подходящее время — в «Расписании» появится «🔔 Окна». Можно и записать сразу.</p>
+      <WaitlistWindows me={me} />
+      <p className="hint small waitlist-hint">Освободится подходящее время — окно появится выше и «🔔» у свободного времени в «Расписании». Можно и записать сразу.</p>
       <ul className="calm-list" aria-label="Лист ожидания">
         {list.data.map((e) => {
           const booked = Boolean(e.upcoming?.startAt)
@@ -359,6 +362,30 @@ function WaitlistAdd({ me }: { me: Me }) {
           ) : found.data ? <p className="hint small">Не нашли «{search}» — добавьте пациента в «Пациентах».</p> : null}
         </>
       )}
+    </section>
+  )
+}
+
+/**
+ * «🔔 Свободные окна» — вверху «Листа ожидания»: сегодня и завтра, кто из листа подходит, «Предложить» (бот / WhatsApp).
+ * Раньше — только плашкой «🔔 3 окна» в «Расписании»; владелец 2026-11-25: «убери сверху… или добавь в лист ожидания».
+ * Больше двух — строками, раскрыть нажатием (как в окне «Окна»).
+ */
+function WaitlistWindows({ me }: { me: Me }) {
+  const windows = useFreeWindows()
+  const [opened, setOpened] = useState<string | null>(null)
+  const open = (windows.data ?? []).filter((w) => waitingCount(w) > 0)
+  if (!open.length) return null
+  const name = (id: number) => (me.doctors ?? []).find((d) => d.id === id)?.fullName ?? ''
+  const fold = open.length > 2
+  return (
+    <section className="card-block waitlist-windows" aria-label="Свободные окна для листа ожидания">
+      <h3 className="waitlist-windows-title">🔔 Свободные окна сегодня и завтра</h3>
+      {open.map((w) => {
+        const key = `${w.doctorId}-${w.start}`
+        return <WindowCard key={key} w={w} doctorName={name}
+          collapsed={fold && opened !== key} onToggle={fold ? () => setOpened(opened === key ? null : key) : undefined} />
+      })}
     </section>
   )
 }
