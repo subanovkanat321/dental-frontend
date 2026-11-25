@@ -4,7 +4,6 @@
     <meta charset="UTF-8" />
     <!-- Без зума пальцами: CRM — приложение, а не страница; текст крупнее — «Настройки → Оформление» -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <meta name="robots" content="noindex" />
     <link rel="icon" href="/tishka-icon.svg" />
     <!-- Установка CRM как приложения (PWA): манифест, значки; service worker — src/pwa. Только здесь,
          не на страницах сайта (site/*.html) — устанавливается CRM, а не каталог клиник -->
@@ -14,18 +13,19 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Tish" />
-    <!-- Превью ссылки (Instagram, Telegram, WhatsApp) — роботы соцсетей JS не выполняют. Для /start, /login
-         и /app сборка делает копии со своими текстами (vite.config.ts → tish-share-pages) -->
-    <title>Tish CRM</title>
-    <meta name="description" content="Программа для стоматологии: расписание, самозапись пациентов в Telegram, напоминания, медкарта, касса и склад." />
-    <meta property="og:title" content="Tish — программа для стоматологии" />
-    <meta property="og:description" content="Расписание, самозапись пациентов в Telegram, напоминания, медкарта, касса и склад — в одном приложении." />
+    <!-- «/» без входа в браузере — главная для пациентов (src/site/Home.tsx): её находят поисковики и ей делятся,
+         поэтому title, описание и превью — про запись к стоматологу. Сотрудник с входом видит CRM, у вкладки — своё название
+         (App.tsx). Для /start, /login и /app сборка делает копии со своими текстами (vite.config.ts → tish-share-pages) -->
+    <title>Tish — запись к стоматологу в Бишкеке онлайн</title>
+    <meta name="description" content="Выберите стоматологию и врача в Бишкеке и других городах Кыргызстана, посмотрите свободное время и запишитесь онлайн за минуту — без звонков." />
+    <meta property="og:title" content="Tish — запись к стоматологу онлайн" />
+    <meta property="og:description" content="Клиники и врачи-стоматологи: выберите свободное время и запишитесь за минуту — на сайте или в Telegram." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://tish.kg/" />
-    <meta property="og:image" content="https://tish.kg/about/og-about.jpg" />
+    <meta property="og:image" content="https://tish.kg/assets/og-tish-1.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Tish: расписание клиники на компьютере и день врача в телефоне" />
+    <meta property="og:image:alt" content="Тишка — талисман Tish: запись к стоматологу онлайн" />
     <meta property="og:locale" content="ru_RU" />
     <meta property="og:site_name" content="Tish" />
     <meta name="twitter:card" content="summary_large_image" />
@@ -34,6 +34,12 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- Без JavaScript (часть роботов) — суть главной и ссылки: каталог клиник и вход для клиник -->
+    <noscript>
+      <h1>Tish — запись к стоматологу онлайн</h1>
+      <p>Выберите клинику и врача, посмотрите свободное время и запишитесь за минуту.</p>
+      <p><a href="/clinics">Все клиники</a> · <a href="/about">Для клиник</a> · <a href="/login">Вход для клиник</a></p>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
