@@ -115,7 +115,7 @@ test('вкладка «Кыргызский»: перевод Tish, «✨ Пер
     http.get('*/api/clinic/visit-report-ai', () => HttpResponse.json({ available: true, on: true })),
     http.post('*/api/care-memos/translate', async ({ request }) => {
       asked.push(await request.json())
-      return HttpResponse.json({ title: 'Агартуудан кийин', body: '• 48 саат «ак диета».' } satisfies Schemas['MemoTranslationsTranslation'])
+      return HttpResponse.json({ title: 'Агартуудан кийин', body: '• 48 саат «ак диета».', template: false } satisfies Schemas['MemoTranslationsTranslation'])
     }),
   )
   window.location.hash = '/settings/memos'
@@ -150,9 +150,16 @@ test('вкладка «Кыргызский»: перевод Tish, «✨ Пер
     titleKy: 'Агартуудан кийин', bodyKy: '• 48 саат «ак диета».' })
 })
 
-test('ИИ клиники выключен — кнопки «Перевести с ИИ» нет, подсказка, где включить', async () => {
+test('ИИ клиники выключен — «📝 Перевести по шаблону»: стандартные строки переводятся, своя — понятная ошибка', async () => {
   backend()
-  server.use(http.get('*/api/clinic/visit-report-ai', () => HttpResponse.json({ available: true, on: false })))
+  let known = true
+  server.use(
+    http.get('*/api/clinic/visit-report-ai', () => HttpResponse.json({ available: true, on: false })),
+    http.post('*/api/care-memos/translate', () => (known
+      ? HttpResponse.json({ title: 'Агартуудан кийин', body: '• Ак диета.', template: true } satisfies Schemas['MemoTranslationsTranslation'])
+      : HttpResponse.json({ status: 409, code: 'ai-unavailable',
+        detail: 'ИИ сейчас недоступен, а по шаблону переводятся только стандартные памятки Tish — переведите эту сами' }, { status: 409 }))),
+  )
   window.location.hash = '/settings/memos'
   renderApp()
   const list = await screen.findByRole('list', { name: 'Памятки' })
@@ -161,6 +168,13 @@ test('ИИ клиники выключен — кнопки «Перевести
   await userEvent.click(within(panel).getByRole('button', { name: 'Кыргызский' }))
   expect(await within(panel).findByText(/когда руководитель включит ИИ клиники/)).toBeInTheDocument()
   expect(within(panel).queryByRole('button', { name: '✨ Перевести с ИИ' })).not.toBeInTheDocument()
+  await userEvent.click(within(panel).getByRole('button', { name: '📝 Перевести по шаблону' }))
+  expect(await within(panel).findByDisplayValue('Агартуудан кийин')).toBeInTheDocument()
+  expect(within(panel).getByRole('status')).toHaveTextContent('Перевод по шаблону стандартных памяток')
+
+  known = false
+  await userEvent.click(within(panel).getByRole('button', { name: '📝 Перевести по шаблону' }))
+  expect(await within(panel).findByRole('alert')).toHaveTextContent('переведите эту сами')
 })
 
 test('строка памятки: 2–3 услуги прайса и «и ещё N», скрытые услуги не показываем; «?» — в полосе вкладок', async () => {
