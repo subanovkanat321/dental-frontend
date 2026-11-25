@@ -472,7 +472,8 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
         <section className="appt-visit" aria-label="Приём">
           {clinical && <ContinueTreatment appointment={a} open={visitTools && a.status === 'SCHEDULED'} onMedical={medical} />}
           {doctorView && servicesBlock}
-          {canEdit && (visitTools || a.status === 'NO_SHOW') && <VisitNote appointment={a} me={me} />}
+          {/* Регистратуре заметку сервер не отдаёт (403) — не спрашиваем */}
+          {canEdit && (visitTools || a.status === 'NO_SHOW') && !desk && <VisitNote appointment={a} me={me} />}
           {/* Зубы этого приёма: врач приёма и админ отмечают, ассистент видит; «Карта зубов и план лечения ›» — вся медкарта */}
           {canEdit && visitTools && clinical && a.patient.id != null && (
             <VisitTeeth appointment={a} onMedical={medical}
@@ -704,7 +705,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
         <TaskDialog patient={{ id: a.patient.id, fullName: a.patient.fullName }} appointmentId={a.id} onClose={() => setTaskOpen(false)} />
       ) : null}
       {labOpen && a.patient.id ? (
-        <LabOrderDialog me={me} preset={{ patient: { id: a.patient.id, fullName: a.patient.fullName }, doctorId: a.doctorId, appointment: { id: a.id, startAt: a.startAt } }}
+        <LabOrderDialog me={me} preset={{ patient: { id: a.patient.id, fullName: a.patient.fullName }, doctorId: a.doctorId, appointment: { id: a.id, startAt: a.startAt, status: a.status } }}
           onClose={() => setLabOpen(false)} />
       ) : null}
       {/* Телефон: следующий шаг и «⋯» — внизу карточки, всегда под пальцем (над безопасной зоной iPhone) */}

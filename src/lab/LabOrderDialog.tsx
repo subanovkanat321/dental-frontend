@@ -21,8 +21,12 @@ type Me = Schemas['BookingViewsMe']
 export type OrderPreset = {
   patient?: TaskPatient
   doctorId?: number
-  /** Приём, из которого открыли: если он ещё впереди — это и есть примерка */
-  appointment?: { id: number; startAt: string }
+  /**
+   * Приём, из которого открыли: если он ещё впереди и не закрыт — это и есть примерка. Без статуса сервер
+   * отвечал 422 «Примерка — только на запланированный приём», если приём уже отметили состоявшимся (или
+   * отменили) до его времени, а в поле «Примерка» стоял прочерк — непонятно, что исправлять.
+   */
+  appointment?: { id: number; startAt: string; status?: string }
   kind?: LabKind
   teeth?: string
 }
@@ -51,7 +55,8 @@ export function LabOrderDialog({ me, order, preset, onClose, onSaved }: {
   const [labId, setLabId] = useState<number | ''>(order?.labId ?? '')
   const [sentOn, setSentOn] = useState(order?.sentOn ?? today)
   const [dueOn, setDueOn] = useState(order?.dueOn ?? addDays(today, 7))
-  const futureVisit = preset?.appointment && preset.appointment.startAt > new Date().toISOString() ? preset.appointment.id : undefined
+  const planned = preset?.appointment?.status == null || preset.appointment.status === 'SCHEDULED' || preset.appointment.status === 'REQUESTED'
+  const futureVisit = preset?.appointment && planned && preset.appointment.startAt > new Date().toISOString() ? preset.appointment.id : undefined
   const [fitting, setFitting] = useState<number | ''>(order?.fittingAppointmentId ?? futureVisit ?? '')
   const [price, setPrice] = useState(order?.priceSom != null ? String(order.priceSom) : '')
   const [note, setNote] = useState(order?.note ?? '')

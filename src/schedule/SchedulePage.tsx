@@ -784,7 +784,7 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
         {!weekMode && !monthMode && reviewLine}
         {!dayList && !monthMode && doctors.length > 0 && (
           <div className="schedule-legend">
-            <BadgesLegend chair={Boolean(chairs.data?.some((c) => (c.doctorIds?.length ?? 0) > 1))} />
+            <BadgesLegend chair={Boolean(chairs.data?.some((c) => (c.doctorIds?.length ?? 0) > 1))} money={!isAssistant(me)} />
             <PaintSwitch compact />
           </div>
         )}

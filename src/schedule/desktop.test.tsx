@@ -118,3 +118,13 @@ test('компьютер: дата в заголовке «Расписания�
   await userEvent.click(within(title).getByRole('button'))
   expect(await screen.findByRole('dialog', { name: 'Выбрать дату' })).toBeInTheDocument()
 })
+
+test('ассистент: в легенде значков нет оплаты — денег он не видит', async () => {
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json({ ...me, admin: false, doctorId: undefined, fullName: 'Асель', assistantOf: [1] })),
+    http.get('*/api/appointments', () => HttpResponse.json([appointment(10, 1, '10:00', 'Бакыт М.')])),
+  )
+  renderApp()
+  expect(await screen.findByText(/❗ важно для врача · ⭐ ВИП · 🆕 первый визит · 💬 комментарий/)).toBeInTheDocument()
+  expect(screen.queryByText(/🧾 долг/)).not.toBeInTheDocument()
+})

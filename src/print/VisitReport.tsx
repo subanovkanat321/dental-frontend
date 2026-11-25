@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { Select } from '../layout/Select'
-import { isAssistant } from '../lib/roles'
+import { isAssistant, seesAllMoney } from '../lib/roles'
 import { haptic, openLink } from '../lib/telegram'
 import { whatsappUrl } from '../lib/texts'
 import { shortDate } from '../lib/time'
@@ -37,14 +37,16 @@ function errorText(e: ApiError | null): string | null {
  * Врач приёма и админ (сервер). Регистратуре и ассистенту — памятка отдельно, как раньше.
  */
 export function AfterVisit({ appointment: a, me }: { appointment: Appointment; me: Me }) {
+  // Регистратура на чужом приёме — заранее только памятка: раньше спрашивали сообщение и ловили 403 (ошибка в консоли)
+  const memoOnly = isAssistant(me) || (Boolean(me.reception) && !seesAllMoney(me) && a.doctorId !== me.doctorId)
   const last = useQuery<Schemas['VisitReportsSent'] | null, ApiError>({
     queryKey: ['visit-report', a.id],
     queryFn: async () => (await unwrap(api.GET('/api/appointments/{id}/visit-report', { params: { path: { id: a.id } } }))) ?? null,
     retry: false,
-    enabled: !isAssistant(me),
+    enabled: !memoOnly,
   })
   // Не врач приёма и не админ (403) — только памятка: отправлять её регистратура может, как раньше
-  if (isAssistant(me) || last.error?.status === 403) {
+  if (memoOnly || last.error?.status === 403) {
     return (
       <section className="visit-docs" aria-label="Памятка пациенту">
         <MemoDocs appointment={a} />

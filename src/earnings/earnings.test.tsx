@@ -63,7 +63,7 @@ test('«Касса → Мой заработок»: сегодня, за мес�
   // Оклад — только в месяце, сегодня — только процент
   expect(block).toHaveTextContent('Сегодня — 30% от принятых')
   expect(block).toHaveTextContent(/оклад 10\s000 сом \+ 30%/)
-  expect(within(block).getByLabelText('Сравнение с прошлым месяцем')).toHaveTextContent('Как в прошлом месяце к этой дате: +12%')
+  expect(within(block).getByLabelText('Сравнение с прошлым месяцем')).toHaveTextContent(/Как в прошлом месяце к этой дате: выручка \+12% · заработок тогда/)
 
   const goal = screen.getByRole('region', { name: 'Цель на месяц' })
   expect(within(goal).getByLabelText('До цели')).toHaveTextContent(/До цели осталось 64\s000 сом · в день нужно ≈ 4\s267 сом на 15 рабочих дней/)

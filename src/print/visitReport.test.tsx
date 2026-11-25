@@ -352,3 +352,18 @@ test('сообщение уже отправлено — блок одной с�
   expect(await within(b).findByRole('textbox', { name: 'Текст сообщения' })).toBeInTheDocument()
   expect(calls).toEqual(['draft:SELF'])
 })
+
+test('регистратура: сразу памятка — сообщение после приёма и заметку врача не спрашиваем (сервер ответил бы 403)', async () => {
+  backend(DRAFT)
+  const asked: string[] = []
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json({ ...me, admin: false, reception: true, doctorId: undefined, hasReception: true })),
+    http.get('*/api/appointments/:id/visit-report', () => { asked.push('visit-report'); return HttpResponse.json(null) }),
+    http.get('*/api/appointments/:id/note', () => { asked.push('note'); return HttpResponse.json({}) }),
+  )
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: /Бакыт М\./ }))
+  expect(await screen.findByRole('region', { name: 'Памятка пациенту' })).toBeInTheDocument()
+  expect(screen.queryByRole('region', { name: 'Сообщение после приёма' })).not.toBeInTheDocument()
+  expect(asked).toEqual([])
+})
