@@ -305,3 +305,21 @@ test('«Позвать снова»: «звали 3 дня назад · все�
   expect(drafts).toEqual([3])
   confirm.mockRestore()
 })
+
+test('«Позвать снова»: карточку сменили адресом при открытой вкладке (совет, ссылка) — список той карточки (QA 2026-11-25)', async () => {
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/patients/recent', () => HttpResponse.json([])),
+    http.get('*/api/comebacks', serve(board)),
+    http.get('*/api/comebacks/result', () => HttpResponse.json({ invited: 0, returned: 0, returnedPlanSom: 0, paidSom: 0 })),
+    http.get('*/api/dropped', () => HttpResponse.json({ patients: [], totalSom: 0 })),
+  )
+  renderApp()
+  await userEvent.click(await findSub('Позвать снова'))
+  const cards = await screen.findByRole('group', { name: 'Кого позвать' })
+  await waitFor(() => expect(within(cards).getByRole('button', { name: /^Все/ })).toHaveAttribute('aria-pressed', 'true'))
+  window.location.hash = '/patients/comeback/noshow'
+  window.dispatchEvent(new HashChangeEvent('hashchange'))
+  await waitFor(() => expect(within(cards).getByRole('button', { name: /Не пришли/ })).toHaveAttribute('aria-pressed', 'true'))
+  expect(within(cards).getByRole('button', { name: /^Все/ })).toHaveAttribute('aria-pressed', 'false')
+})

@@ -93,7 +93,9 @@
 .plan-step-found .row-link:hover { background: var(--accent-soft); }
 .plan-step-picked { margin: 0; display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; }
 .plan-step-fields { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1.3fr); gap: 8px 12px; }
-.plan-step-who { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); }
+.plan-step-who { grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); }
+/* Поле «Врач» — сверху, а не растянутое на высоту колонки «Срок» (QA 2026-11-25: select был ~100 px высотой) */
+.plan-step-who > .field { align-content: start; }
 .plan-step-fields .field { margin: 0; }
 @media (max-width: 640px) {
   .plan-step-fields { grid-template-columns: 1fr 1fr; }

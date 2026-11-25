@@ -40,11 +40,13 @@ export function MedAlertPill({ an, onOpen }: { an?: Anamnesis; onOpen?: () => vo
   const first = allergy ?? shown[0]!
   const more = shown.length - 1
   const all = shown.map(text).join(', ')
+  // Значок ⚠ уже стоит в пилюле: «⚠️» из подписи вопроса («⚠️ Аллергия») не повторяем — было «⚠ ⚠️ Аллергия: …»
+  const pillText = text(first).replace(/^\u26A0\uFE0F?\s*/u, '')
   return (
     <>
       <button type="button" className={allergy ? 'med-pill danger' : 'med-pill'} aria-expanded={open}
         aria-label={`Важно перед лечением: ${all}`} title={all} onClick={() => setOpen(!open)}>
-        <span aria-hidden="true">⚠</span><span className="med-pill-text">{text(first)}</span>{more > 0 && <span className="med-pill-more">+{more}</span>}
+        <span aria-hidden="true">⚠</span><span className="med-pill-text">{pillText}</span>{more > 0 && <span className="med-pill-more">+{more}</span>}
       </button>
       {open && (
         <div className={allergy ? 'med-alert danger' : 'med-alert'} role="note" aria-label="Важно перед лечением">
