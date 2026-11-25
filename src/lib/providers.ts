@@ -1,22 +1,22 @@
 /**
- * «Войти через Google / Apple» (ADR 0008 бэкенда): скрипты провайдеров и их окна. Скрипты грузим лениво — только на
- * странице входа и в «Моём профиле», только когда провайдер подключён (Client ID в /web/config), и никогда в Telegram:
- * во встроенном браузере Telegram окна Google и Apple не работают, а вход там и так сам (initData).
- * Провайдер отдаёт ID-токен (подписанный JWT) — его проверяет сервер; токен не сохраняем нигде.
- * В тестах скрипты не грузятся: тест кладёт подставные window.google / window.AppleID, и загрузчик берёт их.
+ * «Войти через Google» (ADR 0008 бэкенда): скрипт Google и его окно. Скрипт грузим лениво — только на странице входа и
+ * в «Моём профиле», только когда вход подключён (Client ID в /web/config), и никогда в Telegram: во встроенном браузере
+ * Telegram окно Google не работает, а вход там и так сам (initData). «Войти через Apple» убран (2026-11-25).
+ * Google отдаёт ID-токен (подписанный JWT) — его проверяет сервер; токен не сохраняем нигде.
+ * В тестах скрипт не грузится: тест кладёт подставной window.google, и загрузчик берёт его.
  */
 
 import type { WebConfig } from '../api/client'
 import { telegram } from './telegram'
 
-export type Provider = 'google' | 'apple'
+export type Provider = 'google'
 
-/** Кнопки Google и Apple подключены (Client ID в /web/config) и мы не в Telegram. */
+/** Кнопка Google подключена (Client ID в /web/config) и мы не в Telegram. */
 export function externalLoginShown(config: WebConfig | null | undefined): boolean {
-  return Boolean((config?.googleClientId || config?.appleClientId) && !telegram())
+  return Boolean(config?.googleClientId && !telegram())
 }
 
-export const PROVIDER_TITLE: Record<Provider, string> = { google: 'Google', apple: 'Apple' }
+export const PROVIDER_TITLE: Record<Provider, string> = { google: 'Google' }
 
 type GoogleButtonOptions = {
   type?: 'standard' | 'icon'
@@ -46,24 +46,13 @@ export type GoogleIdentity = {
   }
 }
 
-export type AppleSignInResponse = { authorization?: { id_token?: string; code?: string; state?: string } }
-
-export type AppleIdentity = {
-  auth: {
-    init(config: { clientId: string; scope?: string; redirectURI: string; state?: string; nonce?: string; usePopup?: boolean }): void
-    signIn(): Promise<AppleSignInResponse>
-  }
-}
-
 declare global {
   interface Window {
     google?: GoogleIdentity
-    AppleID?: AppleIdentity
   }
 }
 
 const GOOGLE_SRC = 'https://accounts.google.com/gsi/client'
-const APPLE_SRC = 'https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/ru_RU/appleid.auth.js'
 
 const loading = new Map<string, Promise<void>>()
 
@@ -93,27 +82,4 @@ export async function loadGoogle(): Promise<GoogleIdentity> {
   return window.google
 }
 
-export async function loadApple(): Promise<AppleIdentity> {
-  if (!window.AppleID?.auth) await loadScript(APPLE_SRC)
-  if (!window.AppleID?.auth) throw new Error('apple')
-  return window.AppleID
-}
-
-/**
- * Адрес возврата Apple: окно входа всплывающее (usePopup), но Apple сверяет адрес с «Return URLs» Services ID —
- * RUNBOOK бэкенда, раздел 20: https://<домен>/login.
- */
-export const appleRedirectUri = () => `${window.location.origin}/login`
-
-/** Человек сам закрыл окно Apple — не ошибка. */
-export function appleCancelled(e: unknown): boolean {
-  const code = typeof e === 'object' && e !== null && 'error' in e ? String((e as { error: unknown }).error) : ''
-  return code === 'popup_closed_by_user' || code === 'user_cancelled_authorize'
-}
-
-export const SCRIPT_FAILED: Record<Provider, string> = {
-  google: 'Кнопка Google не загрузилась — проверьте интернет или блокировщик рекламы и обновите страницу',
-  apple: 'Вход Apple не загрузился — проверьте интернет или блокировщик рекламы и обновите страницу',
-}
-
-export const POPUP_FAILED = 'Окно Apple не открылось — разрешите всплывающие окна для этого сайта и нажмите ещё раз'
+export const SCRIPT_FAILED = 'Кнопка Google не загрузилась — проверьте интернет или блокировщик рекламы и обновите страницу'

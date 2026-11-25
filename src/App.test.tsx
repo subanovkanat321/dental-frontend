@@ -8,7 +8,7 @@ import { server } from './test/server'
 // Сетка «Все врачи» на компьютере: с 2026-11-25 по умолчанию открывается свой врач — выбор «Все врачи» запомнен
 beforeEach(() => { localStorage.setItem('crm.schedule.view.v2', 'all') })
 
-test('не вошли (401) — вход по номеру и паролю, кнопки «Войти через Telegram» нет; вошли — CRM', async () => {
+test('не вошли (401) — вход по логину или номеру и паролю, кнопки «Войти через Telegram» нет; вошли — CRM', async () => {
   let session = false
   let posted: unknown = null
   server.use(
@@ -26,12 +26,12 @@ test('не вошли (401) — вход по номеру и паролю, кн
   renderApp()
   expect(await screen.findByRole('heading', { name: 'Вход для клиники' })).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: /Telegram/ })).not.toBeInTheDocument()
-  expect(await screen.findByText(/Нет пароля или забыли\? Нажмите «Забыли пароль\? \/ Первый вход» — код придёт/)).toBeInTheDocument()
-  await user.type(await screen.findByRole('textbox', { name: 'Номер телефона' }), '0700 000 031')
+  expect(await screen.findByRole('button', { name: 'Забыли пароль? / Первый вход' })).toBeInTheDocument()
+  await user.type(await screen.findByRole('textbox', { name: 'Логин или телефон' }), '0700 000 031')
   await user.type(screen.getByLabelText('Пароль'), 'Тишина2026')
   await user.click(screen.getByRole('button', { name: 'Войти' }))
   expect(await screen.findByRole('navigation', { name: 'Разделы' })).toBeInTheDocument()
-  expect(posted).toEqual({ phone: '0700000031', password: 'Тишина2026' })
+  expect(posted).toEqual({ login: '0700000031', password: 'Тишина2026' })
   // Скрипт окна входа Telegram больше не грузится
   expect(document.querySelector('script[src*="telegram-widget"]')).toBeNull()
   // Вошли — адрес чистый, без /login

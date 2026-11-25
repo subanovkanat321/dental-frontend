@@ -27,15 +27,18 @@ export function ShowPassword({ shown, onToggle }: { shown: boolean; onToggle: ()
  * «Придумайте пароль»: два поля, показать/скрыть и требования, которые отмечаются по мере ввода.
  * Пароль живёт только в состоянии формы — не в адресе, не в localStorage и не в консоли.
  */
-export function NewPasswordFields({ password, repeat, onPassword, onRepeat, phone, label = 'Новый пароль' }: {
-  password: string; repeat: string; onPassword: (v: string) => void; onRepeat: (v: string) => void; phone: string; label?: string
+export function NewPasswordFields({ password, repeat, onPassword, onRepeat, phone, login = '', label = 'Новый пароль' }: {
+  password: string; repeat: string; onPassword: (v: string) => void; onRepeat: (v: string) => void; phone: string
+  /** Логин (если есть) — пароль не должен его повторять */
+  login?: string
+  label?: string
 }) {
   const [shown, setShown] = useState(false)
-  const c = checkPassword(password, phone)
+  const c = checkPassword(password, phone, login)
+  // Цифры и заглавные не обязательны (2026-11-25): только длина и «не номер / не логин / не 1234567»
   const rules: [boolean, string][] = [
     [c.long, `Не короче ${PASSWORD_MIN} символов`],
-    [c.notDigits, 'Не только цифры'],
-    [c.notPhone || !password, 'Не номер телефона'],
+    [(c.notPhone && c.notLogin && c.notSimple) || !password, login.trim() ? 'Не номер, не логин и не «1234567»' : 'Не номер телефона и не «1234567»'],
     [password !== '' && password === repeat, 'Пароли совпадают'],
   ]
   return (

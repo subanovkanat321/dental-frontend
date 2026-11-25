@@ -25,6 +25,8 @@ import { UpdatingScreen } from './layout/OfflineNotice'
 // Оболочка CRM (меню, плашки) и вход — своими чанками: Mini App пациента их не скачивает
 const Shell = lazy(() => import('./layout/Shell').then((m) => ({ default: m.Shell })))
 const Login = lazy(() => import('./layout/Login').then((m) => ({ default: m.Login })))
+// Главная для пациентов (поиск клиники и запись) — свой чанк: сотрудник и Mini App его не скачивают
+const Home = lazy(() => import('./site/Home').then((m) => ({ default: m.Home })))
 // Разделы — отдельными чанками: пациент не скачивает CRM, сотрудник — только открытый раздел
 const CashPage = lazy(() => import('./cash/CashPage').then((m) => ({ default: m.CashPage })))
 const PatientsPage = lazy(() => import('./patients/PatientsPage').then((m) => ({ default: m.PatientsPage })))
@@ -119,11 +121,10 @@ function Screens() {
       if (telegram()) {
         return <div className="center"><h1>Tish CRM</h1><p className="hint">{failed.message || 'Сессия устарела — закройте и откройте заново из бота.'}</p></div>
       }
-      // Браузер без входа на главной (пациент набрал адрес) — общий каталог клиник; вход — /login.
-      // Запуск с иконки приложения (PWA) — это сотрудник: сразу вход, а не каталог для пациентов
+      // Браузер без входа на главной (пациент набрал tish.kg) — главная для пациентов: поиск клиники и запись,
+      // «Вход для клиник» — /login. Запуск с иконки приложения (PWA) — это сотрудник: сразу вход
       if (!isLoginPath() && !launchedAsApp()) {
-        window.location.replace('/clinics')
-        return <Loading className="screen" />
+        return <ErrorBoundary><Suspense fallback={<Loading className="screen" />}><Home /></Suspense></ErrorBoundary>
       }
       return <><Suspense fallback={<Loading className="screen" />}><Login /></Suspense><UpdateToast /></>
     }
@@ -212,6 +213,8 @@ function Sections({ shown, sections, onVisit, children }: {
     noteSectionLeft(left, hasUnsaved())
     setLeft(shown)
   }
+  // index.html — главная для пациентов («Tish — запись к стоматологу…»); у CRM вкладка своя
+  useEffect(() => { document.title = 'Tish CRM' }, [])
   // Сменили раздел — безопасный момент для тихого обновления на новую версию (если ничего не вводят)
   useEffect(() => { updateAtSafeMoment() }, [shown])
   useEffect(() => {

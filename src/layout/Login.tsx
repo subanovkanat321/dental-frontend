@@ -2,35 +2,17 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useState } from 'react'
 
 import { LOGGED_OUT, loginConfig, WEB_CONFIG_KEY, webConfig } from '../api/client'
+import { externalLoginShown } from '../lib/providers'
 import { isLoginPath } from '../lib/route'
 import { telegram } from '../lib/telegram'
 import { InstallHint } from '../pwa/InstallHint'
-import { FORGOT, PhoneLogin } from './PhoneLogin'
+import { PhoneLogin } from './PhoneLogin'
 import { ExternalLogin } from './ExternalLogin'
 import { Loading } from './Loading'
 import { TelegramLogin } from './TelegramLogin'
 
-/** Ссылка к форме номера и пароля — для тех, у кого Telegram нет вовсе. */
-export const PHONE_OPEN = 'Нет Telegram? Войдите по номеру и паролю'
-
-/** Как человек входил в прошлый раз на этом устройстве: 'phone' — форму номера сразу открытой. Только метка, без данных. */
-const METHOD = 'crm.login.method'
-
-function readMethod(): string | null {
-  try {
-    return localStorage.getItem(METHOD)
-  } catch {
-    return null
-  }
-}
-
-function saveMethod(m: 'phone' | 'telegram') {
-  try {
-    localStorage.setItem(METHOD, m)
-  } catch {
-    // приватный режим — в следующий раз снова начнём с Telegram
-  }
-}
+/** Свёрнутая ссылка: запасные способы входа (Google, если подключён) — главное на странице только Telegram и пароль. */
+export const OTHER_WAYS = 'Другие способы входа'
 
 /** Только что нажали «Выйти» в этой вкладке? Флаг читаем при открытии экрана, стираем после показа. */
 function justLoggedOut(): boolean {
@@ -54,22 +36,23 @@ function LoggedOutHint({ onClose }: { onClose: () => void }) {
 }
 
 /**
- * Страница входа на сайт: сверху «Войти через Telegram» (быстрее всего) — ссылка в бота и «Подтвердить
- * вход» там; ниже «Нет Telegram?» — номер телефона и пароль (TelegramLogin; прежний Telegram Login Widget убран — сервер отвечает на него 410). Нет пароля —
- * «Забыли пароль? / Первый вход»: код в Telegram (бот сотрудников) или по SMS. В Telegram (Mini App) вход сам,
- * по initData — кнопку «Войти через Telegram» там не показываем. Под Telegram — «Войти через Google / Apple», если владелец
- * их подключил и человек привязал аккаунт (ExternalLogin; в Telegram их тоже нет).
+ * Страница входа на сайт — максимально просто (решение владельца 2026-11-25), всего две вещи:
+ * <ol>
+ * <li>большая кнопка «Войти через Telegram» — главный способ (ссылка в бота и «Подтвердить вход» там, на компьютере —
+ * ещё и QR-код; TelegramLogin). В Telegram (Mini App) вход сам, по initData, — кнопки там нет;</li>
+ * <li>под ней — компактная форма «Логин или телефон» + «Пароль» + «Войти» и ссылка «Забыли пароль?» (PhoneLogin).</li>
+ * </ol>
+ * Остальное — под свёрнутой ссылкой «Другие способы входа»: «Войти через Google» (только если владелец подключил,
+ * ExternalLogin). Регистрация клиники — как раньше через Telegram (/join), здесь её нет.
  */
 export function Login() {
   const client = useQueryClient()
   const bot = useQuery({ queryKey: WEB_CONFIG_KEY, queryFn: webConfig, staleTime: Infinity })
   const [loggedOut, setLoggedOut] = useState(justLoggedOut)
-  /** Ждём «Подтвердить вход» в боте — форму номера и пароля прячем, чтобы не путать. */
+  /** Ждём «Подтвердить вход» в боте — форму пароля прячем, чтобы не путать. */
   const [tgWaiting, setTgWaiting] = useState(false)
   const onWaiting = useCallback((w: boolean) => setTgWaiting(w), [])
-  // С Telegram форма номера и пароля свёрнута: новый врач видел поля пароля и не понимал, какой пароль вводить.
-  // Входил по номеру на этом устройстве — открыта сразу
-  const [byPhone, setByPhone] = useState(() => readMethod() === 'phone')
+  const [others, setOthers] = useState(false)
   // Показали один раз: обновили страницу или вошли снова — подсказки уже нет
   useEffect(() => {
     try {
@@ -86,36 +69,32 @@ export function Login() {
   }
   const config = loginConfig(bot.data)
   const viaTelegram = !!config?.telegramLogin && !telegram()
+  const hasOthers = externalLoginShown(config)
   return (
     <div className="center login">
       <div className="login-card">
       <img src={`${import.meta.env.BASE_URL}tishka.svg`} alt="Тишка — талисман Tish" width={147} height={140} />
       {loggedOut && <LoggedOutHint onClose={() => setLoggedOut(false)} />}
       <h1>Вход для клиники</h1>
-      <p className="hint">Врачи, регистратура и руководители — {viaTelegram ? 'нажмите «Войти через Telegram» и подтвердите в боте — пароль не нужен' : 'по номеру телефона и паролю'}.</p>
       {bot.isPending && <Loading />}
       {bot.isSuccess && !config && <p className="error">Вход сейчас недоступен: сервер не настроен или не отвечает. Обновите страницу через минуту.</p>}
-      {viaTelegram && <TelegramLogin onDone={() => { saveMethod('telegram'); entered() }} onWaiting={onWaiting} />}
-      {config && !tgWaiting && <ExternalLogin config={config} onDone={entered} />}
-      {config && !tgWaiting && viaTelegram && !byPhone && (
+      {viaTelegram && <TelegramLogin onDone={entered} onWaiting={onWaiting} />}
+      {config && !tgWaiting && (
         <>
-          <button type="button" className="link login-phone-open" onClick={() => setByPhone(true)}>
-            {PHONE_OPEN}</button>
-          {(config.smsLogin || config.telegramCode) && (
-            <p className="hint small login-phone-note">Пароля нет или забыли — там же «{FORGOT}»: пришлём код{config.smsLogin ? ' по SMS' : ' в Telegram'}{config.mailCode ? ' или на почту' : ''}.</p>
+          {viaTelegram && <p className="login-or"><span>или логин и пароль</span></p>}
+          <PhoneLogin onDone={entered} sms={config.smsLogin} telegram={config.telegramCode} password={config.passwordLogin}
+            mail={config.mailCode} secondary={viaTelegram} />
+          {hasOthers && !others && (
+            <button type="button" className="link login-others" aria-expanded={false} onClick={() => setOthers(true)}>{OTHER_WAYS}</button>
+          )}
+          {hasOthers && others && (
+            <div className="login-others-open" role="group" aria-label={OTHER_WAYS}>
+              <ExternalLogin config={config} onDone={entered} />
+            </div>
           )}
         </>
       )}
-      {config && !tgWaiting && (!viaTelegram || byPhone) && (
-        <>
-          {viaTelegram && <p className="login-or"><span>{PHONE_OPEN}</span></p>}
-          <PhoneLogin onDone={() => { saveMethod('phone'); entered() }} sms={config.smsLogin} telegram={config.telegramCode} password={config.passwordLogin}
-            mail={config.mailCode} />
-        </>
-      )}
       <InstallHint />
-      <p className="hint small">В Telegram приложение открывается кнопкой «Открыть» в боте клиники — там пароль не нужен.</p>
-      <p className="hint small">📲 <a href="/app">Скачать Tish на телефон или компьютер</a> — как приложение, со своим значком</p>
       <p className="hint small">Пациенты записываются через бота в Telegram: <a href="/clinics">выбрать клинику</a></p>
       </div>
     </div>

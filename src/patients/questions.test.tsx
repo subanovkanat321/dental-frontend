@@ -37,9 +37,9 @@ function backend({ ai }: { ai: boolean }) {
     http.get('*/api/patient-questions/:id', ({ params }) => HttpResponse.json(questions.find((q) => q.id === Number(params.id)))),
     http.post('*/api/patient-questions/:id/draft', () => {
       drafts++
-      return ai
-        ? HttpResponse.json({ text: 'Здравствуйте! Чистка — от 2500 сом, точная стоимость — после осмотра.' } satisfies Schemas['QuestionControllerDraft'])
-        : HttpResponse.json({ status: 409, detail: 'ИИ клиники выключен — напишите ответ сами', code: 'ai-unavailable' }, { status: 409 })
+      return HttpResponse.json(ai
+        ? { text: 'Здравствуйте! Чистка — от 2500 сом, точная стоимость — после осмотра.', template: false }
+        : { text: 'Здравствуйте! Спасибо за вопрос.\n\nРаботаем: пн, вт, ср, чт, пт, сб, 09:00–18:00.', template: true } satisfies Schemas['QuestionControllerDraft'])
     }),
     http.post('*/api/patient-questions/:id/answer', async ({ params, request }) => {
       const body = (await request.json()) as Schemas['QuestionControllerAnswer']
@@ -86,7 +86,7 @@ test('«Вопросы»: бейдж, список, черновик ИИ пра
   expect(await screen.findByRole('list', { name: 'Вопросы пациентов' })).toHaveTextContent('Айгуль Т.')
 })
 
-test('без ИИ кнопки черновика нет: отвечают вручную; «Закрыть без ответа» переспрашивает', async () => {
+test('без ИИ — «📝 Черновик по шаблону» с тихой пометкой; «Закрыть без ответа» переспрашивает', async () => {
   window.location.hash = '/patients'
   const { answers, drafts } = backend({ ai: false })
   renderApp()
@@ -94,8 +94,13 @@ test('без ИИ кнопки черновика нет: отвечают вр�
   await userEvent.click(await screen.findByRole('button', { name: 'Нет в базе клиники' }))
   const panel = await screen.findByRole('complementary', { name: 'Вопрос пациента' })
   expect(await within(panel).findByText(/впервые/)).toBeInTheDocument()
-  expect(within(panel).queryByRole('button', { name: /Черновик/ })).not.toBeInTheDocument()
+  expect(within(panel).queryByRole('button', { name: /✨/ })).not.toBeInTheDocument()
   expect(within(panel).getByRole('button', { name: 'Отправить' })).toBeDisabled()
+  await userEvent.click(within(panel).getByRole('button', { name: '📝 Черновик по шаблону' }))
+  await waitForSlow(() => expect(within(panel).getByLabelText('Ответ пациенту')).toHaveValue('Здравствуйте! Спасибо за вопрос.\n\nРаботаем: пн, вт, ср, чт, пт, сб, 09:00–18:00.'))
+  expect(within(panel).getByText(/Составлено по шаблону из данных клиники/)).toBeInTheDocument()
+  expect(drafts()).toBe(1)
+  await userEvent.clear(within(panel).getByLabelText('Ответ пациенту'))
 
   const confirm = vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true)
   await userEvent.click(within(panel).getByRole('button', { name: 'Закрыть без ответа' }))
@@ -103,7 +108,6 @@ test('без ИИ кнопки черновика нет: отвечают вр�
   await userEvent.click(within(panel).getByRole('button', { name: 'Закрыть без ответа' }))
   expect(await within(panel).findByText(/Закрыт без ответа/)).toBeInTheDocument()
   expect(answers).toEqual([])
-  expect(drafts()).toBe(0)
 })
 
 test('кнопка уведомления «Открыть вопрос» (?question=ID) ведёт в «Пациенты → Вопросы»', () => {
@@ -157,6 +161,35 @@ test('ИИ-администратор бота: «🤖 Ответил ИИ» с 
   expect(answer).toHaveTextContent('🤖 Ответил ИИ')
   expect(answer).toHaveTextContent('Мы на Киевской, 1.')
   expect(within(panel).queryByLabelText('Ответ пациенту')).not.toBeInTheDocument()
+})
+
+test('ИИ недоступен — бот ответил по шаблону: «🤖 Автоответ по шаблону» в «Отвеченных»', async () => {
+  window.location.hash = '/patients'
+  const byTemplate: Question = {
+    id: 9, channel: 'TELEGRAM', status: 'ANSWERED', text: 'Где вы находитесь?', createdAt: '2026-11-03T04:00:00Z', answeredAt: '2026-11-03T04:00:01Z',
+    answer: 'Наш адрес: ул. Киевская, 1.', aiOutcome: 'TEMPLATE', aiAnswer: 'Наш адрес: ул. Киевская, 1.',
+  }
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/patients/recent', () => HttpResponse.json([])),
+    http.get('*/api/patient-questions/new-count', () => HttpResponse.json({ count: 0 })),
+    http.get('*/api/patient-questions', ({ request }) => {
+      const done = new URL(request.url).searchParams.get('done') === 'true'
+      return HttpResponse.json({ questions: done ? [byTemplate] : [], ai: false, aiAvailable: false, botAi: true } satisfies Schemas['QuestionControllerQuestionList'])
+    }),
+    http.get('*/api/patient-questions/:id', () => HttpResponse.json(byTemplate)),
+  )
+  renderApp()
+  await userEvent.click(await findSub(/Вопросы/))
+  await userEvent.click(await screen.findByRole('tab', { name: 'Отвеченные' }))
+  const done = await screen.findByRole('list', { name: 'Вопросы пациентов' })
+  await waitForSlow(() => expect(done).toHaveTextContent('автоответ'))
+  await userEvent.click(within(done).getByRole('button', { name: 'Нет в базе клиники' }))
+  const panel = await screen.findByRole('complementary', { name: 'Вопрос пациента' })
+  const answer = await within(panel).findByRole('region', { name: 'Автоответ по шаблону' })
+  expect(answer).toHaveTextContent('🤖 Автоответ по шаблону')
+  expect(answer).toHaveTextContent('Наш адрес: ул. Киевская, 1.')
+  expect(within(panel).queryByRole('region', { name: 'Ответ' })).not.toBeInTheDocument()
 })
 
 test('ИИ записал по «Да» пациента — пометка в списке и в вопросе', async () => {

@@ -3207,6 +3207,34 @@
         }
       }
     },
+    "/api/me/username" : {
+      "put" : {
+        "tags" : [ "password-controller" ],
+        "operationId" : "username",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PasswordControllerUsernameChange"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PasswordControllerUsernameState"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/me/tour" : {
       "get" : {
         "tags" : [ "staff-tour-controller" ],
@@ -24797,6 +24825,9 @@
         "properties" : {
           "password" : {
             "type" : "string"
+          },
+          "username" : {
+            "type" : "string"
           }
         }
       },
@@ -24841,6 +24872,20 @@
               "type" : "integer",
               "format" : "int64"
             }
+          }
+        }
+      },
+      "PasswordControllerUsernameChange" : {
+        "properties" : {
+          "username" : {
+            "type" : "string"
+          }
+        }
+      },
+      "PasswordControllerUsernameState" : {
+        "properties" : {
+          "username" : {
+            "type" : "string"
           }
         }
       },
@@ -27508,6 +27553,9 @@
           },
           "password" : {
             "type" : "string"
+          },
+          "login" : {
+            "type" : "string"
           }
         }
       },
@@ -29584,8 +29632,12 @@
         "properties" : {
           "text" : {
             "type" : "string"
+          },
+          "template" : {
+            "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "template" ]
       },
       "PatientQuestionsQuestionView" : {
         "properties" : {
@@ -29627,7 +29679,7 @@
           },
           "aiOutcome" : {
             "type" : "string",
-            "enum" : [ "ANSWERED", "ESCALATED", "HANDOFF" ]
+            "enum" : [ "ANSWERED", "ESCALATED", "HANDOFF", "TEMPLATE" ]
           },
           "aiAnswer" : {
             "type" : "string"
@@ -30000,7 +30052,7 @@
         "properties" : {
           "provider" : {
             "type" : "string",
-            "enum" : [ "google", "apple" ]
+            "enum" : [ "google" ]
           },
           "available" : {
             "type" : "boolean"
@@ -30520,8 +30572,12 @@
           },
           "body" : {
             "type" : "string"
+          },
+          "template" : {
+            "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "template" ]
       },
       "CareMemoControllerLinked" : {
         "properties" : {
@@ -31619,9 +31675,6 @@
             "type" : "boolean"
           },
           "googleClientId" : {
-            "type" : "string"
-          },
-          "appleClientId" : {
             "type" : "string"
           }
         },
@@ -33178,6 +33231,10 @@
           },
           "lastError" : {
             "type" : "string"
+          },
+          "pausedUntil" : {
+            "type" : "string",
+            "format" : "date-time"
           }
         },
         "required" : [ "configured", "errors24h" ]
@@ -35728,6 +35785,9 @@
           },
           "telegramCode" : {
             "type" : "boolean"
+          },
+          "username" : {
+            "type" : "string"
           }
         },
         "required" : [ "passwordSet", "phoneLogin", "sms", "telegram", "telegramCode", "temporary" ]
