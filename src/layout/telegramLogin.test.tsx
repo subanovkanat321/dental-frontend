@@ -48,7 +48,6 @@ function backend(statuses: TelegramLoginStatus['state'][], { telegramLogin = tru
 }
 
 afterEach(() => {
-  localStorage.removeItem('crm.login.method')
   vi.restoreAllMocks()
   delete window.Telegram
 })
@@ -58,12 +57,13 @@ test('«Войти через Telegram» → открывает бота, ждё
   const open = vi.spyOn(window, 'open').mockReturnValue(null)
   const user = userEvent.setup()
   renderApp()
-  // Кнопка Telegram — первой; форма номера и пароля свёрнута под «Нет Telegram? Войдите по номеру и паролю»
+  // Две вещи: главная кнопка Telegram — первой, под ней компактная форма «Логин или телефон» + пароль (кнопка «Войти»
+  // не яркая — главный способ Telegram); Google нет — нет и «Другие способы входа»
   const tg = await screen.findByRole('button', { name: 'Войти через Telegram' })
-  expect(screen.getByText(/нажмите «Войти через Telegram» и подтвердите в боте — пароль не нужен/)).toBeInTheDocument()
-  expect(screen.queryByRole('textbox', { name: 'Номер телефона' })).not.toBeInTheDocument()
-  const open1 = screen.getByRole('button', { name: 'Нет Telegram? Войдите по номеру и паролю' })
-  expect(tg.compareDocumentPosition(open1) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  const field = await screen.findByRole('textbox', { name: 'Логин или телефон' })
+  expect(tg.compareDocumentPosition(field) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  expect(screen.getByRole('button', { name: 'Войти' })).not.toHaveClass('primary')
+  expect(screen.queryByRole('button', { name: 'Другие способы входа' })).not.toBeInTheDocument()
 
   await user.click(await screen.findByRole('button', { name: 'Войти через Telegram' }))
 
@@ -72,8 +72,8 @@ test('«Войти через Telegram» → открывает бота, ждё
   expect(waiting).toHaveTextContent('Откройте Telegram и нажмите «Подтвердить вход».')
   // Не открылось окно — та же ссылка кнопкой
   expect(screen.getByRole('link', { name: 'Открыть Telegram' })).toHaveAttribute('href', LINK)
-  // Пока ждём — формы номера нет, чтобы не путать
-  expect(screen.queryByRole('textbox', { name: 'Номер телефона' })).not.toBeInTheDocument()
+  // Пока ждём — формы пароля нет, чтобы не путать
+  expect(screen.queryByRole('textbox', { name: 'Логин или телефон' })).not.toBeInTheDocument()
 
   // Опрос: «waiting» → «done» → CRM
   expect(await screen.findByRole('navigation', { name: 'Разделы' }, { timeout: 8000 })).toBeInTheDocument()
@@ -107,15 +107,14 @@ test('«Отмена» на сайте забывает вход; «Нет» в 
   renderApp()
   expect(await screen.findByText('Вход отменён в Telegram.', undefined, { timeout: 5000 })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Войти через Telegram' })).toBeInTheDocument()
-  // Форма номера — по ссылке; открыли один раз и вошли по номеру — на этом устройстве она открыта сразу
-  await userEvent.click(await screen.findByRole('button', { name: 'Нет Telegram? Войдите по номеру и паролю' }))
-  expect(await screen.findByRole('textbox', { name: 'Номер телефона' })).toBeInTheDocument()
+  // Форма пароля снова видна под кнопкой
+  expect(await screen.findByRole('textbox', { name: 'Логин или телефон' })).toBeInTheDocument()
 }, 10000)
 
 test('вход через Telegram не включён на сервере — кнопки нет', async () => {
   backend(['none'], { telegramLogin: false })
   renderApp()
-  expect(await screen.findByRole('textbox', { name: 'Номер телефона' })).toBeInTheDocument()
+  expect(await screen.findByRole('textbox', { name: 'Логин или телефон' })).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: 'Войти через Telegram' })).not.toBeInTheDocument()
 })
 
@@ -125,8 +124,7 @@ test('внутри Telegram (Mini App) кнопки «Войти через Tele
   const client = createQueryClient({ queries: { retry: false } })
   render(<QueryClientProvider client={client}><Login /></QueryClientProvider>)
 
-  expect(await screen.findByRole('textbox', { name: 'Номер телефона' })).toBeInTheDocument()
+  expect(await screen.findByRole('textbox', { name: 'Логин или телефон' })).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: 'Войти через Telegram' })).not.toBeInTheDocument()
   expect(screen.queryByText(/через Telegram/)).not.toBeInTheDocument()
-  expect(screen.queryByText(/Нет Telegram\?/)).not.toBeInTheDocument()
 })

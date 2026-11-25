@@ -11,7 +11,7 @@ type Identity = Schemas['ExternalLoginControllerIdentityView']
 
 const GOOGLE_CLIENT = 'test-client.apps.googleusercontent.com'
 
-/** «Мой профиль → Вход через Google и Apple» (ADR 0008 бэкенда); аккаунты и почта — вымышленные. */
+/** «Мой профиль → Вход через Google» (ADR 0008 бэкенда); аккаунты и почта — вымышленные. */
 function backend(initial: Identity[], link?: () => Response) {
   let state = initial
   const linked: unknown[] = []
@@ -21,7 +21,7 @@ function backend(initial: Identity[], link?: () => Response) {
     http.get('*/api/me/phone', () => HttpResponse.json({ phone: '+996700000051', phoneOnly: false, sms: true, telegram: true } satisfies Schemas['MyPhoneControllerMyPhone'])),
     http.get('*/api/me/email', () => HttpResponse.json({ phoneLogin: true, available: false } satisfies Schemas['MyEmailControllerMyEmail'])),
     http.get('*/web/config', () => HttpResponse.json({ botUsername: 'tish_test_bot', smsLogin: false, passwordLogin: true, telegramCode: true,
-      telegramLogin: true, mailCode: false, googleClientId: GOOGLE_CLIENT, appleClientId: 'kg.tish.test' } satisfies WebConfig)),
+      telegramLogin: true, mailCode: false, googleClientId: GOOGLE_CLIENT } satisfies WebConfig)),
     http.post('*/web/login/oauth/nonce', () => HttpResponse.json({ nonce: 'nonce-1', secondsLeft: 600 } satisfies Schemas['ExternalLoginControllerNonce'])),
     http.get('*/api/me/identities', () => HttpResponse.json(state)),
     http.post('*/api/me/identities/:provider', async ({ request, params }) => {
@@ -60,7 +60,7 @@ function fakeGoogle() {
   window.google = google
 }
 
-const NOT_LINKED: Identity[] = [{ provider: 'google', available: true, linked: false }, { provider: 'apple', available: true, linked: false }]
+const NOT_LINKED: Identity[] = [{ provider: 'google', available: true, linked: false }]
 
 afterEach(() => {
   window.location.hash = ''
@@ -68,12 +68,12 @@ afterEach(() => {
   delete window.Telegram
 })
 
-test('провайдеры не подключены — блока «Вход через Google и Apple» нет', async () => {
+test('Google не подключён — блока «Вход через Google» нет', async () => {
   backend([])
   renderApp()
   expect(await screen.findByRole('region', { name: 'Телефон' })).toBeInTheDocument()
   await screen.findByText('+996 700 000 051')
-  expect(screen.queryByRole('region', { name: 'Вход через Google и Apple' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('region', { name: 'Вход через Google' })).not.toBeInTheDocument()
 })
 
 test('«Привязать Google» → окно Google → привязан, видна почта; «Отвязать» — с вопросом', async () => {
@@ -81,9 +81,9 @@ test('«Привязать Google» → окно Google → привязан, в
   fakeGoogle()
   const user = userEvent.setup()
   renderApp()
-  const section = await screen.findByRole('region', { name: 'Вход через Google и Apple' })
-  expect(within(section).getAllByText('Не привязан')).toHaveLength(2)
-  expect(within(section).getByRole('button', { name: 'Привязать Apple' })).toBeInTheDocument()
+  const section = await screen.findByRole('region', { name: 'Вход через Google' })
+  expect(within(section).getAllByText('Не привязан')).toHaveLength(1)
+  expect(within(section).queryByRole('button', { name: /Apple/ })).not.toBeInTheDocument()
 
   await user.click(within(section).getByRole('button', { name: 'Привязать Google' }))
   await user.click(await within(section).findByRole('button', { name: 'Продолжить с Google' }))
@@ -97,7 +97,7 @@ test('«Привязать Google» → окно Google → привязан, в
   expect(await screen.findByText(/Отвязать Google\? Входы через него на всех устройствах закроются/)).toBeInTheDocument()
   await user.click(within(screen.getByRole('alertdialog', { name: 'Подтверждение' })).getByRole('button', { name: 'Отвязать' }))
   await waitFor(() => expect(unlinked()).toBe(1))
-  expect(await within(section).findAllByText('Не привязан')).toHaveLength(2)
+  expect(await within(section).findAllByText('Не привязан')).toHaveLength(1)
 })
 
 test('аккаунт уже у другого сотрудника — текст сервера под строкой', async () => {
@@ -106,7 +106,7 @@ test('аккаунт уже у другого сотрудника — текс�
   fakeGoogle()
   const user = userEvent.setup()
   renderApp()
-  const section = await screen.findByRole('region', { name: 'Вход через Google и Apple' })
+  const section = await screen.findByRole('region', { name: 'Вход через Google' })
 
   await user.click(within(section).getByRole('button', { name: 'Привязать Google' }))
   await user.click(await within(section).findByRole('button', { name: 'Продолжить с Google' }))
@@ -120,7 +120,7 @@ test('плохой токен — ошибка поля idToken из 422', async
   fakeGoogle()
   const user = userEvent.setup()
   renderApp()
-  const section = await screen.findByRole('region', { name: 'Вход через Google и Apple' })
+  const section = await screen.findByRole('region', { name: 'Вход через Google' })
 
   await user.click(within(section).getByRole('button', { name: 'Привязать Google' }))
   await user.click(await within(section).findByRole('button', { name: 'Продолжить с Google' }))

@@ -3,7 +3,7 @@ import { useState } from 'react'
 
 import { api, ApiError, unwrap, WEB_CONFIG_KEY, webConfig, type Schemas } from '../api/client'
 import { HelpHint } from '../help/HelpHint'
-import { AppleButton, GoogleButton } from '../layout/ProviderButtons'
+import { GoogleButton } from '../layout/ProviderButtons'
 import { ask, notify } from '../lib/confirm'
 import { PROVIDER_TITLE, type Provider } from '../lib/providers'
 import { telegram } from '../lib/telegram'
@@ -13,13 +13,13 @@ type Identity = Schemas['ExternalLoginControllerIdentityView']
 
 const IDENTITIES_KEY = ['me-identities'] as const
 
-const HINT = 'Привяжите свой аккаунт — и на странице входа хватит одной кнопки «Войти через Google» или «Войти через Apple», '
+const HINT = 'Привяжите свой аккаунт — и на странице входа хватит одной кнопки «Войти через Google», '
   + 'без пароля. Аккаунт привязывается только к вам; по почте Tish никого не пускает. Отвязать можно в любой момент — '
   + 'входы через него на всех устройствах сразу закроются.'
 
 /**
- * «Вход через Google и Apple» в «Моём профиле» (ADR 0008 бэкенда): «Привязать Google», «Привязать Apple», «Отвязать».
- * Блока нет, если владелец ни одного не подключил, и внутри Telegram (окна провайдеров там не работают — привязать
+ * «Вход через Google» в «Моём профиле» (ADR 0008 бэкенда): «Привязать Google», «Отвязать».
+ * Блока нет, если владелец его не подключил, и внутри Telegram (окно Google там не работает — привязать
  * можно в браузере). Почта привязанного аккаунта — только на экране, не в консоли и не в localStorage.
  */
 export function ExternalLoginsSection() {
@@ -28,13 +28,12 @@ export function ExternalLoginsSection() {
   const config = useQuery({ queryKey: WEB_CONFIG_KEY, queryFn: webConfig, staleTime: Infinity, enabled: !inTelegram })
   if (inTelegram || !list.data?.length) return null
   return (
-    <section className="settings-group" aria-label="Вход через Google и Apple">
-      <h2>Вход через Google и Apple</h2>
+    <section className="settings-group" aria-label="Вход через Google">
+      <h2>Вход через Google</h2>
       <div className="card-block provider-card">
-        <p className="hint">Быстрый вход на сайте без пароля{' '}<HelpHint title="Вход через Google и Apple">{HINT}</HelpHint></p>
-        {list.data.map((identity) => (
-          <IdentityRow key={identity.provider} identity={identity}
-            clientId={identity.provider === 'google' ? config.data?.googleClientId : config.data?.appleClientId} />
+        <p className="hint">Быстрый вход на сайте без пароля{' '}<HelpHint title="Вход через Google">{HINT}</HelpHint></p>
+        {list.data.filter((identity) => identity.provider === 'google').map((identity) => (
+          <IdentityRow key={identity.provider} identity={identity} clientId={config.data?.googleClientId} />
         ))}
       </div>
     </section>
@@ -81,10 +80,8 @@ function IdentityRow({ identity, clientId }: { identity: Identity; clientId: str
               .then((ok) => ok && unlink.mutate())}>Отвязать</button>
         ) : !identity.available || !clientId ? null : !linking ? (
           <button type="button" className="btn" onClick={() => setLinking(true)}>Привязать {title}</button>
-        ) : provider === 'google' ? (
-          <GoogleButton clientId={clientId} text="continue_with" onToken={link} onError={setError} />
         ) : (
-          <AppleButton clientId={clientId} label="Продолжить с Apple" onToken={link} onError={setError} />
+          <GoogleButton clientId={clientId} text="continue_with" onToken={link} onError={setError} />
         )}
       </div>
     </div>

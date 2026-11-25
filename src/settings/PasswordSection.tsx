@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { notify } from '../lib/confirm'
 import { passwordProblem } from '../lib/password'
+import { USERNAME_RULES, usernameProblem } from '../lib/username'
 import { shortDate } from '../lib/time'
 import { CodeInput, ResendLink } from '../layout/CodeStep'
 import { sentText, useCountdown } from '../lib/otp'
@@ -14,13 +15,14 @@ import { HelpHint } from '../help/HelpHint'
 type Mode = 'current' | 'code'
 
 /** Сотруднику с Telegram: пароль — только запасной вход по номеру. */
-const OPTIONAL_HINT = 'Необязательно. Пароль нужен, только если вы входите без Telegram — по номеру телефона.'
+const OPTIONAL_HINT = 'Необязательно. Логин и пароль нужны, только если вы входите без Telegram — по логину или номеру телефона.'
 
 /** Путь «по коду»: «Получить код» → код → «Подтвердить» (пропуск) → новый пароль. */
 type CodeStep = 'send' | 'code' | 'new'
 
 /**
- * «Пароль и вход» внизу «Моего профиля» — у всех, у кого указан телефон. Сотрудник с Telegram входит через
+ * «Логин и пароль» внизу «Моего профиля» — у всех, у кого указан телефон. Сверху — логин (V264 бэкенда): его можно
+ * вписать на странице входа вместо номера («Логин или телефон»), ниже — пароль. Сотрудник с Telegram входит через
  * Telegram (на сайте — «Войти через Telegram» и подтвердить в боте), пароль ему не нужен: блок — с тихой
  * подписью «Необязательно…», кнопка неброская. Без Telegram пароль — его вход по номеру.
  * Сменить — по текущему паролю. Не помню текущий или пароля ещё нет — «Получить код» (сервер шлёт в
@@ -102,7 +104,7 @@ export function PasswordSection() {
   const anyCode = byTelegram || Boolean(s?.sms)
 
   const submit = () => {
-    const problem = passwordProblem(fresh.password, fresh.repeat, '')
+    const problem = passwordProblem(fresh.password, fresh.repeat, '', state.data?.username ?? '')
     setError(problem)
     if (!problem) save.mutate()
   }
@@ -142,18 +144,19 @@ export function PasswordSection() {
   const optional = Boolean(s.telegram) && !s.temporary
 
   return (
-    <section className="settings-group" aria-label="Пароль и вход">
-      <h2>Пароль и вход</h2>
+    <section className="settings-group" aria-label="Логин и пароль">
+      <h2>Логин и пароль</h2>
       <div className="card-block">
+        <UsernameLine username={s.username ?? null} />
         {!open ? (
           <div className="setting-line">
             <div className="setting-what">
               {optional ? (
-                <p className="hint setting-sub">Необязательно — только для входа по номеру{s.passwordSet && s.setAt ? ` · задан ${shortDate(s.setAt)}` : ''}{' '}
+                <p className="hint setting-sub">Пароль необязателен — только для входа без Telegram{s.passwordSet && s.setAt ? ` · задан ${shortDate(s.setAt)}` : ''}{' '}
                   <HelpHint title="Пароль">{OPTIONAL_HINT} С Telegram входите кнопкой «Войти через Telegram» — пароль не спросим.</HelpHint></p>
               ) : (
                 <p>{s.passwordSet
-                  ? s.temporary ? 'Сейчас пароль временный — придумайте свой.' : `Вы входите по номеру и паролю.${s.setAt ? ` Пароль задан ${shortDate(s.setAt)}.` : ''}`
+                  ? s.temporary ? 'Сейчас пароль временный — придумайте свой.' : `Вы входите по ${s.username ? 'логину или номеру' : 'номеру'} и паролю.${s.setAt ? ` Пароль задан ${shortDate(s.setAt)}.` : ''}`
                   : 'Пароль ещё не задан — задайте его по коду.'}</p>
               )}
             </div>
@@ -174,7 +177,7 @@ export function PasswordSection() {
               </>
             ) : step === 'send' ? (
               <>
-                <p className="hint">{!anyCode ? 'Коды по SMS пока не подключены. Попросите руководителя клиники задать временный пароль.'
+                <p className="hint">{!anyCode ? 'Коды по SMS пока не подключены. Попросите руководителя клиники задать логин и временный пароль.'
                   : `${byTelegram && s.sms ? 'Пришлём код: бесплатно в Telegram от бота клиники, если номер привязан к вашему Telegram, иначе — SMS на ваш номер.'
                     : byTelegram ? 'Пришлём код в Telegram от бота клиники.' : 'Пришлём код по SMS на ваш номер.'} Подтвердите его — и придумаете новый пароль.`}</p>
                 {anyCode && (
@@ -196,7 +199,7 @@ export function PasswordSection() {
               <p className="hint">Код подтверждён. Придумайте новый пароль.</p>
             )}
             {passwordStep && (
-              <NewPasswordFields password={fresh.password} repeat={fresh.repeat} phone=""
+              <NewPasswordFields password={fresh.password} repeat={fresh.repeat} phone="" login={s.username ?? ''}
                 onPassword={(v) => setFresh({ ...fresh, password: v })} onRepeat={(v) => setFresh({ ...fresh, repeat: v })} />
             )}
             {shownError && <p className="error" role="alert">{shownError}</p>}
@@ -215,5 +218,58 @@ export function PasswordSection() {
         )}
       </div>
     </section>
+  )
+}
+
+/**
+ * Строка «Логин» в «Логин и пароль»: показать, задать, сменить или убрать (пустое поле). Логин не секрет, но и не для
+ * чужих глаз: только на экране — не в адресе, не в консоли и не в localStorage. Занят — 409 username-taken, текст сервера
+ * под полем; формат — 422 на поле username.
+ */
+function UsernameLine({ username }: { username: string | null }) {
+  const client = useQueryClient()
+  const [open, setOpen] = useState(false)
+  const [value, setValue] = useState('')
+  const [error, setError] = useState('')
+  const save = useMutation<Schemas['PasswordControllerUsernameState'], ApiError>({
+    mutationFn: () => unwrap(api.PUT('/api/me/username', { body: { username: value.trim() } })),
+    onSuccess: (r) => {
+      setOpen(false)
+      client.setQueryData<Schemas['PasswordControllerPasswordState']>(['me-password'], (old) => (old ? { ...old, username: r.username ?? undefined } : old))
+      void notify(r.username ? `Логин сохранён: ${r.username}. На странице входа впишите его в «Логин или телефон».` : 'Логин убран. Входите по номеру.')
+    },
+  })
+  const submit = () => {
+    const problem = usernameProblem(value)
+    setError(problem)
+    if (!problem) save.mutate()
+  }
+  if (!open) {
+    return (
+      <div className="setting-line">
+        <div className="setting-what">
+          <p>{username ? <>Логин: <b>{username}</b></> : 'Логин не задан'}</p>
+          <p className="hint setting-sub">{username ? 'Входите логином или номером — как удобнее.' : 'Можно входить не по номеру, а по короткому логину, например «aigul».'}</p>
+        </div>
+        <button type="button" className="btn" onClick={() => { save.reset(); setError(''); setValue(username ?? ''); setOpen(true) }}>
+          {username ? 'Сменить логин' : 'Задать логин'}</button>
+      </div>
+    )
+  }
+  const shownError = error || save.error?.fieldErrors.username || save.error?.message
+  return (
+    <form className="form narrow" aria-label="Логин" onSubmit={(e) => { e.preventDefault(); submit() }}>
+      <label className="field"><span>Логин</span>
+        <input type="text" value={value} onChange={(e) => setValue(e.target.value)} autoComplete="username" autoCapitalize="off"
+          autoCorrect="off" spellCheck={false} maxLength={32} autoFocus />
+      </label>
+      <p className="hint small">{USERNAME_RULES}{username ? ' Очистите поле, чтобы убрать логин.' : ''}</p>
+      {shownError && <p className="error" role="alert">{shownError}</p>}
+      <div className="actions">
+        <button type="submit" className="btn primary" disabled={save.isPending || (!value.trim() && !username)}>
+          {save.isPending ? <><Spinner />Сохраняем…</> : 'Сохранить'}</button>
+        <button type="button" className="btn ghost" onClick={() => setOpen(false)}>Отмена</button>
+      </div>
+    </form>
   )
 }

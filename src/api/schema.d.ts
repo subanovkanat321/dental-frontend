@@ -1124,6 +1124,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/username": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["username"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me/tour": {
         parameters: {
             query?: never;
@@ -10720,6 +10736,7 @@ export interface components {
         };
         PasswordControllerTemporaryPassword: {
             password?: string;
+            username?: string;
         };
         StaffMembersControllerRoleChange: {
             /** @enum {string} */
@@ -10735,6 +10752,12 @@ export interface components {
         };
         StaffMembersControllerAssistantDoctors: {
             doctorIds?: number[];
+        };
+        PasswordControllerUsernameChange: {
+            username?: string;
+        };
+        PasswordControllerUsernameState: {
+            username?: string;
         };
         StaffTourTourView: {
             /** Format: date-time */
@@ -11796,6 +11819,7 @@ export interface components {
         PhoneLoginControllerPasswordLogin: {
             phone?: string;
             password?: string;
+            login?: string;
         };
         PhoneLoginControllerNewPassword: {
             token?: string;
@@ -12829,7 +12853,7 @@ export interface components {
         };
         ExternalLoginControllerIdentityView: {
             /** @enum {string} */
-            provider: "google" | "apple";
+            provider: "google";
             available: boolean;
             linked: boolean;
             email?: string;
@@ -13467,7 +13491,6 @@ export interface components {
             telegramLogin: boolean;
             mailCode: boolean;
             googleClientId?: string;
-            appleClientId?: string;
         };
         DirectoryControllerClinic: {
             name?: string;
@@ -15052,6 +15075,7 @@ export interface components {
             sms: boolean;
             telegram: boolean;
             telegramCode: boolean;
+            username?: string;
         };
         PasswordControllerCodePending: {
             pending: boolean;
@@ -18453,6 +18477,30 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    username: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordControllerUsernameChange"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PasswordControllerUsernameState"];
+                };
             };
         };
     };

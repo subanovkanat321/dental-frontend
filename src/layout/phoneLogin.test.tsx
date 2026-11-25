@@ -7,7 +7,7 @@ import { server } from '../test/server'
 import { waitForSlow } from '../test/wait'
 
 /** Номер и пароли — вымышленные. */
-const WRONG = 'Неверный номер или пароль. Пароль ещё не задан или забыли — нажмите «Забыли пароль? / Первый вход»'
+const WRONG = 'Неверный логин, номер или пароль. Пароль ещё не задан или забыли — нажмите «Забыли пароль? / Первый вход»'
 
 const ORPHAN = 'Этот номер больше не привязан к клинике. Войдите через Telegram или зарегистрируйте клинику: tish.kg/start'
 
@@ -65,13 +65,13 @@ function backend(config: { sms?: boolean; password?: boolean; telegram?: boolean
   return posts
 }
 
-test('страница входа — сразу «номер + пароль», кнопки Telegram нет; номер и пароль только в теле запроса', async () => {
+test('страница входа — сразу «логин или телефон + пароль», кнопки Telegram нет; номер и пароль только в теле запроса', async () => {
   const posts = backend()
   const user = userEvent.setup()
   renderApp()
-  await user.type(await screen.findByRole('textbox', { name: 'Номер телефона' }), '0700 000 031')
+  await user.type(await screen.findByRole('textbox', { name: 'Логин или телефон' }), '0700 000 031')
   expect(screen.queryByRole('button', { name: 'Войти через Telegram' })).not.toBeInTheDocument()
-  expect(screen.getByText(/Нет пароля или забыли\? Нажмите «Забыли пароль\? \/ Первый вход» — код придёт по SMS/)).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Забыли пароль? / Первый вход' })).toBeInTheDocument()
   const password = screen.getByLabelText('Пароль')
   expect(password).toHaveAttribute('type', 'password')
   expect(password).toHaveAttribute('autocomplete', 'current-password')
@@ -84,7 +84,7 @@ test('страница входа — сразу «номер + пароль», 
   await user.click(screen.getByRole('button', { name: 'Войти' }))
 
   expect(await screen.findByRole('navigation', { name: 'Разделы' })).toBeInTheDocument()
-  expect(posts).toEqual([{ path: 'password', body: { phone: '0700000031', password: 'Тишина2026' }, header: '1' }])
+  expect(posts).toEqual([{ path: 'password', body: { login: '0700000031', password: 'Тишина2026' }, header: '1' }])
   expect(window.location.pathname).toBe('/')
   expect(window.location.href).not.toContain('700')
   expect(window.location.href).not.toContain('Тишина')
@@ -92,11 +92,25 @@ test('страница входа — сразу «номер + пароль», 
   expect(JSON.stringify({ ...localStorage })).not.toContain('700')
 })
 
+test('вход по логину: логин уходит как есть, без «+996»; не в адресе и не в localStorage', async () => {
+  const posts = backend()
+  const user = userEvent.setup()
+  renderApp()
+  await user.type(await screen.findByRole('textbox', { name: 'Логин или телефон' }), 'Aigul.K')
+  await user.type(screen.getByLabelText('Пароль'), 'Тишина2026')
+  await user.click(screen.getByRole('button', { name: 'Войти' }))
+
+  expect(await screen.findByRole('navigation', { name: 'Разделы' })).toBeInTheDocument()
+  expect(posts).toEqual([{ path: 'password', body: { login: 'Aigul.K', password: 'Тишина2026' }, header: '1' }])
+  expect(window.location.href).not.toContain('Aigul')
+  expect(JSON.stringify({ ...localStorage })).not.toContain('Aigul')
+})
+
 test('«Забыли пароль? / Первый вход» → одна кнопка «Получить код» → код → «Подтвердить» → только потом пароль → вход', async () => {
   const posts = backend()
   const user = userEvent.setup()
   renderApp()
-  await user.type(await screen.findByRole('textbox', { name: 'Номер телефона' }), '700000031')
+  await user.type(await screen.findByRole('textbox', { name: 'Логин или телефон' }), '700000031')
   await user.type(screen.getByLabelText('Пароль'), 'не-тот-пароль')
   await user.click(screen.getByRole('button', { name: 'Войти' }))
   expect(await screen.findByRole('alert')).toHaveTextContent(WRONG)
@@ -137,7 +151,7 @@ test('«Забыли пароль? / Первый вход» → одна кно
   // Правила пароля — до отправки
   await user.type(field, '12345678')
   await user.click(save)
-  expect(screen.getByRole('alert')).toHaveTextContent('только из цифр')
+  expect(screen.getByRole('alert')).toHaveTextContent('Слишком простой пароль')
   await user.clear(field)
   await user.type(field, '+996700000031')
   await user.click(save)
@@ -240,7 +254,7 @@ test('429 — блок: текст сервера и заметная кнопк
   backend()
   const user = userEvent.setup()
   renderApp()
-  await user.type(await screen.findByRole('textbox', { name: 'Номер телефона' }), '700000031')
+  await user.type(await screen.findByRole('textbox', { name: 'Логин или телефон' }), '700000031')
   await user.type(screen.getByLabelText('Пароль'), 'много')
   await user.click(screen.getByRole('button', { name: 'Войти' }))
   expect(await screen.findByRole('alert')).toHaveTextContent('Подождите 15 минут')
@@ -251,7 +265,7 @@ test('409 «номер больше не привязан к клинике» (�
   backend()
   const user = userEvent.setup()
   renderApp()
-  await user.type(await screen.findByRole('textbox', { name: 'Номер телефона' }), '700000031')
+  await user.type(await screen.findByRole('textbox', { name: 'Логин или телефон' }), '700000031')
   await user.type(screen.getByLabelText('Пароль'), 'сирота')
   await user.click(screen.getByRole('button', { name: 'Войти' }))
   expect(await screen.findByRole('alert')).toHaveTextContent(ORPHAN)
@@ -265,7 +279,7 @@ test('временный пароль от админа → сразу «При�
   }))
   const user = userEvent.setup()
   renderApp()
-  await user.type(await screen.findByRole('textbox', { name: 'Номер телефона' }), '700000031')
+  await user.type(await screen.findByRole('textbox', { name: 'Логин или телефон' }), '700000031')
   await user.type(screen.getByLabelText('Пароль'), 'Временный-1')
   await user.click(screen.getByRole('button', { name: 'Войти' }))
 
@@ -301,7 +315,7 @@ test('ни Telegram-кодов, ни SMS — подсказка про врем�
   renderApp()
   expect(await screen.findByLabelText('Пароль')).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: /Забыли пароль/ })).not.toBeInTheDocument()
-  expect(screen.getByText(/задать временный пароль/)).toBeInTheDocument()
+  expect(screen.getByText(/задать логин и временный пароль/)).toBeInTheDocument()
   expect(screen.queryByText(/код придёт в Telegram/)).not.toBeInTheDocument()
 })
 

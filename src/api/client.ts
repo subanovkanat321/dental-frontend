@@ -260,12 +260,14 @@ export async function phoneLogin(phone: string, code: string): Promise<SetupToke
 }
 
 /**
- * Вход «номер + пароль». null — вошли (cookie-сессия); пропуск — пароль был временный, придумать свой.
- * Неверный номер/пароль или пароля нет — 401 (одинаково: сервер не говорит, есть ли номер); 429 — блок 15 минут;
- * 409 phone-orphan — пароль верный, но клинику удалили: текст сервера «Войдите через Telegram или зарегистрируйте клинику».
+ * Вход «логин или телефон + пароль» (V264 бэкенда). login — логин (есть латинская буква) или номер в виде для запроса
+ * (phoneFromInput). null — вошли (cookie-сессия); пропуск — пароль был временный, придумать свой.
+ * Неверный логин/номер/пароль или пароля нет — 401 (одинаково: сервер не говорит, есть ли такой логин или номер);
+ * 429 — блок 15 минут; 409 phone-orphan — пароль верный, но клинику удалили: текст сервера «Войдите через Telegram или
+ * зарегистрируйте клинику». Логин и пароль — только в теле запроса.
  */
-export function passwordLogin(phone: string, password: string): Promise<SetupToken | null> {
-  return webPost<SetupToken>('/web/login/phone/password', { phone, password })
+export function passwordLogin(login: string, password: string): Promise<SetupToken | null> {
+  return webPost<SetupToken>('/web/login/phone/password', { login, password })
 }
 
 /** «Придумайте пароль»: пропуск + пароль → вход. Слабый пароль — 422 (поле password), пропуск устарел — 401. */
@@ -326,7 +328,7 @@ export async function forgetTelegramLogin(): Promise<void> {
 }
 
 /**
- * «Войти через Google / Apple» (ADR 0008 бэкенда): одноразовый nonce — его передаём провайдеру, он вернётся внутри
+ * «Войти через Google» (ADR 0008 бэкенда): одноразовый nonce — его передаём провайдеру, он вернётся внутри
  * подписанного ID-токена. Действует 10 минут и один раз: после каждой попытки берём новый.
  */
 export async function oauthNonce(): Promise<string> {
@@ -339,7 +341,7 @@ export async function oauthNonce(): Promise<string> {
  * Вход ID-токеном провайдера: 204 — вошли (cookie-сессия). 401 — токен не принят или аккаунт не привязан
  * (code identity-not-linked, текст сервера — где привязать); 403 — сотрудника нет ни в одной клинике.
  */
-export async function oauthLogin(provider: 'google' | 'apple', idToken: string): Promise<void> {
+export async function oauthLogin(provider: 'google', idToken: string): Promise<void> {
   await webPost(`/web/login/oauth/${provider}`, { idToken })
 }
 

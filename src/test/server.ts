@@ -26,7 +26,7 @@ export const server = setupServer(
   // Отчёты об ошибках приложения (lib/clientErrors): сервер всегда отвечает 204
   http.post('*/web/client-error', () => new HttpResponse(null, { status: 204 })),
   http.get('*/api/supplies', () => HttpResponse.json([])),
-  // Вход через Google и Apple (ADR 0008 бэкенда): по умолчанию не подключён — блока в «Моём профиле» нет
+  // Вход через Google (ADR 0008 бэкенда): по умолчанию не подключён — блока в «Моём профиле» нет
   http.get('*/api/me/identities', () => HttpResponse.json([] satisfies Schemas['ExternalLoginControllerIdentityView'][])),
   // WhatsApp через Tish (V256): по умолчанию не подключён — напоминания как раньше (бот или WhatsApp вручную)
   http.get('*/api/clinic/whatsapp', () => HttpResponse.json({ available: false, connected: false, confirmation: true, reminder: true, soon: true,
@@ -93,7 +93,7 @@ export const server = setupServer(
   http.get('*/api/platform/content/settings', () => HttpResponse.json({ reelsAuto: false, storiesAuto: false } satisfies Schemas['ContentSettingsSettings'])),
   // Уведомления в приложение: по умолчанию на сервере не включены — блок в «Настройках» скрыт
   http.get('*/api/push', () => HttpResponse.json({ enabled: false, channel: 'TELEGRAM', devices: [] })),
-  // «Пароль и вход»: по умолчанию вошли через Telegram — блока нет
+  // «Логин и пароль»: по умолчанию вошли через Telegram — блока нет
   http.get('*/api/me/name', () => HttpResponse.json({ fullName: 'Айпери', editable: true } satisfies Schemas['StaffMembersOwnName'])),
   http.get('*/api/me/password', () => HttpResponse.json({ phoneLogin: false, passwordSet: false, temporary: false, sms: false, telegram: false, telegramCode: false } satisfies Schemas['PasswordControllerPasswordState'])),
   // «Мой профиль → Почта»: по умолчанию почта на сервере не настроена — блока нет (почту проверяет profileEmail.test)
@@ -105,7 +105,7 @@ export const server = setupServer(
   http.put('*/api/me/tour', () => HttpResponse.json({ seenAt: '2026-11-01T06:00:00Z' } satisfies Schemas['StaffTourTourView'])),
   // «Совет дня»: по умолчанию сегодня уже показали — карточки нет (свои тесты — tips/tips.test.tsx)
   http.get('*/api/me/tips', () => HttpResponse.json({ ready: false, shownToday: true, seen: [], off: false, groupShows: 0, groupDone: false, groupDue: false, used: [] } satisfies Schemas['StaffTipsTipsView'])),
-  // Код на свой номер не ждём (шаг «Код» в «Пароль и вход» после перезагрузки — свои тесты)
+  // Код на свой номер не ждём (шаг «Код» в «Логин и пароль» после перезагрузки — свои тесты)
   http.get('*/api/me/password/code', () => HttpResponse.json({ pending: false, secondsLeft: 0, resendSeconds: 0 } satisfies Schemas['PasswordControllerCodePending'])),
   // Экран входа: незаконченного входа нет (шаг после перезагрузки — свои тесты)
   http.get('*/web/login/phone/pending', () => new HttpResponse(null, { status: 204 })),
