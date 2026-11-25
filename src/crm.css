@@ -3612,3 +3612,16 @@ button.history-link:hover .history-text { color: var(--link); }
 .wa-clinics > li:last-child { border-bottom: none; }
 .wa-clinics .tone-ok { color: var(--ok-ink); } .wa-clinics .tone-bad { color: var(--bad-ink); } .wa-clinics .tone-wait { color: var(--wait-ink); }
 .wa-url { word-break: break-all; font-size: 12px; }
+
+/* «Настройки», «Клиника», «Я» на компьютере — одной колонкой сверху вниз, как лендинг, на всю ширину (владелец
+   2026-11-25: «не разделяй экран на два… просто сверху вниз на всю страницу»). Отменяет сетку «две карточки рядом»
+   выше (и .page-grid внутри пункта). «Помощь» — как была */
+@media (min-width: 761px) {
+  .settings-item:not([data-host=help]) :is(section, div, form):has(> :is(.card-block, .settings-group) + :is(.card-block, .settings-group)),
+  .settings-item:not([data-host=help]) .page-grid {
+    display: grid !important; grid-template-columns: minmax(0, 1fr) !important; gap: 16px; }
+  .settings-item:not([data-host=help]) :is(section, div, form):has(> :is(.card-block, .settings-group) + :is(.card-block, .settings-group)) > *,
+  .settings-item:not([data-host=help]) .page-grid > * { grid-column: 1 / -1 !important; }
+  /* «О клинике»: две колонки внутри формы — тоже одной, сверху вниз */
+  .settings-item .about-grid { grid-template-columns: minmax(0, 1fr); }
+}
