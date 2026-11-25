@@ -116,3 +116,17 @@ test('карточка старой отмены (до записи «кто») 
   // «Записан» (восстановить) — «Записан» в списке пилюли статуса
   expect(statusMenu(panel)).toHaveAccessibleName('Статус: Отменён')
 })
+
+test('отменил и записался снова — у строки «↻ записан снова · 16:00», отменённая запись остаётся историей', async () => {
+  screenWidth(false)
+  const again = appointment(15, 1, '16:00', 'Нурлан К.', { patient: { ...byStaff.patient } })
+  backend([appointment(10, 1, '10:00', 'Бакыт М.'), byStaff, again])
+  renderApp()
+  const column = await screen.findByRole('group', { name: 'Айгерим Садыкова' })
+  expect(await within(column).findByRole('button', { name: /16:00–16:30, Нурлан К\./ })).toBeInTheDocument()
+  await userEvent.click(screen.getByRole('button', { name: /Отменено: 1/ }))
+  const row = within(screen.getByRole('list', { name: 'Отменённые записи' })).getByRole('button')
+  expect(row).toHaveTextContent('↻ записан снова · 16:00')
+  // Другой пациент в отменённых — без пометки
+  expect(within(screen.getByRole('list', { name: 'Отменённые записи' })).getAllByRole('button')).toHaveLength(1)
+})

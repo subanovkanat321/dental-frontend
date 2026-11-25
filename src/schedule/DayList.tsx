@@ -184,7 +184,7 @@ export function DayList({ me, doctors, date, onDate, onOpen, onQuick, onNew, onN
           : items.length === 0 ? (
             <>
               <EmptyState title={emptyDayText(date, today)}>{offText}</EmptyState>
-              <CancelledList items={cancelled} onOpen={onOpen} selectedId={selectedId} doctorName={many ? (id) => nameOf.get(id) ?? '' : undefined} />
+              <CancelledList items={cancelled} others={loaded} onOpen={onOpen} selectedId={selectedId} doctorName={many ? (id) => nameOf.get(id) ?? '' : undefined} />
             </>
           ) : (() => {
             const blocks = groups.map((g) => {
@@ -214,7 +214,7 @@ export function DayList({ me, doctors, date, onDate, onOpen, onQuick, onNew, onN
                       ))}
                     {g.items.length === 0 && <li className="hint day-empty">Нет записей</li>}
                   </ul>
-                  <CancelledList items={cancelled.filter((a) => a.doctorId === g.doctor.id)} onOpen={onOpen} selectedId={selectedId} />
+                  <CancelledList items={cancelled.filter((a) => a.doctorId === g.doctor.id)} others={loaded} onOpen={onOpen} selectedId={selectedId} />
                 </>
               )
               // «Все врачи» — у каждого врача свой блок; имя прилипает сверху при прокрутке
