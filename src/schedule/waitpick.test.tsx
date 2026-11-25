@@ -113,3 +113,17 @@ test('никто из листа не помещается — блока нет
   expect(within(panel).queryByRole('region', { name: 'Подходит из листа ожидания' })).not.toBeInTheDocument()
   expect(panel).not.toHaveTextContent(/Чынара|Дина/)
 })
+
+test('телефон: окно для листа ожидания — «🔔 2 из листа» у свободного времени (не плашкой сверху); нажать — «Окна» с «Предложить»', async () => {
+  backend([aigul, bakyt])
+  const matches = [aigul, bakyt].map((e) => ({ entryId: e.id, patient: e.patient!, startAt: at('10:00'), durationMinutes: e.durationMinutes, declined: false }))
+  server.use(http.get('*/api/waitlist/windows', () => HttpResponse.json([{ doctorId: 1, start: at('10:00'), end: at('12:00'), freed: false, matches }])))
+  renderApp()
+  const bell = await screen.findByRole('button', { name: 'Лист ожидания: 2 подходят на 10:00 — предложить' })
+  expect(bell).toHaveTextContent('🔔 2 из листа')
+  // Окно уже видно в списке дня — плашки «Лист ожидания: 1 окно» сверху нет
+  expect(screen.queryByRole('button', { name: /Свободные окна/ })).not.toBeInTheDocument()
+  await userEvent.click(bell)
+  const dialog = await screen.findByRole('dialog', { name: '🔔 Окна для листа ожидания' })
+  expect(within(dialog).getByRole('region', { name: 'Свободно 10:00–12:00' })).toBeInTheDocument()
+})

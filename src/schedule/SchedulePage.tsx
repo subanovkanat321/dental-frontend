@@ -383,6 +383,10 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
   const windowsDay = date === today || date === addDays(today, 1)
   const freeWindows = useFreeWindows(windowsDay).data ?? []
   const shownWindows = windowsDay ? freeWindows : []
+  // Телефон («День» списком): окна этого дня у врачей на экране — пометкой «🔔 2 из листа» у свободного времени; плашка
+  // сверху — только про остальные (завтра, другие врачи). Владелец 2026-11-25: «5 окон» отдельной строкой непонятно
+  const inlineWindows = shownWindows.filter((w) => dateOf(w.start) === date && (dayList ?? []).some((d) => d.id === w.doctorId))
+  const otherWindows = shownWindows.filter((w) => !inlineWindows.includes(w))
   const greets = Boolean(me.reception || me.admin)
   const birthdayRows = useBirthdays(greets).data?.items
   const shownBirthdays = date === today && greets ? birthdayRows : undefined
@@ -564,11 +568,11 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
           <>
             {/* Телефон: только то, что нужно сделать сейчас, — заявки и оплата на кассе (и «мой день» врача). «Ждём ответа» видно в строках
                 дня, «склад: мало» — в «Складе» и сообщением бота: на главной это было лишнее */}
-            {(requests.length > 0 || (toPay.data?.length ?? 0) > 0 || earnings.data || overdueTasks > 0 || shownWindows.length > 0
+            {(requests.length > 0 || (toPay.data?.length ?? 0) > 0 || earnings.data || overdueTasks > 0 || otherWindows.length > 0
               || (shownBirthdays?.length ?? 0) > 0) && (
               <div className="today-strip compact" role="group" aria-label="Требует внимания">
                 {tasksChip(true)}
-                <FreeWindowsChip compact windows={shownWindows} onOpen={() => setWindowsOpen(true)} />
+                <FreeWindowsChip compact windows={otherWindows} onOpen={() => setWindowsOpen(true)} />
                 <BirthdaysChip compact rows={shownBirthdays} onOpen={() => setBirthdaysOpen(true)} />
                 {requests.length > 0 && (
                   <button type="button" className="stat s-request" onClick={firstOf(requests)}>
@@ -652,7 +656,8 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
             doctorsNote={!listMode && (partial || offHidden.length) ? <>{partial && <span className="shown-of">{partial.replace(/^./, (c) => c.toUpperCase())}</span>}{partial && offHidden.length ? ' · ' : ''}{offHint}</> : undefined}
             onNewHere={bookable.length > 0 && !listMode ? newHere : undefined}
             onOpen={(a) => setSide({ kind: 'appointment', id: a.id, fallback: a })} onQuick={openQuick}
-            onNew={(doctorId, minutes) => setSide({ kind: 'new', slot: { doctorId, date, minutes } })} />
+            onNew={(doctorId, minutes) => setSide({ kind: 'new', slot: { doctorId, date, minutes } })}
+            windows={inlineWindows} onWindows={() => setWindowsOpen(true)} />
         ) : monthMode ? (
           <MonthGrid month={month} today={today} selected={date} data={monthData} compact={narrow}
             onOpenDay={(day) => { setDate(day); setMode('day') }} />

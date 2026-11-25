@@ -682,6 +682,8 @@ details.agreement-box { max-height: none; }
 .btn.date-today { flex: none; min-height: 52px; padding: 0 12px; border-radius: 12px; font-size: .95rem; }
 .date-caret { font-size: .8em; color: var(--link); }
 .date-step:disabled { opacity: .35; cursor: default; }
+/* Шапка дня на телефоне — компактно (2026-11-25): дата в одну строку с «‹ ›» и круглой «＋» */
+.date-new { flex: none; width: 52px; min-height: 0; height: 52px; padding: 0; justify-content: center; border-radius: 50%; font: 600 1.7rem/1 var(--display); }
 /* «📅 другой день»: прозрачное поле даты поверх — нажатие открывает календарь */
 .day-actions { display: flex; gap: 8px; }
 .day-actions .btn { flex: 1 1 0; min-height: 44px; justify-content: center; }
@@ -713,6 +715,14 @@ details.agreement-box { max-height: none; }
 .day-list .row.free .row-button { grid-template-columns: 52px 1fr auto; }
 .day-list .row.free .plus { color: var(--accent); font-weight: 700; }
 .day-list .row.free.readonly { padding: 10px; gap: 8px; }
+/* «🔔 2 из листа» у свободного времени (лист ожидания): справа, перед «＋» — отдельной кнопкой */
+.day-list .row.free.with-waiting { flex-wrap: wrap; row-gap: 0; }
+.day-list .row.free.with-waiting > .row-button { flex: 1 1 100%; }
+/* Под «свободно до …», по колонке текста — строка не сжимается */
+.free-waiting { flex-shrink: 0; align-self: flex-start; margin: -4px 0 10px 70px; min-height: 36px; padding: 4px 12px; border: 0; border-radius: 999px;
+  background: var(--req-bg); color: var(--req-ink); font: inherit; font-size: .88rem; font-weight: 600; white-space: nowrap; cursor: pointer; }
+.doctor-columns .free-waiting { margin: 0 6px 6px; min-height: 32px; padding: 2px 10px; font-size: .8rem; }
+.doctor-columns .row.free.with-waiting { flex-wrap: wrap; }
 .day-list .row.pause { padding: 10px; gap: 8px; background: var(--sunken); color: var(--hint); }
 .remind-quick { flex: none; align-self: center; width: 44px; height: 44px; margin-right: 6px; border: 1px solid var(--line-strong); border-radius: 50%;
   background: var(--card); color: var(--ok-ink); font: 700 .78rem var(--display); cursor: pointer; }

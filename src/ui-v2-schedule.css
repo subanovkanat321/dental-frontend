@@ -131,21 +131,26 @@
 @media (max-width: 760px) {
   /* Чей день: врач — белой карточкой, календарь — круглой кнопкой рядом */
   .ui-v2 .pick-row { gap: 10px; align-items: center; }
-  .ui-v2 .pick-current { min-height: 64px; border: 0; border-radius: var(--v2-r-card); background: var(--v2-card); box-shadow: var(--v2-shadow); padding: 10px 16px 10px 12px; }
+  .ui-v2 .pick-current { min-height: 52px; border: 0; border-radius: var(--v2-r-card); background: var(--v2-card); box-shadow: var(--v2-shadow); padding: 6px 14px 6px 8px; }
   .ui-v2 .pick-current[aria-expanded=true] { box-shadow: inset 0 0 0 2px var(--accent), var(--v2-shadow); }
   .ui-v2 .pick-text strong { color: var(--v2-ink); font-size: var(--v2-row-title); }
-  .ui-v2 .pick-calendar { width: 52px; height: 52px; border: 0; border-radius: 50%; background: var(--v2-card); box-shadow: var(--v2-shadow); }
+  .ui-v2 .pick-calendar { width: 48px; height: 48px; border: 0; border-radius: 50%; background: var(--v2-card); box-shadow: var(--v2-shadow); }
   .ui-v2 .pick-list { border: 0; border-radius: var(--v2-r-card); box-shadow: var(--v2-shadow-float); }
 
   /* Дата: крупно по центру, без рамки; стрелки — круглые белые кнопки 48px */
-  .ui-v2 .date-bar { gap: 10px; padding: 8px 0 4px; }
-  .ui-v2 .date-step { width: 48px; height: 48px; border: 0; border-radius: 50%; background: var(--v2-card); box-shadow: var(--v2-shadow); color: var(--v2-ink); font-size: 1.7rem; }
+  .ui-v2 .date-bar { gap: 8px; padding: 6px 0 2px; }
+  .ui-v2 .date-step { width: 44px; height: 44px; border: 0; border-radius: 50%; background: var(--v2-card); box-shadow: var(--v2-shadow); color: var(--v2-ink); font-size: 1.7rem; }
   .ui-v2 .date-step:active { background: var(--sunken); }
   .ui-v2 .date-pick { padding: 2px 6px; border: 0; background: none; }
-  .ui-v2 .date-pick .date-main { color: var(--v2-ink); font: 700 1.75rem / 1.15 var(--display); letter-spacing: -.02em; }
+  .ui-v2 .date-pick .date-main { color: var(--v2-ink); font: 700 1.3rem / 1.15 var(--display); letter-spacing: -.02em; }
   .ui-v2 .date-pick .date-sub { color: var(--hint); font-size: var(--v2-row-sub); }
   .ui-v2 .btn.date-today { min-height: 48px; border: 0; border-radius: var(--v2-r-pill); background: var(--v2-card); box-shadow: var(--v2-shadow); }
   .ui-v2 .day-actions .btn { min-height: 52px; }
+  .ui-v2 .date-new { width: 48px; height: 48px; box-shadow: var(--v2-shadow-float); }
+  /* Выбор врача — одной строкой: аватар меньше */
+  .ui-v2 .pick-current .pick-avatar { width: 36px; height: 36px; font-size: .9rem; }
+  /* «5 записей сегодня» в кнопке не показываем — имя целиком важнее; число записей видно в списке врачей и в дне */
+  .ui-v2 .pick-current .pick-text .hint { display: none; }
 
   /* Строки дня — 17px имя, время моноширинно; свободное — пунктиром без тени */
   .ui-v2 .day-list .rows { gap: 8px; }
@@ -154,7 +159,7 @@
   .ui-v2 .day-list .row .name { font-size: var(--v2-row-title); }
   .ui-v2 .day-list .row .state, .ui-v2 .day-list .row .row-note { font-size: .88rem; }
   .ui-v2 .day-list .row.pause { padding: 12px 14px; }
-  .ui-v2 .today-strip.compact .stat { min-height: 36px; padding: 4px 14px; }
+  .ui-v2 .today-strip.compact .stat { min-height: 34px; padding: 3px 11px; font-size: .8rem; }
 
   /* Карточка на весь экран: шапка прилипает — полупрозрачный фон с размытием, круглые кнопки 44px */
   .ui-v2 .panel:is(.appt-card, .patient-card) { gap: 12px; padding: 14px 16px calc(20px + env(safe-area-inset-bottom)); border-radius: 0; box-shadow: none; }
