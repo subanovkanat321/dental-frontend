@@ -7,25 +7,11 @@ import { contactPhone } from '../lib/guardian'
 import { freeSlotText, whatsappUrl } from '../lib/texts'
 import { openLink } from '../lib/telegram'
 import { plural } from '../lib/plural'
-import { dateOf, minutesOf, shortDate, timeOf, todayIn } from '../lib/time'
+import { dateOf, minutesOf, shortDate, timeOf } from '../lib/time'
 import { AttentionDialog } from './AttentionDialog'
 import { fitsText, useFreeWindows, waitingCount, windowTitle, WINDOWS_KEY, type FreeWindow } from './windowsModel'
 
 type Match = Schemas['WaitlistWindowsMatch']
-
-/** «🔔 2 окна» в полосе «Требует внимания»: есть окна, в которые кто-то подходит. */
-export function FreeWindowsChip({ windows, compact, onOpen }: { windows: FreeWindow[]; compact?: boolean; onOpen: () => void }) {
-  const open = windows.filter((w) => waitingCount(w) > 0)
-  if (!open.length) return null
-  const people = new Set(open.flatMap((w) => w.matches.filter((m) => !m.declined).map((m) => m.entryId))).size
-  const freed = open.some((w) => w.freed)
-  return (
-    <button type="button" className="stat s-request" onClick={onOpen}
-      aria-label={`${freed ? 'Освободилось окно' : 'Свободные окна'}: ${fitsText(people)}`} title="Окна для листа ожидания — предложить">
-      🔔 {compact ? <>{open.every((w) => dateOf(w.start) !== todayIn()) ? 'Завтра' : 'Лист ожидания'}: <b>{open.length}</b> {plural(open.length, 'окно', 'окна', 'окон')}</> : <>{freed ? 'Освободилось окно' : 'Окна'} · <b>{people}</b> из листа</>}
-    </button>
-  )
-}
 
 /**
  * Подсказка в «Сводке дня»: «Освободилось 15:00–16:00 · подходят 2 пациента из листа ожидания» и «Предложить» — первые три
