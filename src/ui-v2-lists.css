@@ -97,6 +97,15 @@
 .ui-v2 .cash-day-list li { padding: 11px 4px; }
 .ui-v2 .cash-day-closed { padding: 14px 16px; border-radius: var(--v2-r-row); }
 
+/* Форма «Добавить расход» — поля как везде в v2: мягкая заливка без рамки, скругление 12 */
+.ui-v2 .expense-form :is(input:not([type=checkbox], [type=radio]), select, .ui-select, .date-input) {
+  height: 42px; border-color: transparent; border-radius: 12px; background-color: var(--v2-field);
+}
+.ui-v2 .expense-form :is(input:not([type=checkbox], [type=radio]), select, .ui-select):focus { border-color: var(--accent); background-color: var(--v2-card); outline: 3px solid var(--accent-soft); outline-offset: 0; }
+.ui-v2 .expense-form .ui-select:not(:focus, [aria-expanded=true]) { background-color: var(--v2-field) !important; }
+.ui-v2 .expense-form > .check { min-height: 40px; }
+@media (max-width: 760px) { .ui-v2 .expense-form :is(input:not([type=checkbox], [type=radio]), select, .ui-select, .date-input) { height: 48px; } }
+
 /* ── Таблицы ──────────────────────────────────────────────────────────────────────────────────────── */
 .ui-v2 .table { border-radius: var(--v2-r-card); background: var(--v2-card); box-shadow: var(--v2-shadow); }
 .ui-v2 .card-block .table { box-shadow: none; }
@@ -123,8 +132,10 @@
 
 /* ── Телефон ──────────────────────────────────────────────────────────────────────────────────────── */
 @media (max-width: 760px) {
-  /* Фильтры шапки — в одну строку с прокруткой нет: переносятся «таблетками» */
-  .ui-v2 .page-head .check { gap: 6px; min-height: 38px; padding: 0 12px 0 8px; font-size: .85rem; }
+  /* Фильтры шапки переносятся «таблетками»; чуть компактнее, чтобы две («Только кто не подтвердил» и «Не отмечено»
+     в «Записаны») вставали в одну строку на 390px — раньше не хватало нескольких пикселей */
+  .ui-v2 .page-head .check { gap: 5px; min-height: 38px; padding: 0 10px 0 7px; font-size: .82rem; letter-spacing: -.005em; }
+  .ui-v2 .page-head .check > input[type=checkbox] { width: 18px; height: 18px; }
   .ui-v2 .calm-day h3, .ui-v2 .debtors-block h3 { font-size: 1.1rem; }
   /* Длинная серая подпись справа («ждёт 2 дня · окно предложили вчера») не сжимает имя в столбик */
   .ui-v2 .calm-meta { max-width: 11em; white-space: normal; line-height: 1.3; }
@@ -152,6 +163,18 @@
   .ui-v2 .salary-sums > div { padding: 10px 12px; }
   .ui-v2 .salary-sums dd { font-size: .98rem; }
   .ui-v2 .cash-day-sum .cash-day-total dd { font-size: 1.25rem; white-space: nowrap; }
+}
+
+/* «Касса дня» на телефоне: строка «Положили и забрали» — что и сумма в первой строке, время мелко под «что», ✕ справа.
+   В четыре колонки «что» получало ~110px и ломалось по слову («Положили · / Размен · / Айгерим») */
+@media (max-width: 760px) {
+  .ui-v2 .cash-day-list li { grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; row-gap: 2px; align-items: center; }
+  .ui-v2 .cash-day-list li:has(> .btn) { grid-template-columns: minmax(0, 1fr) auto 40px; }
+  .ui-v2 .cash-day-list li > .what { grid-column: 1; grid-row: 1; overflow-wrap: normal; line-height: 1.3; }
+  .ui-v2 .cash-day-list li > .sum { grid-column: 2; grid-row: 1; font-weight: 600; }
+  .ui-v2 .cash-day-list li > .when { grid-column: 1; grid-row: 2; font-size: .85rem; }
+  .ui-v2 .cash-day-list li > .when:empty { display: none; }
+  .ui-v2 .cash-day-list li > .btn { grid-column: 3; grid-row: 1 / span 2; justify-self: end; width: 40px; min-width: 40px; min-height: 40px; padding: 0; justify-content: center; }
 }
 
 /* «Расходы» на телефоне: ✎ и ✕ — в правом верхнем углу карточки-строки, а не отдельной строкой внизу */
