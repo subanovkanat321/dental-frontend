@@ -19,7 +19,6 @@ import { useCountdown } from '../lib/otp'
 import { passwordProblem } from '../lib/password'
 import { clearCodeSent, markCodeSent, recentCodeSent } from './codeMark'
 import { NextSteps } from './NextSteps'
-import { monthsText } from '../lib/plural'
 import { refFromUrl, signupFromUrl } from '../lib/referral'
 
 /** Как часто спрашиваем сервер, пока ждём «✅ Да, это я» в боте. */
@@ -46,7 +45,7 @@ type Step =
   | { kind: 'next'; clinicName: string }
 
 /**
- * «Попробовать бесплатно» — клиника регистрируется сама (/start), без заявки и звонка. Один экран формы:
+ * «Начать бесплатно» — клиника регистрируется сама (/start), без заявки и звонка. Один экран формы:
  * название клиники (или своё имя, если работаете один), город, имя, телефон, согласие. Выбора «частный врач /
  * клиника» нет: и там, и там регистрируется один человек и добавляет коллег сам. Подтвердить, что
  * это вы, — кодом из SMS на этот номер (и придумать пароль) или кнопкой «✅ Да, это я» в боте Telegram (что
@@ -96,7 +95,7 @@ export function SignupPage({ onDone = () => window.location.assign('/'), userAge
   /** С этого устройства недавно отправляли код на почту, а шаг не восстановился — подсказка над формой. */
   const [codeHint, setCodeHint] = useState(false)
 
-  useEffect(() => { document.title = 'Попробовать Tish бесплатно' }, [])
+  useEffect(() => { document.title = 'Подключить Tish бесплатно' }, [])
 
   // Пришли по ссылке-приглашению другой клиники (/join?ref=… → /start?ref=…): код уходит с формой, сверху — кто пригласил
   const [ref] = useState(() => refFromUrl())
@@ -328,15 +327,15 @@ export function SignupPage({ onDone = () => window.location.assign('/'), userAge
     const other = e && !Object.keys(e.fieldErrors).length ? e.message : ''
     formBody = (
       <div className="signup-step" hidden={step.kind !== 'form'}>
-        <h1>Попробовать Tish бесплатно</h1>
+        <h1>Подключить Tish бесплатно</h1>
         {w.email && codeHint && (
           <p className="hint signup-resume-hint" role="note">Отправляли код на почту? — <button type="button" className="link"
             onClick={openResume}>«Уже есть код из письма»</button></p>
         )}
         {invite.data && (
-          <p className="tone-ok signup-invite" role="note">🎁 Вас пригласила клиника «{invite.data.clinicName}» — {monthsText(invite.data.freeMonths)} бесплатно</p>
+          <p className="tone-ok signup-invite" role="note">🎁 Вас пригласила клиника «{invite.data.clinicName}»</p>
         )}
-        <p className="hint">Создайте клинику за пару минут — без заявки, звонка и предоплаты. Всё приложение, без ограничений.</p>
+        <p className="hint">Tish бесплатный: всё приложение, без оплаты, пробного срока и ограничений. Клиника — за пару минут, без заявки и звонка.</p>
         <form ref={formRef} className="form narrow invite-form signup-form" aria-label="Регистрация клиники"
           onSubmit={(ev: FormEvent) => {
             ev.preventDefault()

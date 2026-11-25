@@ -6,10 +6,17 @@ import { PhoneInput } from '../clinic/PhoneInput'
 import { phoneFromInput } from '../clinic/phone'
 import { CaseBlock } from './CaseBlock'
 import { SiteHeader } from './SiteHeader'
-import { monthsText } from '../lib/plural'
-import { OFFER } from '../lib/brand'
+import { FREE_LINE } from '../lib/brand'
 import { refFromUrl } from '../lib/referral'
-import { getJson, inAppBrowser, type JoinCase, type Links, type PublicMaterials, type ReferralInvite, type Tariffs } from './web'
+import { getJson, inAppBrowser, type JoinCase, type Links, type PublicMaterials, type ReferralInvite } from './web'
+
+/** Что входит в бесплатный Tish — всё; WhatsApp честно: за сообщения платит клиника Meta, не Tish. */
+const FREE_INCLUDED = [
+  'Все функции: запись, бот, напоминания, медкарта, касса, склад, аналитика',
+  'Без ограничений по врачам, сотрудникам и пациентам',
+  'Без пробного срока, предоплаты и договора на год',
+  'Ваши данные — ваши: выгрузка пациентов и записей в любой момент',
+]
 
 const FEATURES: [string, string, string][] = [
   ['📲', 'Запись в Telegram', 'Пациент выбирает врача, услугу и время сам — врач подтверждает одним нажатием.'],
@@ -21,16 +28,15 @@ const FEATURES: [string, string, string][] = [
 ]
 
 /**
- * Страница для клиник (/join): что умеет приложение и «Попробовать бесплатно» — регистрация сама на /start (с 2026-11-16;
- * срок пробного периода и цены не показываем). Форма заявки — вторичный путь «Хочу, чтобы помогли подключить»: её разбирает
+ * Страница для клиник (/join): что умеет приложение и «Начать бесплатно» — регистрация сама на /start (с 2026-11-16).
+ * С 2026-11-25 Tish бесплатный для всех: вместо «Сколько стоит» — блок «Бесплатно» (что входит — всё), цен и сроков нет. Форма заявки — вторичный путь «Хочу, чтобы помогли подключить»: её разбирает
  * владелец платформы в «Платформа → Клиники». Поле-ловушка website — от ботов: человек его не видит.
  * <p>
  * По ссылке-приглашению другой клиники (/join?ref=<код>, «Клиника приводит клинику») — сверху «Вас пригласила клиника
- * «…» — 3 месяца бесплатно», и «Попробовать бесплатно» ведёт на /start?ref=<код>: регистрация запишется приглашённой.
+ * «…»», и «Начать бесплатно» ведёт на /start?ref=<код>: регистрация запишется приглашённой.
  * Код неизвестен — страница как обычно.
  */
 export function Join() {
-  const [tariffs, setTariffs] = useState<Tariffs | null>(null)
   const [solo, setSolo] = useState(false)
   // Поля — без React-состояния (значения читаются при отправке): на Android во встроенном браузере
   // Instagram клавиатура закрывалась после первой буквы. Меньше перерисовок во время набора — и без
@@ -56,11 +62,8 @@ export function Join() {
     // Ролик и PDF-презентация — на них ведёт ссылка из сообщения клиникам («Рассылка клиникам → По одной»)
     void getJson<PublicMaterials>('/web/materials/public').then(({ data }) => setMaterials(data ?? {}))
     void getJson<JoinCase>('/web/case').then(({ data }) => setStory(data?.shown ? data : null))
-    void getJson<Tariffs>('/web/tariffs').then(({ data }) => {
-      setTariffs(data)
-      // Пришли по ссылке /join#form (со страницы /go) — к форме, когда страница дорисовалась
-      if (window.location.hash) setTimeout(() => document.getElementById(window.location.hash.slice(1))?.scrollIntoView(), 0)
-    })
+    // Пришли по ссылке /join#form (со страницы /go) — к форме, когда страница дорисовалась
+    if (window.location.hash) setTimeout(() => document.getElementById(window.location.hash.slice(1))?.scrollIntoView(), 0)
   }, [])
   const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -103,9 +106,9 @@ export function Join() {
       <SiteHeader />
       {invite && (
         <div className="site-promo site-invite" role="note" aria-label="Приглашение">
-          <h2>🎁 Вас пригласила клиника «{invite.data.clinicName}» — {monthsText(invite.data.freeMonths)} бесплатно</h2>
-          <p>Зарегистрируйтесь по этой ссылке: всё приложение без оплаты {monthsText(invite.data.freeMonths)}, без предоплаты и договора на год.</p>
-          <a className="btn primary" href={startHref}>Попробовать бесплатно</a>
+          <h2>🎁 Вас пригласила клиника «{invite.data.clinicName}»</h2>
+          <p>Tish бесплатный: всё приложение, без оплаты и пробного срока. Клиника готова за 5 минут.</p>
+          <a className="btn primary" href={startHref}>Начать бесплатно</a>
         </div>
       )}
       <div className="site-hero">
@@ -113,7 +116,7 @@ export function Join() {
         <a className="site-hero-home" href="/" aria-label="Открыть Tish — расписание" title="Открыть расписание"><img src={`${import.meta.env.BASE_URL}tishka.svg`} alt="" width={84} height={80} /></a>
         <div><h1>Запись пациентов для стоматологии</h1>
           <p>Пациенты записываются в Telegram, бот напоминает о приёме. Работать можно в Telegram и на сайте — с телефона и компьютера.</p>
-          <p className="site-ctas"><a className="btn primary" href={startHref}>Попробовать бесплатно</a>
+          <p className="site-ctas"><a className="btn primary" href={startHref}>Начать бесплатно</a>
             <a className="btn" href="#form">Хочу, чтобы помогли подключить</a></p></div>
       </div>
       {(materials.video || materials.presentation) && (
@@ -131,26 +134,21 @@ export function Join() {
           )}
         </section>
       )}
-      {tariffs?.promo && (
-        <div className="site-promo">
-          <h2>🎁 {tariffs.promo.title}</h2>
-          <p>{tariffs.promo.text}</p>
-          <ul>{(tariffs.promo.points ?? []).map((x) => <li key={x}>{x}</li>)}</ul>
-          <a className="btn primary" href={startHref}>Попробовать бесплатно</a>
-        </div>
-      )}
       <h2>Что умеет</h2>
       <ul className="site-features">
         {FEATURES.map(([icon, title, text]) => <li key={title}><span className="ico" aria-hidden="true">{icon}</span><span><strong>{title}</strong><span>{text}</span></span></li>)}
       </ul>
       <p className="site-tour-link"><a href="/tour">▶ Тур по Tish — 2 минуты</a>: как выглядит программа, 10 шагов со скриншотами</p>
       {story && <CaseBlock story={story} />}
-      {/* Цены пока не показываем (владелец, 2026-11-02): клиника сначала пробует бесплатно, о цене — в разговоре */}
-      <h2 id="tariffs">Сколько стоит</h2>
-      <p>{OFFER}: всё приложение, без ограничений и без предоплаты.
-        Понравится — договоримся об условиях; нет — просто перестанете пользоваться.</p>
+      {/* Tish бесплатный для всех (владелец, 2026-11-25): вместо цен — что входит. Якорь #tariffs — для старых ссылок */}
+      <section id="tariffs" className="site-promo site-free" aria-label="Бесплатно">
+        <h2>🎁 Бесплатно</h2>
+        <p>{FREE_LINE}</p>
+        <ul>{FREE_INCLUDED.map((x) => <li key={x}>{x}</li>)}</ul>
+        <a className="btn primary" href={startHref}>Начать бесплатно</a>
+      </section>
       <h2 id="form">Хочу, чтобы помогли подключить</h2>
-      <p className="hint">Создать клинику самим — 5 минут: <a href={startHref}>Попробовать бесплатно</a>. Хотите, чтобы мы настроили всё и перенесли
+      <p className="hint">Создать клинику самим — 5 минут: <a href={startHref}>Начать бесплатно</a>. Хотите, чтобы мы настроили всё и перенесли
         пациентов из тетради или Excel, — оставьте заявку, мы позвоним.</p>
       {inAppBrowser() && (
         <p className="tone-wait">Открыли из Instagram? Если клавиатура закрывается — нажмите ⋮ вверху → «Открыть в браузере»

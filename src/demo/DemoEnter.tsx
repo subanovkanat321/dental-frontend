@@ -15,7 +15,7 @@ function roleFromUrl(search = window.location.search): Role {
 
 /**
  * «Посмотреть демо»: вход гостем в вымышленную клинику на 2 часа (POST /web/demo/enter) и сразу — в CRM. Без
- * Telegram и номера. Не вышло (демо выключено, лимит входов) — понятный текст и «Попробовать бесплатно».
+ * Telegram и номера. Не вышло (демо выключено, лимит входов) — понятный текст и «Начать бесплатно».
  */
 export function DemoEnter() {
   const [error, setError] = useState<string | null>(null)

@@ -89,7 +89,7 @@ async function openSheet(title: string) {
 }
 
 test.each([
-  ['settings', 'Настройки', 'Напоминание о приёме', 'Тариф и оплата', '#/settings/plan'],
+  ['settings', 'Настройки', 'Напоминание о приёме', 'Пригласить коллег', '#/settings/plan'],
   ['cash', 'Касса', 'Деньги', 'Должники', '#/cash/debtors'],
 ])('%s: пункт из листа подразделов открывается; сначала лист снимает свою запись истории, потом переход', async (page, title, first, pick, hash) => {
   window.location.hash = `/${page}`
@@ -119,20 +119,20 @@ test.each([
 test('Настройки: вкладка и экран — из одного источника; закрыли лист без выбора — пункт тот же', async () => {
   window.location.hash = '/settings/plan'
   renderApp()
-  expect(await screen.findByRole('heading', { name: 'Тариф и оплата' })).toBeInTheDocument()
+  expect(await screen.findByRole('heading', { name: 'Пригласить коллег' })).toBeInTheDocument()
   // Вернулись на адрес раздела без пункта (назад, ссылка) — и вкладка, и экран: последний открытый пункт
   window.location.hash = '/settings'
   await new Promise((r) => setTimeout(r, 50))
-  expect(await current('Настройки')).toBe('Тариф и оплата')
-  expect(screen.getByRole('heading', { name: 'Тариф и оплата' })).toBeInTheDocument()
+  expect(await current('Настройки')).toBe('Пригласить коллег')
+  expect(screen.getByRole('heading', { name: 'Пригласить коллег' })).toBeInTheDocument()
 
   const sheet = await openSheet('Настройки')
   await userEvent.click(within(sheet).getByRole('button', { name: 'Закрыть' }))
   expect(screen.queryByRole('menu', { name: 'Подразделы: Настройки' })).not.toBeInTheDocument()
   await waitForSlow(() => expect(depth()).toBe(0))
   expect(window.location.hash).toBe('#/settings')
-  expect(await current('Настройки')).toBe('Тариф и оплата')
-  expect(screen.getByRole('heading', { name: 'Тариф и оплата' })).toBeInTheDocument()
+  expect(await current('Настройки')).toBe('Пригласить коллег')
+  expect(screen.getByRole('heading', { name: 'Пригласить коллег' })).toBeInTheDocument()
 })
 
 test('«назад» (история браузера) закрывает лист из нижнего меню — раздел не меняется', async () => {

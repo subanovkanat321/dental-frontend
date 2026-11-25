@@ -8,7 +8,7 @@ import { Tour } from './Tour'
 import { TOUR_START, TOUR_STEPS } from './tourSteps'
 import type { Links } from './web'
 
-test('«Тур по Tish»: 10 шагов — скриншот с alt, заголовок, польза и «Попробовать бесплатно» → /start?from=tour', async () => {
+test('«Тур по Tish»: 10 шагов — скриншот с alt, заголовок, польза и «Начать бесплатно» → /start?from=tour', async () => {
   server.use(http.get('*/web/links', () => HttpResponse.json({ supportWhatsapp: '996770444555' } satisfies Links)))
   const { container } = render(<Tour />)
   expect(screen.getByRole('heading', { level: 1, name: 'Как клиника работает в Tish — за 10 шагов' })).toBeInTheDocument()
@@ -27,7 +27,7 @@ test('«Тур по Tish»: 10 шагов — скриншот с alt, заго�
   })
   // Порядок шагов — как в задаче: расписание первым, «всё включено, по-кыргызски» последним
   expect(TOUR_STEPS.map((s) => s.img)).toEqual(['raspisanie', 'kartochka', 'diktovka', 'diagnoz', 'zapis-bot', 'otzyvy', 'kassa', 'plan', 'analitika', 'kyrgyzcha'])
-  // Все «Попробовать бесплатно» — регистрация с меткой тура (шапка, шаги, низ, липкая кнопка телефона)
+  // Все «Начать бесплатно» — регистрация с меткой тура (шапка, шаги, низ, липкая кнопка телефона)
   const tries = screen.getAllByRole('link', { name: OFFER })
   expect(tries.length).toBe(13)
   for (const a of tries) expect(a).toHaveAttribute('href', TOUR_START)

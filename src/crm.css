@@ -584,10 +584,8 @@ fieldset.anamnesis-grid { border: 0; padding: 0; margin: 0; min-width: 0; }
 .pay-status h2 { margin: 0; }
 .pay-status.tone-ok { color: var(--ok-ink); } .pay-status.tone-wait { color: var(--wait-ink); } .pay-status.tone-bad { color: var(--bad-ink); } .pay-status.tone-hint { color: var(--hint); }
 .pay-status .hint { color: var(--hint); }
-.tariffs { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 10px 0; }
-.tariff { display: grid; gap: 4px; align-content: start; padding: 12px; border: 1px solid var(--separator); border-radius: var(--r-md); }
-.tariff.current { border-color: var(--accent); background: var(--accent-soft); }
-.tariff-price { font: 700 1.2rem var(--mono); }
+.free-status { border-left: 4px solid var(--ok-ink); }
+.free-status h2 { margin: 0 0 6px; color: var(--ok-ink); }
 .pay-details { white-space: pre-wrap; padding: 8px 10px; border-radius: var(--r-md); background: var(--sunken); }
 .agreement-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(280px, 1fr); gap: 20px; align-items: start; }
 .agreement-box { display: grid; gap: 8px; max-height: 70vh; overflow: auto; padding: 12px; border: 1px solid var(--separator); border-radius: var(--r-md); }

@@ -5,9 +5,9 @@ import { shortDate } from '../lib/time'
 
 type Billing = Schemas['ClinicBillingBilling']
 
-/** Оплата клиники одной строкой: бесплатно — спокойно; 7 дней и меньше — жёлтое; отсрочка и пауза — красное. */
+/** Оплата клиники одной строкой (владельцу в «Платформе»; с 2026-11-25 сервер отдаёт FREE всем): бесплатно — спокойно; 7 дней и меньше — жёлтое; отсрочка и пауза — красное. */
 export function billingLine(b?: Billing | null): { text: string; tone: 'hint' | 'ok' | 'wait' | 'bad' } {
-  if (!b || b.state === 'FREE') return { text: 'бесплатно (пилот)', tone: 'hint' }
+  if (!b || b.state === 'FREE') return { text: 'бесплатно', tone: 'hint' }
   const until = b.paidUntil ? shortDate(`${b.paidUntil}T12:00:00Z`) : ''
   if (b.state === 'PAUSED') return { text: `новые записи на паузе — оплата закончилась ${until}`, tone: 'bad' }
   if (b.state === 'GRACE') return { text: `оплата закончилась ${until}, пауза с ${b.pausesOn ? shortDate(`${b.pausesOn}T12:00:00Z`) : ''}`, tone: 'bad' }
