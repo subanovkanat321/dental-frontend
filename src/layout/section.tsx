@@ -48,7 +48,7 @@ export function SectionTitle({ page, title, subTitle, hint }: { page: Page; titl
     return (
       <>
         <h1 className="sr-only sect-h1">{subTitle}</h1>
-        {visible && nav.tabsSlot && createPortal(phone
+        {visible && nav.tabsSlot && createPortal(phone || drillPage(page)
           ? <SubTitleBar nav={nav} page={page} title={title} subTitle={subTitle} hint={hint} />
           : <SubTabs nav={nav} page={page} title={title} hint={hint} />, nav.tabsSlot)}
       </>
@@ -60,6 +60,14 @@ export function SectionTitle({ page, title, subTitle, hint }: { page: Page; titl
       {hint}
     </div>
   )
+}
+
+/**
+ * UI v2 (черновик, docs/ui-v2.md): пункты «Настроек» и «Клиники» — экраны «внутрь» и на телефоне, и на компьютере:
+ * круглая «‹» (открывает список пунктов — лист NavSheet) и название по центру вместо вкладок.
+ */
+function drillPage(page: Page): boolean {
+  return isUiV2() && (page === 'settings' || page === 'clinic')
 }
 
 /**
@@ -97,7 +105,8 @@ function SubTitleBar({ nav, page, title, subTitle, hint }: { nav: NavApi; page: 
   const subs = nav.subs(page)
   const active = nav.active(page)
   const [setHelpSlot, subHelp] = useHelpSlot(nav)
-  const [tip, setTip] = useState(() => !hintSeen())
+  // Подсказка про «нижнее меню» — только телефону (в UI v2 эта строка бывает и на компьютере, у «Настроек»)
+  const [tip, setTip] = useState(() => !hintSeen() && !(drillPage(page) && !matches('(max-width: 760px)')))
   const [stuck, setStuck] = useState(false)
   useEffect(() => {
     const onScroll = () => setStuck(window.scrollY > 4)
@@ -116,7 +125,7 @@ function SubTitleBar({ nav, page, title, subTitle, hint }: { nav: NavApi; page: 
   const open = nav.sheet === page
   // UI v2 (черновик): пункт «Настроек» и «Клиники» — экран «внутрь»: круглая «‹» слева (открывает тот же список
   // пунктов) и название по центру; разделы-списки — крупный заголовок и подраздел «таблеткой» (только CSS)
-  const drill = isUiV2() && (page === 'settings' || page === 'clinic')
+  const drill = drillPage(page)
   return (
     <nav className={drill ? 'sub-tabs sub-bar v2-drill' : 'sub-tabs sub-bar'} data-tour="sub-tabs" aria-label={`Подразделы: ${title}`} data-stuck={stuck || undefined}>
       <button type="button" className="sub-bar-btn" aria-haspopup="menu" aria-expanded={open}
@@ -308,7 +317,7 @@ function SubTabs({ nav, page, title, hint }: { nav: NavApi; page: Page; title: s
     if (key !== active) nav.go(page, key)
   }
   return (
-    <nav ref={bar} className="sub-tabs" data-tour="sub-tabs" aria-label={`Подразделы: ${title}`} data-stuck={stuck || undefined}>
+    <nav ref={bar} className="sub-tabs" data-tour="sub-tabs" data-title={title} aria-label={`Подразделы: ${title}`} data-stuck={stuck || undefined}>
       <div ref={scroller} className="sub-tabs-scroll" onScroll={measure}
         onPointerDown={() => { touched.current = true }} onWheel={() => { touched.current = true }}
         data-fade-start={edges.start || undefined} data-fade-end={edges.end || undefined}>

@@ -64,11 +64,137 @@
   box-shadow: var(--v2-shadow); font-size: 0; }
 .ui-v2 .settings-back::before { content: '‹'; font-size: 30px; line-height: 1; margin-top: -3px; color: var(--v2-ink); }
 
-/* ── Компьютер: меню и вкладки чуть мягче ─────────────────────────────────────────────────────────── */
+/* Поиск пациента — большое круглое поле с лупой */
+.ui-v2 .patients-head .search {
+  min-height: 44px; padding: 0 16px 0 46px; border: 0; border-radius: var(--v2-r-control); background: var(--v2-card) no-repeat 16px 50% / 20px 20px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2375898E' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E");
+  box-shadow: var(--v2-shadow); 
+}
+.ui-v2 .patients-head .search:focus { outline: 2px solid var(--accent); outline-offset: 0; }
+
+/* ── Лист пунктов раздела (NavSheet): телефон — снизу, компьютер — окном по центру; строки — группами-карточками ─ */
+.ui-v2 .sub-sheet-head { display: flex; align-items: center; gap: 10px; }
+.ui-v2 .sub-sheet-close { flex: none; margin-left: auto; border: 0; border-radius: 50%; cursor: pointer; }
+.ui-v2 .nav-sheet-item { display: flex; align-items: center; color: var(--text); text-decoration: none; -webkit-tap-highlight-color: transparent; }
+.ui-v2 .nav-sheet-item:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.ui-v2 .nav-sheet-item > .sub-ico { flex: none; }
+.ui-v2 .nav-sheet-text { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.ui-v2 .nav-sheet-title { line-height: 1.25; }
+.ui-v2 .nav-sheet-hint { overflow: hidden; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
+.ui-v2 .nav-sheet-check { flex: none; font-weight: 700; }
+.ui-v2 .sub-sheet-head { margin: 0 0 14px !important; }
+.ui-v2 .sub-sheet-head .sub-bar-ico { display: none; }
+.ui-v2 .sub-sheet-head h2 { color: var(--v2-ink); font: 700 var(--v2-title) / 1.1 var(--display); letter-spacing: -.02em; }
+.ui-v2 .sub-sheet-close { width: 40px; height: 40px; background: var(--v2-card); box-shadow: var(--v2-shadow); color: var(--v2-ink); font-size: 1rem; }
+
+.ui-v2 .nav-sheet-card .nav-group, .ui-v2 .sub-sheet .nav-group { margin: 22px 4px 10px; color: var(--v2-ink); font: 700 var(--v2-group) / 1.2 var(--display);
+  letter-spacing: -.01em; text-transform: none; }
+.ui-v2 .nav-sheet-item {
+  gap: 14px; min-height: 76px; margin: 0; padding: 14px 16px; border-radius: 0; background: var(--v2-card);
+  position: relative;
+}
+/* Строки одной группы — одна карточка: скругления у первой и последней, тонкая линия между ними от текста */
+.ui-v2 .nav-sheet-item.first, .ui-v2 .nav-sheet-item.first + .nav-sheet-item, .ui-v2 .nav-group + .nav-sheet-item {
+  border-top-left-radius: var(--v2-r-card); border-top-right-radius: var(--v2-r-card);
+}
+.ui-v2 .nav-sheet-item.first, .ui-v2 .nav-sheet-item:has(+ .nav-group), .ui-v2 .nav-sheet-item:last-child {
+  border-bottom-left-radius: var(--v2-r-card); border-bottom-right-radius: var(--v2-r-card);
+}
+.ui-v2 .nav-sheet-item:not(.first) + .nav-sheet-item::before { content: ''; position: absolute; top: 0; left: 74px; right: 0; height: 1px; background: var(--separator); }
+.ui-v2 .nav-sheet-item.first { margin-bottom: 0; background: var(--v2-card); box-shadow: inset 0 0 0 2px var(--accent); }
+.ui-v2 .nav-sheet-item.first + .nav-sheet-item:not(.nav-group + *) { margin-top: 14px; }
+.ui-v2 .nav-sheet-item:active { background: var(--sunken); }
+.ui-v2 .nav-sheet-item > .sub-ico, .ui-v2 .nav-sheet-item.first > .sub-ico {
+  width: var(--v2-tile); height: var(--v2-tile); padding: 10px; border-radius: var(--v2-r-tile);
+  background: var(--sub-ico, var(--accent)); color: var(--v2-tile-glyph); stroke-width: 2;
+}
+.ui-v2 .nav-sheet-title, .ui-v2 .nav-sheet-item.first .nav-sheet-title { color: var(--v2-ink); font-size: var(--v2-row-title); font-weight: 600; }
+.ui-v2 .nav-sheet-hint { color: var(--hint); font-size: var(--v2-row-sub); }
+.ui-v2 .nav-sheet-item:not(.first)::after { content: '›'; flex: none; margin-left: 2px; color: var(--faint); font-size: 26px; line-height: 1; }
+.ui-v2 .nav-sheet-check { width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; background: var(--accent); color: var(--accent-text); font-size: .8rem; }
+
+/* ── Компьютер (ноутбук 1366/1440 и монитор 1920) ─────────────────────────────────────────────────── */
 @media (min-width: 761px) {
-  .ui-v2 .workspace { padding: 20px 28px; }
-  .ui-v2 .sub-tabs { background: var(--v2-page); border-bottom-color: transparent; }
-  .ui-v2 .sub-tab.active { border-radius: var(--v2-r-pill) var(--v2-r-pill) 0 0; }
+  /* Текст 16px вместо 15: крупнее, но сетка расписания (колонки врачей от 150px) вмещает столько же врачей */
+  :root.ui-v2 { font-size: calc(16px * var(--text-scale, 1)); }
+  .ui-v2 .workspace { padding: 20px 28px 28px; }
+  .ui-v2 .card-block { padding: 22px 24px; }
+  .ui-v2 .btn { min-height: 40px; padding: 0 16px; }
+  .ui-v2 .segments button { min-height: 34px; padding: 4px 14px; }
+  .ui-v2 .search, .ui-v2 .page-head .ui-select { min-height: 42px; }
+  .ui-v2 .total { font-size: 2.5rem; line-height: 1.1; }
+  .ui-v2 .calm-row { min-height: 64px; padding: 12px 22px; }
+  .ui-v2 .calm-name { font-size: 1.0625rem; color: var(--v2-ink); }
+
+  /* Меню слева: белое, без линии; пункты 44px, значок — цветная плитка с белым рисунком; открытый — мягкая подсветка */
+  .ui-v2 .sidebar { gap: 3px; padding: 18px 14px; border-right: 0; background: var(--v2-card); box-shadow: 1px 0 0 var(--separator); }
+  .ui-v2 .sidebar .nav { gap: 12px; min-height: 44px; padding: 7px 10px; border-radius: 14px; color: var(--v2-ink); font-size: 1rem; font-weight: 500; }
+  .ui-v2 .sidebar .nav > .icon { flex: none; width: 30px; height: 30px; padding: 6px; border-radius: 9px; background: var(--tile, var(--ico-settings)); color: var(--v2-tile-glyph) !important; stroke-width: 2; }
+  .ui-v2 .sidebar .nav[data-section=schedule] { --tile: var(--ico-schedule); }
+  .ui-v2 .sidebar .nav[data-section=patients] { --tile: var(--ico-patients); }
+  .ui-v2 .sidebar .nav[data-section=cash] { --tile: var(--ico-cash); }
+  .ui-v2 .sidebar .nav[data-section=stock] { --tile: var(--ico-stock); }
+  .ui-v2 .sidebar .nav[data-section=clinic] { --tile: var(--ico-clinic); }
+  .ui-v2 .sidebar .nav[data-section=learn] { --tile: var(--ico-learn); }
+  .ui-v2 .sidebar .nav[data-section=settings] { --tile: var(--ico-settings); }
+  .ui-v2 .sidebar .nav[data-section=platform] { --tile: var(--ico-platform); }
+  .ui-v2 .sidebar .nav.help-nav { --tile: var(--ico-help); }
+  .ui-v2 .sidebar .nav:hover { background: var(--sunken); }
+  .ui-v2 .sidebar .nav.active, .ui-v2 .nav-item.sub-active > .nav-row > .nav.active { background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; box-shadow: none; }
+  .ui-v2 .nav-chev { border-radius: 10px; }
+  /* Подразделы в дереве и в панели по наведению — маленькие плитки 26px */
+  .ui-v2 .nav-subitem { gap: 10px; min-height: 38px; border-radius: 12px; }
+  .ui-v2 .nav-subitem > .sub-ico { flex: none; width: 26px; height: 26px; padding: 5px; border-radius: 8px; background: var(--sub-ico, var(--accent)); color: var(--v2-tile-glyph) !important; stroke-width: 2; }
+  .ui-v2 .nav-fly { width: 280px; padding: 10px; border: 0; border-radius: var(--v2-r-card); box-shadow: var(--v2-shadow-float); }
+  .ui-v2 .nav-fly .nav-group, .ui-v2 .nav-sub .nav-group { color: var(--v2-ink); font-size: .85rem; font-weight: 700; }
+  .ui-v2 .me-block { border-radius: 14px; }
+
+  /* Крупный заголовок раздела над вкладками (из data-title): уезжает при прокрутке, вкладки-«таблетки» прилипают.
+     Полоса — 72px заголовок + 46px вкладки; top −72px оставляет у верха только вкладки (--tabs-h те же 46px) */
+  .ui-v2 .sub-tabs-slot { top: -72px; margin: -20px -28px 14px; }
+  .ui-v2 .sub-tabs:not(.sub-bar) { flex-wrap: wrap; height: auto; padding: 0 22px; border-bottom: 0;
+    background: color-mix(in srgb, var(--v2-page) 90%, transparent); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+  .ui-v2 .sub-tabs:not(.sub-bar)::before { content: attr(data-title); flex: 0 0 100%; box-sizing: border-box; height: 72px; padding: 22px 6px 0;
+    color: var(--v2-ink); font: 700 var(--v2-title) / 1.1 var(--display); letter-spacing: -.02em; }
+  .ui-v2 .sub-tabs:not(.sub-bar) .sub-tabs-scroll { height: 46px; }
+  .ui-v2 .sub-tabs:not(.sub-bar) .sub-tabs-helps, .ui-v2 .sub-tabs:not(.sub-bar) .sub-tabs-more { height: 46px; }
+  .ui-v2 .sub-tabs[data-stuck] { box-shadow: 0 1px 0 var(--separator); }
+  .ui-v2 .sub-tabs-list { align-items: center; gap: 4px; padding: 0; }
+  .ui-v2 .sub-tab { align-self: center; height: 36px; padding: 0 16px; border-radius: var(--v2-r-pill); color: var(--hint); font-weight: 500; }
+  .ui-v2 .sub-tab:hover:not(.active) { background: var(--v2-card); color: var(--v2-ink); }
+  .ui-v2 .sub-tab.active { background: var(--v2-card); color: var(--accent-ink); font-weight: 600; box-shadow: var(--v2-shadow); }
+  .ui-v2 .sub-tabs-ink { display: none; }
+  .ui-v2 .sub-tabs-help .help-hint-btn { width: 32px; height: 32px; border: 0; background: var(--v2-card); box-shadow: var(--v2-shadow); }
+  :root.ui-v2:has(.sub-tabs-slot:not(:empty)) .toolbar.sticky-head { padding-top: 6px; }
+  .ui-v2 .toolbar.sticky-head { background: var(--v2-page); }
+  .ui-v2 .toolbar.sticky-head.stuck { box-shadow: 0 1px 0 var(--separator); }
+
+  /* Пункт «Настроек»/«Клиники» — экран «внутрь»: круглая «‹» слева (список пунктов окном), название по центру */
+  .ui-v2 .sub-tabs-slot:has(.v2-drill) { top: 0; }
+  .ui-v2 .sub-bar.v2-drill { display: grid; grid-template-columns: 48px minmax(0, 1fr) 48px; align-items: center; gap: 12px; height: auto; min-height: 76px;
+    padding: 14px 28px; border: 0; background: color-mix(in srgb, var(--v2-page) 90%, transparent); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+  .ui-v2 .v2-drill .sub-bar-btn { grid-column: 1; grid-row: 1; justify-content: center; width: 48px; height: 48px; margin: 0; padding: 0; border-radius: 50%;
+    background: var(--v2-card) !important; box-shadow: var(--v2-shadow); color: var(--v2-ink); }
+  .ui-v2 .v2-drill .sub-bar-btn:hover { box-shadow: var(--v2-shadow-float); }
+  .ui-v2 .v2-back-glyph { font-size: 34px; line-height: 1; margin: -4px 0 0 -2px; }
+  .ui-v2 .v2-drill-title { grid-column: 2; grid-row: 1; margin: 0; overflow: hidden; color: var(--v2-ink); font: 700 1.6rem / 1.2 var(--display); letter-spacing: -.01em;
+    text-align: center; text-overflow: ellipsis; white-space: nowrap; }
+  .ui-v2 .v2-drill .sub-tabs-helps { grid-column: 3; grid-row: 1; justify-self: end; }
+  /* Содержимое пункта — колонкой по центру, как в «Настройках» iOS/macOS: на мониторе строки не растягиваются на 1600px */
+  .ui-v2 .workspace:has(.v2-drill) .settings-item { max-width: 860px; margin: 0 auto; }
+
+  /* Список пунктов — окном по центру: заголовок 34px, группы строк с плитками 44px */
+  .ui-v2 .more-sheet.nav-sheet { display: block; position: fixed; inset: 0; z-index: 60; background: rgba(11, 34, 41, .32); }
+  .ui-v2 .nav-sheet-card.more-card { position: absolute; top: 5vh; left: 50%; bottom: auto; display: grid; gap: 0; width: min(640px, calc(100vw - 48px));
+    max-height: 90vh; overflow-y: auto; overscroll-behavior: contain; padding: 24px 24px 28px; transform: translateX(-50%);
+    border-radius: 28px; background: var(--v2-page); box-shadow: var(--v2-shadow-float); }
+  .ui-v2 .sub-sheet-head { margin: 0 0 16px; }
+  .ui-v2 .nav-sheet-item:hover { background: var(--sunken); }
+  .ui-v2 .nav-sheet-item.first:hover { background: var(--v2-card); }
+
+  /* «Касса → Деньги»: плитки-итоги крупнее */
+  .ui-v2 .methods.cash-flow > div { padding: 16px 20px; }
+  .ui-v2 .methods.cash-flow > div b { font-size: 1.6rem; }
 }
 
 /* ── Телефон ──────────────────────────────────────────────────────────────────────────────────────── */
@@ -106,36 +232,6 @@
     bottom: 0; gap: 0; padding: 18px 16px calc(98px + env(safe-area-inset-bottom) - var(--nav-drop, 0px));
     border-radius: 28px 28px 0 0; background: var(--v2-page); max-height: calc(100dvh - 24px);
   }
-  .ui-v2 .sub-sheet-head { margin: 0 0 14px !important; }
-  .ui-v2 .sub-sheet-head .sub-bar-ico { display: none; }
-  .ui-v2 .sub-sheet-head h2 { color: var(--v2-ink); font: 700 var(--v2-title) / 1.1 var(--display); letter-spacing: -.02em; }
-  .ui-v2 .sub-sheet-close { width: 40px; height: 40px; background: var(--v2-card); box-shadow: var(--v2-shadow); color: var(--v2-ink); font-size: 1rem; }
-
-  .ui-v2 .nav-sheet-card .nav-group, .ui-v2 .sub-sheet .nav-group { margin: 22px 4px 10px; color: var(--v2-ink); font: 700 var(--v2-group) / 1.2 var(--display);
-    letter-spacing: -.01em; text-transform: none; }
-  .ui-v2 .nav-sheet-item {
-    gap: 14px; min-height: 76px; margin: 0; padding: 14px 16px; border-radius: 0; background: var(--v2-card);
-    position: relative;
-  }
-  /* Строки одной группы — одна карточка: скругления у первой и последней, тонкая линия между ними от текста */
-  .ui-v2 .nav-sheet-item.first, .ui-v2 .nav-sheet-item.first + .nav-sheet-item, .ui-v2 .nav-group + .nav-sheet-item {
-    border-top-left-radius: var(--v2-r-card); border-top-right-radius: var(--v2-r-card);
-  }
-  .ui-v2 .nav-sheet-item.first, .ui-v2 .nav-sheet-item:has(+ .nav-group), .ui-v2 .nav-sheet-item:last-child {
-    border-bottom-left-radius: var(--v2-r-card); border-bottom-right-radius: var(--v2-r-card);
-  }
-  .ui-v2 .nav-sheet-item:not(.first) + .nav-sheet-item::before { content: ''; position: absolute; top: 0; left: 74px; right: 0; height: 1px; background: var(--separator); }
-  .ui-v2 .nav-sheet-item.first { margin-bottom: 0; background: var(--v2-card); box-shadow: inset 0 0 0 2px var(--accent); }
-  .ui-v2 .nav-sheet-item.first + .nav-sheet-item:not(.nav-group + *) { margin-top: 14px; }
-  .ui-v2 .nav-sheet-item:active { background: var(--sunken); }
-  .ui-v2 .nav-sheet-item > .sub-ico, .ui-v2 .nav-sheet-item.first > .sub-ico {
-    width: var(--v2-tile); height: var(--v2-tile); padding: 10px; border-radius: var(--v2-r-tile);
-    background: var(--sub-ico, var(--accent)); color: var(--v2-tile-glyph); stroke-width: 2;
-  }
-  .ui-v2 .nav-sheet-title, .ui-v2 .nav-sheet-item.first .nav-sheet-title { color: var(--v2-ink); font-size: var(--v2-row-title); font-weight: 600; }
-  .ui-v2 .nav-sheet-hint { color: var(--hint); font-size: var(--v2-row-sub); }
-  .ui-v2 .nav-sheet-item:not(.first)::after { content: '›'; flex: none; margin-left: 2px; color: var(--faint); font-size: 26px; line-height: 1; }
-  .ui-v2 .nav-sheet-check { width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; background: var(--accent); color: var(--accent-text); font-size: .8rem; }
 
   /* Лист «Ещё»: себя — карточкой, разделы — строками с плиткой */
   .ui-v2 .more-who-btn { padding: 14px 16px; margin-bottom: 14px; border: 0; border-radius: var(--v2-r-card); background: var(--v2-card); box-shadow: none; }
@@ -181,12 +277,7 @@
   .ui-v2 .toolbar.sticky-head { background: none; box-shadow: none !important; }
 
   /* «Пациенты → Все»: большой круглый поиск, фильтры «таблетками», список — белой карточкой со строками 17px */
-  .ui-v2 .patients-head .search {
-    min-height: 52px; padding: 0 16px 0 46px; border: 0; border-radius: var(--v2-r-control); background: var(--v2-card) no-repeat 16px 50% / 20px 20px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2375898E' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E");
-    box-shadow: var(--v2-shadow); font-size: 17px !important;
-  }
-  .ui-v2 .patients-head .search:focus { outline: 2px solid var(--accent); outline-offset: 0; }
+  .ui-v2 .patients-head .search { min-height: 52px; }
   .ui-v2 .patients-head .head-filters { gap: 10px; }
   .ui-v2 .page-head .ui-select { border: 0; background-color: var(--v2-card); box-shadow: var(--v2-shadow); }
   .ui-v2 .patients-head .head-filters .ui-select { min-height: 40px; border: 0; border-radius: var(--v2-r-pill); background-color: var(--v2-card); box-shadow: var(--v2-shadow); font-size: 15px !important; }
