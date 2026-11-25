@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { me, renderApp, openItem } from '../test/fixtures'
+import { findSubs, me, openItem, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 import { waitForSlow } from '../test/wait'
 
@@ -96,10 +96,10 @@ test('не админ: в «Настройках» нет новостей дл�
   window.location.hash = '/settings'
   renderApp()
   // Пункты «Настроек» — вкладками сверху (с 2026-11-13)
-  const tabs = await screen.findByRole('navigation', { name: 'Подразделы: Настройки' })
-  expect(within(tabs).getByRole('link', { name: 'Анкета пациента' })).toBeInTheDocument()
-  expect(within(tabs).getByRole('link', { name: 'Памятки после процедур' })).toBeInTheDocument()
-  expect(within(tabs).queryByRole('link', { name: /Новости для пациентов/ })).not.toBeInTheDocument()
-  expect(within(tabs).queryByRole('link', { name: /Тариф и оплата/ })).not.toBeInTheDocument()
-  expect(within(tabs).queryByRole('link', { name: /Сотрудники/ })).not.toBeInTheDocument()
+  const tabs = await findSubs('Настройки')
+  expect(tabs.get('Анкета пациента')).toBeInTheDocument()
+  expect(tabs.get('Памятки после процедур')).toBeInTheDocument()
+  expect(tabs.query(/Новости для пациентов/)).not.toBeInTheDocument()
+  expect(tabs.query(/Тариф и оплата/)).not.toBeInTheDocument()
+  expect(tabs.query(/Сотрудники/)).not.toBeInTheDocument()
 })

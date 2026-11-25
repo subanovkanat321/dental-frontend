@@ -1,5 +1,5 @@
 import { QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { act } from 'react'
 
@@ -45,10 +45,58 @@ function subsArea() {
   return screen.queryByRole('navigation', { name: /^Подразделы: / }) ?? screen.getByRole('navigation', { name: 'Разделы' })
 }
 
-/** Подраздел — ссылка; число у подраздела — в имени: «Вопросы · 2». */
+/**
+ * UI v2 (по умолчанию с 2026-11-25): у «Настроек» и «Клиники» вместо вкладок — экран «внутрь»: круглая «‹» открывает
+ * лист пунктов (layout/NavSheet.tsx, пункты — menuitem). Открыть лист, если он ещё закрыт; не «внутрь» — null.
+ */
+function drillSheet(nav: HTMLElement): HTMLElement | null {
+  if (!nav.classList.contains('v2-drill')) return null
+  const name = nav.getAttribute('aria-label') ?? ''
+  const open = screen.queryByRole('menu', { name })
+  if (open) return open
+  fireEvent.click(within(nav).getByRole('button', { name: /выбрать подраздел/ }))
+  return screen.getByRole('menu', { name })
+}
+
+/** Пункт листа по названию (без числа и «открыт сейчас», которые лист добавляет к имени для читалок). */
+function sheetItems(sheet: HTMLElement, name?: string | RegExp): HTMLElement[] {
+  return within(sheet).queryAllByRole('menuitem').filter((a) => {
+    const title = a.querySelector('.nav-sheet-title')?.textContent ?? ''
+    return name == null || (typeof name === 'string' ? title === name : name.test(title))
+  })
+}
+
+/** Подраздел — ссылка; число у подраздела — в имени: «Вопросы · 2». У экрана «внутрь» (v2) — пункт листа «‹». */
 export async function findSub(name: string | RegExp) {
   await screen.findByRole('navigation', { name: 'Разделы' })
-  return waitFor(() => within(subsArea()).getByRole('link', { name }))
+  return waitFor(() => {
+    const area = subsArea()
+    const sheet = drillSheet(area)
+    if (!sheet) return within(area).getByRole('link', { name })
+    const [item] = sheetItems(sheet, name)
+    if (!item) throw new Error(`Нет пункта «${String(name)}» в листе ${sheet.getAttribute('aria-label')}`)
+    return item
+  })
+}
+
+/**
+ * Все пункты раздела, как их видит человек: вкладки над страницей или (v2, «Настройки»/«Клиника») лист «‹».
+ * `get`/`query` — по названию, `titles` — названия по порядку (в листе первым идёт открытый пункт).
+ */
+export async function findSubs(title: string) {
+  const nav = await screen.findByRole('navigation', { name: `Подразделы: ${title}` })
+  const sheet = drillSheet(nav)
+  const query = (name: string | RegExp): HTMLElement | null => (sheet ? sheetItems(sheet, name)[0] ?? null : within(nav).queryByRole('link', { name }))
+  return {
+    query,
+    get: (name: string | RegExp): HTMLElement => {
+      const el = query(name)
+      if (!el) throw new Error(`Нет пункта «${String(name)}» в «${title}»`)
+      return el
+    },
+    titles: (): string[] => (sheet ? sheetItems(sheet).map((a) => a.querySelector('.nav-sheet-title')?.textContent ?? '')
+      : within(nav).getAllByRole('link').map((a) => a.textContent ?? '')),
+  }
 }
 
 /**
@@ -63,7 +111,9 @@ export async function openPlatform(sub: string | RegExp, mode?: string, user = u
 }
 
 export function querySub(name: string | RegExp) {
-  return within(subsArea()).queryByRole('link', { name })
+  const area = subsArea()
+  const sheet = drillSheet(area)
+  return sheet ? sheetItems(sheet, name)[0] ?? null : within(area).queryByRole('link', { name })
 }
 
 /** Пункт «Настроек» (#/settings/<item>) — как нажать его в списке. */

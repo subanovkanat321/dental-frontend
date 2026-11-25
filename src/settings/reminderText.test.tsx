@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { me, openItem, renderApp } from '../test/fixtures'
+import { findSubs, me, openItem, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 
 type Settings = Schemas['SettingsControllerSettings']
@@ -108,9 +108,9 @@ test('не админ пункта не видит', async () => {
   backend(SETTINGS, { ...me, admin: false })
   renderApp()
   openItem('')
-  const tabs = await screen.findByRole('navigation', { name: 'Подразделы: Настройки' })
-  expect(within(tabs).getByRole('link', { name: 'Памятки после процедур' })).toBeInTheDocument()
-  expect(within(tabs).queryByRole('link', { name: /Напоминание о приёме/ })).not.toBeInTheDocument()
+  const tabs = await findSubs('Настройки')
+  expect(tabs.get('Памятки после процедур')).toBeInTheDocument()
+  expect(tabs.query(/Напоминание о приёме/)).not.toBeInTheDocument()
 })
 
 test('«Номер в напоминаниях»: по умолчанию клиники; «Номер врача приёма» сохраняется сразу, предпросмотр — с номером врача', async () => {

@@ -73,8 +73,9 @@ afterEach(async () => {
 const depth = () => (window.history.state as { tishBack?: number } | null)?.tishBack ?? 0
 
 const tabs = (title: string) => screen.findByRole('navigation', { name: `Подразделы: ${title}` })
-/** Открытый подраздел — по строке над страницей «Раздел · Подраздел ▾» */
-const current = async (title: string) => within(await tabs(title)).getByRole('button', { name: /выбрать подраздел/ }).querySelector('.sub-bar-sub')?.textContent
+/** Открытый подраздел — по имени кнопки над страницей «Раздел · Подраздел: выбрать подраздел» (и «▾», и круглой «‹» v2) */
+const current = async (title: string) => within(await tabs(title)).getByRole('button', { name: /выбрать подраздел/ }).getAttribute('aria-label')
+  ?.match(new RegExp(`^${title} · (.+?): выбрать подраздел`))?.[1]
 
 /** Строка «Раздел · Подраздел ▾» → лист. Пока грузится кусочек кода пункта, шапка с вкладками — временная (Suspense) и сменяется настоящей:
  *  нажатие по кнопке, которую как раз заменили, теряется — тогда нажимаем снова. */
