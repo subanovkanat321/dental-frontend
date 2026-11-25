@@ -632,7 +632,7 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
             {/* Отменённые в сетке не рисуем, но и не прячем молча: «Отменено: N ›» — ссылкой в конце строки над
                 сеткой (под сеткой строка уходила за край экрана и её не замечали); раскрытый список — строкой ниже */}
             {!weekMode && !monthMode && !dayList && shown.length > 0 && (
-              <CancelledList inline items={loaded.filter((a) => a.status === 'CANCELLED' && (view === 'all' || shown.some((d) => d.id === a.doctorId)))}
+              <CancelledList inline items={loaded.filter((a) => a.status === 'CANCELLED' && (view === 'all' || shown.some((d) => d.id === a.doctorId)))} others={loaded}
                 selectedId={selected?.id} onOpen={(a) => setSide({ kind: 'appointment', id: a.id, fallback: a })}
                 doctorName={view === 'all' ? (id) => doctors.find((d) => d.id === id)?.fullName ?? '' : undefined} />
             )}

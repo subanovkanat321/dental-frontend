@@ -11,8 +11,14 @@ type Appointment = Schemas['AppointmentView']
  * и не пропадают молча («было 4 пациента, вижу 2»). Раскрыть — время, пациент и кто отменил; нажать —
  * карточка приёма (там «Восстановить»). Нет отменённых — ничего не показываем.
  */
-export function CancelledList({ items, onOpen, selectedId, doctorName, withDate, inline = false }: {
+export function CancelledList({ items, others = [], onOpen, selectedId, doctorName, withDate, inline = false }: {
   items: Appointment[]
+  /**
+   * Остальные записи на экране: отменил и записался снова (владелец 2026-11-25: «пациент и в отменённых, и в
+   * записи — это норм?») — у строки «↻ записан снова · 15:00», чтобы не звонить зря. Отменённая запись остаётся:
+   * это история — кто и когда отменил
+   */
+  others?: Appointment[]
   onOpen: (a: Appointment) => void
   selectedId?: number
   /** «Все врачи» — имя врача у строки */
@@ -25,6 +31,9 @@ export function CancelledList({ items, onOpen, selectedId, doctorName, withDate,
   const [open, setOpen] = useState(false)
   if (!items.length) return null
   const sorted = [...items].sort((x, y) => x.startAt.localeCompare(y.startAt))
+  const rebooked = (a: Appointment) => others
+    .filter((o) => o.id !== a.id && o.status !== 'CANCELLED' && o.patient.id === a.patient.id && o.startAt)
+    .sort((x, y) => x.startAt.localeCompare(y.startAt))[0]
   return (
     <div className={inline ? 'cancelled inline' : 'cancelled'}>
       <button type="button" className="cancelled-toggle" aria-expanded={open} onClick={() => setOpen(!open)}>
@@ -41,6 +50,12 @@ export function CancelledList({ items, onOpen, selectedId, doctorName, withDate,
                   {doctorName && a.doctorId != null && <span className="hint"> · {doctorName(a.doctorId)}</span>}
                 </span>
                 <span className="cancelled-who hint">{cancelledText(a)}</span>
+                {(() => {
+                  const again = rebooked(a)
+                  if (!again) return null
+                  const day = withDate || dateOf(again.startAt) !== dateOf(a.startAt) ? `${dayTitle(dateOf(again.startAt))}, ` : ''
+                  return <span className="cancelled-again tone-ok">↻ записан снова · {day}{timeOf(again.startAt)}</span>
+                })()}
               </button>
             </li>
           ))}
