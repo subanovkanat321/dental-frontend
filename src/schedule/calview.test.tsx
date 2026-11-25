@@ -82,6 +82,19 @@ describe('«Месяц»', () => {
     return { ranges }
   }
 
+  test('один врач — в дне точки статусов (заявка, подтвердил), а не врачи', async () => {
+    screenOf('desktop')
+    backend()
+    localStorage.setItem('crm.schedule.view.v2', '1')
+    renderApp()
+    await userEvent.click(await screen.findByRole('button', { name: 'Месяц' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Следующий месяц' }))
+    const day = await screen.findByRole('button', { name: new RegExp(`^${dayTitle(tuesday)}, 2 записи`) })
+    expect(day.querySelector('.month-dot.k-request')).toHaveTextContent('1')
+    expect(day.querySelector('.month-dot.k-ok')).toHaveTextContent('1')
+    expect(day.querySelector('.month-dot.doc')).toBeNull()
+  })
+
   test('числа записей по дням (все врачи, один запрос на врача за месяц), выходные — штриховкой, клик — «День»', async () => {
     screenOf('desktop')
     const { ranges } = backend()
@@ -92,8 +105,11 @@ describe('«Месяц»', () => {
     // Отменённый не считается: 2 у Айгерим + 1 у Дастана; загрузка — 90 минут из 18 рабочих часов двух врачей
     const day = await screen.findByRole('button', { name: new RegExp(`^${dayTitle(tuesday)}, 3 записи, занято 8%`) })
     expect(day).toHaveTextContent('3 записи')
-    expect(day.querySelector('.month-dot.k-request')).toHaveTextContent('1')
-    expect(day.querySelector('.month-dot.k-ok')).toHaveTextContent('1')
+    // Все врачи — точки по врачам: у Айгерим 2, у Дастана 1 (отменённый не считается)
+    expect(within(day).getByTitle('Айгерим Садыкова: 2')).toHaveTextContent('2')
+    expect(within(day).getByTitle('Дастан Т.: 1')).toHaveTextContent('1')
+    // Точки статусов — у одного врача (тест ниже); у «Все врачи» вместо них — врачи
+    expect(day.querySelector('.month-dot.k-request')).toBeNull()
     expect(day.querySelector('.month-load > span')).toHaveStyle({ '--load': '8%' })
     expect(ranges).toEqual(expect.arrayContaining([`${nextMonth}-01/${daysInMonth(nextMonth)}/1`, `${nextMonth}-01/${daysInMonth(nextMonth)}/2`]))
     expect(screen.getByRole('heading', { level: 1 }).closest('.day-title')).toHaveTextContent(/все врачи · записей 3/)

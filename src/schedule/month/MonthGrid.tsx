@@ -1,6 +1,6 @@
 import { type CSSProperties } from 'react'
 
-import { dayTitle } from '../../lib/time'
+import { dateOf, dayTitle } from '../../lib/time'
 import { Loading } from '../../layout/Loading'
 import { MONTH_KINDS, monthGridDays, monthStats, recordsText, type MonthKind } from './monthModel'
 import type { useMonthData } from './useMonth'
@@ -19,7 +19,7 @@ const WEEKDAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
  * «Дне»; сегодня — число в коралловом кружке, как «сейчас». Нажать на день — этот день в «Дне».
  * На телефоне — только число записей и полоска: точки и подписи не влезают в 50 px.
  */
-export function MonthGrid({ month, today, selected, data, compact = false, onOpenDay }: {
+export function MonthGrid({ month, today, selected, data, compact = false, onOpenDay, doctors = [] }: {
   /** 'YYYY-MM'. */
   month: string
   today: string
@@ -29,9 +29,26 @@ export function MonthGrid({ month, today, selected, data, compact = false, onOpe
   data: ReturnType<typeof useMonthData>
   compact?: boolean
   onOpenDay: (date: string) => void
+  /**
+   * Врачи на экране (цвет — как у колонки). Больше одного — в дне точки по врачам «● 5 ● 3» вместо точек статусов
+   * (владелец 2026-11-25: «точки по врачам в месяце тоже сделай»)
+   */
+  doctors?: { id: number; name: string; color: string }[]
 }) {
   const days = monthGridDays(month)
   const stats = monthStats(days, data.hours, data.appointments, data.timeOff)
+  const byDoctor = doctors.length > 1
+  // День → врач → записей (без отменённых)
+  const perDoctor = new Map<string, Map<number, number>>()
+  if (byDoctor) {
+    for (const a of data.appointments) {
+      if (a.status === 'CANCELLED' || !a.startAt || a.doctorId == null) continue
+      const day = dateOf(a.startAt)
+      const m = perDoctor.get(day) ?? new Map<number, number>()
+      m.set(a.doctorId, (m.get(a.doctorId) ?? 0) + 1)
+      perDoctor.set(day, m)
+    }
+  }
 
   return (
     <div className={`month${compact ? ' compact' : ''}`}>
@@ -58,7 +75,17 @@ export function MonthGrid({ month, today, selected, data, compact = false, onOpe
                 {s && s.count > 0 && <span className="month-count num">{compact ? s.count : recordsText(s.count)}</span>}
               </span>
               {s?.off && !compact && <span className="month-off">{s.offTitle ?? 'Выходной'}</span>}
-              {s && s.count > 0 && !compact && (
+              {s && s.count > 0 && !compact && byDoctor && (
+                <span className="month-dots by-doctor">
+                  {doctors.filter((d) => perDoctor.get(date)?.get(d.id)).map((d) => (
+                    <span key={d.id} className="month-dot doc" title={`${d.name}: ${perDoctor.get(date)!.get(d.id)}`}
+                      style={{ '--doc': d.color } as CSSProperties}>
+                      <i aria-hidden="true" />{perDoctor.get(date)!.get(d.id)}
+                    </span>
+                  ))}
+                </span>
+              )}
+              {s && s.count > 0 && !compact && !byDoctor && (
                 <span className="month-dots">
                   {MONTH_KINDS.filter((k) => s.kinds[k]).map((k) => (
                     <span key={k} className={`month-dot k-${k}`} title={`${s.kinds[k]} — ${KIND_TEXT[k]}`}>
@@ -78,7 +105,9 @@ export function MonthGrid({ month, today, selected, data, compact = false, onOpe
       </div>
       {!compact && (
         <p className="month-legend hint small">
-          {MONTH_KINDS.filter((k) => k !== 'quiet').map((k) => (
+          {byDoctor ? doctors.map((d) => (
+            <span key={d.id} className="month-dot doc" style={{ '--doc': d.color } as CSSProperties}><i aria-hidden="true" />{d.name}</span>
+          )) : MONTH_KINDS.filter((k) => k !== 'quiet').map((k) => (
             <span key={k} className={`month-dot k-${k}`}><i aria-hidden="true" />{KIND_TEXT[k]}</span>
           ))}
           <span className="month-legend-load"><span aria-hidden="true" /> занято от рабочего времени</span>

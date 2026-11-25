@@ -41,6 +41,8 @@
 .month-dot.k-done i { background: var(--done-ink); }
 .month-dot.k-bad i { background: var(--bad-ink); }
 .month-dot.k-quiet i { background: var(--faint); }
+/* Точки по врачам (несколько врачей на экране): цвет — как у колонки врача */
+.month-dot.doc i { width: 8px; height: 8px; background: var(--doc); }
 
 /* Загрузка дня — полоска снизу ячейки: доля занятого от рабочего времени */
 .month-load { position: absolute; left: 8px; right: 8px; bottom: 6px; height: 4px; border-radius: 9999px; background: var(--sunken); overflow: hidden; }

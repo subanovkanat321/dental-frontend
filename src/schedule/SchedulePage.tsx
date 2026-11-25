@@ -648,6 +648,7 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
             windows={inlineWindows} onWindows={() => setWindowsOpen(true)} />
         ) : monthMode ? (
           <MonthGrid month={month} today={today} selected={date} data={monthData} compact={narrow}
+            doctors={(view === 'all' ? doctors : []).map((d) => ({ id: d.id, name: d.fullName ?? '', color: colorOf(d) }))}
             onOpenDay={(day) => { setDate(day); setMode('day') }} />
         ) : weekMode && weekDoctor != null ? (
           <WeekGrid me={me} doctorId={weekDoctor} monday={monday} today={today} selectedId={selected?.id}
