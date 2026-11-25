@@ -190,9 +190,10 @@
     text-align: center; text-overflow: ellipsis; white-space: nowrap; }
   .ui-v2 .v2-drill .sub-tabs-helps { grid-column: 3; grid-row: 1; justify-self: end; }
   /* Содержимое пункта — колонкой по центру, как в «Настройках» iOS/macOS: на мониторе строки не растягиваются на 1600px */
-  .ui-v2 .workspace:has(.v2-drill) .settings-item { max-width: 860px; margin: 0 auto; }
+  /* Ширина пункта — на весь экран, как в прежнем виде (владелец 2026-11-25: «сделай на весь экран»): колонка 860px ломала страницы из нескольких карточек — «О клинике»,
+     «Напоминание» (владелец 2026-11-25: «клиника и настройки на ноуте полностью сломались») */
+  .ui-v2 .workspace:has(.v2-drill) .settings-item { max-width: none; margin: 0; }
   /* С открытой панелью справа (сотрудник, услуга, памятка) колонке нужно место и под список, и под панель */
-  .ui-v2 .workspace:has(.v2-drill) .settings-item:has(.with-panel) { max-width: 1280px; }
 
   /* Список пунктов — окном по центру: заголовок 34px, группы строк с плитками 44px */
   .ui-v2 .more-sheet.nav-sheet { display: block; position: fixed; inset: 0; z-index: 60; background: rgba(11, 34, 41, .32); }
@@ -263,17 +264,20 @@
   .ui-v2 .more-item[data-section=help] { --tile: var(--ico-help); }
   .ui-v2 .more-item[data-section=team] { --tile: var(--ico-patients); }
 
-  /* Заголовок раздела: крупно 34px слева, подраздел — «таблеткой» под ним; уезжает при прокрутке, как в iOS */
-  .ui-v2 .sub-tabs-slot { position: static; margin: -16px -16px 4px; }
-  .ui-v2 .sub-bar { height: auto; padding: 18px 16px 6px; background: none; border: 0; box-shadow: none !important; align-items: flex-start; }
-  .ui-v2 .sub-bar-btn { flex-wrap: wrap; height: auto; margin: 0; padding: 0; gap: 8px; background: none !important; }
+  /* Заголовок раздела на телефоне — тонкой строкой «Пациенты · Записаны» (владелец 2026-11-25: «верхние вкладки
+     зачем — нижние и так открывают подвкладки»). Было: крупно 34px и подраздел «таблеткой» — дублировало нижнее меню
+     и занимало ~110px. Строка — та же кнопка листа подразделов (подписи и роли прежние), «?» справа */
+  .ui-v2 .sub-tabs-slot { position: static; margin: -16px -16px 2px; }
+  .ui-v2 .sub-bar { height: auto; min-height: 44px; padding: 8px 16px 2px; background: none; border: 0; box-shadow: none !important; align-items: center; }
+  .ui-v2 .sub-bar-btn { flex-wrap: nowrap; align-items: baseline; height: auto; min-width: 0; margin: 0; padding: 0; gap: 0; background: none !important; }
   .ui-v2 .sub-bar:not(.v2-drill) .sub-bar-ico, .ui-v2 .sub-bar-dot { display: none; }
-  .ui-v2 .sub-bar-sect { flex-basis: 100%; color: var(--v2-ink); font: 700 var(--v2-title) / 1.12 var(--display); letter-spacing: -.02em; }
-  .ui-v2 .sub-bar-pick { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 12px 0 16px; border-radius: var(--v2-r-pill);
-    background: var(--v2-card); box-shadow: var(--v2-shadow); font-size: .95rem; }
-  .ui-v2 .sub-bar-btn[aria-expanded=true] .sub-bar-pick, .ui-v2 .sub-bar-btn:active .sub-bar-pick { background: var(--accent-soft); }
-  .ui-v2 .sub-bar .sub-tabs-helps { margin-top: 6px; }
-  .ui-v2 .sub-bar .sub-tabs-help .help-hint-btn { width: 36px; height: 36px; border: 0; background: var(--v2-card); box-shadow: var(--v2-shadow); }
+  .ui-v2 .sub-bar-sect { flex: none; color: var(--v2-ink); font: 700 1.1rem / 1.2 var(--display); letter-spacing: -.01em; }
+  .ui-v2 .sub-bar:not(.v2-drill) .sub-bar-sect::after { content: "·"; margin: 0 7px; color: var(--hint); font-weight: 400; }
+  .ui-v2 .sub-bar-pick { display: inline-flex; align-items: baseline; gap: 4px; min-width: 0; min-height: 0; padding: 0; border-radius: 0;
+    background: none; box-shadow: none; color: var(--hint); font-size: 1rem; font-weight: 500; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .ui-v2 .sub-bar-btn[aria-expanded=true] .sub-bar-pick, .ui-v2 .sub-bar-btn:active .sub-bar-pick { background: none; color: var(--accent-ink); }
+  .ui-v2 .sub-bar .sub-tabs-helps { margin-top: 0; margin-left: auto; }
+  .ui-v2 .sub-bar .sub-tabs-help .help-hint-btn { width: 32px; height: 32px; border: 0; background: var(--v2-card); box-shadow: var(--v2-shadow); }
 
   /* Экран «внутрь» (пункт «Настроек», «Клиники»): круглая «‹» слева, название по центру; прилипает сверху */
   .ui-v2 .sub-tabs-slot:has(.v2-drill) { position: sticky; top: 0; margin-bottom: 8px; }

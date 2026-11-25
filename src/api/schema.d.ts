@@ -292,6 +292,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/platform/whatsapp/secrets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["secrets"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/platform/whatsapp/connection": {
         parameters: {
             query?: never;
@@ -2446,6 +2462,22 @@ export interface paths {
         get: operations["verify"];
         put?: never;
         post: operations["receive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/whatsapp/webhook/{clinicId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["verifyClinic"];
+        put?: never;
+        post: operations["receiveClinic"];
         delete?: never;
         options?: never;
         head?: never;
@@ -9638,13 +9670,13 @@ export interface components {
             /** Format: int64 */
             appointments: number;
         };
-        WhatsAppControllerConnection: {
+        WhatsAppControllerSecrets: {
             /** Format: int64 */
             clinicId: number;
-            wabaId?: string;
-            phoneNumberId?: string;
-            displayPhone?: string;
-            enabled?: boolean;
+            token?: string;
+            appSecret?: string;
+            verifyToken?: string;
+            clear?: ("TOKEN" | "APP_SECRET" | "VERIFY_TOKEN")[];
         };
         WhatsAppAdminConnectionView: {
             /** Format: int64 */
@@ -9655,6 +9687,19 @@ export interface components {
             displayPhone?: string;
             enabled: boolean;
             tokenOnServer: boolean;
+            envClinic: boolean;
+            tokenSet: boolean;
+            appSecretSet: boolean;
+            verifyTokenSet: boolean;
+            unreadable?: string[];
+            webhookReady: boolean;
+            webhookPath?: string;
+            /** Format: date-time */
+            lastInboundAt?: string;
+            /** Format: int32 */
+            webhookErrors: number;
+            /** Format: date-time */
+            lastWebhookErrorAt?: string;
         };
         WhatsAppAdminFailureView: {
             /** Format: int64 */
@@ -9671,11 +9716,20 @@ export interface components {
             tokenClinicId?: number;
             graphVersion?: string;
             webhookPath?: string;
+            secretsKey: boolean;
             connections?: components["schemas"]["WhatsAppAdminConnectionView"][];
             last24h?: {
                 [key: string]: number;
             };
             failures?: components["schemas"]["WhatsAppAdminFailureView"][];
+        };
+        WhatsAppControllerConnection: {
+            /** Format: int64 */
+            clinicId: number;
+            wabaId?: string;
+            phoneNumberId?: string;
+            displayPhone?: string;
+            enabled?: boolean;
         };
         BillingControllerTariffsRequest: {
             /** Format: int32 */
@@ -16516,6 +16570,30 @@ export interface operations {
             };
         };
     };
+    secrets: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WhatsAppControllerSecrets"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WhatsAppAdminPlatformView"];
+                };
+            };
+        };
+    };
     save: {
         parameters: {
             query?: never;
@@ -21191,6 +21269,58 @@ export interface operations {
                 "X-Hub-Signature-256"?: string;
             };
             path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": string;
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    verifyClinic: {
+        parameters: {
+            query?: {
+                "hub.mode"?: string;
+                "hub.verify_token"?: string;
+                "hub.challenge"?: string;
+            };
+            header?: never;
+            path: {
+                clinicId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/plain": string;
+                };
+            };
+        };
+    };
+    receiveClinic: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Hub-Signature-256"?: string;
+            };
+            path: {
+                clinicId: number;
+            };
             cookie?: never;
         };
         requestBody?: {
