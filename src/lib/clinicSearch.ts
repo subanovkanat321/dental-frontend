@@ -2,7 +2,7 @@ import { useState } from 'react'
 
 /**
  * Поиск клиники, когда их много: по названию и адресу (в каталоге — и по врачу) и по городу.
- * Общий для каталога /clinics (src/site/Directory.tsx) и выбора клиники в Mini App
+ * Общий для главной tish.kg и каталога /clinics (src/site/Home.tsx) и выбора клиники в Mini App
  * (src/patient/PatientApp.tsx). Пока клиник мало, поиск и города не показываем — короткий
  * список и так виден целиком, а пустое поле поиска только отвлекает.
  */
@@ -71,9 +71,10 @@ type Clinic = { city?: string | null }
 
 /**
  * Поиск и город над списком клиник. `text` — по чему искать (название, адрес, врачи). Город,
- * которого в списке больше нет, не прячет все клиники — показываем все.
+ * которого в списке больше нет, не прячет все клиники — показываем все. `searchFrom` — с какого
+ * числа клиник работает поиск (главная tish.kg показывает поиск всегда: 0).
  */
-export function useClinicFilter<C extends Clinic>(clinics: C[], text: (c: C) => (string | null | undefined)[]) {
+export function useClinicFilter<C extends Clinic>(clinics: C[], text: (c: C) => (string | null | undefined)[], { searchFrom = SEARCH_FROM }: { searchFrom?: number } = {}) {
   const [query, setQuery] = useState('')
   const [saved, setSaved] = useState(remembered)
   // Города с клиниками — по числу клиник, при равенстве — в порядке списка (Бишкек, Ош, …)
@@ -83,7 +84,7 @@ export function useClinicFilter<C extends Clinic>(clinics: C[], text: (c: C) => 
   const cities = [...counts].sort((a, b) => b[1] - a[1] || order(a[0]) - order(b[0])).map(([city, count]) => ({ city, count }))
   const showCities = cities.length >= 2
   const city = showCities && counts.has(saved) ? saved : ''
-  const showSearch = clinics.length >= SEARCH_FROM
+  const showSearch = clinics.length >= searchFrom
   const shown = clinics.filter((c) => (!city || c.city === city) && (!showSearch || matchesQuery([...text(c), c.city], query)))
   const setCity = (next: string) => {
     setSaved(next)

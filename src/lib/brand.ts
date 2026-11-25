@@ -13,3 +13,16 @@ export const OFFER = 'Попробовать бесплатно'
  * запишется «из Instagram» и будет видна в «Платформа → Аналитика → Откуда пришли клиники» (V237 бэкенда).
  */
 export const INSTAGRAM_SIGNUP = '/start?from=instagram'
+
+/**
+ * Связь с Tish по умолчанию — те же адреса, что были на /about. Страницы сайта сначала берут контакты из «Сведений о
+ * платформе» (GET /web/links: supportWhatsapp, supportUrl), а эти — если там пусто или сервер не ответил.
+ */
+export const TISH_TELEGRAM = 'https://t.me/veratti_16'
+export const TISH_WHATSAPP = '996773565895'
+export const TISH_PHONE = '996558162998'
+
+/** Ссылка WhatsApp Tish с готовым первым сообщением; number — из «Сведений о платформе», иначе {@link TISH_WHATSAPP}. */
+export function tishWhatsapp(text?: string, number: string = TISH_WHATSAPP): string {
+  return `https://wa.me/${number}${text ? `?text=${encodeURIComponent(text)}` : ''}`
+}
