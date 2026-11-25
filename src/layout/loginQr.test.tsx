@@ -6,7 +6,7 @@ import { http, HttpResponse } from 'msw'
 import type { TelegramLoginStatus } from '../api/client'
 import { createQueryClient } from '../api/queryClient'
 import { server } from '../test/server'
-import { PHONE_OPEN, Login } from './Login'
+import { Login } from './Login'
 import { QR_SCREEN } from '../lib/qrScreen'
 import { QR_CAPTION } from './TelegramLogin'
 
@@ -54,7 +54,6 @@ const qrImage = () => screen.findByRole('img', { name: /QR-код входа/ })
 afterEach(() => {
   delete (window as { matchMedia?: unknown }).matchMedia
   delete window.Telegram
-  localStorage.removeItem('crm.login.method')
   vi.restoreAllMocks()
 })
 
@@ -70,10 +69,10 @@ test('на компьютере QR-код ссылки в бота виден с
   expect(screen.getByText(QR_CAPTION)).toBeInTheDocument()
   expect(api.started()).toBe(1)
   expect(open).not.toHaveBeenCalled()
-  // Пока ссылка только для QR — не «ждём вас»: путь без Telegram виден, с подсказкой про «Забыли пароль»
+  // Пока ссылка только для QR — не «ждём вас»: форма логина и пароля видна, с «Забыли пароль?»
   expect(screen.queryByRole('status', { name: 'Ждём подтверждения в Telegram' })).not.toBeInTheDocument()
-  expect(screen.getByRole('button', { name: PHONE_OPEN })).toBeInTheDocument()
-  expect(screen.getByText(/Пароля нет или забыли — там же «Забыли пароль\? \/ Первый вход»: пришлём код по SMS/)).toBeInTheDocument()
+  expect(await screen.findByRole('textbox', { name: 'Логин или телефон' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Забыли пароль? / Первый вход' })).toBeInTheDocument()
 
   // «Войти через Telegram» открывает ту же ссылку (новую не берёт), QR остаётся и на шаге ожидания
   await userEvent.click(screen.getByRole('button', { name: 'Войти через Telegram' }))
@@ -119,7 +118,7 @@ test('внутри Telegram QR-кода нет даже на широком эк
   screenIs(true)
   window.Telegram = { WebApp: { initData: 'query_id=1&hash=abc' } } as unknown as typeof window.Telegram
   show()
-  expect(await screen.findByRole('textbox', { name: 'Номер телефона' })).toBeInTheDocument()
+  expect(await screen.findByRole('textbox', { name: 'Логин или телефон' })).toBeInTheDocument()
   expect(screen.queryByRole('img', { name: /QR-код входа/ })).not.toBeInTheDocument()
   expect(api.started()).toBe(0)
 })

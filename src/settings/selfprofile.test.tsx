@@ -21,7 +21,7 @@ afterEach(() => {
   window.location.hash = ''
 })
 
-test('«Мой профиль» у регистратуры: сверху своё «Имя» — меняет сама, ниже «Телефон», «Пароль и вход» — в самом низу', async () => {
+test('«Мой профиль» у регистратуры: сверху своё «Имя» — меняет сама, ниже «Телефон», «Логин и пароль» — в самом низу', async () => {
   let sent: unknown = null
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(reception)),
@@ -37,7 +37,7 @@ test('«Мой профиль» у регистратуры: сверху сво
   renderApp()
 
   const nameBlock = await screen.findByRole('region', { name: 'Имя' })
-  const order = await Promise.all(['Имя', 'Телефон', 'Пароль и вход'].map((name) => screen.findByRole('region', { name })))
+  const order = await Promise.all(['Имя', 'Телефон', 'Логин и пароль'].map((name) => screen.findByRole('region', { name })))
   expect(order[0]!.compareDocumentPosition(order[1]!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   expect(order[1]!.compareDocumentPosition(order[2]!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
 

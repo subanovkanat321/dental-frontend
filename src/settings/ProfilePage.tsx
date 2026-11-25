@@ -62,7 +62,7 @@ export function ProfilePage({ me, onBack, footer }: { me: Me; onBack: () => void
         : admin.error ? <p className="error">{admin.error.message}</p>
           : own ? <DoctorPanel key={own.id} doctor={own} me={me} onClose={onBack} inline afterProfile={<MyPhone />} />
             : <><MyPhone /><p className="hint">Профиль не найден — обновите страницу.</p></>}
-      {/* Внизу, не «надо сделать»: быстрый вход без пароля (Google, Apple) и пароль — для входа по номеру */}
+      {/* Внизу, не «надо сделать»: быстрый вход без пароля (Google) и логин с паролем — для входа без Telegram */}
       <ExternalLoginsSection />
       <PasswordSection />
       {footer}
@@ -125,7 +125,7 @@ const TAKE_FROM_TELEGRAM = 'Взять номер из Telegram'
  * номер ваш);</li>
  * <li>запасной способ — кодом из SMS на этот номер: номер → «Получить код» → код → «Подтвердить» → только
  * потом «Придумайте пароль для входа по номеру» (сервер выдал одноразовый пропуск; шаг можно пропустить и
- * задать пароль позже в «Пароль и вход»).</li>
+ * задать пароль позже в «Логин и пароль»).</li>
  * </ul>
  * Убрать (у кого есть Telegram) — без кода.
  */
@@ -302,7 +302,7 @@ function MyPhoneCard({ state }: { state: MyPhoneState }) {
   })
   const skipPassword = () => {
     refresh()
-    void notify('Номер подтверждён. Пароль для входа по номеру можно задать позже — «Пароль и вход».')
+    void notify('Номер подтверждён. Пароль для входа по номеру можно задать позже — «Логин и пароль».')
   }
   const remove = useMutation<unknown, ApiError>({ mutationFn: () => unwrap(api.DELETE('/api/me/phone')), onSuccess: refresh })
   const viaTelegram = useTelegramShare(state.phone ?? null, refresh)

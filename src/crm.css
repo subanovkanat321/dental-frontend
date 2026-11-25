@@ -1115,27 +1115,19 @@ button.timesheet-day:hover { border-color: var(--accent); }
 .login-qr-plate svg { display: block; width: 100%; height: 100%; }
 .login-qr-empty { display: grid; place-items: center; width: 100%; height: 100%; color: #4C6268; font-size: .9rem; text-align: center; }
 .login-qr .hint.small { max-width: 300px; margin: 0; }
-/* «Войти через Google / Apple» (layout/ExternalLogin, ProviderButtons): кнопку Google рисует сам Google (фрейм), Apple —
-   своя по правилам Apple: чёрная, логотип и «Войти через Apple»; в тёмной теме — белая */
+/* «Войти через Google» (layout/ExternalLogin, ProviderButtons): кнопку рисует сам Google (фрейм) */
 .login-providers { width: 100%; max-width: 360px; justify-self: center; display: grid; gap: 10px; justify-items: stretch; text-align: center;
   margin-top: 6px; padding-top: 14px; border-top: 1px solid var(--separator); }
 .login-providers .hint.small, .login-providers .error { margin: 0; }
 .provider-button { display: grid; gap: 6px; justify-items: center; min-height: 44px; }
 .provider-google { display: flex; justify-content: center; width: 100%; min-height: 44px; }
-.btn.provider-apple { min-height: 44px; gap: 8px; border: 0; border-radius: 4px; background: #000; color: #fff; font-size: 1rem; font-weight: 500; }
-.btn.provider-apple:hover:not(:disabled) { background: #1d1d1f; }
-.provider-apple-logo { flex: none; margin-top: -2px; }
-:root[data-theme=dark] .btn.provider-apple { background: #fff; color: #000; }
-:root[data-theme=dark] .btn.provider-apple:hover:not(:disabled) { background: #f2f2f2; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme]) .btn.provider-apple { background: #fff; color: #000; }
-  :root:not([data-theme]) .btn.provider-apple:hover:not(:disabled) { background: #f2f2f2; } }
 .provider-card { display: grid; gap: 12px; }
 .provider-card > .hint { margin: 0; }
 .provider-line + .provider-line { padding-top: 12px; border-top: 1px solid var(--separator); }
 .provider-line .provider-google { min-width: 220px; }
-.login-phone-note { justify-self: center; max-width: 360px; margin: 0; text-align: center; }
 .login-or { display: flex; align-items: center; gap: 10px; width: 100%; max-width: 360px; justify-self: center; margin: 6px 0 0; white-space: nowrap; color: var(--faint); font-size: .9rem; }
-.login-phone-open { justify-self: center; margin-top: 6px; }
+.login-others { justify-self: center; margin-top: 6px; font-size: .9rem; }
+.login-others-open { width: 100%; display: grid; justify-items: center; }
 .login-or::before, .login-or::after { content: ''; flex: 1; border-top: 1px solid var(--separator); }
 /* Вход по номеру и SMS (без Telegram): форма в карточке входа — по ширине кнопки, слева направо */
 .phone-login { width: 100%; max-width: 360px; justify-self: center; text-align: left; }

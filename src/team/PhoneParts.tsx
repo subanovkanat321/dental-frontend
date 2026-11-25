@@ -7,6 +7,8 @@ import { PhoneInput } from '../clinic/PhoneInput'
 import { phoneFromInput, phoneToInput } from '../clinic/phone'
 import { PasswordInput, ShowPassword } from '../layout/PasswordFields'
 import { notify } from '../lib/confirm'
+import { PASSWORD_MIN, passwordProblem } from '../lib/password'
+import { usernameProblem } from '../lib/username'
 import { phoneText } from './texts'
 
 // Админу — DoctorAdminView, остальным — DoctorView из me (без Telegram, роли и телефона)
@@ -46,34 +48,51 @@ export function DoctorPhone({ doctor: d, onDone }: { doctor: Doctor; onDone: () 
 }
 
 /**
- * «Временный пароль» сотруднику по номеру — когда SMS не подключены или не доходят. Админ задаёт
- * пароль и говорит его лично; сотрудник входит им один раз и сразу придумывает свой (3 дня).
- * Пароль сервер в ответе не возвращает и в журнал действий не пишет.
+ * «Логин и пароль» сотруднику по номеру — когда у него нет Telegram, а SMS не подключены или не доходят. Админ задаёт
+ * временный пароль и, если нужно, логин (V264 бэкенда) и говорит их лично; сотрудник входит ими один раз и сразу
+ * придумывает свой пароль (3 дня), логин потом может сменить сам в «Мой профиль». Пароль сервер в ответе не
+ * возвращает и в журнал действий не пишет; логин — тоже только в теле запроса.
  */
 export function TemporaryPassword({ telegramId, name }: { telegramId: number; name: string }) {
   const [open, setOpen] = useState(false)
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [shown, setShown] = useState(true)
+  const [error, setError] = useState('')
   const set = useMutation<unknown, ApiError>({
     mutationFn: () => unwrap(api.PUT('/api/members/{telegramId}/temporary-password', {
-      params: { path: { telegramId } }, body: { password },
+      params: { path: { telegramId } }, body: username.trim() ? { password, username: username.trim() } : { password },
     })),
     onSuccess: () => {
+      const login = username.trim().toLowerCase()
       setOpen(false)
       setPassword('')
-      void notify(`Временный пароль для «${name}» задан. Скажите его лично (не пересылайте в общий чат): при входе `
-        + 'по номеру и этому паролю сотрудник сразу придумает свой. Действует 3 дня.')
+      setUsername('')
+      void notify(`${login ? `Логин «${login}» и временный пароль` : 'Временный пароль'} для «${name}» заданы. Скажите их лично `
+        + `(не пересылайте в общий чат): при входе по ${login ? 'логину' : 'номеру'} и этому паролю сотрудник сразу придумает свой. `
+        + 'Пароль действует 3 дня.')
     },
   })
-  if (!open) {
-    return <button type="button" className="btn small ghost" onClick={() => { set.reset(); setOpen(true) }}>Временный пароль</button>
+  const submit = () => {
+    const problem = usernameProblem(username) || passwordProblem(password, password, '', username)
+    setError(problem)
+    if (!problem) set.mutate()
   }
+  if (!open) {
+    return <button type="button" className="btn small ghost" onClick={() => { set.reset(); setError(''); setOpen(true) }}>Логин и пароль</button>
+  }
+  const shownError = error || set.error?.fieldErrors.username || set.error?.fieldErrors.password || set.error?.message
   return (
-    <form className="form" aria-label={`Временный пароль: ${name}`} onSubmit={(e) => { e.preventDefault(); set.mutate() }}>
-      <PasswordInput label="Временный пароль" value={password} onChange={setPassword} shown={shown} autoComplete="new-password" autoFocus />
+    <form className="form" aria-label={`Логин и пароль: ${name}`} onSubmit={(e) => { e.preventDefault(); submit() }}>
+      <label className="field"><span>Логин (необязательно)</span>
+        <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="off" autoCapitalize="off"
+          autoCorrect="off" spellCheck={false} maxLength={32} autoFocus placeholder="например, aigul" />
+      </label>
+      <p className="hint small">Латиница, цифры, точка, дефис; 3–32 символа. Пусто — логин не меняется, войти можно по номеру.</p>
+      <PasswordInput label="Временный пароль" value={password} onChange={setPassword} shown={shown} autoComplete="new-password" />
       <ShowPassword shown={shown} onToggle={() => setShown(!shown)} />
-      <p className="hint">Не короче 8 символов, не только цифры. Старые входы сотрудника закроются.</p>
-      {set.error && <p className="error" role="alert">{set.error.fieldErrors.password ?? set.error.message}</p>}
+      <p className="hint">Не короче {PASSWORD_MIN} символов. Старые входы сотрудника закроются.</p>
+      {shownError && <p className="error" role="alert">{shownError}</p>}
       <div className="actions">
         <button type="submit" className="btn primary" disabled={set.isPending || !password}>Задать</button>
         <button type="button" className="btn ghost" onClick={() => setOpen(false)}>Отмена</button>
@@ -83,7 +102,7 @@ export function TemporaryPassword({ telegramId, name }: { telegramId: number; na
 }
 
 /** Подсказка у телефона сотрудника — одна в «Персонале» и в «Моём профиле». */
-export const PHONE_HINT = 'Номер — для входа на сайте без Telegram: номер и пароль. Первый раз или забыли пароль — код в Telegram или по SMS. С Telegram пароль не нужен: «Войти через Telegram».'
+export const PHONE_HINT = 'Номер — для входа на сайте без Telegram: номер (или логин) и пароль. Первый раз или забыли пароль — код в Telegram или по SMS. С Telegram пароль не нужен: «Войти через Telegram».'
 
 /** Сотруднику с Telegram номер для входа админ не задаёт — только он сам, с кодом из SMS. */
 export const SELF_HINT = 'Номер для входа сотрудник указывает сам — в «Моём профиле» (нажать на себя внизу меню).'

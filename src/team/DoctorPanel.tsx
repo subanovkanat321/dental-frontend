@@ -114,7 +114,7 @@ export function DoctorPanel({ doctor: d, me, onClose, inline = false, afterProfi
   const access = admin && !self ? <AccessAdmin doctor={d} inline={inline} onDone={refresh} /> : <OwnAccess doctor={d} me={me} inline={inline} />
 
   if (inline) {
-    // «Мой профиль»: каждый раздел — подпись над карточкой, как «Телефон» и «Пароль и вход» на той же странице
+    // «Мой профиль»: каждый раздел — подпись над карточкой, как «Телефон» и «Логин и пароль» на той же странице
     return (
       <aside className="doctor-inline" aria-label="Врач">
         <section className="settings-group" aria-label="Для пациентов">
@@ -288,7 +288,7 @@ function OwnAccess({ doctor: d, me, inline }: { doctor: Doctor; me: Me; inline: 
     <>
       {d.telegramId != null && <p className="tone-ok">{byPhone ? '✓ Вы входите по номеру (без Telegram)' : '✓ Ваш Telegram подключён'}</p>}
       <p className="hint">{inline
-        ? 'Номер — в разделе «Телефон», пароль (только для входа без Telegram) — в «Пароль и вход».'
+        ? 'Номер — в разделе «Телефон», пароль (только для входа без Telegram) — в «Логин и пароль».'
         : 'Телефон и пароль — в «Моём профиле» (нажать на себя внизу меню).'}
         {me.admin ? '' : ' Сменили аккаунт Telegram — попросите у руководителя новую ссылку-приглашение.'}</p>
     </>

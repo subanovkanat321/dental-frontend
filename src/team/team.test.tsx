@@ -471,6 +471,7 @@ test('карточка врача без Telegram: привязать номер
 
 test('карточка сотрудника по номеру: телефон меняет руководитель, временный пароль; с Telegram — номер только показать', async () => {
   const puts: unknown[] = []
+  const temps: unknown[] = []
   let members: Schemas['StaffMembersMemberView'][] = [
     { telegramId: 111, fullName: 'Айгерим', role: 'ADMIN', me: true, doctor: true, phoneOnly: false },
     { telegramId: 5001, fullName: 'Бермет', role: 'RECEPTION', doctor: false, phoneOnly: false, phone: '+996700000041', me: false },
@@ -490,7 +491,14 @@ test('карточка сотрудника по номеру: телефон м
       members = members.map((m) => (m.telegramId === -1000000000000001 ? { ...m, phone: '+996700000012' } : m))
       return HttpResponse.json({ phone: '+996700000012', phoneOnly: true } satisfies Schemas['StaffPhonesPhoneView'])
     }),
-    http.put('*/api/members/:id/temporary-password', () => new HttpResponse(null, { status: 204 })),
+    http.put('*/api/members/:id/temporary-password', async ({ request }) => {
+      const body = await request.json() as Schemas['PasswordControllerTemporaryPassword']
+      temps.push(body)
+      if (body.username === 'reg.desk') {
+        return HttpResponse.json({ status: 409, code: 'username-taken', detail: 'Этот логин уже занят — придумайте другой' }, { status: 409 })
+      }
+      return new HttpResponse(null, { status: 204 })
+    }),
   )
   const user = userEvent.setup()
   renderApp()
@@ -504,13 +512,29 @@ test('карточка сотрудника по номеру: телефон м
   await userEvent.click(within(card).getByRole('button', { name: 'Подсказка: Телефон' }))
   expect(card).toHaveTextContent('Номер для входа сотрудник указывает сам')
   expect(within(card).queryByRole('button', { name: 'Изменить' })).not.toBeInTheDocument()
-  expect(within(card).queryByRole('button', { name: 'Временный пароль' })).not.toBeInTheDocument()
+  expect(within(card).queryByRole('button', { name: 'Логин и пароль' })).not.toBeInTheDocument()
 
   await user.click(within(table).getByRole('button', { name: 'Нурия' }))
   card = await screen.findByRole('complementary', { name: 'Сотрудник' })
   await waitForSlow(() => expect(card).toHaveTextContent('Нурия'))
   expect(card).toHaveTextContent('✓ Входит по номеру (без Telegram)')
-  expect(within(card).getByRole('button', { name: 'Временный пароль' })).toBeInTheDocument()
+  // «Логин и пароль» коллеге без Telegram: логин занят — текст сервера; пароль короче 7 — подсказка до отправки
+  await user.click(within(card).getByRole('button', { name: 'Логин и пароль' }))
+  const login = within(card).getByRole('form', { name: 'Логин и пароль: Нурия' })
+  await user.type(within(login).getByRole('textbox', { name: 'Логин (необязательно)' }), 'reg.desk')
+  await user.type(within(login).getByLabelText('Временный пароль'), 'врем-1')
+  await user.click(within(login).getByRole('button', { name: 'Задать' }))
+  expect(await within(login).findByRole('alert')).toHaveTextContent('Пароль — не короче 7 символов')
+  expect(temps).toEqual([])
+  await user.type(within(login).getByLabelText('Временный пароль'), '23')
+  await user.click(within(login).getByRole('button', { name: 'Задать' }))
+  expect(await within(login).findByRole('alert')).toHaveTextContent('Этот логин уже занят — придумайте другой')
+  await user.clear(within(login).getByRole('textbox', { name: 'Логин (необязательно)' }))
+  await user.type(within(login).getByRole('textbox', { name: 'Логин (необязательно)' }), 'Nuria')
+  await user.click(within(login).getByRole('button', { name: 'Задать' }))
+  expect(await screen.findByText(/Логин «nuria» и временный пароль для «Нурия» заданы/)).toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: 'Понятно' }))
+  expect(temps.at(-1)).toEqual({ password: 'врем-123', username: 'Nuria' })
   await user.click(within(card).getByRole('button', { name: 'Изменить' }))
   const form = within(card).getByRole('form', { name: 'Телефон: Нурия' })
   await user.clear(within(form).getByRole('textbox', { name: 'Телефон' }))
