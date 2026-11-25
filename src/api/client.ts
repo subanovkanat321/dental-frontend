@@ -326,6 +326,24 @@ export async function forgetTelegramLogin(): Promise<void> {
 }
 
 /**
+ * «Войти через Google / Apple» (ADR 0008 бэкенда): одноразовый nonce — его передаём провайдеру, он вернётся внутри
+ * подписанного ID-токена. Действует 10 минут и один раз: после каждой попытки берём новый.
+ */
+export async function oauthNonce(): Promise<string> {
+  const r = await webPost<Schemas['ExternalLoginControllerNonce']>('/web/login/oauth/nonce', undefined)
+  if (!r?.nonce) throw new ApiError(500, 'Сервер не ответил — попробуйте ещё раз')
+  return r.nonce
+}
+
+/**
+ * Вход ID-токеном провайдера: 204 — вошли (cookie-сессия). 401 — токен не принят или аккаунт не привязан
+ * (code identity-not-linked, текст сервера — где привязать); 403 — сотрудника нет ни в одной клинике.
+ */
+export async function oauthLogin(provider: 'google' | 'apple', idToken: string): Promise<void> {
+  await webPost(`/web/login/oauth/${provider}`, { idToken })
+}
+
+/**
  * Ссылка-приглашение на сайт (/invite#join_… врачу, /invite#staff_… сотруднику): что за приглашение.
  * kind — DOCTOR или STAFF; botUsername — для
  * «Открыть в Telegram», бот не настроен — null. codeRequired — регистрация по номеру с кодом из SMS (SMS

@@ -6,6 +6,7 @@ import { isLoginPath } from '../lib/route'
 import { telegram } from '../lib/telegram'
 import { InstallHint } from '../pwa/InstallHint'
 import { FORGOT, PhoneLogin } from './PhoneLogin'
+import { ExternalLogin } from './ExternalLogin'
 import { Loading } from './Loading'
 import { TelegramLogin } from './TelegramLogin'
 
@@ -56,7 +57,8 @@ function LoggedOutHint({ onClose }: { onClose: () => void }) {
  * Страница входа на сайт: сверху «Войти через Telegram» (быстрее всего) — ссылка в бота и «Подтвердить
  * вход» там; ниже «Нет Telegram?» — номер телефона и пароль (TelegramLogin; прежний Telegram Login Widget убран — сервер отвечает на него 410). Нет пароля —
  * «Забыли пароль? / Первый вход»: код в Telegram (бот сотрудников) или по SMS. В Telegram (Mini App) вход сам,
- * по initData — кнопку «Войти через Telegram» там не показываем.
+ * по initData — кнопку «Войти через Telegram» там не показываем. Под Telegram — «Войти через Google / Apple», если владелец
+ * их подключил и человек привязал аккаунт (ExternalLogin; в Telegram их тоже нет).
  */
 export function Login() {
   const client = useQueryClient()
@@ -94,6 +96,7 @@ export function Login() {
       {bot.isPending && <Loading />}
       {bot.isSuccess && !config && <p className="error">Вход сейчас недоступен: сервер не настроен или не отвечает. Обновите страницу через минуту.</p>}
       {viaTelegram && <TelegramLogin onDone={() => { saveMethod('telegram'); entered() }} onWaiting={onWaiting} />}
+      {config && !tgWaiting && <ExternalLogin config={config} onDone={entered} />}
       {config && !tgWaiting && viaTelegram && !byPhone && (
         <>
           <button type="button" className="link login-phone-open" onClick={() => setByPhone(true)}>

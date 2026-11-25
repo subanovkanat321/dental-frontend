@@ -2340,6 +2340,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/web/login/oauth/{provider}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["login_2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/login/oauth/nonce": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["nonce"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/web/invite": {
         parameters: {
             query?: never;
@@ -4751,6 +4783,22 @@ export interface paths {
         put?: never;
         post: operations["logoutAll"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/identities/{provider}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["link_1"];
+        delete: operations["unlink"];
         options?: never;
         head?: never;
         patch?: never;
@@ -7483,7 +7531,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["link_1"];
+        get: operations["link_2"];
         put?: never;
         post?: never;
         delete?: never;
@@ -7900,6 +7948,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["mine"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/identities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["mine_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -11742,6 +11806,14 @@ export interface components {
             /** @enum {string} */
             channel?: "auto" | "sms" | "mail";
         };
+        ExternalLoginControllerTokenRequest: {
+            idToken: string;
+        };
+        ExternalLoginControllerNonce: {
+            nonce: string;
+            /** Format: int64 */
+            secondsLeft: number;
+        };
         InviteControllerTokenRequest: {
             token?: string;
         };
@@ -12754,6 +12826,17 @@ export interface components {
         PasswordControllerCodeRequest: {
             channel?: string;
         };
+        ExternalLoginControllerIdentityView: {
+            /** @enum {string} */
+            provider: "google" | "apple";
+            available: boolean;
+            linked: boolean;
+            email?: string;
+            /** Format: date-time */
+            linkedAt?: string;
+            /** Format: date-time */
+            lastLoginAt?: string;
+        };
         MyEmailControllerEmailCode: {
             email: string;
         };
@@ -13381,6 +13464,8 @@ export interface components {
             telegramCode: boolean;
             telegramLogin: boolean;
             mailCode: boolean;
+            googleClientId?: string;
+            appleClientId?: string;
         };
         DirectoryControllerClinic: {
             name?: string;
@@ -21047,6 +21132,52 @@ export interface operations {
             };
         };
     };
+    login_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                provider: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ExternalLoginControllerTokenRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+        };
+    };
+    nonce: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExternalLoginControllerNonce"];
+                };
+            };
+        };
+    };
     view_2: {
         parameters: {
             query?: never;
@@ -25627,6 +25758,54 @@ export interface operations {
             };
         };
     };
+    link_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                provider: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ExternalLoginControllerTokenRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExternalLoginControllerIdentityView"][];
+                };
+            };
+        };
+    };
+    unlink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                provider: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExternalLoginControllerIdentityView"][];
+                };
+            };
+        };
+    };
     code_5: {
         parameters: {
             query?: never;
@@ -30189,7 +30368,7 @@ export interface operations {
             };
         };
     };
-    link_1: {
+    link_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -30762,6 +30941,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["NetMonthMine"];
+                };
+            };
+        };
+    };
+    mine_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExternalLoginControllerIdentityView"][];
                 };
             };
         };

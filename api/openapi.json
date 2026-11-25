@@ -6315,6 +6315,59 @@
         }
       }
     },
+    "/web/login/oauth/{provider}" : {
+      "post" : {
+        "tags" : [ "external-login-controller" ],
+        "operationId" : "login_2",
+        "parameters" : [ {
+          "name" : "provider",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ExternalLoginControllerTokenRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/login/oauth/nonce" : {
+      "post" : {
+        "tags" : [ "external-login-controller" ],
+        "operationId" : "nonce",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ExternalLoginControllerNonce"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/web/invite" : {
       "post" : {
         "tags" : [ "invite-controller" ],
@@ -12027,6 +12080,71 @@
         "responses" : {
           "200" : {
             "description" : "OK"
+          }
+        }
+      }
+    },
+    "/api/me/identities/{provider}" : {
+      "post" : {
+        "tags" : [ "external-login-controller" ],
+        "operationId" : "link_1",
+        "parameters" : [ {
+          "name" : "provider",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ExternalLoginControllerTokenRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ExternalLoginControllerIdentityView"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "external-login-controller" ],
+        "operationId" : "unlink",
+        "parameters" : [ {
+          "name" : "provider",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ExternalLoginControllerIdentityView"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -17865,7 +17983,7 @@
     "/api/patients/{id}/referral/link" : {
       "get" : {
         "tags" : [ "patient-referral-controller" ],
-        "operationId" : "link_1",
+        "operationId" : "link_2",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -18567,6 +18685,27 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/NetMonthMine"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/me/identities" : {
+      "get" : {
+        "tags" : [ "external-login-controller" ],
+        "operationId" : "mine_1",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ExternalLoginControllerIdentityView"
+                  }
                 }
               }
             }
@@ -27393,6 +27532,26 @@
           }
         }
       },
+      "ExternalLoginControllerTokenRequest" : {
+        "properties" : {
+          "idToken" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "idToken" ]
+      },
+      "ExternalLoginControllerNonce" : {
+        "properties" : {
+          "nonce" : {
+            "type" : "string"
+          },
+          "secondsLeft" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "nonce", "secondsLeft" ]
+      },
       "InviteControllerTokenRequest" : {
         "properties" : {
           "token" : {
@@ -29837,6 +29996,32 @@
           }
         }
       },
+      "ExternalLoginControllerIdentityView" : {
+        "properties" : {
+          "provider" : {
+            "type" : "string",
+            "enum" : [ "google", "apple" ]
+          },
+          "available" : {
+            "type" : "boolean"
+          },
+          "linked" : {
+            "type" : "boolean"
+          },
+          "email" : {
+            "type" : "string"
+          },
+          "linkedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "lastLoginAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "available", "linked", "provider" ]
+      },
       "MyEmailControllerEmailCode" : {
         "properties" : {
           "email" : {
@@ -31432,6 +31617,12 @@
           },
           "mailCode" : {
             "type" : "boolean"
+          },
+          "googleClientId" : {
+            "type" : "string"
+          },
+          "appleClientId" : {
+            "type" : "string"
           }
         },
         "required" : [ "mailCode", "passwordLogin", "smsLogin", "telegramCode", "telegramLogin" ]

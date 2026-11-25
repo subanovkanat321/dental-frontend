@@ -17,6 +17,7 @@ import { NewPasswordFields } from '../layout/PasswordFields'
 import { passwordProblem } from '../lib/password'
 import { telegram } from '../lib/telegram'
 import { PasswordSection } from './PasswordSection'
+import { ExternalLoginsSection } from './ExternalLoginsSection'
 import { HelpHint } from '../help/HelpHint'
 import { Icon } from '../layout/Icon'
 import { RowMenu } from '../patients/CalmList'
@@ -61,7 +62,8 @@ export function ProfilePage({ me, onBack, footer }: { me: Me; onBack: () => void
         : admin.error ? <p className="error">{admin.error.message}</p>
           : own ? <DoctorPanel key={own.id} doctor={own} me={me} onClose={onBack} inline afterProfile={<MyPhone />} />
             : <><MyPhone /><p className="hint">Профиль не найден — обновите страницу.</p></>}
-      {/* Внизу, не «надо сделать»: с Telegram пароль не нужен — только для входа по номеру */}
+      {/* Внизу, не «надо сделать»: быстрый вход без пароля (Google, Apple) и пароль — для входа по номеру */}
+      <ExternalLoginsSection />
       <PasswordSection />
       {footer}
     </section>

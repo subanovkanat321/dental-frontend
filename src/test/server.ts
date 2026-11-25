@@ -26,6 +26,8 @@ export const server = setupServer(
   // Отчёты об ошибках приложения (lib/clientErrors): сервер всегда отвечает 204
   http.post('*/web/client-error', () => new HttpResponse(null, { status: 204 })),
   http.get('*/api/supplies', () => HttpResponse.json([])),
+  // Вход через Google и Apple (ADR 0008 бэкенда): по умолчанию не подключён — блока в «Моём профиле» нет
+  http.get('*/api/me/identities', () => HttpResponse.json([] satisfies Schemas['ExternalLoginControllerIdentityView'][])),
   // WhatsApp через Tish (V256): по умолчанию не подключён — напоминания как раньше (бот или WhatsApp вручную)
   http.get('*/api/clinic/whatsapp', () => HttpResponse.json({ available: false, connected: false, confirmation: true, reminder: true, soon: true,
     templates: [], recent: [] } satisfies Schemas['WhatsAppAdminClinicView'])),
