@@ -892,6 +892,34 @@
         }
       }
     },
+    "/api/platform/whatsapp/secrets" : {
+      "put" : {
+        "tags" : [ "whats-app-controller" ],
+        "operationId" : "secrets",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/WhatsAppControllerSecrets"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/WhatsAppAdminPlatformView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/platform/whatsapp/connection" : {
       "put" : {
         "tags" : [ "whats-app-controller" ],
@@ -6556,6 +6584,89 @@
         "tags" : [ "webhook-controller" ],
         "operationId" : "receive",
         "parameters" : [ {
+          "name" : "X-Hub-Signature-256",
+          "in" : "header",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "string",
+                "format" : "byte"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
+    "/api/whatsapp/webhook/{clinicId}" : {
+      "get" : {
+        "tags" : [ "webhook-controller" ],
+        "operationId" : "verifyClinic",
+        "parameters" : [ {
+          "name" : "clinicId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "hub.mode",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "hub.verify_token",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "hub.challenge",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "text/plain" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "webhook-controller" ],
+        "operationId" : "receiveClinic",
+        "parameters" : [ {
+          "name" : "clinicId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
           "name" : "X-Hub-Signature-256",
           "in" : "header",
           "required" : false,
@@ -22075,23 +22186,27 @@
         },
         "required" : [ "active", "appointments", "id" ]
       },
-      "WhatsAppControllerConnection" : {
+      "WhatsAppControllerSecrets" : {
         "properties" : {
           "clinicId" : {
             "type" : "integer",
             "format" : "int64"
           },
-          "wabaId" : {
+          "token" : {
             "type" : "string"
           },
-          "phoneNumberId" : {
+          "appSecret" : {
             "type" : "string"
           },
-          "displayPhone" : {
+          "verifyToken" : {
             "type" : "string"
           },
-          "enabled" : {
-            "type" : "boolean"
+          "clear" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "TOKEN", "APP_SECRET", "VERIFY_TOKEN" ]
+            }
           }
         },
         "required" : [ "clinicId" ]
@@ -22119,9 +22234,45 @@
           },
           "tokenOnServer" : {
             "type" : "boolean"
+          },
+          "envClinic" : {
+            "type" : "boolean"
+          },
+          "tokenSet" : {
+            "type" : "boolean"
+          },
+          "appSecretSet" : {
+            "type" : "boolean"
+          },
+          "verifyTokenSet" : {
+            "type" : "boolean"
+          },
+          "unreadable" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "webhookReady" : {
+            "type" : "boolean"
+          },
+          "webhookPath" : {
+            "type" : "string"
+          },
+          "lastInboundAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "webhookErrors" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "lastWebhookErrorAt" : {
+            "type" : "string",
+            "format" : "date-time"
           }
         },
-        "required" : [ "clinicId", "enabled", "tokenOnServer" ]
+        "required" : [ "appSecretSet", "clinicId", "enabled", "envClinic", "tokenOnServer", "tokenSet", "verifyTokenSet", "webhookErrors", "webhookReady" ]
       },
       "WhatsAppAdminFailureView" : {
         "properties" : {
@@ -22158,6 +22309,9 @@
           "webhookPath" : {
             "type" : "string"
           },
+          "secretsKey" : {
+            "type" : "boolean"
+          },
           "connections" : {
             "type" : "array",
             "items" : {
@@ -22178,7 +22332,28 @@
             }
           }
         },
-        "required" : [ "enabled", "webhookReady" ]
+        "required" : [ "enabled", "secretsKey", "webhookReady" ]
+      },
+      "WhatsAppControllerConnection" : {
+        "properties" : {
+          "clinicId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "wabaId" : {
+            "type" : "string"
+          },
+          "phoneNumberId" : {
+            "type" : "string"
+          },
+          "displayPhone" : {
+            "type" : "string"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "clinicId" ]
       },
       "BillingControllerTariffsRequest" : {
         "properties" : {
