@@ -3362,7 +3362,7 @@ button.cash-entry:hover, button.cash-entry.active { background: var(--sunken); }
 .cash-day-list .sum { white-space: nowrap; text-align: right; }
 
 /* «Настройки → Скидки» */
-.discount-form { display: grid; gap: 10px; max-width: 560px; }
+.discount-form { display: grid; gap: 10px; }
 .radio-list { display: grid; gap: 6px; }
 .radio-row { display: flex; gap: 8px; align-items: baseline; cursor: pointer; }
 .discount-form .field.narrow input { max-width: 8em; }

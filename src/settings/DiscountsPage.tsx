@@ -20,6 +20,8 @@ const WHO: [Who, string, string][] = [
  * «Настройки → Скидки» (V241 бэкенда): кто, кроме руководителя, может дать скидку в оплате и до скольких процентов от
  * цены. Руководитель даёт любую. Меняет руководитель (сервер: 403 остальным).
  */
+const NBSP = '\u00a0'
+
 export function DiscountsPage({ me, onBack }: { me: Me; onBack: () => void }) {
   const policy = useDiscountPolicy()
   const client = useQueryClient()
@@ -61,7 +63,7 @@ export function DiscountsPage({ me, onBack }: { me: Me; onBack: () => void }) {
               <input type="number" min={1} max={100} inputMode="numeric" disabled={!admin} value={maxValue}
                 onChange={(e) => setMax(e.target.value)} /></label>
           )}
-          <p className="hint small">Руководитель может дать любую скидку. Сумма в сомах проверяется той же меркой: 600 из 5 000 — 12 %.</p>
+          <p className="hint small">Руководитель может дать любую скидку. Сумма в сомах проверяется той же меркой: 600 из 5{NBSP}000 — 12{NBSP}%.</p>
           {save.error && <p className="error" role="alert">{Object.values(save.error.fieldErrors)[0] ?? save.error.message}</p>}
           {save.isSuccess && who == null && max == null && <p className="tone-ok" role="status">✓ Сохранено</p>}
           {admin ? <button type="submit" className="btn primary" disabled={save.isPending}>Сохранить</button>
