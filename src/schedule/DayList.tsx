@@ -7,7 +7,7 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 
 import { api, unwrap, type Schemas } from '../api/client'
 import { useReminderNotSent } from './useReminderNotSent'
 import { confirmRemind, remindedText } from './remindAgain'
-import { addDays, emptyDayText, minutesOf, somText, timeOf, todayIn } from '../lib/time'
+import { addDays, emptyDayText, minutesOf, shortDay, somText, timeOf, todayIn } from '../lib/time'
 import { serviceEmoji } from '../lib/serviceEmoji'
 import { MonthSheet } from './month/MonthSheet'
 import { isShaky } from './paint'
@@ -176,7 +176,7 @@ export function DayList({ me, doctors, date, onDate, onOpen, onQuick, onNew, onN
         <button type="button" className="date-pick" aria-label={`${title.main}, ${title.sub}: выбрать день`} aria-haspopup="dialog"
           onClick={() => setMonthOpen(true)}>
           <span className="date-main">{title.main} <span className="date-caret" aria-hidden="true">▾</span></span>
-          <span className="date-sub">{title.sub}</span>
+          <span className="date-sub"><span className="date-sub-full">{title.sub}</span><span className="date-sub-short" aria-hidden="true">{shortDay(date)}</span></span>
         </button>
         <button type="button" className="date-step" aria-label="Следующий день" onClick={() => onDate(addDays(date, 1))}>›</button>
         {date !== today && <button type="button" className="btn small date-today" onClick={() => onDate(today)}>Сегодня</button>}

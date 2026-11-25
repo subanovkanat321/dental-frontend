@@ -679,6 +679,7 @@ details.agreement-box { max-height: none; }
 .date-pick:has(.date-pick-input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
 .date-main { font: 600 1.2rem var(--display); }
 .date-sub { font-size: .9rem; color: var(--hint); }
+.date-sub-short { display: none; }
 .btn.date-today { flex: none; min-height: 52px; padding: 0 12px; border-radius: 12px; font-size: .95rem; }
 .date-caret { font-size: .8em; color: var(--link); }
 .date-step:disabled { opacity: .35; cursor: default; }

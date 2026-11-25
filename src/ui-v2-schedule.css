@@ -220,10 +220,15 @@
   .ui-v2 .date-bar { gap: 8px; padding: 6px 0 2px; }
   .ui-v2 .date-step { width: 44px; height: 44px; border: 0; border-radius: 50%; background: var(--v2-card); box-shadow: var(--v2-shadow); color: var(--v2-ink); font-size: 1.7rem; }
   .ui-v2 .date-step:active { background: var(--sunken); }
-  .ui-v2 .date-pick { padding: 2px 6px; border: 0; background: none; }
-  .ui-v2 .date-pick .date-main { color: var(--v2-ink); font: 700 1.3rem / 1.15 var(--display); letter-spacing: -.02em; }
-  .ui-v2 .date-pick .date-sub { color: var(--hint); font-size: var(--v2-row-sub); }
-  .ui-v2 .btn.date-today { min-height: 48px; border: 0; border-radius: var(--v2-r-pill); background: var(--v2-card); box-shadow: var(--v2-shadow); }
+  /* Дата — в своей белой рамке-«таблетке», в одну строку каждая надпись (владелец 2026-11-25: «дату в рамку, как раньше»;
+     без рамки рядом с «Сегодня» и «＋» дата ломалась в столбик) */
+  .ui-v2 .date-pick { min-height: 52px; padding: 4px 10px; border: 0; border-radius: 18px; background: var(--v2-card); box-shadow: var(--v2-shadow); }
+  .ui-v2 .date-pick .date-main { color: var(--v2-ink); font: 700 1.2rem / 1.15 var(--display); letter-spacing: -.02em; white-space: nowrap; }
+  .ui-v2 .date-pick .date-sub { max-width: 100%; overflow: hidden; color: var(--hint); font-size: .88rem; white-space: nowrap; text-overflow: ellipsis; }
+  /* Подпись под датой — коротко: «чт 26 нояб» (полная «понедельник, 23 ноября» не помещалась рядом с «‹ › ＋») */
+  .ui-v2 .date-bar .date-sub-full { display: none; }
+  .ui-v2 .date-bar .date-sub-short { display: inline; }
+  .ui-v2 .btn.date-today { min-height: 44px; padding: 0 12px; border: 0; border-radius: var(--v2-r-pill); background: var(--v2-card); box-shadow: var(--v2-shadow); font-size: .9rem; }
   .ui-v2 .day-actions .btn { min-height: 52px; }
   .ui-v2 .date-new { width: 48px; height: 48px; box-shadow: var(--v2-shadow-float); }
   /* Выбор врача — одной строкой: аватар меньше */
