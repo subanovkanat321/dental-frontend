@@ -82,6 +82,11 @@
   .calm-list > .calm-row:has(.calm-sub) .calm-main { display: contents; }
   .calm-list > .calm-row:not(:has(.calm-sub)) .calm-main { grid-column: span 2; }
   .calm-list > .calm-row .calm-extra { grid-column: 1 / -1; }
+  /* «Записаны»: каждый день — свой список, и колонки «auto» у дней были разной ширины — услуга и «подтвердил» стояли
+     вразнобой (владелец 2026-11-25: «не ровно»). Ширины — постоянные, одинаковые у всех дней */
+  .calm-list.booked-list:has(> .calm-row.with-lead) { grid-template-columns: 3.4em minmax(200px, 1fr) minmax(0, 1.6fr) 9em 8.5em; }
+  .calm-list.booked-list > .calm-row .calm-meta { justify-self: start; justify-items: start; text-align: left; }
+  .calm-list.booked-list > .calm-row .calm-lead { align-self: center; padding-top: 0; }
 }
 /* Эмодзи у кнопки строки — только у WhatsApp (узнаётся сразу); «🔔 Напомнить» рядом с «Пригласить» — лишний шум */
 .calm-act .btn[data-ico]:not([data-tone=wa])::before { content: none; }

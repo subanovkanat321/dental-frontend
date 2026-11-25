@@ -113,7 +113,7 @@ export function BookedTab({ me, initial, onOpenAppointment }: {
           {[...byDay].map(([day, list]) => (
             <div key={day} className="calm-day">
               <h3>{day === today ? `Сегодня, ${dayTitle(day).toLowerCase()}` : dayTitle(day)} <span className="hint">· {list.length}</span></h3>
-              <ul className="calm-list" aria-label={dayTitle(day)}>
+              <ul className="calm-list booked-list" aria-label={dayTitle(day)}>
                 {list.map((a) => (
                   <BookedRow key={a.id} a={a} canEdit={canEditDoctor(me, a.doctorId)} past={onlyUnmarked} onOpen={onOpenAppointment}
                     doctor={doctors.length > 1 && doctorId == null && a.doctorId != null ? nameOf.get(a.doctorId) : undefined} />
