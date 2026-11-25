@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 
-import { FREE_LINE, TISH_INSTAGRAM, TISH_INSTAGRAM_NAME } from '../lib/brand'
+import { FREE_LINE, TISH_INSTAGRAM, TISH_INSTAGRAM_NAME, TISH_PHONE, TISH_TELEGRAM, tishWhatsapp } from '../lib/brand'
 import { DEMO_PATH } from '../lib/demo'
 import { CaseBlock } from './CaseBlock'
 import { getJson, useDemoEnabled, type JoinCase } from './web'
@@ -26,9 +26,9 @@ const PROMO_VIDEO = '/web/materials/public/promo.mp4'
 const PROMO_POSTER = '/web/materials/public/promo.png'
 const ABOUT_CONTACTS = {
   instagram: TISH_INSTAGRAM,
-  telegram: 'https://t.me/veratti_16',
-  whatsapp: `https://wa.me/996773565895?text=${encodeURIComponent('Здравствуйте! Хочу узнать про Tish для клиники')}`,
-  phone: 'tel:+996558162998',
+  telegram: TISH_TELEGRAM,
+  whatsapp: tishWhatsapp('Здравствуйте! Хочу узнать про Tish для клиники'),
+  phone: `tel:+${TISH_PHONE}`,
 }
 
 type Shot = { src: string; alt: string; w?: number; h?: number }

@@ -49,6 +49,7 @@ function aiMark(q: Question): string | null {
   const action = aiActionText(q)
   if (action) return action
   if (q.aiOutcome === 'ANSWERED') return '🤖 Ответил ИИ'
+  if (q.aiOutcome === 'TEMPLATE') return '🤖 Автоответ по шаблону'
   if (q.aiOutcome === 'ESCALATED' || q.aiOutcome === 'HANDOFF') return 'Передано сотрудникам'
   return null
 }
@@ -58,6 +59,7 @@ function aiShort(q: Question): string {
   if (q.aiAction === 'BOOKED') return 'ИИ записал'
   if (q.aiAction === 'RESCHEDULED') return 'ИИ перенёс'
   if (q.aiAction === 'CANCELLED') return 'ИИ отменил'
+  if (q.aiOutcome === 'TEMPLATE') return 'автоответ'
   return q.aiOutcome === 'ANSWERED' ? 'ответил ИИ' : 'передано сотрудникам'
 }
 
@@ -114,9 +116,9 @@ function replyHint(q: Question): string {
 }
 
 /**
- * Вопрос справа: текст, «✨ Черновик ответа» (если клиника включила ИИ), поле ответа и «Отправить» —
- * ответ уходит пациенту в бот. ИИ сам ничего не отправляет: черновик попадает в поле, сотрудник
- * проверяет. Без ИИ отвечают вручную.
+ * Вопрос справа: текст, «✨ Черновик ответа» (ИИ, если клиника его включила) или «📝 Черновик по шаблону»
+ * (без ИИ — из данных клиники), поле ответа и «Отправить» — ответ уходит пациенту в бот. Черновик сам ничего
+ * не отправляет: попадает в поле, сотрудник проверяет. ИИ не ответил — сервер отдаёт шаблон с пометкой.
  */
 export function QuestionPanel({ questionId, onClose, onOpenPatient }: {
   questionId: number
@@ -132,13 +134,14 @@ export function QuestionPanel({ questionId, onClose, onOpenPatient }: {
   // Можно ли просить черновик — из того же списка (уже в кэше)
   const ai = useQuestions(false).data?.ai ?? false
   const [text, setText] = useState('')
-  const [drafted, setDrafted] = useState(false)
+  // Черновик: null — ещё не просили; template — составлен по шаблону (ИИ выключен или недоступен)
+  const [drafted, setDrafted] = useState<null | { template: boolean }>(null)
   const refresh = () => client.invalidateQueries({ queryKey: ['patient-questions'] })
   const draft = useMutation<Schemas['QuestionControllerDraft'], ApiError>({
     mutationFn: () => unwrap(api.POST('/api/patient-questions/{id}/draft', { params: { path: { id: questionId } } })),
     onSuccess: (d) => {
       setText(d.text ?? '')
-      setDrafted(true)
+      setDrafted({ template: d.template })
     },
   })
   const answer = useMutation<Question, ApiError>({
@@ -180,6 +183,13 @@ export function QuestionPanel({ questionId, onClose, onOpenPatient }: {
             ? 'Этого номера нет в базе клиники (или он общий у нескольких карточек).'
             : 'Человек написал боту впервые — его ещё нет в базе клиники.'}</p>}
           <p className="question-text">{q.text}</p>
+          {q.aiOutcome === 'TEMPLATE' && (
+            <section aria-label="Автоответ по шаблону">
+              <h3>🤖 Автоответ по шаблону · {shortDate(q.answeredAt!, true)}</h3>
+              <p className="question-text">{q.aiAnswer ?? q.answer}</p>
+              <p className="hint small">ИИ был недоступен — бот ответил сам по данным клиники (адрес, часы, цены, запись). Нужно уточнить — напишите пациенту в Telegram или позвоните.</p>
+            </section>
+          )}
           {q.aiOutcome === 'ANSWERED' && (
             <section aria-label="Ответ ИИ">
               <h3>🤖 Ответил ИИ · {shortDate(q.answeredAt!, true)}</h3>
@@ -191,7 +201,7 @@ export function QuestionPanel({ questionId, onClose, onOpenPatient }: {
           {(q.aiOutcome === 'ESCALATED' || q.aiOutcome === 'HANDOFF') && (
             <section aria-label="Передано сотрудникам">
               <p className="notice tone-wait">
-                {q.aiOutcome === 'HANDOFF' ? 'Передано сотрудникам: пациент попросил человека (или ИИ на сегодня ответил уже много раз).' : 'Передано сотрудникам: ИИ не стал отвечать сам (медицинский вопрос, жалоба или не уверен).'}
+                {q.aiOutcome === 'HANDOFF' ? 'Передано сотрудникам: пациент попросил человека, бот без ИИ не узнал вопрос или на сегодня ответил уже много раз.' : 'Передано сотрудникам: ИИ не стал отвечать сам (медицинский вопрос, жалоба или не уверен).'}
               </p>
               {q.aiAnswer && (
                 <>
@@ -201,7 +211,7 @@ export function QuestionPanel({ questionId, onClose, onOpenPatient }: {
               )}
             </section>
           )}
-          {q.status === 'ANSWERED' && q.aiOutcome !== 'ANSWERED' && (
+          {q.status === 'ANSWERED' && q.aiOutcome !== 'ANSWERED' && q.aiOutcome !== 'TEMPLATE' && (
             <section aria-label="Ответ">
               <h3>Ответ · {shortDate(q.answeredAt!, true)}</h3>
               <p className="question-text">{q.answer}</p>
@@ -210,11 +220,11 @@ export function QuestionPanel({ questionId, onClose, onOpenPatient }: {
           {q.status === 'CLOSED' && <p className="hint">Закрыт без ответа · {shortDate(q.answeredAt!, true)}</p>}
           {q.status === 'NEW' && (
             <>
-              {ai && (
-                <button type="button" className="btn" disabled={draft.isPending} onClick={() => draft.mutate()}>
-                  {draft.isPending ? <><Spinner />Пишем черновик…</> : drafted ? '✨ Другой черновик' : '✨ Черновик ответа'}</button>
-              )}
-              {drafted && <p className="hint small">✨ Черновик написал ИИ — проверьте и поправьте перед отправкой.</p>}
+              <button type="button" className="btn" disabled={draft.isPending} onClick={() => draft.mutate()}>
+                {draft.isPending ? <><Spinner />Пишем черновик…</> : !ai ? '📝 Черновик по шаблону' : drafted ? '✨ Другой черновик' : '✨ Черновик ответа'}</button>
+              {drafted && <p className="hint small">{drafted.template
+                ? '📝 Составлено по шаблону из данных клиники — проверьте и допишите перед отправкой.'
+                : '✨ Черновик написал ИИ — проверьте и поправьте перед отправкой.'}</p>}
               {/* Поле и подсказка — своим блоком: в карточке на весь экран iPhone (сетка фиксированной высоты, клавиатура
                   открыта) поле сжималось в одну строку, а подсказка наезжала на него (2026-11-23) */}
               <div className="question-reply">

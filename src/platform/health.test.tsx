@@ -38,7 +38,7 @@ const health = {
   ],
   telegram: { mode: 'webhook', webhookSet: true, pendingUpdates: 3, lastErrorAt: '2026-11-06T09:30:00Z', lastError: 'Wrong response from the webhook: 502 Bad Gateway' },
   sms: { configured: true, lastSentAt: '2026-11-06T07:00:00Z' },
-  ai: { configured: true, lastOkAt: '2026-11-06T09:00:00Z', errors24h: 1, lastErrorAt: '2026-11-06T08:00:00Z', lastError: 'AnthropicIoException' },
+  ai: { configured: true, lastOkAt: '2026-11-06T09:00:00Z', errors24h: 1, lastErrorAt: '2026-11-06T08:00:00Z', lastError: 'AnthropicIoException', pausedUntil: '2026-11-06T09:02:00Z' },
   errors: { total24h: 4, top: [{ method: 'GET', path: '/api/patients/{id}', exception: 'java.lang.IllegalStateException', count: 4,
     lastAt: '2026-11-06T09:40:00Z', lastRequestId: '3f9a2c41b7d0' }] },
   files: { storage: 'R2', moved: 1840, total: 2210, trash: 12, lastErrorAt: '2026-11-06T09:10:00Z', lastError: 'SdkClientException' },
@@ -76,6 +76,7 @@ test('владелец: «Здоровье» — проблемы сверху, 
   expect(within(links).getByRole('row', { name: /Telegram/ })).toHaveTextContent('ждут доставки 3')
   expect(within(links).getByRole('row', { name: /Telegram/ })).toHaveTextContent('502 Bad Gateway')
   expect(within(links).getByRole('row', { name: /ИИ/ })).toHaveTextContent('ошибок за сутки 1')
+  expect(within(links).getByRole('row', { name: /ИИ/ })).toHaveTextContent('пауза после ошибок подряд до')
 
   const errors = screen.getByRole('table', { name: 'Ошибки сервера за сутки' })
   expect(within(errors).getByRole('row', { name: /patients/ })).toHaveTextContent('GET /api/patients/{id}')

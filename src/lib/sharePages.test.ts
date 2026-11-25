@@ -14,9 +14,11 @@ const start = SHARE_PAGES.find((p) => p.file === 'start')!
 
 const content = (html: string, attr: string) => [...html.matchAll(new RegExp(`<meta (?:name|property)="${attr}" content="([^"]*)"`, 'g'))].map((m) => m[1])
 
-test('index.html: общее превью «Tish — программа для стоматологии» с картинкой, а не голое «Tish CRM»', () => {
-  expect(content(built, 'og:title')).toEqual(['Tish — программа для стоматологии'])
-  expect(content(built, 'og:image')).toEqual(['https://tish.kg/about/og-about.jpg'])
+test('index.html: «/» — главная для пациентов: title и превью про запись к стоматологу, индексируется', () => {
+  expect(built).toContain('<title>Tish — запись к стоматологу в Бишкеке онлайн</title>')
+  expect(content(built, 'og:title')).toEqual(['Tish — запись к стоматологу онлайн'])
+  expect(content(built, 'og:image')).toEqual(['https://tish.kg/assets/og-tish-1.png'])
+  expect(built).not.toContain('noindex')
 })
 
 test.each(SHARE_PAGES)('$file.html: свой title и превью, бандл и версия — те же, что у index.html', (page) => {
