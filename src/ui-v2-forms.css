@@ -91,6 +91,17 @@
 .ui-v2 .page-head:has(> .settings-back) > .sub-titles h1 { margin: 0; overflow: hidden; color: var(--v2-ink); font: 600 1.05rem / 1.25 var(--display); text-overflow: ellipsis; white-space: nowrap; }
 .ui-v2 .page-head:has(> .settings-back) > .head-tools { grid-column: 3; grid-row: 1; justify-self: end; }
 .ui-v2 .page-head:has(> .settings-back) > .head-tools:empty { display: none; }
+/* Телефон: тонкой строкой, как у остальных разделов — «‹  Мои настройки · Мой профиль» слева (владелец, 2026-11-26:
+   «сверху „Мой профиль“ простой текст — поменяй»); «‹» меньше */
+@media (max-width: 760px) {
+  .ui-v2 .page-head:has(> .settings-back) { grid-template-columns: 36px minmax(0, 1fr) auto; min-height: 48px; gap: 10px; }
+  .ui-v2 .page-head:has(> .settings-back) > .settings-back { width: 36px; height: 36px; min-height: 36px; }
+  .ui-v2 .page-head:has(> .settings-back) > .sub-titles { display: flex; align-items: baseline; text-align: left; overflow: hidden; white-space: nowrap; }
+  .ui-v2 .page-head:has(> .settings-back) > .sub-titles .sect-crumb { display: inline; flex: none; color: var(--v2-ink); font: 700 1.1rem / 1.2 var(--display);
+    letter-spacing: -.01em; text-transform: none; }
+  .ui-v2 .page-head:has(> .settings-back) > .sub-titles .sect-crumb::after { content: "·"; margin: 0 7px; color: var(--hint); font-weight: 400; }
+  .ui-v2 .page-head:has(> .settings-back) > .sub-titles h1 { min-width: 0; color: var(--accent-ink); font: 600 1rem / 1.2 var(--ui); }
+}
 
 /* ── Списки «Клиники»: персонал, услуги ──────────────────────────────────────────────────────────────────── */
 .ui-v2 .staff-line { min-height: 64px; }
