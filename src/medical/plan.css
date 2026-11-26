@@ -66,6 +66,10 @@
  */
 .plan-teeth { display: grid; gap: 8px; margin: 4px 0 8px; }
 .plan-teeth .tooth { position: relative; }
+/* «Зубы: постоянные ▾» — прикус свёрнут в одну строку над формулой; нужен редко (дети) */
+.plan-teeth > .dentition-toggle { justify-self: start; min-height: 32px; color: var(--hint); font-size: .875rem; }
+.plan-teeth > .dentition-toggle:hover, .plan-teeth > .dentition-toggle[aria-expanded=true] { color: var(--link); }
+.plan-teeth > .dentition-switch { margin: 0; }
 .plan-teeth .tooth.planned { border: 1.5px dashed var(--accent); background: var(--accent-soft); }
 .plan-teeth .tooth.planned.picked { border-style: solid; }
 .tooth-plan-count { position: absolute; top: 1px; right: 2px; min-width: 15px; height: 15px; padding: 0 3px; border-radius: 8px;

@@ -1,5 +1,5 @@
 import { QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
@@ -73,7 +73,7 @@ test('ассистент видит статус без кнопок', async () 
   expect(screen.queryByRole('button', { name: 'Отказался' })).toBeNull()
 })
 
-test('карточка приёма: в строке «План лечения» — статус и прогресс', async () => {
+test('карточка приёма: в строке «План лечения» — статус чипом и короткий прогресс', async () => {
   const a = appointment(7, 1, '10:00', 'Бакыт Тестов', { status: 'DONE' })
   server.use(
     http.get('*/api/patients/7/plan', () => HttpResponse.json([
@@ -84,7 +84,40 @@ test('карточка приёма: в строке «План лечения»
   )
   wrap(<VisitPlan appointment={a} me={me} />)
   const meta = await screen.findByLabelText('Прогресс плана лечения')
-  expect(meta).toHaveTextContent('В работе')
-  expect(meta).toHaveTextContent('выполнено 1 из 2')
-  expect(meta).toHaveTextContent('4 000 из 19 000 сом')
+  const head = screen.getByRole('button', { name: /План лечения/ })
+  expect(head).toHaveTextContent('В работе')
+  expect(meta).toHaveTextContent('1 из 2 этапов · 4 000 из 19 000 сом')
+  expect(meta).not.toHaveTextContent('скидка')
+})
+
+test('карточка приёма, предложенный план со скидкой: сводка один раз в заголовке, внутри — только кнопки решения', async () => {
+  const a = appointment(7, 1, '10:00', 'Бакыт Тестов', { status: 'SCHEDULED' })
+  const marks: string[] = []
+  server.use(
+    http.get('*/api/patients/7/plan', () => HttpResponse.json([
+      { id: 1, title: 'Пломба', priceSom: 5000, netSom: 4000, discountSom: 1000, stage: 1 },
+      { id: 2, title: 'Коронка', priceSom: 15000, stage: 1 },
+    ] satisfies Schemas['TreatmentStepView'][])),
+    http.get('*/api/patients/7/plan/status', () => HttpResponse.json({ status: 'PROPOSED', done: 0, total: 2, doneSom: 0, totalSom: 19000, manualAgreed: false } satisfies Progress)),
+    http.put('*/api/patients/7/plan/status', async ({ request }) => {
+      marks.push((await request.json() as { mark: string }).mark)
+      return HttpResponse.json({ status: 'AGREED', done: 0, total: 2, doneSom: 0, totalSom: 19000, manualAgreed: true } satisfies Progress)
+    }),
+  )
+  const user = userEvent.setup()
+  wrap(<VisitPlan appointment={a} me={me} />)
+  const meta = await screen.findByLabelText('Прогресс плана лечения')
+  expect(meta).toHaveTextContent('0 из 2 этапов · 19 000 сом · 20 000 − 1 000 скидка')
+  const head = screen.getByRole('button', { name: /План лечения/ })
+  expect(head).toHaveTextContent('Предложен')
+  await user.click(head)
+  const bar = await screen.findByRole('group', { name: 'Статус плана лечения' })
+  // Статус и прогресс не повторяются внутри
+  expect(bar).not.toHaveTextContent('Предложен')
+  expect(bar).not.toHaveTextContent(/из 2/)
+  expect(within(screen.getByRole('region', { name: 'План лечения пациента' })).queryByText(/к оплате/)).toBeNull()
+  expect(within(bar).getByRole('button', { name: 'Отказался' })).toBeInTheDocument()
+  await user.click(within(bar).getByRole('button', { name: 'Пациент согласен' }))
+  await waitFor(() => expect(head).toHaveTextContent('Согласован'))
+  expect(marks).toEqual(['AGREED'])
 })

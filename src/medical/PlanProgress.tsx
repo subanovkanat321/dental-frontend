@@ -32,8 +32,11 @@ export function PlanProgressLine({ patientId, enabled = true }: { patientId: num
 /**
  * Над этапами в редакторе плана: статус, прогресс и отметки руками — «Пациент согласен» (обсудили на приёме, а не по
  * ссылке), «Отказался», «Снять отметку». Остальное статус узнаёт сам. readOnly (ассистент) — только статус.
+ * Предложенный план — две кнопки: «Пациент согласен» заметная, «Отказался» тихая.
+ *
+ * @param actionsOnly только кнопки: статус и прогресс уже в заголовке (строка «План лечения» в карточке приёма)
  */
-export function PlanStatusBar({ patientId, readOnly }: { patientId: number; readOnly: boolean }) {
+export function PlanStatusBar({ patientId, readOnly, actionsOnly = false }: { patientId: number; readOnly: boolean; actionsOnly?: boolean }) {
   const client = useQueryClient()
   const status = usePlanStatus(patientId)
   const mark = useMutation<Progress, ApiError, 'AGREED' | 'REFUSED' | 'NONE'>({
@@ -47,18 +50,21 @@ export function PlanStatusBar({ patientId, readOnly }: { patientId: number; read
   const p = status.data
   if (!p?.status) return null
   const s = p.status
+  if (actionsOnly && readOnly) return null
+  // Предложен — решение за пациентом: две кнопки. Дальше отметки нужны редко — тихие ссылки справа
+  const proposed = s === 'PROPOSED'
   return (
-    <div className="plan-status" role="group" aria-label="Статус плана лечения">
-      <PlanStatusChip progress={p} />
-      <span className="hint small">{progressText(p)}</span>
+    <div className={actionsOnly ? 'plan-status actions-only' : 'plan-status'} role="group" aria-label="Статус плана лечения">
+      {!actionsOnly && <PlanStatusChip progress={p} />}
+      {!actionsOnly && <span className="hint small">{progressText(p)}</span>}
       {!readOnly && (
-        <span className="plan-status-actions">
-          {s === 'PROPOSED' && <button type="button" className="link small" disabled={mark.isPending} onClick={() => mark.mutate('AGREED')}>Пациент согласен</button>}
-          {(s === 'PROPOSED' || s === 'AGREED' || s === 'IN_PROGRESS') && (
-            <button type="button" className="link small" disabled={mark.isPending} onClick={() => mark.mutate('REFUSED')}>Отказался</button>
+        <span className={proposed ? 'plan-status-actions decide' : 'plan-status-actions'}>
+          {proposed && <button type="button" className="btn small plan-agree" disabled={mark.isPending} onClick={() => mark.mutate('AGREED')}><span aria-hidden="true">✓ </span>Пациент согласен</button>}
+          {(proposed || s === 'AGREED' || s === 'IN_PROGRESS') && (
+            <button type="button" className={proposed ? 'btn small' : 'link small quiet'} disabled={mark.isPending} onClick={() => mark.mutate('REFUSED')}>Отказался</button>
           )}
           {(s === 'REFUSED' || (s === 'AGREED' && p.manualAgreed)) && (
-            <button type="button" className="link small" disabled={mark.isPending} onClick={() => mark.mutate('NONE')}>Снять отметку</button>
+            <button type="button" className="link small quiet" disabled={mark.isPending} onClick={() => mark.mutate('NONE')}>Снять отметку</button>
           )}
         </span>
       )}

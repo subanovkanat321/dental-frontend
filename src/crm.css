@@ -2276,6 +2276,8 @@ button.status-pill:focus-visible { outline: 2px solid var(--accent); outline-off
 .fold-head:hover .fold-title { color: var(--link); }
 .fold-head:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--r-sm); }
 .fold-title { font-weight: 600; flex: none; }
+/* Заголовок без пояснения справа — переносится, а не вылезает за карточку («Принимаете пациентов? Станьте и врачом», 2026-11-26) */
+.fold-head:not(:has(.fold-meta)) .fold-title { flex: 0 1 auto; min-width: 0; overflow-wrap: break-word; }
 .fold-meta { margin-left: auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--hint); font-size: .9rem; }
 .fold-chev { flex: none; color: var(--hint); font-size: 1.1rem; line-height: 1; transition: transform 150ms ease-in-out; }
 .fold-meta + .fold-chev, .fold-title + .fold-chev { margin-left: 0; }
@@ -3189,8 +3191,29 @@ button.cash-entry:hover, button.cash-entry.active { background: var(--sunken); }
 .plan-progress-bar > span { display: block; height: 100%; background: var(--accent); border-radius: 2px; }
 .plan-status { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin: 0 0 8px; }
 .plan-status-actions { display: inline-flex; flex-wrap: wrap; gap: 4px 12px; margin-left: auto; }
-.plan-meta { display: inline-flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 4px 6px; font-variant-numeric: tabular-nums; }
+.plan-status .link.quiet { font-size: .85rem; }
+/* Предложенный план: «✓ Пациент согласен» — заметная (мягкая бирюза, залитая кнопка на области одна), «Отказался» — тихая */
+.plan-status-actions.decide { display: flex; gap: 8px; width: 100%; margin-left: 0; }
+@media (max-width: 600px) { .plan-status-actions.decide .plan-agree { flex: 1 1 auto; } }
+.plan-status-actions.decide .btn { min-height: 44px; padding-inline: 12px; justify-content: center; white-space: nowrap; }
+.plan-status-actions.decide .btn:not(.plan-agree) { color: var(--hint); }
+.plan-status.actions-only { margin: 0; }
+.plan-status.actions-only { justify-content: flex-end; }
+.btn.plan-agree { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; }
+.btn.plan-agree:hover:not(:disabled) { background: var(--accent); color: #fff; }
+/* Строка «План лечения» в карточке приёма: под заголовком — «0 из 12 этапов · 99 000 сом · 113 000 − 14 000 скидка» */
+.plan-meta { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; font-variant-numeric: tabular-nums; }
+.plan-meta-off { font-size: .8rem; }
+.plan-meta-today { color: var(--ok-ink); }
 .fold-meta:has(.plan-meta) { white-space: normal; overflow: visible; text-align: right; }
+/* Заголовок раскрывашки с бейджем и строкой под ним: [Заголовок] [чип] … › / строка ниже */
+.fold-head.has-sub { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; column-gap: 8px; row-gap: 2px; align-items: center; }
+.fold-head.has-sub .fold-title { grid-column: 1; grid-row: 1; }
+.fold-head.has-sub .fold-badge { grid-column: 2; grid-row: 1; justify-self: start; }
+.fold-head.has-sub .fold-meta { grid-column: 2; grid-row: 1; }
+.fold-head.has-sub .fold-sub { grid-column: 1 / 3; grid-row: 2; min-width: 0; color: var(--hint); font-size: .875rem; }
+.fold-head.has-sub .fold-chev { grid-column: 3; grid-row: 1 / span 2; margin: 0; }
+.fold-badge { display: inline-flex; align-items: center; }
 
 /* Заметка о приёме (шаг 2): подпись и инструменты одной строкой, разделы — только с текстом, пустые — чипами */
 .visit-note { gap: 8px; }

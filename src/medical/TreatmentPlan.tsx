@@ -139,10 +139,9 @@ export function TreatmentPlan({ patient, prefill = null, readOnly, heading = tru
 
   return (
     <section className="card-block">
-      {heading
-        ? <h2>План лечения{sum && !multi ? <span className="hint"> · {sum}</span> : null}</h2>
-        : sum && !multi ? <p className="hint small">{sum}</p> : null}
-      {(plan.data?.length ?? 0) > 0 && <PlanStatusBar patientId={patientId} readOnly={readOnly} />}
+      {/* В карточке приёма сумма, статус и прогресс — в заголовке строки «План лечения»: здесь только кнопки статуса */}
+      {heading && <h2>План лечения{sum && !multi ? <span className="hint"> · {sum}</span> : null}</h2>}
+      {(plan.data?.length ?? 0) > 0 && <PlanStatusBar patientId={patientId} readOnly={readOnly} actionsOnly={!heading} />}
       {multi && selected && variants.data && (
         <PlanVariantBar patientId={patientId} data={variants.data} selected={selected} onSelect={setSelectedId} readOnly={readOnly} />
       )}

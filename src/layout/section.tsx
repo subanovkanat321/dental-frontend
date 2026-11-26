@@ -125,7 +125,10 @@ function SubTitleBar({ nav, page, title, subTitle, hint }: { nav: NavApi; page: 
   const open = nav.sheet === page
   // UI v2 (черновик): пункт «Настроек» и «Клиники» — экран «внутрь»: круглая «‹» слева (открывает тот же список
   // пунктов) и название по центру; разделы-списки — крупный заголовок и подраздел «таблеткой» (только CSS)
-  const drill = drillPage(page)
+  // Телефон — та же тонкая строка «Настройки · Мой профиль ▾», что у остальных разделов (владелец, 2026-11-26: «сверху
+  // „Мой профиль“ простым текстом — поменяй»); экран «внутрь» с круглой «‹» — только компьютер
+  const phone = useMedia('(max-width: 760px)')
+  const drill = drillPage(page) && !phone
   return (
     <nav className={drill ? 'sub-tabs sub-bar v2-drill' : 'sub-tabs sub-bar'} data-tour="sub-tabs" aria-label={`Подразделы: ${title}`} data-stuck={stuck || undefined}>
       <button type="button" className="sub-bar-btn" aria-haspopup="menu" aria-expanded={open}

@@ -3,19 +3,23 @@ import { useState } from 'react'
 
 import { api, unwrap, type Schemas } from '../api/client'
 import { DentitionSwitch } from './DentitionSwitch'
-import { dentitionOf, type Dentition } from './dentition'
+import { ageYears, dentitionOf, type Dentition } from './dentition'
 import { ToothFigure } from './ToothGlyph'
 import { ToothFormula } from './ToothFormula'
 import { stateText } from './toothStates'
 
 type Patient = Schemas['PatientView']
+
+/** «Зубы: постоянные ▾» — коротко о прикусе над формулой плана. */
+const DENTITION_SHORT: Record<Dentition, string> = { PERMANENT: 'постоянные', PRIMARY: 'молочные', MIXED: 'сменный прикус' }
 type Step = Schemas['TreatmentStepView']
 
 /**
  * Зубная формула в плане лечения — главный способ добавить работу: нажал один или несколько зубов → «Что сделать →».
  * Зубы, у которых в этом варианте плана есть несделанный этап, подсвечены (рамка и число этапов). Состояние зубов —
  * с карты (тот же кэш ['teeth', id], что у карты зубов). Прикус — как на карте; переключатель меняет только вид здесь
- * (сохраняет прикус карта зубов).
+ * (сохраняет прикус карта зубов). Он нужен редко (дети), поэтому свёрнут в одну строку «Зубы: постоянные ▾», и только
+ * когда может понадобиться: ребёнок, возраст неизвестен или прикус уже не постоянный. Взрослому — не показываем.
  *
  * @param picked выбранные зубы (сверху держит план: по ним подсвечены строки и открывается лист «Что сделать»)
  */
@@ -37,7 +41,10 @@ export function PlanTeethPicker({ patient, steps, picked, onPick, onWhat, onGene
     retry: false,
   })
   const [shown, setShown] = useState<Dentition | null>(null)
+  const [switching, setSwitching] = useState(false)
   const dentition = shown ?? dentitionOf(patient)
+  const years = ageYears(patient.birthDate)
+  const dentitionMatters = dentition !== 'PERMANENT' || shown != null || patient.dentition != null || years == null || years < 18
   const byNumber = new Map((teeth.data ?? []).map((t) => [t.number, t]))
   const planned = new Map<number, number>()
   for (const s of steps) {
@@ -64,8 +71,15 @@ export function PlanTeethPicker({ patient, steps, picked, onPick, onWhat, onGene
 
   return (
     <div className="plan-teeth" aria-label="Зубы плана">
-      <DentitionSwitch value={dentition} saved={shown ?? patient.dentition ?? null} birthDate={patient.birthDate}
-        onChange={(d) => setShown(d)} />
+      {dentitionMatters && (
+        <button type="button" className="link small dentition-toggle" aria-expanded={switching} onClick={() => setSwitching(!switching)}>
+          Зубы: {DENTITION_SHORT[dentition]} <span aria-hidden="true">{switching ? '▴' : '▾'}</span>
+        </button>
+      )}
+      {dentitionMatters && switching && (
+        <DentitionSwitch value={dentition} saved={shown ?? patient.dentition ?? null} birthDate={patient.birthDate}
+          onChange={(d) => { setShown(d); setSwitching(false) }} />
+      )}
       <ToothFormula render={tooth} dentition={dentition} teeth={teeth.data} />
       <div className={picked.length ? 'plan-teeth-bar active' : 'plan-teeth-bar'} aria-live="polite">
         {picked.length === 0 ? (
