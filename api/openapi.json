@@ -35168,6 +35168,25 @@
           "nextVisit" : {
             "type" : "string",
             "format" : "date-time"
+          },
+          "doctorId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "debtSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "advanceSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "tagIds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int64"
+            }
           }
         },
         "required" : [ "id", "telegram" ]

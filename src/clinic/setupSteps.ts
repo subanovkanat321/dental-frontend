@@ -12,7 +12,7 @@ type Me = Schemas['BookingViewsMe']
 export const SETUP_HINT_CLOSED = 'crm.setupHintClosed'
 
 /** «Пн–Сб, 09:00–18:00»: новой клинике часы ставятся сами (пн–сб) — показать, какие, чтобы проверили. */
-function hoursText(c?: Schemas['ClinicView']): string {
+export function hoursText(c?: Schemas['ClinicView']): string {
   if (!c?.workDays?.length || !c.workStart || !c.workEnd) return 'Заданы'
   const on = WEEK.filter(([code]) => c.workDays!.includes(code))
   const run = on.length > 1 && WEEK.findIndex(([code]) => code === on.at(-1)![0]) - WEEK.findIndex(([code]) => code === on[0]![0]) === on.length - 1

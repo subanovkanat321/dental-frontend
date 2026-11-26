@@ -1,12 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState, type FormEvent } from 'react'
+import { useId, useState, type FormEvent, type ReactNode } from 'react'
 
 import { api, ApiError, unwrap, upload, type Schemas } from '../api/client'
 import { ChoiceCards } from '../layout/ChoiceCards'
 import { SaveBar } from '../layout/SaveBar'
 import { Select } from '../layout/Select'
 import { CITIES, guessCity } from '../lib/clinicSearch'
+import { openSettings } from '../lib/route'
 import { openLink, telegram } from '../lib/telegram'
+import { matches } from '../lib/useMedia'
 import { useDirty } from '../lib/unsaved'
 import { useBlobUrl } from '../lib/useBlobUrl'
 import { canEditPrices } from '../lib/roles'
@@ -14,6 +16,9 @@ import { BookingLinks } from './BookingLinks'
 import { PhoneInput } from './PhoneInput'
 import { PhoneListInput } from './PhoneListInput'
 import { SetupChecklist } from './SetupChecklist'
+import { hoursText } from './setupSteps'
+import { phoneText } from '../team/texts'
+import './about.css'
 import { phoneFromInput, phonesFromInput, phonesToInput, phoneToInput } from './phone'
 import { Loading } from '../layout/Loading'
 
@@ -26,6 +31,8 @@ const FIELDS = ['brandName', 'phones', 'whatsappPhone', 'legalName', 'address', 
  * «О клинике»: что видят пациенты (название, телефоны, WhatsApp, адрес, 2ГИС, часы), как работают врачи
  * (независимо, свой склад), кто отвечает за данные (для согласия). Меняет только руководитель (с 2026-11-13,
  * как цены и часы клиники); остальные смотрят. Админу ещё предоплата («с чистого листа» — в «Данных»).
+ * Вид (2026-11-26, владелец: «настройки простые — поправь дизайн»): сверху «Так клиника видна пациентам» со счётчиком
+ * «Заполнено N из 6», ниже поля карточками-группами; одна колонка, на широком экране подпись слева — поле справа.
  */
 export function AboutTab({ me }: { me: Me }) {
   const clinic = useQuery({ queryKey: ['clinic'], queryFn: () => unwrap(api.GET('/api/clinic')) })
@@ -40,6 +47,53 @@ export function AboutTab({ me }: { me: Me }) {
     </>
   )
 }
+
+/** Поле «О клинике» на странице: id для перехода из «Осталось заполнить». */
+const fieldId = (k: string) => `about-${k}`
+
+/** Перейти к полю: прокрутить к нему и поставить курсор (в «только просмотре» поле выключено — только прокрутка). */
+function focusField(k: string) {
+  const box = document.getElementById(fieldId(k))
+  const target = box?.matches('input, textarea, button') ? box : box?.querySelector<HTMLElement>('input, textarea, button')
+  ;(target ?? box)?.scrollIntoView?.({ block: 'center', behavior: 'smooth' })
+  target?.focus({ preventScroll: true })
+}
+
+/**
+ * Строка формы: на широком экране подпись слева, поле справа; подсказка и ошибка — под полем.
+ * Подсказка — вне <label>: иначе она вошла бы в название поля для экранного диктора.
+ */
+function Row({ hint, error, children }: { hint?: ReactNode; error?: string; children: ReactNode }) {
+  return (
+    <div className="about-row">
+      {children}
+      {hint && <p className="hint">{hint}</p>}
+      {error && <p className="error">{error}</p>}
+    </div>
+  )
+}
+
+/** Карточка-группа полей: заголовок и одна строка, зачем это пациентам. */
+function Group({ title, hint, children }: { title: string; hint: ReactNode; children: ReactNode }) {
+  const id = useId()
+  return (
+    <section className="card-block about-card" aria-labelledby={id}>
+      <header className="about-card-head">
+        <h2 id={id}>{title}</h2>
+        <p className="hint">{hint}</p>
+      </header>
+      {children}
+    </section>
+  )
+}
+
+/** Буква в кружке вместо логотипа: «Стоматология «Улыбка»» → «У» (по названию в кавычках, если оно есть). */
+function initialOf(name: string): string {
+  const quoted = /[«"„“]([^»"”]+)/.exec(name)?.[1]
+  return ((quoted ?? name).trim()[0] ?? '?').toUpperCase()
+}
+
+const httpUrl = (s: string) => /^https?:\/\/\S+$/i.test(s.trim()) ? s.trim() : null
 
 function AboutForm({ me, clinic: c }: { me: Me; clinic: Clinic }) {
   const client = useQueryClient()
@@ -86,53 +140,75 @@ function AboutForm({ me, clinic: c }: { me: Me; clinic: Clinic }) {
     save.mutate()
   }
   const page = c.code ? `${window.location.origin}/c/${c.code}` : null
+  // Что заполнено — по введённому сейчас, не по сохранённому. Обязательные — те же, что в жёлтой подсказке
+  // «Заполните „О клинике“» (AdminNotices): название клиники или ИП (для согласия) и адрес
+  const fill: Fill[] = [
+    { key: 'brandName', title: 'Название', done: Boolean(f.brandName.trim()) },
+    { key: 'legalName', title: 'Клиника или ИП', done: Boolean(f.legalName.trim()), required: true },
+    { key: 'phones', title: 'Телефон', done: f.phones.some((p) => p.trim()) },
+    { key: 'address', title: 'Адрес', done: Boolean(f.address.trim()), required: true },
+    { key: 'city', title: 'Город', done: Boolean(f.city) },
+    { key: 'mapUrl', title: 'Ссылка 2ГИС', done: Boolean(f.mapUrl.trim()) },
+  ]
 
   return (
-    <form className="card-block about" aria-label="О клинике" onSubmit={submit}>
-      <fieldset className="about-grid" disabled={!canEdit}>
-        {!canEdit && <p className="tone-wait">Только просмотр: «О клинике», цены и часы клиники меняет руководитель.</p>}
-        <div className="about-col">
-          <WebVersion />
-          <h2>Для пациентов</h2>
-          <p className="hint">Адрес и ссылку на карту пациенты видят при записи и в напоминаниях бота.</p>
-          <label className="field"><span>Название для пациентов</span>
-            <input value={f.brandName} maxLength={100} placeholder="Стоматология «Улыбка»" onChange={text('brandName')} /></label>
-          {err('brandName') && <p className="error">{err('brandName')}</p>}
-          <div className="field"><span>Телефоны клиники — первый главный</span>
-            <PhoneListInput label="Телефон клиники" values={f.phones} onChange={set('phones')} /></div>
-          {err('phones') && <p className="error">{err('phones')}</p>}
-          <label className="field"><span>WhatsApp клиники — если на другом номере, укажите его</span>
-            <PhoneInput label="WhatsApp клиники" value={f.whatsappPhone} onChange={set('whatsappPhone')} /></label>
-          {err('whatsappPhone') && <p className="error">{err('whatsappPhone')}</p>}
-          <p className="hint">Пациенты видят кнопку «Позвонить» на каждый номер; без WhatsApp кнопки «Написать в WhatsApp» нет.</p>
-          <label className="field"><span>Адрес</span>
-            {/* Город не выбран, а в адресе он есть — подставляем сами: одним действием меньше */}
-            <input value={f.address} maxLength={200} placeholder="Например: Бишкек, ул. Шевченко 6" onChange={(e) => changeAddress(e.target.value)} /></label>
-          {err('address') && <p className="error">{err('address')}</p>}
-          <label className="field"><span>Город</span>
-            <Select value={f.city} onChange={(e) => { setCityGuessed(false); set('city')(e.target.value) }}>
-              <option value="">Не указан</option>
-              {CITIES.map((city) => <option key={city} value={city}>{city}</option>)}
-            </Select></label>
-          {err('city') && <p className="error">{err('city')}</p>}
-          <p className="hint">По городу пациенты находят клинику в каталоге /clinics и в боте, когда клиник станет много.</p>
-          <label className="field"><span>Ссылка 2ГИС</span>
-            <input type="url" value={f.mapUrl} maxLength={300} placeholder="https://2gis.kg/bishkek/…" onChange={text('mapUrl')} /></label>
-          {err('mapUrl') && <p className="error">{err('mapUrl')}</p>}
-          <p className="hint">В 2ГИС найдите кабинет → «Поделиться» → «Скопировать ссылку» и вставьте сюда.</p>
-          <label className="field"><span>Ссылка на отзывы в Google — необязательно</span>
-            <input type="url" value={f.googleReviewUrl} maxLength={300} placeholder="https://g.page/r/…/review" onChange={text('googleReviewUrl')} /></label>
-          {err('googleReviewUrl') && <p className="error">{err('googleReviewUrl')}</p>}
-          <p className="hint">Google Карты → карточка клиники → «Поделиться» (или «Получить больше отзывов»). После оценки приёма
-            пациент увидит кнопки «Оставить отзыв в 2ГИС» и «Google» (при 1–3 ⭐ — мелко, под «Что было не так?»).</p>
-          {page && <BookingPage url={page} />}
-          <label className="check"><input type="checkbox" checked={f.listed} onChange={flag('listed')} /> Показывать клинику в общем каталоге /clinics</label>
+    <form className="about-page" aria-label="О клинике" onSubmit={submit}>
+      {!canEdit && <p className="tone-wait about-readonly">Только просмотр: «О клинике», цены и часы клиники меняет руководитель.</p>}
+      <Preview f={f} hours={hoursText(c)} fill={fill} page={page} />
 
-          <p className="hint">Часы клиники и каждого врача — в «Клиника → Рабочее время».</p>
-        </div>
+      <fieldset className="about-cards" disabled={!canEdit}>
+        <Group title="Название и юр. данные" hint="Название пациенты видят в боте, на странице клиники и в напоминаниях.">
+          <Row error={err('brandName')}>
+            <label className="field"><span>Название для пациентов</span>
+              <input id={fieldId('brandName')} value={f.brandName} maxLength={100} placeholder="Стоматология «Улыбка»" onChange={text('brandName')} /></label>
+          </Row>
+          <Row error={err('legalName')} hint="Кто отвечает за данные пациентов: это название пациент видит в согласии и в «Политике обработки данных».">
+            <label className="field"><span>Клиника или ИП</span>
+              <input id={fieldId('legalName')} value={f.legalName} maxLength={150} placeholder="ИП Садыкова А. или Стоматология «Улыбка»" onChange={text('legalName')} /></label>
+          </Row>
+        </Group>
 
-        <div className="about-col">
-          <h2>Как работают врачи</h2>
+        <Group title="Адрес и как добраться" hint="Адрес и маршрут пациенты видят при записи и в напоминаниях бота.">
+          <Row error={err('address')}>
+            <label className="field"><span>Адрес</span>
+              {/* Город не выбран, а в адресе он есть — подставляем сами: одним действием меньше */}
+              <input id={fieldId('address')} value={f.address} maxLength={200} placeholder="Например: Бишкек, ул. Шевченко 6" onChange={(e) => changeAddress(e.target.value)} /></label>
+          </Row>
+          <Row error={err('city')} hint="По городу клинику находят в каталоге /clinics и в боте.">
+            <label className="field" id={fieldId('city')}><span>Город</span>
+              <Select value={f.city} onChange={(e) => { setCityGuessed(false); set('city')(e.target.value) }}>
+                <option value="">Не указан</option>
+                {CITIES.map((city) => <option key={city} value={city}>{city}</option>)}
+              </Select></label>
+          </Row>
+          <Row error={err('mapUrl')} hint="В 2ГИС найдите кабинет → «Поделиться» → «Скопировать ссылку» и вставьте сюда.">
+            <label className="field"><span>Ссылка 2ГИС</span>
+              <input id={fieldId('mapUrl')} type="url" value={f.mapUrl} maxLength={300} placeholder="https://2gis.kg/bishkek/…" onChange={text('mapUrl')} /></label>
+          </Row>
+        </Group>
+
+        <Group title="Связь" hint="На каждый номер у пациента своя кнопка «Позвонить», на WhatsApp — «Написать в WhatsApp».">
+          <Row error={err('phones')} hint="Первый номер — главный, до трёх номеров.">
+            <div className="field" id={fieldId('phones')}><span>Телефоны</span>
+              <PhoneListInput label="Телефон клиники" values={f.phones} onChange={set('phones')} /></div>
+          </Row>
+          <Row error={err('whatsappPhone')} hint="Если WhatsApp на другом номере — укажите его. Пусто — кнопки «Написать в WhatsApp» нет.">
+            <label className="field"><span>WhatsApp</span>
+              <PhoneInput label="WhatsApp клиники" value={f.whatsappPhone} onChange={set('whatsappPhone')} /></label>
+          </Row>
+          {/* «Техподдержка приложения» убрана: у клиники своей нет — в /help бота контакты Tish.
+              Старые значения уходят при сохранении как были (сервер их не стирает молча). */}
+        </Group>
+
+        <Group title="Отзывы и каталог" hint="После оценки приёма пациент увидит кнопки «Оставить отзыв в 2ГИС» и «Google».">
+          <Row error={err('googleReviewUrl')} hint="Необязательно. Google Карты → карточка клиники → «Поделиться» (или «Получить больше отзывов»). При 1–3 ⭐ кнопки — мелко, под «Что было не так?».">
+            <label className="field"><span>Отзывы в Google</span>
+              <input type="url" value={f.googleReviewUrl} maxLength={300} placeholder="https://g.page/r/…/review" onChange={text('googleReviewUrl')} /></label>
+          </Row>
+          <label className="check about-listed"><input type="checkbox" checked={f.listed} onChange={flag('listed')} /> Показывать клинику в общем каталоге /clinics</label>
+        </Group>
+
+        <Group title="Как работают врачи" hint="Кто видит медкарты, выручку и материалы. Изменения — после «Сохранить».">
           {/* Карточки вместо галочек (2026-11-21, владелец): видно оба варианта и что каждый значит */}
           <ChoiceCards label="Медкарты и деньги врачей" disabled={!me.admin} value={f.independentDoctors ? 'own' : 'clinic'}
             onChange={(v) => set('independentDoctors')(v === 'own')} choices={[
@@ -147,21 +223,72 @@ function AboutForm({ me, clinic: c }: { me: Me; clinic: Clinic }) {
               { value: 'shared', icon: '📦', title: 'Один склад на всех', text: 'Материалы общие, закупает клиника.' },
               { value: 'own', icon: '🧳', title: 'Свой склад у каждого врача', text: 'Каждый врач закупает сам: видит и тратит свои материалы и общие.' },
             ]} />
-          <p className="hint">Владелец кабинета (руководитель без своего приёма) видит всё при любой настройке. Изменения — после «Сохранить».</p>
-
-          <h2>Для согласия пациентов</h2>
-          <label className="field"><span>Клиника или ИП</span>
-            <input value={f.legalName} maxLength={150} placeholder="ИП Садыкова А. или Стоматология «Улыбка»" onChange={text('legalName')} /></label>
-          {err('legalName') && <p className="error">{err('legalName')}</p>}
-          <p className="hint">Кто отвечает за данные пациентов: это название пациент видит в согласии и в «Политике обработки данных».</p>
-          {/* «Техподдержка приложения» убрана: у клиники своей нет — в /help бота контакты Tish.
-              Старые значения уходят при сохранении как были (сервер их не стирает молча). */}
-        </div>
+          <p className="hint">Владелец кабинета (руководитель без своего приёма) видит всё при любой настройке.</p>
+        </Group>
       </fieldset>
+
+      {/* Ссылка на веб-версию нужна всем, и в «только просмотре» — вне выключенного fieldset */}
+      <WebVersion />
       {/* Ошибка поля — и под полем, и в полосе: поле может быть выше, за краем экрана */}
       {canEdit && <SaveBar dirty={dirty} saving={save.isPending} saved={save.isSuccess} savedText="«О клинике» сохранено — пациенты видят новое"
         error={save.error && (FIELDS.map((k) => err(k)).find(Boolean) ?? save.error.message)} />}
     </form>
+  )
+}
+
+type Fill = { key: string; title: string; done: boolean; required?: boolean }
+type AboutFields = { brandName: string; legalName: string; address: string; city: string; mapUrl: string; phones: string[]; whatsappPhone: string }
+
+/**
+ * «Так клиника видна пациентам» — сверху страницы, меняется сразу, пока вводят: кружок с буквой, название,
+ * адрес с маршрутом в 2ГИС, телефоны, WhatsApp, часы и страница клиники (/c/<код>) — «Открыть» и «Скопировать».
+ * В заголовке — «Заполнено N из M»; чего не хватает — ссылками к полям. На телефоне свёрнута (заголовок со
+ * счётчиком виден), на компьютере раскрыта.
+ */
+function Preview({ f, hours, fill, page }: { f: AboutFields; hours: string; fill: Fill[]; page: string | null }) {
+  const [open, setOpen] = useState(() => !matches('(max-width: 760px)'))
+  const done = fill.filter((x) => x.done).length
+  const missing = [...fill.filter((x) => !x.done && x.required), ...fill.filter((x) => !x.done && !x.required)]
+  const needed = missing.some((x) => x.required)
+  const phones = phonesFromInput(f.phones).filter(Boolean).map(phoneText)
+  const wa = phoneFromInput(f.whatsappPhone)
+  const name = f.brandName.trim()
+  const address = f.address.trim()
+  const place = f.city && address && !address.toLowerCase().includes(f.city.toLowerCase()) ? `${f.city}, ${address}` : address || f.city
+  const map = httpUrl(f.mapUrl)
+  return (
+    <details className="card-block about-preview" open={open} onToggle={(e) => setOpen(e.currentTarget.open)}>
+      <summary>
+        <span className="about-preview-title">Так клиника видна пациентам</span>
+        <span className={`about-fill ${needed ? 'todo' : done === fill.length ? 'done' : ''}`}>Заполнено {done} из {fill.length}</span>
+      </summary>
+      <div className="about-preview-body">
+        <div className="about-id">
+          <span className="about-avatar" aria-hidden="true">{name ? initialOf(name) : '?'}</span>
+          <div className="about-id-text">
+            <strong className={name ? 'about-name' : 'about-name empty'}>{name || 'Название не указано'}</strong>
+            <span className={place ? '' : 'about-empty'}>{place || 'Адрес не указан'}</span>
+            {map && <a href={map} target="_blank" rel="noopener noreferrer">Маршрут в 2ГИС</a>}
+          </div>
+        </div>
+        <dl className="about-facts">
+          <div><dt>Телефоны</dt><dd>{phones.length ? phones.map((p) => <span key={p} className="num">{p}</span>) : <span className="about-empty">не указаны</span>}</dd></div>
+          <div><dt>WhatsApp</dt><dd>{wa ? <span className="num">{phoneText(wa)}</span> : <span className="about-empty">не указан — кнопки «Написать» нет</span>}</dd></div>
+          <div><dt>Часы</dt><dd><span className="num">{hours}</span>
+            <button type="button" className="link" aria-label="Изменить часы клиники" onClick={() => openSettings('hours')}>Изменить</button></dd></div>
+        </dl>
+        {page && <BookingPage url={page} />}
+        {missing.length > 0 && (
+          <p className={needed ? 'about-missing todo' : 'about-missing'}>
+            <span>{needed ? 'Осталось заполнить:' : 'Можно дополнить:'}</span>
+            {missing.map((x) => (
+              <button key={x.key} type="button" className={x.required ? 'link about-req' : 'link'} onClick={() => focusField(x.key)}>
+                {x.title}{x.required && <small> · {x.key === 'legalName' ? 'для согласия пациентов' : 'обязательно'}</small>}</button>
+            ))}
+          </p>
+        )}
+      </div>
+    </details>
   )
 }
 
@@ -250,8 +377,9 @@ function DepositForm({ st, onSaved }: { st: Deposit; onSaved: (d: Deposit) => vo
 }
 
 /**
- * «Страница для Instagram»: tish.kg/c/<код> — запись, «Позвонить», WhatsApp, врачи, услуги, адрес.
- * «Скопировать» и подсказка, куда её ставить; подробно — раздел руководства (#ssylka-na-zapis).
+ * Страница клиники tish.kg/c/<код> — запись, «Позвонить», WhatsApp, врачи, услуги, адрес. В карточке
+ * «Так клиника видна пациентам»: «Открыть», «Скопировать ссылку» и куда её ставить; подробно — раздел
+ * руководства (#ssylka-na-zapis).
  */
 function BookingPage({ url }: { url: string }) {
   const [copied, setCopied] = useState<boolean | null>(null)
@@ -264,14 +392,17 @@ function BookingPage({ url }: { url: string }) {
     }
   }
   return (
-    <div className="field"><span>Страница для Instagram — запись, WhatsApp, врачи, услуги, адрес</span>
+    <div className="about-page-link">
+      <span className="about-page-label">Страница клиники — для Instagram, 2ГИС и рекламы</span>
       <a className="invite-link" href={url} target="_blank" rel="noopener noreferrer">{url}</a>
       <div className="actions">
-        <button type="button" className="btn" aria-label="Скопировать ссылку на страницу записи" onClick={() => void copy()}>Скопировать</button>
+        <a className="btn" href={url} target="_blank" rel="noopener noreferrer">Открыть</a>
+        <button type="button" className="btn" aria-label="Скопировать ссылку на страницу записи" onClick={() => void copy()}>Скопировать ссылку</button>
       </div>
       {copied === true && <p className="tone-ok" role="status">Ссылка на запись скопирована</p>}
       {copied === false && <p className="hint" role="status">Скопировать не получилось — нажмите на ссылку выше и удерживайте, затем «Копировать»</p>}
-      <p className="hint">Поставьте в Instagram (Ссылки в профиле), 2ГИС (поле «Сайт»), Google Карты и рекламу. Своя ссылка для Instagram, 2ГИС, WhatsApp и QR — ниже, в «Ссылках для записи»; со скидкой — «Откуда приходят → Промокоды».{' '}
+      <p className="hint">Поставьте в Instagram (Ссылки в профиле), 2ГИС (поле «Сайт»), Google Карты и рекламу. Своя ссылка для каждого места и QR — ниже,
+        в «Ссылках для записи»; со скидкой — «Промокоды».{' '}
         <a href="/guide?from=app#ssylka-na-zapis" target="_blank" rel="noopener noreferrer">Как и куда поставить</a></p>
     </div>
   )
@@ -297,7 +428,7 @@ function WebVersion() {
     }
   }
   return (
-    <div className="web-version">
+    <section className="card-block web-version" aria-label="Работать с компьютера">
       <h2>Работать с компьютера</h2>
       <p className="hint">То же приложение в браузере — удобно на компьютере в регистратуре. Вход — через Telegram, тем же аккаунтом, что и в боте.</p>
       <a className="invite-link" href={url} target="_blank" rel="noopener noreferrer">{url}</a>
@@ -309,6 +440,6 @@ function WebVersion() {
       </div>
       {copied && <p className="tone-ok" role="status">Ссылка скопирована — откройте её в браузере на компьютере</p>}
       {copyFailed && !copied && <p className="hint" role="status">Скопировать не получилось — нажмите на ссылку выше и удерживайте, затем «Копировать»</p>}
-    </div>
+    </section>
   )
 }

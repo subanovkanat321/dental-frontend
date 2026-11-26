@@ -29,7 +29,7 @@ export function AdminNotices({ me }: { me: Me }) {
       : 'Договор с платформой — прочитайте и подпишите.', item: 'agreement' })
   }
   if (empty) {
-    notes.push({ key: 'clinic', tone: 'wait', text: 'Заполните «О клинике»: название клиники или ИП (для согласия пациентов), адрес и техподдержку.', item: 'about' })
+    notes.push({ key: 'clinic', tone: 'wait', text: 'Заполните «О клинике»: название клиники или ИП (для согласия пациентов), и адрес.', item: 'about' })
   }
   const shown = notes.filter((n) => !hidden.includes(n.key))
   if (!shown.length) return null

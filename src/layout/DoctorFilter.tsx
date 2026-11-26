@@ -36,7 +36,7 @@ export type AllOption = { label?: string; sub?: string; icon?: string; buttonLab
  * Клавиатура: Enter и пробел — выбрать, ↑ ↓ — по пунктам, Esc и «Назад» — закрыть.
  */
 export function DoctorFilter<K extends number | string>({
-  label, options, value, onChange, all = {}, variant = 'pill', buttonSub, side, footer, className, buttonLabel,
+  label, options, value, onChange, all = {}, variant = 'pill', buttonSub, side, footer, className, buttonLabel, readOnly = false,
 }: {
   /** Что выбираем: «Врач», «Чьи пациенты», «Чья касса» — подпись списка и начало подписи кнопки */
   label: string
@@ -55,6 +55,8 @@ export function DoctorFilter<K extends number | string>({
   className?: string
   /** Своя подпись кнопки для чтения с экрана (по умолчанию «label: имя») */
   buttonLabel?: string
+  /** Выбирать не из чего (один врач): тот же вид, но без ▾ и списка — просто чьё это */
+  readOnly?: boolean
 }) {
   const [open, setOpen] = useState(false)
   const root = useRef<HTMLDivElement>(null)
@@ -106,6 +108,15 @@ export function DoctorFilter<K extends number | string>({
   return (
     <div ref={root} className={['doctor-picker', variant === 'pill' ? 'doctor-filter' : null, className].filter(Boolean).join(' ')}>
       <div className="pick-row">
+        {readOnly ? (
+          <div className="pick-current readonly" role="note" aria-label={buttonLabel ?? `${label}: ${current ? current.name : ''}`}>
+            {current && <Avatar option={current} />}
+            <span className="pick-text">
+              <strong>{name}</strong>
+              {buttonSub && <span className="hint">{buttonSub}</span>}
+            </span>
+          </div>
+        ) : (
         <button type="button" className="pick-current" aria-haspopup="listbox" aria-expanded={open} aria-controls={open ? listId : undefined}
           aria-label={buttonLabel ?? `${label}: ${current ? current.name : allOpt?.buttonLabel ?? allLabel}`}
           onClick={() => setOpen(!open)}
@@ -123,6 +134,7 @@ export function DoctorFilter<K extends number | string>({
           </span>
           <span className="pick-caret" aria-hidden="true">{open ? '▴' : '▾'}</span>
         </button>
+        )}
         {side?.(close)}
       </div>
       {open && (

@@ -39,3 +39,8 @@
 @media (min-width: 761px) {
   .cash > .toolbar > .doctor-picker.doctor-filter { order: 3; margin-left: auto; }
 }
+/* Один врач — не фильтр (выбирать не из кого, владелец 2026-11-26): просто кружок и имя, без рамки, фона и ▾ */
+.doctor-picker .pick-current.readonly,
+.doctor-picker:is(.doctor-filter, .compact) .pick-current.readonly { cursor: default; border: 0 !important; background: none !important;
+  box-shadow: none !important; padding-left: 0; }
+.doctor-picker .pick-current.readonly .hint { display: none; }
