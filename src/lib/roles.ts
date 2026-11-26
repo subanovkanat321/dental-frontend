@@ -61,6 +61,16 @@ export function seesMoneyOf(me: Me, doctorId: number | null | undefined): boolea
   return Boolean(me.reception) || seesAllMoney(me) || (doctorId != null && doctorId === me.doctorId)
 }
 
+/**
+ * Деньги пациентов в списках («Пациенты → Все», колонка «Долг / аванс»): регистратура и руководитель «видит всех» — по
+ * клинике, врач — долг по своим приёмам; ассистенту — нет. Как AccessScope.patientMoneyScope + аванс на сервере
+ * (PatientListController): кому не положено, сервер сумм не присылает.
+ */
+export function seesPatientMoney(me: Me): boolean {
+  if (isAssistant(me)) return false
+  return Boolean(me.reception) || seesAllMoney(me) || me.doctorId != null
+}
+
 /** «Ждут оплаты на кассе» (/to-pay): только в клинике с регистратурой и тем, кому сервер его отдаст. */
 export function seesToPay(me: Me): boolean {
   return Boolean(me.reception || me.hasReception) && (Boolean(me.reception) || seesAllMoney(me) || me.doctorId != null)

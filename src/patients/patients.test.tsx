@@ -177,3 +177,62 @@ test('фильтр по врачу: только его пациенты, сер
   await choose(screen.getByRole('button', { name: /^Чьи пациенты:/ }), 'Все врачи')
   expect(await screen.findByText('Нурлан К.')).toBeInTheDocument()
 })
+
+/** Колонки компьютера: врач, «Долг / аванс», последний визит, следующая запись, метки (данные вымышленные). */
+const wide: Row[] = [
+  { id: 1, fullName: 'Бакыт М.', phone: '996555111222', telegram: true, lastVisit: '2026-01-10T04:00:00Z', doctorId: 2, debtSom: 3000, advanceSom: 0, tagIds: [] },
+  { id: 2, fullName: 'Айгуль Т.', phone: '996700333444', telegram: false, lastVisit: '2026-10-30T05:00:00Z', nextVisit: '2026-11-05T06:00:00Z', doctorId: 1,
+    debtSom: 0, advanceSom: 5000, tagIds: [1] },
+  { id: 3, fullName: 'Нурлан К.', phone: '996777555666', telegram: false, debtSom: 0, advanceSom: 0, tagIds: [] },
+]
+const row = (name: string) => within(screen.getByRole('list', { name: 'Пациенты' })).getAllByRole('listitem')
+  .find((li) => within(li).getAllByRole('button')[0]!.textContent === name)!
+
+test('колонки компьютера: врач с кружком, долг красным и аванс, даты, метки; сортировка заголовками', async () => {
+  backend()
+  server.use(http.get('*/api/patients/recent', () => HttpResponse.json(wide)))
+  renderApp()
+  await screen.findByText('Айгуль Т.')
+  const bakyt = row('Бакыт М.')
+  expect(bakyt.querySelector('.pl-doctor')).toHaveTextContent('Дастан Т.')
+  expect(bakyt.querySelector('.pl-doctor .avatar')).toHaveTextContent('ДТ')
+  expect(bakyt.querySelector('.pl-debt')).toHaveTextContent(/−3\s000 сом/)
+  expect(bakyt.querySelector('.pl-last')).toHaveTextContent('был 10 янв')
+  const aigul = row('Айгуль Т.')
+  expect(aigul.querySelector('.pl-doctor')).toHaveTextContent('Айгерим С.')
+  expect(aigul.querySelector('.pl-advance')).toHaveTextContent(/\+5\s000 аванс/)
+  expect(aigul.querySelector('.pl-next')).toHaveTextContent(/5 нояб, \d\d:\d\d/)
+  expect(await within(aigul).findByText('ВИП')).toBeInTheDocument()
+  // Ноль — пусто
+  expect(row('Нурлан К.').querySelector('.pl-money')).toBeEmptyDOMElement()
+
+  // Шапка не строка списка; «Долг / аванс»: сначала должники, ещё раз — сначала с авансом; пустые — в конце
+  await userEvent.click(screen.getByRole('button', { name: /^Сортировать: Долг \/ аванс/ }))
+  expect(names()).toEqual(['Бакыт М.', 'Айгуль Т.', 'Нурлан К.'])
+  await userEvent.click(screen.getByRole('button', { name: /^Сортировать: Долг \/ аванс/ }))
+  expect(names()).toEqual(['Айгуль Т.', 'Бакыт М.', 'Нурлан К.'])
+  expect(screen.getByRole('button', { name: 'Сортировать: Долг / аванс, по убыванию' })).toHaveAttribute('aria-pressed', 'true')
+  await userEvent.click(screen.getByRole('button', { name: /^Сортировать: ФИО/ }))
+  expect(names()).toEqual(['Айгуль Т.', 'Бакыт М.', 'Нурлан К.'])
+  await userEvent.click(screen.getByRole('button', { name: /^Сортировать: ФИО/ }))
+  expect(names()).toEqual(['Нурлан К.', 'Бакыт М.', 'Айгуль Т.'])
+  // Порядок заголовком — виден и в выпадающем списке телефона
+  expect(chosen(screen.getByLabelText('Порядок'))).toContain('По имени, с конца')
+  await userEvent.click(screen.getByRole('button', { name: /^Сортировать: Последний визит/ }))
+  expect(names()).toEqual(['Айгуль Т.', 'Бакыт М.', 'Нурлан К.'])
+  await userEvent.click(screen.getByRole('button', { name: /^Сортировать: Следующая запись/ }))
+  expect(names()[0]).toBe('Айгуль Т.')
+})
+
+test('ассистенту колонки «Долг / аванс» нет', async () => {
+  backend()
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json({ ...me, admin: false, doctorId: undefined, assistantOf: [1] })),
+    http.get('*/api/patients/recent', () => HttpResponse.json(wide.map((r) => ({ ...r, debtSom: undefined, advanceSom: undefined })))),
+  )
+  renderApp()
+  await screen.findByText('Айгуль Т.')
+  expect(screen.queryByRole('button', { name: /^Сортировать: Долг/ })).toBeNull()
+  expect(document.querySelector('.pl-money')).toBeNull()
+  expect(row('Бакыт М.').querySelector('.pl-doctor')).toHaveTextContent('Дастан Т.')
+})

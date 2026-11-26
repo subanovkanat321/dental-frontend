@@ -2,7 +2,6 @@ import { useQuery } from '@tanstack/react-query'
 import { useCallback, useMemo, useState } from 'react'
 
 import { api, unwrap, type Schemas } from '../api/client'
-import { formatPhone, shortDate } from '../lib/time'
 import { MedicalRecord } from '../medical/MedicalRecord'
 import { NewPatientPanel } from './PatientForm'
 import { PatientPanel } from './PatientPanel'
@@ -26,7 +25,11 @@ import { doctorOptions } from '../layout/doctorOptions'
 import { Select } from '../layout/Select'
 import { Spinner } from '../layout/Loading'
 import { HelpHint } from '../help/HelpHint'
-import { CalmRow } from './CalmList'
+import { PatientTableHead, PatientTableRow } from './PatientTable'
+import { sortRows, type Sort, type SortBy } from './patientSort'
+import { colorDoctorsOf } from '../layout/doctorOptions'
+import { usePatientTags } from '../tags/tags'
+import { seesPatientMoney } from '../lib/roles'
 import { TasksTab } from '../tasks/TasksTab'
 import { RatingsTab } from './RatingsTab'
 import { NoBotTab } from './NoBotTab'
@@ -39,10 +42,13 @@ type Me = Schemas['BookingViewsMe']
 type Row = Schemas['PatientListControllerPatientRow']
 type Patient = Schemas['PatientView']
 
-/** Порядок списка (было — заголовки колонок): недавние, давно не были, по имени, ближайшая запись. */
-type SortKey = 'last' | 'lastAsc' | 'name' | 'next'
-
-const SORTS: [SortKey, string][] = [['last', 'Сначала недавние'], ['lastAsc', 'Давно не были'], ['name', 'По имени'], ['next', 'Ближайшая запись']]
+/**
+ * Порядок списка. На телефоне — выпадающим списком (первые четыре), на компьютере — заголовками колонок таблицы; оба
+ * меняют одно состояние. Порядок, выбранный заголовком и которого нет среди первых четырёх, список тоже покажет.
+ */
+const SORTS: [string, string][] = [['last-desc', 'Сначала недавние'], ['last-asc', 'Давно не были'], ['name-asc', 'По имени'], ['next-asc', 'Ближайшая запись'],
+  ['name-desc', 'По имени, с конца'], ['next-desc', 'Дальние записи первыми'], ['balance-asc', 'Сначала должники'], ['balance-desc', 'Сначала с авансом']]
+const sortKey = (s: Sort) => `${s.by}-${s.desc ? 'desc' : 'asc'}`
 
 /**
  * «Пациенты»: таблица с поиском и сортировкой, карточка — справа. Список — последние 300 по
@@ -67,7 +73,7 @@ export function PatientsPage({ me, onBook, onBookLead, initialPatient, initialQu
   onOpenAppointment?: (appointmentId: number) => void
 }) {
   const [query, setQuery] = useState('')
-  const [sort, setSort] = useState<SortKey>('last')
+  const [sort, setSort] = useState<Sort>({ by: 'last', desc: true })
   const [selected, setSelected] = useState<number | 'new' | null>(initialPatient ?? null)
   // Медкарта — на месте таблицы, во всю ширину: карте зубов нужно место
   const [medical, setMedical] = useState<Patient | null>(null)
@@ -122,19 +128,15 @@ export function PatientsPage({ me, onBook, onBookLead, initialPatient, initialQu
   }, [text, search, local, remote.data])
   const rows: Row[] = useMemo(() => (extra.length ? [...local, ...extra] : local), [local, extra])
 
-  const sorted = useMemo(() => {
-    const value = (r: Row) => (sort === 'name' ? r.fullName ?? '' : sort === 'next' ? r.nextVisit ?? '' : r.lastVisit ?? '')
-    const desc = sort === 'last'
-    return [...rows].sort((a, b) => {
-      const x = value(a)
-      const y = value(b)
-      // Пустые даты — всегда в конце, в какую сторону ни сортируй
-      if (!x && y) return 1
-      if (x && !y) return -1
-      const order = sort === 'name' ? x.localeCompare(y, 'ru') : x < y ? -1 : x > y ? 1 : 0
-      return desc ? -order : order
-    })
-  }, [rows, sort])
+  // Список — не страницами: сервер отдаёт до 300 строк сразу (и поиск — сверх них), поэтому сортируем здесь, без запроса
+  const sorted = useMemo(() => sortRows(rows, sort), [rows, sort])
+  // «Долг / аванс» — только тем, кому сервер присылает суммы (те же права, что у денег в карточке пациента)
+  const money = seesPatientMoney(me)
+  const colorDoctors = useMemo(() => colorDoctorsOf(me), [me])
+  // Метки клиники — названия и цвета чипов; грузим, только если у кого-то в списке они есть
+  const tags = usePatientTags(tab === 'all' && sorted.some((p) => (p.tagIds?.length ?? 0) > 0))
+  const currentSort = sortKey(sort)
+  const sortOptions = SORTS.filter(([key], i) => i < 4 || key === currentSort)
 
   if (medical) {
     return (
@@ -166,9 +168,15 @@ export function PatientsPage({ me, onBook, onBookLead, initialPatient, initialQu
                   <button type="button" className="btn small" aria-pressed={dupsOnly} onClick={() => { setDupsOnly(!dupsOnly); setBirthdaysOnly(false) }}
                     title="Возможно, пациента завели дважды — объединить">👥 Похожие карточки{pairCount ? ` · ${pairCount}` : ''}</button>
                 )}
-                <Select aria-label="Порядок" value={sort} onChange={(e) => setSort(e.target.value as SortKey)}>
-                  {SORTS.map(([key, title]) => <option key={key} value={key}>{title}</option>)}
-                </Select>
+                {/* На компьютере порядок — заголовками колонок таблицы (calm.css прячет этот список) */}
+                <span className="patients-order">
+                  <Select aria-label="Порядок" value={currentSort} onChange={(e) => {
+                    const [by, dir] = e.target.value.split('-')
+                    setSort({ by: by as SortBy, desc: dir === 'desc' })
+                  }}>
+                    {sortOptions.map(([key, title]) => <option key={key} value={key}>{title}</option>)}
+                  </Select>
+                </span>
                 {/* Сколько — только когда ищем или выбрали врача: «последние по визитам: 300» каждый день — шум */}
                 {(recent.isPending || text || doctorId != null) && (
                   <span className="head-note">
@@ -200,13 +208,11 @@ export function PatientsPage({ me, onBook, onBookLead, initialPatient, initialQu
           </EmptyState>
         )}
         {tab === 'all' && !birthdaysOnly && !dupsOnly && sorted.length > 0 && (
-          <ul className="calm-list" aria-label="Пациенты">
+          <ul className={money ? 'calm-list patients-table with-money' : 'calm-list patients-table'} aria-label="Пациенты">
+            <PatientTableHead sort={sort} onSort={setSort} money={money} />
             {sorted.map((p) => (
-              <CalmRow key={p.id} open={() => setSelected(p.id)} active={p.id === selected} name={p.fullName}
-                sub={p.phone ? <span className="num">{formatPhone(p.phone)}</span> : 'без телефона'}
-                meta={p.nextVisit
-                  ? <span className="calm-meta-strong">записан {shortDate(p.nextVisit, true)}</span>
-                  : p.lastVisit ? `был ${shortDate(p.lastVisit)}` : 'ещё не был'} />
+              <PatientTableRow key={p.id} p={p} open={() => setSelected(p.id)} active={p.id === selected} money={money}
+                doctors={me.doctors ?? []} colorDoctors={colorDoctors} tags={tags.data} />
             ))}
           </ul>
         )}
