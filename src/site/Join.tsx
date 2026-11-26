@@ -102,7 +102,8 @@ export function Join() {
   }
   const err = (k: string) => errors[k] && <p className="error">{errors[k]}</p>
   return (
-    <main className="site-page">
+    // Ноутбук (от 1000px): сверху шапка и Тишка, ниже две колонки — слева о Tish и «Бесплатно», справа заявка в карточке
+    <main className="site-page wide join-page">
       <SiteHeader />
       {invite && (
         <div className="site-promo site-invite" role="note" aria-label="Приглашение">
@@ -119,78 +120,84 @@ export function Join() {
           <p className="site-ctas"><a className="btn primary" href={startHref}>Начать бесплатно</a>
             <a className="btn" href="#form">Хочу, чтобы помогли подключить</a></p></div>
       </div>
-      {(materials.video || materials.presentation) && (
-        <section id="materials" className="site-case site-materials" aria-label="Посмотрите за минуту">
-          <h2>Посмотрите за минуту</h2>
-          {materials.video && (
-            // preload="none": ролик ~9 МБ не грузится, пока не нажали «Play» (страницу часто открывают с мобильного)
-            <video className="site-video" controls preload="none" playsInline poster={materials.poster ?? undefined} width={1080} height={1350}
-              aria-label="Ролик о Tish на минуту">
-              <source src={materials.video} type="video/mp4" />
-            </video>
+      <div className="site-cols join-cols">
+        <div className="site-col">
+          {(materials.video || materials.presentation) && (
+            <section id="materials" className="site-case site-materials" aria-label="Посмотрите за минуту">
+              <h2>Посмотрите за минуту</h2>
+              {materials.video && (
+                // preload="none": ролик ~9 МБ не грузится, пока не нажали «Play» (страницу часто открывают с мобильного)
+                <video className="site-video" controls preload="none" playsInline poster={materials.poster ?? undefined} width={1080} height={1350}
+                  aria-label="Ролик о Tish на минуту">
+                  <source src={materials.video} type="video/mp4" />
+                </video>
+              )}
+              {materials.presentation && (
+                <a className="btn" href={materials.presentation} target="_blank" rel="noopener noreferrer">📄 Презентация (PDF)</a>
+              )}
+            </section>
           )}
-          {materials.presentation && (
-            <a className="btn" href={materials.presentation} target="_blank" rel="noopener noreferrer">📄 Презентация (PDF)</a>
-          )}
-        </section>
-      )}
-      <h2>Что умеет</h2>
-      <ul className="site-features">
-        {FEATURES.map(([icon, title, text]) => <li key={title}><span className="ico" aria-hidden="true">{icon}</span><span><strong>{title}</strong><span>{text}</span></span></li>)}
-      </ul>
-      <p className="site-tour-link"><a href="/tour">▶ Тур по Tish — 2 минуты</a>: как выглядит программа, 10 шагов со скриншотами</p>
-      {story && <CaseBlock story={story} />}
-      {/* Tish бесплатный для всех (владелец, 2026-11-25): вместо цен — что входит. Якорь #tariffs — для старых ссылок */}
-      <section id="tariffs" className="site-promo site-free" aria-label="Бесплатно">
-        <h2>🎁 Бесплатно</h2>
-        <p>{FREE_LINE}</p>
-        <ul>{FREE_INCLUDED.map((x) => <li key={x}>{x}</li>)}</ul>
-        <a className="btn primary" href={startHref}>Начать бесплатно</a>
-      </section>
-      <h2 id="form">Хочу, чтобы помогли подключить</h2>
-      <p className="hint">Создать клинику самим — 5 минут: <a href={startHref}>Начать бесплатно</a>. Хотите, чтобы мы настроили всё и перенесли
-        пациентов из тетради или Excel, — оставьте заявку, мы позвоним.</p>
-      {inAppBrowser() && (
-        <p className="tone-wait">Открыли из Instagram? Если клавиатура закрывается — нажмите ⋮ вверху → «Открыть в браузере»
-          {links.supportWhatsapp && <> или <a href={`https://wa.me/${links.supportWhatsapp}?text=${encodeURIComponent('Здравствуйте! Хотим подключить клинику к Tish.')}`}>напишите нам в WhatsApp</a></>}.</p>
-      )}
-      <form className="form site-card" aria-label="Заявка клиники" onSubmit={(e) => void submit(e)}>
-        <div className="segments" role="group" aria-label="Кто вы">
-          <button type="button" aria-pressed={!solo} onClick={() => setSolo(false)}>Клиника</button>
-          <button type="button" aria-pressed={solo} onClick={() => setSolo(true)}>Частный врач</button>
+          <h2>Что умеет</h2>
+          <ul className="site-features">
+            {FEATURES.map(([icon, title, text]) => <li key={title}><span className="ico" aria-hidden="true">{icon}</span><span><strong>{title}</strong><span>{text}</span></span></li>)}
+          </ul>
+          <p className="site-tour-link"><a href="/tour">▶ Тур по Tish — 2 минуты</a>: как выглядит программа, 10 шагов со скриншотами</p>
+          {story && <CaseBlock story={story} />}
+          {/* Tish бесплатный для всех (владелец, 2026-11-25): вместо цен — что входит. Якорь #tariffs — для старых ссылок */}
+          <section id="tariffs" className="site-promo site-free" aria-label="Бесплатно">
+            <h2>🎁 Бесплатно</h2>
+            <p>{FREE_LINE}</p>
+            <ul>{FREE_INCLUDED.map((x) => <li key={x}>{x}</li>)}</ul>
+            <a className="btn primary" href={startHref}>Начать бесплатно</a>
+          </section>
         </div>
-        <p className="hint">{solo
-          ? 'Частный врач работает один (например, арендует кабинет): он и ведёт приём, и управляет записью.'
-          : 'Клиника — несколько врачей, у каждого своё расписание; регистратура — по желанию.'}</p>
-        <label className="field"><span>{solo ? 'Кабинет (как вас найдут пациенты)' : 'Клиника'}</span>
-          <input name="clinicName" maxLength={100} autoComplete="off" placeholder={solo ? 'Стоматолог Айгерим Садыкова' : 'Стоматология «Улыбка»'} /></label>
-        {err('clinicName')}
-        <label className="field"><span>Как к вам обращаться</span>
-          <input name="contactName" maxLength={100} autoComplete="off" placeholder="Айгерим" /></label>
-        {err('contactName')}
-        <label className="field"><span>Телефон или WhatsApp</span><PhoneInput label="Телефон или WhatsApp" value={phone} onChange={setPhone} /></label>
-        {err('phone')}
-        <label className="field"><span>Telegram — по желанию</span>
-          <input name="telegram" maxLength={60} autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="@username" /></label>
-        {err('telegram')}
-        {/* Город — из справочника (тот же, что в «О клинике» и фильтре каталога): без «г. Бишкек» и «бишкек» */}
-        <label className="field"><span>Город</span>
-          <Select name="city" defaultValue="">
-            <option value="">Выберите город</option>
-            {CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
-            <option value="Другой">Другой город — напишите в комментарии</option>
-          </Select></label>
-        {err('city')}
-        {!solo && <label className="field"><span>Сколько врачей</span><input name="doctors" type="number" min={1} max={100} inputMode="numeric" placeholder="2" /></label>}
-        {err('doctors')}
-        <label className="field"><span>Комментарий</span><textarea name="message" maxLength={1000} rows={3} placeholder="Что важно для вашей клиники" /></label>
-        {err('message')}
-        <input className="trap" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" />
-        <label className="check"><input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} /> Согласен(на), чтобы мои имя и телефон использовали, чтобы связаться со мной по заявке</label>
-        {err('consent')}
-        {errors.form && <p className="error" role="alert">{errors.form}</p>}
-        <button type="submit" className="btn primary" disabled={sending}>Оставить заявку</button>
-      </form>
+        <aside className="site-col join-side" aria-label="Заявка на подключение">
+          <h2 id="form">Хочу, чтобы помогли подключить</h2>
+          <p className="hint">Создать клинику самим — 5 минут: <a href={startHref}>Начать бесплатно</a>. Хотите, чтобы мы настроили всё и перенесли
+            пациентов из тетради или Excel, — оставьте заявку, мы позвоним.</p>
+          {inAppBrowser() && (
+            <p className="tone-wait">Открыли из Instagram? Если клавиатура закрывается — нажмите ⋮ вверху → «Открыть в браузере»
+              {links.supportWhatsapp && <> или <a href={`https://wa.me/${links.supportWhatsapp}?text=${encodeURIComponent('Здравствуйте! Хотим подключить клинику к Tish.')}`}>напишите нам в WhatsApp</a></>}.</p>
+          )}
+          <form className="form site-card" aria-label="Заявка клиники" onSubmit={(e) => void submit(e)}>
+            <div className="segments" role="group" aria-label="Кто вы">
+              <button type="button" aria-pressed={!solo} onClick={() => setSolo(false)}>Клиника</button>
+              <button type="button" aria-pressed={solo} onClick={() => setSolo(true)}>Частный врач</button>
+            </div>
+            <p className="hint">{solo
+              ? 'Частный врач работает один (например, арендует кабинет): он и ведёт приём, и управляет записью.'
+              : 'Клиника — несколько врачей, у каждого своё расписание; регистратура — по желанию.'}</p>
+            <label className="field"><span>{solo ? 'Кабинет (как вас найдут пациенты)' : 'Клиника'}</span>
+              <input name="clinicName" maxLength={100} autoComplete="off" placeholder={solo ? 'Стоматолог Айгерим Садыкова' : 'Стоматология «Улыбка»'} /></label>
+            {err('clinicName')}
+            <label className="field"><span>Как к вам обращаться</span>
+              <input name="contactName" maxLength={100} autoComplete="off" placeholder="Айгерим" /></label>
+            {err('contactName')}
+            <label className="field"><span>Телефон или WhatsApp</span><PhoneInput label="Телефон или WhatsApp" value={phone} onChange={setPhone} /></label>
+            {err('phone')}
+            <label className="field"><span>Telegram — по желанию</span>
+              <input name="telegram" maxLength={60} autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="@username" /></label>
+            {err('telegram')}
+            {/* Город — из справочника (тот же, что в «О клинике» и фильтре каталога): без «г. Бишкек» и «бишкек» */}
+            <label className="field"><span>Город</span>
+              <Select name="city" defaultValue="">
+                <option value="">Выберите город</option>
+                {CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                <option value="Другой">Другой город — напишите в комментарии</option>
+              </Select></label>
+            {err('city')}
+            {!solo && <label className="field"><span>Сколько врачей</span><input name="doctors" type="number" min={1} max={100} inputMode="numeric" placeholder="2" /></label>}
+            {err('doctors')}
+            <label className="field"><span>Комментарий</span><textarea name="message" maxLength={1000} rows={3} placeholder="Что важно для вашей клиники" /></label>
+            {err('message')}
+            <input className="trap" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" />
+            <label className="check"><input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} /> Согласен(на), чтобы мои имя и телефон использовали, чтобы связаться со мной по заявке</label>
+            {err('consent')}
+            {errors.form && <p className="error" role="alert">{errors.form}</p>}
+            <button type="submit" className="btn primary" disabled={sending}>Оставить заявку</button>
+          </form>
+        </aside>
+      </div>
       <footer className="site-footer"><a href="/about">Для клиник: всё о Tish</a> · <a href="/tour">Тур по Tish</a> · <a href="/login">Вход для клиники</a> · © {new Date().getFullYear()} Tish</footer>
     </main>
   )

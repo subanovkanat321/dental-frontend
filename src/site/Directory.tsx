@@ -42,7 +42,8 @@ export function Directory() {
   const filter = useClinicFilter(Array.isArray(clinics) ? clinics : [], (c) => [c.name, c.address, ...c.doctors.map((d) => d.fullName)])
   const found = filter.shown
   return (
-    <main className="site-page">
+    // Ноутбук: карточки клиник сеткой в 2–3 колонки (site.css, .site-grid)
+    <main className="site-page wide">
       <SiteHeader back={t.back}><LangSwitch lang={lang} onChange={setLang} /></SiteHeader>
       {/* Сотрудники клиник набирают tish.kg и попадают сюда — вход в CRM сразу видно, а не только внизу */}
       <a className="site-staff" href="/login"><span>{t.staff}</span><strong>{t.staffLogin} →</strong></a>
@@ -59,28 +60,32 @@ export function Directory() {
               <p>{t.nothing}</p>
               <button type="button" className="btn" onClick={() => { filter.setQuery(''); filter.setCity('') }}>{t.showAll}</button>
             </div>
-          ) : found.map((c) => (
-            <article key={c.pageUrl} className="site-card">
-              <h2>{c.name || t.clinic}</h2>
-              {(c.address || c.city) && <p>📍 {withCity(c.address, c.city)}{c.mapUrl && <> · <a href={c.mapUrl} target="_blank" rel="noopener noreferrer">{t.map}</a></>}</p>}
-              {c.doctors.length > 0 && (
-                <ul className="site-list" aria-label={t.doctors}>
-                  {c.doctors.map((d) => (
-                    <li key={d.fullName} className="site-doctor small">
-                      {d.photoUrl ? <img src={d.photoUrl} alt="" width={40} height={40} /> : <span className="initials" aria-hidden="true">{initials(d.fullName)}</span>}
-                      <span><strong>{d.fullName}</strong>{d.about && <span className="hint">{d.about}</span>}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <div className="site-actions">
-                {c.telegramUrl && <a className="btn primary" href={c.telegramUrl} target="_blank" rel="noopener noreferrer">📲 {t.book}</a>}
-                {c.bookingUrl && <a className={c.telegramUrl ? 'btn' : 'btn primary'} href={c.bookingUrl}>🌐 {t.bookWeb}</a>}
-                <a className="btn" href={c.pageUrl}>🦷 {t.more}</a>
-              </div>
-              {c.telegramUrl && inAppBrowser() && tgLink(c.telegramUrl) && <a className="site-inapp-link" href={tgLink(c.telegramUrl)!}>📲 {t.openTg}</a>}
-            </article>
-          ))}
+          ) : (
+            <div className="site-grid">
+              {found.map((c) => (
+                <article key={c.pageUrl} className="site-card">
+                  <h2>{c.name || t.clinic}</h2>
+                  {(c.address || c.city) && <p>📍 {withCity(c.address, c.city)}{c.mapUrl && <> · <a href={c.mapUrl} target="_blank" rel="noopener noreferrer">{t.map}</a></>}</p>}
+                  {c.doctors.length > 0 && (
+                    <ul className="site-list" aria-label={t.doctors}>
+                      {c.doctors.map((d) => (
+                        <li key={d.fullName} className="site-doctor small">
+                          {d.photoUrl ? <img src={d.photoUrl} alt="" width={40} height={40} /> : <span className="initials" aria-hidden="true">{initials(d.fullName)}</span>}
+                          <span><strong>{d.fullName}</strong>{d.about && <span className="hint">{d.about}</span>}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <div className="site-actions">
+                    {c.telegramUrl && <a className="btn primary" href={c.telegramUrl} target="_blank" rel="noopener noreferrer">📲 {t.book}</a>}
+                    {c.bookingUrl && <a className={c.telegramUrl ? 'btn' : 'btn primary'} href={c.bookingUrl}>🌐 {t.bookWeb}</a>}
+                    <a className="btn" href={c.pageUrl}>🦷 {t.more}</a>
+                  </div>
+                  {c.telegramUrl && inAppBrowser() && tgLink(c.telegramUrl) && <a className="site-inapp-link" href={tgLink(c.telegramUrl)!}>📲 {t.openTg}</a>}
+                </article>
+              ))}
+            </div>
+          )}
         </>
       )}
       <footer className="site-footer">{t.forClinics}: <a href="/about">{t.about}</a> · <a href="/login">{t.login}</a> · <a href="/join">{t.join}</a></footer>

@@ -1,5 +1,5 @@
 /*
- * Страницы сайта (/go, /join, /clinics, /c/<код>): один столбец под телефон, «Пульт клиники» из
+ * Страницы сайта (/go, /join, /clinics, /c/<код>): на телефоне один столбец, на ноутбуке — вся ширина (.wide, ниже), «Пульт клиники» из
  * DESIGN.md → «Сайт». Спокойно: светлый фон, белые карточки, один цвет действия — бирюзовый
  * (--accent), один тёплый — только акция (--promo-*). Главное действие раздела — одно, залито.
  */
@@ -99,6 +99,42 @@ body.site {
   .site-page h1 { font-size: 2rem; }
 }
 @media (prefers-reduced-motion: reduce) { .go-link { transition: none; } .go-link:active { transform: none; } }
+/*
+ * Ноутбук (от 1000px) — страницы для клиник (.site-page.wide: /join, /go, /clinics, /c/<код>) на всю ширину, как главная:
+ * контейнер 1200px и колонки (.site-cols → .site-col). На телефоне колонки — тот же один столбец, порядок блоков прежний:
+ * обёртки — сетки с тем же отступом, что у страницы (gap: inherit). Оплата, план и отзыв — для пациентов с телефона, узкие.
+ */
+.site-cols, .site-col { display: grid; gap: inherit; min-width: 0; }
+.site-col { align-content: start; }
+.site-grid { display: grid; gap: inherit; }
+@media (min-width: 1000px) {
+  .site-page.wide { max-width: 1200px; padding: 24px 32px 56px; gap: 28px; }
+  .site-page.wide .site-hero { padding: 32px 40px; gap: 28px; }
+  .site-page.wide .site-hero img { width: 112px; }
+  .site-page.wide .site-hero p { max-width: 64ch; }
+  .site-page.wide h1 { font-size: 2.4rem; }
+  .site-page.wide h2 { font-size: 1.3rem; }
+  .site-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 48px; align-items: start; }
+  /* /join: слева о Tish и «Бесплатно», справа — заявка; «Что умеет» — в две колонки */
+  .join-cols { grid-template-columns: minmax(0, 1fr) 440px; column-gap: 56px; }
+  .join-page .site-features { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 28px; }
+  .join-page .site-tour-link { margin: 0; }
+  .join-side { row-gap: 14px; }
+  .join-side .site-card { margin-top: 6px; padding: 24px; }
+  .join-page .site-free .btn { justify-self: start; padding-inline: 32px; }
+  /* /c/<код>: запись и контакты слева — остаются на экране, пока листают врачей и услуги */
+  .clinic-cols { grid-template-columns: minmax(0, 400px) minmax(0, 1fr); }
+  .clinic-main { position: sticky; top: 16px; }
+  .clinic-doctors { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+  .clinic-doctors h2 { grid-column: 1 / -1; }
+  /* /clinics: карточки клиник сеткой, кнопки — внизу карточки */
+  .site-grid { grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); align-items: stretch; }
+  .site-grid .site-card { display: flex; flex-direction: column; }
+  .site-grid .site-card .site-actions { margin-top: auto; }
+  /* /go: клиникам — слева, пациентам и контакты — справа */
+  .go-cols { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); }
+}
+
 
 /* Запись на сайте без Telegram (/c/<код>#book): тот же пошаговый мастер, что в Telegram (patient.css) */
 .web-book { display: grid; gap: 14px; }

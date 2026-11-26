@@ -124,6 +124,17 @@
   .tour-step:nth-child(even) .tour-shot { order: 2; }
   .tour-phone { width: 300px; }
 }
+/* Ноутбук: шире герой и шаги, скриншот — на мягкой бирюзовой плашке во всю свою колонку */
+@media (min-width: 1100px) {
+  .tour { --tour-max: 1240px; }
+  .tour-hero { max-width: 1000px; padding-top: 72px; }
+  .tour-hero .tour-lead { max-width: 52ch; margin-inline: auto; }
+  .tour-final { max-width: 1000px; }
+  .tour-step { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 80px; padding: 48px 0; }
+  .tour-shot { padding: 48px 24px; border-radius: 28px; background: var(--accent-soft); }
+  .tour-phone { width: 320px; }
+  .tour-copy { max-width: 36em; }
+}
 @media (prefers-reduced-motion: reduce) {
   .tour-btn, .tour-dot::before, .tour-progress-bar > span, .tour-sticky { transition: none; }
 }

@@ -39,46 +39,49 @@ export function Go() {
   const wa = c.supportWhatsapp ? `https://wa.me/${c.supportWhatsapp}` : null
   const demo = useDemoEnabled()
   return (
-    <main className="site-page">
+    // Ноутбук: слева — клиникам, справа — пациентам и контакты
+    <main className="site-page wide go-page">
       <header className="site-hero">
         {/* Тишка — как логотип: на главную приложения (расписание; без входа — вход) */}
         <a className="site-hero-home" href="/" aria-label="Открыть Tish — расписание" title="Открыть расписание"><img src={`${import.meta.env.BASE_URL}tishka.svg`} alt="" width={84} height={80} /></a>
         <div><h1>Tish — программа для стоматологий Кыргызстана</h1><p>Telegram-запись, ИИ-медкарта голосом, касса — в одном приложении</p></div>
       </header>
 
-      <section className="site-section" aria-labelledby="go-clinics">
-        <h2 id="go-clinics">Для клиник и частных врачей</h2>
-        {/* Оффер — сама кнопка: нажали — сразу регистрация клиники (/start, без заявки) */}
-        <GoLink icon="🎁" title={`Подключить клинику — ${OFFER.toLowerCase()}`} sub="Tish бесплатный — клиника готова за 5 минут" href="/start" main />
-        {/* Тур — 10 шагов со скриншотами (/tour): главное «как это выглядит» для владельца клиники */}
-        <GoLink icon="▶" title="Тур по Tish — 2 минуты" sub="10 шагов со скриншотами: запись, медкарта, касса" href="/tour" />
-        {/* Демо-клиника без регистрации — только если включена на сервере (GET /web/demo) */}
-        {demo && <GoLink icon="👀" title="Посмотреть демо" sub="Вымышленная клиника изнутри — без регистрации, за секунды" href={DEMO_PATH} />}
-        {/* Ролик на минуту — на /join (плеер там же, без предзагрузки); ролика нет — коротко о главном на /about */}
-        <GoLink icon={m.video ? '🎬' : '📄'} title="Как это работает" sub={m.video ? 'Ролик на минуту' : 'Запись, ИИ-диктовка, карта зубов, касса — с картинками'}
-          href={m.video ? '/join#materials' : '/about'} />
-        <GoLink icon="💬" title="Спросить в WhatsApp" sub="Ответим на вопросы и поможем подключиться" href={wa} />
-        <GoLink icon="✈️" title="Спросить в Telegram" sub={wa ? null : 'Ответим на вопросы и поможем подключиться'} href={c.supportUrl} />
-        <GoLink icon="🔐" title="Вход для клиники" href="/login" />
-        <p className="hint go-note">Работать можно в Telegram и на сайте — с телефона и компьютера.</p>
-      </section>
+      <div className="site-cols go-cols">
+        <section className="site-section" aria-labelledby="go-clinics">
+          <h2 id="go-clinics">Для клиник и частных врачей</h2>
+          {/* Оффер — сама кнопка: нажали — сразу регистрация клиники (/start, без заявки) */}
+          <GoLink icon="🎁" title={`Подключить клинику — ${OFFER.toLowerCase()}`} sub="Tish бесплатный — клиника готова за 5 минут" href="/start" main />
+          {/* Тур — 10 шагов со скриншотами (/tour): главное «как это выглядит» для владельца клиники */}
+          <GoLink icon="▶" title="Тур по Tish — 2 минуты" sub="10 шагов со скриншотами: запись, медкарта, касса" href="/tour" />
+          {/* Демо-клиника без регистрации — только если включена на сервере (GET /web/demo) */}
+          {demo && <GoLink icon="👀" title="Посмотреть демо" sub="Вымышленная клиника изнутри — без регистрации, за секунды" href={DEMO_PATH} />}
+          {/* Ролик на минуту — на /join (плеер там же, без предзагрузки); ролика нет — коротко о главном на /about */}
+          <GoLink icon={m.video ? '🎬' : '📄'} title="Как это работает" sub={m.video ? 'Ролик на минуту' : 'Запись, ИИ-диктовка, карта зубов, касса — с картинками'}
+            href={m.video ? '/join#materials' : '/about'} />
+          <GoLink icon="💬" title="Спросить в WhatsApp" sub="Ответим на вопросы и поможем подключиться" href={wa} />
+          <GoLink icon="✈️" title="Спросить в Telegram" sub={wa ? null : 'Ответим на вопросы и поможем подключиться'} href={c.supportUrl} />
+          <GoLink icon="🔐" title="Вход для клиники" href="/login" />
+          <p className="hint go-note">Работать можно в Telegram и на сайте — с телефона и компьютера.</p>
+        </section>
+        <div className="site-col">
+          {/* Пациентам — своим блоком сразу после клиник (2026-11-21, владелец: мелкую ссылку внизу не видно). Первым остаётся
+              блок клиник: Instagram Tish — для них, но пациент по старой ссылке должен найти врача */}
+          <section className="site-section" aria-labelledby="go-patients">
+            <h2 id="go-patients">Пациентам</h2>
+            <GoLink icon="🦷" title="Записаться к стоматологу" sub="Выберите клинику — запись в Telegram за минуту" href="/clinics" />
+          </section>
 
-      {/* Пациентам — своим блоком сразу после клиник (2026-11-21, владелец: мелкую ссылку внизу не видно). Первым остаётся
-          блок клиник: Instagram Tish — для них, но пациент по старой ссылке должен найти врача */}
-      <section className="site-section" aria-labelledby="go-patients">
-        <h2 id="go-patients">Пациентам</h2>
-        <GoLink icon="🦷" title="Записаться к стоматологу" sub="Выберите клинику — запись в Telegram за минуту" href="/clinics" />
-      </section>
-
-      {/* Instagram есть всегда — «Связаться» не пропадает, даже если номера поддержки не заполнены */}
-      <section className="site-section" aria-labelledby="go-contacts">
-        <h2 id="go-contacts">{c.supportPhones?.length ? 'Позвонить' : 'Мы в Instagram'}</h2>
-        <div className="site-actions">
-          <ContactLinks className={null} phones={c.supportPhones} whatsapp={null} />
-          <a className="btn" href={TISH_INSTAGRAM} target="_blank" rel="noopener noreferrer">Instagram {TISH_INSTAGRAM_NAME}</a>
+          {/* Instagram есть всегда — «Связаться» не пропадает, даже если номера поддержки не заполнены */}
+          <section className="site-section" aria-labelledby="go-contacts">
+            <h2 id="go-contacts">{c.supportPhones?.length ? 'Позвонить' : 'Мы в Instagram'}</h2>
+            <div className="site-actions">
+              <ContactLinks className={null} phones={c.supportPhones} whatsapp={null} />
+              <a className="btn" href={TISH_INSTAGRAM} target="_blank" rel="noopener noreferrer">Instagram {TISH_INSTAGRAM_NAME}</a>
+            </div>
+          </section>
         </div>
-      </section>
-
+      </div>
 
       <footer className="site-footer">© {new Date().getFullYear()} Tish</footer>
     </main>

@@ -115,51 +115,60 @@ export function ClinicSite() {
     )
   }
   return (
-    <main className="site-page">
+    // Ноутбук: слева запись, контакты и адрес (липко), справа врачи и услуги с ценами
+    <main className="site-page wide">
       <SiteHeader back={t.back}><LangSwitch lang={lang} onChange={setLang} /></SiteHeader>
       <div className="site-hero">
         <img src={`${import.meta.env.BASE_URL}tishka.svg`} alt="" width={84} height={80} />
         <div><h1>{name}</h1>{d.settingUp ? <p role="status">{t.settingUp}</p> : <p>{t.tagline}</p>}</div>
       </div>
-      <div className="site-actions">
-        {telegramUrl && <a className="btn primary" href={telegramUrl} target="_blank" rel="noopener noreferrer">📲 {t.book}</a>}
-        {/* Без Telegram (у многих пожилых его нет) — форма здесь же, клиника подтверждает звонком */}
-        {d.bookingUrl && <button type="button" className={telegramUrl ? 'btn' : 'btn primary'} onClick={showBooking}>🌐 {t.bookWeb}</button>}
-        <ContactLinks className={null} phones={d.phones} whatsapp={d.whatsapp} waText={t.waText} texts={t} />
+      <div className="site-cols clinic-cols">
+        <div className="site-col clinic-main">
+          <div className="site-actions">
+            {telegramUrl && <a className="btn primary" href={telegramUrl} target="_blank" rel="noopener noreferrer">📲 {t.book}</a>}
+            {/* Без Telegram (у многих пожилых его нет) — форма здесь же, клиника подтверждает звонком */}
+            {d.bookingUrl && <button type="button" className={telegramUrl ? 'btn' : 'btn primary'} onClick={showBooking}>🌐 {t.bookWeb}</button>}
+            <ContactLinks className={null} phones={d.phones} whatsapp={d.whatsapp} waText={t.waText} texts={t} />
+          </div>
+          {telegramUrl && promo && <p className="hint">🎟 {t.promo.replace('{code}', promo)}</p>}
+          {telegramUrl && <InAppHint url={telegramUrl} text={t.inApp} link={t.openTg} />}
+          {(d.address || d.mapUrl) && (
+            <p className="site-address">📍 {d.address}{d.mapUrl && <>{d.address && ' · '}<a href={d.mapUrl} target="_blank" rel="noopener noreferrer">{t.map}</a></>}</p>
+          )}
+          {d.telegramUrl && (
+            <section className="site-card">
+              <h2>{t.howTitle}</h2>
+              <ol className="site-how">{t.how.map((step) => <li key={step}>{step}</li>)}</ol>
+            </section>
+          )}
+        </div>
+        {(d.doctors.length > 0 || d.services.length > 0) && (
+          <div className="site-col">
+            {d.doctors.length > 0 && (
+              <section className="site-card clinic-doctors">
+                <h2>{t.doctors}</h2>
+                {d.doctors.map((doc) => (
+                  <div key={doc.fullName} className="site-doctor">
+                    {doc.photoUrl ? <img src={doc.photoUrl} alt="" width={52} height={52} /> : <span className="initials" aria-hidden="true">{initials(doc.fullName)}</span>}
+                    <span><strong>{doc.fullName}</strong>{doc.about && <span className="hint">{doc.about}</span>}</span>
+                  </div>
+                ))}
+              </section>
+            )}
+            {d.services.length > 0 && (
+              <section className="site-card">
+                <h2>{t.services}</h2>
+                <ul className="site-list site-services">
+                  {d.services.map((s) => (
+                    <li key={s.name}><span><strong>{s.name}</strong><span className="hint"> ⏱ {s.durationMinutes} {t.min}</span></span>
+                      {s.priceSom != null && <b className="nowrap">{price(s.priceSom)}</b>}</li>
+                  ))}
+                </ul>
+              </section>
+            )}
+          </div>
+        )}
       </div>
-      {telegramUrl && promo && <p className="hint">🎟 {t.promo.replace('{code}', promo)}</p>}
-      {telegramUrl && <InAppHint url={telegramUrl} text={t.inApp} link={t.openTg} />}
-      {(d.address || d.mapUrl) && (
-        <p className="site-address">📍 {d.address}{d.mapUrl && <>{d.address && ' · '}<a href={d.mapUrl} target="_blank" rel="noopener noreferrer">{t.map}</a></>}</p>
-      )}
-      {d.telegramUrl && (
-        <section className="site-card">
-          <h2>{t.howTitle}</h2>
-          <ol className="site-how">{t.how.map((step) => <li key={step}>{step}</li>)}</ol>
-        </section>
-      )}
-      {d.doctors.length > 0 && (
-        <section className="site-card">
-          <h2>{t.doctors}</h2>
-          {d.doctors.map((doc) => (
-            <div key={doc.fullName} className="site-doctor">
-              {doc.photoUrl ? <img src={doc.photoUrl} alt="" width={52} height={52} /> : <span className="initials" aria-hidden="true">{initials(doc.fullName)}</span>}
-              <span><strong>{doc.fullName}</strong>{doc.about && <span className="hint">{doc.about}</span>}</span>
-            </div>
-          ))}
-        </section>
-      )}
-      {d.services.length > 0 && (
-        <section className="site-card">
-          <h2>{t.services}</h2>
-          <ul className="site-list site-services">
-            {d.services.map((s) => (
-              <li key={s.name}><span><strong>{s.name}</strong><span className="hint"> ⏱ {s.durationMinutes} {t.min}</span></span>
-                {s.priceSom != null && <b className="nowrap">{price(s.priceSom)}</b>}</li>
-            ))}
-          </ul>
-        </section>
-      )}
       <footer className="site-footer">© {new Date().getFullYear()} {name}</footer>
     </main>
   )

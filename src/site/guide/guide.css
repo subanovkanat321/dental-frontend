@@ -42,7 +42,11 @@
 .manual .manual-footer { line-height: 1.6; }
 
 @media (min-width: 1024px) {
-  .manual .manual-layout { grid-template-columns: 240px minmax(0, 1fr); align-items: start; gap: 40px; }
+  /* Ноутбук: шире страница и картинки, строка текста — не длиннее ~72 знаков */
+  .site-page.manual:not(.print) { max-width: 1280px; padding-inline: 32px; }
+  .manual .manual-section { max-width: 920px; }
+  .manual .manual-section > :is(h3, p, ol), .manual .manual-intro { max-width: 72ch; }
+  .manual .manual-layout { grid-template-columns: 260px minmax(0, 1fr); align-items: start; gap: 48px; }
   .manual .manual-toc { position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow: auto; }
 }
 

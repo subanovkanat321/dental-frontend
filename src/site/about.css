@@ -208,3 +208,25 @@ html:has(.about), html:has(.about) body { background: #FFFFFF; }
 .about-case .site-case-metrics { display: flex; flex-wrap: wrap; gap: 12px; padding: 0; list-style: none; }
 .about-case .site-case-metrics li { display: grid; padding: 12px 16px; border-radius: 14px; background: var(--about-soft); border: 1px solid var(--separator); }
 .about-case .site-case-metrics b { font-size: 1.5rem; color: var(--accent); }
+
+/*
+ * Широкий ноутбук и монитор: страница во всю ширину — контейнер 1320px, «узкие» слайды 1120px; обещания, шаги и контакты
+ * — в ряд, вопросы — в две колонки. Абзацы по центру — не длиннее ~72 знаков.
+ */
+@media (min-width: 1000px) {
+  .about { --about-max: 1320px; }
+  .about-inner.narrow { max-width: 1120px; }
+  .about-inner.narrow > .about-lead { max-width: 72ch; margin-inline: auto; }
+  .about-promises { grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: none; }
+  .about-promises li { flex-direction: column; align-items: flex-start; gap: 10px; padding: 24px; }
+  .about-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+  .about-steps li { grid-template-columns: 1fr; gap: 14px; padding: 24px; }
+  .about-faq { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 12px 16px; }
+  .about-contacts { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .about-steps li { align-content: start; }
+  /* Общий класс .center из tokens.css (узкая колонка 420px с отступом 12vh) ломал ряд кнопок: на ноутбуке — снова ряд */
+  .about-ctas.center { display: flex; max-width: none; margin: 32px 0 0; padding: 0; }
+  /* Кейс — карточкой по центру, а не строкой у левого края широкого слайда */
+  .about-case { display: grid; gap: 10px; max-width: 880px; margin-inline: auto; padding: 32px 36px; border-radius: 24px; background: var(--about-soft); border: 1px solid var(--separator); }
+  .about-case .site-case-metrics li { background: var(--page); }
+}
