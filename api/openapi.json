@@ -27532,6 +27532,9 @@
           },
           "code" : {
             "type" : "string"
+          },
+          "login" : {
+            "type" : "string"
           }
         }
       },
@@ -27577,6 +27580,9 @@
           "channel" : {
             "type" : "string",
             "enum" : [ "auto", "sms", "mail" ]
+          },
+          "login" : {
+            "type" : "string"
           }
         }
       },
@@ -31617,9 +31623,13 @@
           },
           "mail" : {
             "type" : "boolean"
+          },
+          "entered" : {
+            "type" : "string",
+            "enum" : [ "phone", "login", "email" ]
           }
         },
-        "required" : [ "mail", "phoneMasked", "resendSeconds", "secondsLeft", "step", "temporary" ]
+        "required" : [ "entered", "mail", "phoneMasked", "resendSeconds", "secondsLeft", "step", "temporary" ]
       },
       "LinksControllerLinks" : {
         "properties" : {

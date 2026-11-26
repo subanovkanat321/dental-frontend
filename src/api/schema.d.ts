@@ -11811,6 +11811,7 @@ export interface components {
         PhoneLoginControllerLoginRequest: {
             phone?: string;
             code?: string;
+            login?: string;
         };
         PhoneLoginControllerSetupToken: {
             setupToken: string;
@@ -11829,6 +11830,7 @@ export interface components {
             phone?: string;
             /** @enum {string} */
             channel?: "auto" | "sms" | "mail";
+            login?: string;
         };
         ExternalLoginControllerTokenRequest: {
             idToken: string;
@@ -13471,6 +13473,8 @@ export interface components {
             resendSeconds: number;
             temporary: boolean;
             mail: boolean;
+            /** @enum {string} */
+            entered: "phone" | "login" | "email";
         };
         LinksControllerLinks: {
             supportTelegram?: string;

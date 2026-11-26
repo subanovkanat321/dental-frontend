@@ -239,22 +239,23 @@ export type SetupToken = Schemas['PhoneLoginControllerSetupToken']
 export type CodeChannel = 'auto' | 'sms' | 'mail'
 
 /**
- * «Забыли пароль? / Первый вход», шаг 1: прислать код. Сервер всегда отвечает «ок» — не говорит, есть
- * ли такой сотрудник, привязан ли номер к Telegram и куда ушёл код; 503 — явный SMS, а SMS не подключены;
- * 422 — номер не похож на номер. Номер — только в теле.
+ * «Забыли пароль? / Первый вход», шаг 1: прислать код. login — «Логин, телефон или почта» (номер — в виде для
+ * запроса, phoneFromInput): есть «@» — почта (письмо только на неё, канал не важен), есть латинская буква — логин, иначе
+ * номер. Сервер всегда отвечает «ок» — не говорит, есть ли такой сотрудник или почта, привязан ли номер к Telegram и
+ * куда ушёл код; 503 — явный SMS (или почта), а канал не подключён; 422 — не похоже ни на номер, ни на почту. Всё — только в теле.
  */
-export async function requestLoginCode(phone: string, channel: CodeChannel = 'auto'): Promise<void> {
-  // Без номера (страницу перезагрузили на шаге кода) — сервер берёт номер из своей cookie «ждём код»
-  const body = phone ? { phone } : {}
+export async function requestLoginCode(login: string, channel: CodeChannel = 'auto'): Promise<void> {
+  // Пусто (страницу перезагрузили на шаге кода) — сервер берёт своё из cookie «ждём код»
+  const body = login ? { login } : {}
   await webPost('/web/login/phone/code', channel === 'auto' ? body : { ...body, channel })
 }
 
 /**
- * Шаг 2: номер и код → пропуск «Придумайте пароль» (ещё не вход). Неверный код — 401. Номера нет (страницу
- * перезагрузили) — сервер берёт его из HttpOnly-cookie «ждём код»; она истекла — 401 «Время на ввод кода вышло».
+ * Шаг 2: логин, номер или почта (то же, что на шаге 1) и код → пропуск «Придумайте пароль» (ещё не вход). Неверный код — 401.
+ * Пусто (страницу перезагрузили) — сервер берёт своё из HttpOnly-cookie «ждём код»; она истекла — 401 «Время на ввод кода вышло».
  */
-export async function phoneLogin(phone: string, code: string): Promise<SetupToken> {
-  const token = await webPost<SetupToken>('/web/login/phone', phone ? { phone, code } : { code })
+export async function phoneLogin(login: string, code: string): Promise<SetupToken> {
+  const token = await webPost<SetupToken>('/web/login/phone', login ? { login, code } : { code })
   if (!token?.setupToken) throw new ApiError(500, 'Вход не удался — попробуйте ещё раз')
   return token
 }

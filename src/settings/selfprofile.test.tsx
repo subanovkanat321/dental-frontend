@@ -108,6 +108,43 @@ test('подсказки нет, когда профиль заполнен; с�
   expect(window.location.hash).toBe('#/me/profile')
 })
 
+test('профиль заполнен, а почты нет — один раз «Добавьте почту» (только при входе по номеру и настроенной почте); ✕ — больше не показываем', async () => {
+  const filled = { ...me, doctors: [{ id: 1, fullName: 'Айгерим Садыкова', active: true, about: 'терапевт', photoUrl: '/doctors/1/photo?v=1' }] }
+  let email: Schemas['MyEmailControllerMyEmail'] = { phoneLogin: true, available: true }
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(filled)),
+    http.get('*/api/me/email', () => HttpResponse.json(email)),
+  )
+  const user = userEvent.setup()
+  let view = renderApp()
+  const notice = await screen.findByRole('region', { name: 'Добавьте почту' })
+  expect(notice).toHaveTextContent('Добавьте почту в «Мой профиль»: забудете пароль — код для нового придёт на неё.')
+  await user.click(within(notice).getByRole('button', { name: /Добавьте почту/ }))
+  expect(window.location.hash).toBe('#/me/profile')
+  view.unmount()
+
+  // Почта уже есть, почта на сервере не настроена или входа по номеру нет — молчим
+  for (const state of [{ email: 'a@example.kg', phoneLogin: true, available: true }, { phoneLogin: true, available: false },
+    { phoneLogin: false, available: true }] satisfies Schemas['MyEmailControllerMyEmail'][]) {
+    email = state
+    window.location.hash = ''
+    view = renderApp()
+    await screen.findByRole('button', { name: /^Расписание/ })
+    await waitFor(() => expect(screen.queryByRole('region', { name: 'Добавьте почту' })).not.toBeInTheDocument())
+    view.unmount()
+  }
+
+  email = { phoneLogin: true, available: true }
+  window.location.hash = ''
+  view = renderApp()
+  await user.click(within(await screen.findByRole('region', { name: 'Добавьте почту' })).getByRole('button', { name: 'Скрыть подсказку' }))
+  expect(localStorage.getItem('crm.email-notice.hidden')).toBe('1')
+  view.unmount()
+  renderApp()
+  await screen.findByRole('button', { name: /^Расписание/ })
+  expect(screen.queryByRole('region', { name: 'Добавьте почту' })).not.toBeInTheDocument()
+})
+
 test('«Мой профиль» у врача: сверху «Для пациентов» (фото и имя), ниже «Телефон» и «Работа»; «Удалить врача» и «Работает» у себя — нет', async () => {
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),

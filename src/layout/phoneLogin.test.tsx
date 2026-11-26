@@ -5,6 +5,8 @@ import { http, HttpResponse } from 'msw'
 import { me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 import { waitForSlow } from '../test/wait'
+import { NO_MAIL, NO_MAIL_BY_EMAIL } from './PhoneLogin'
+import type { LoginPending } from '../api/client'
 
 /** Номер и пароли — вымышленные. */
 const WRONG = 'Неверный логин, номер или пароль. Пароль ещё не задан или забыли — нажмите «Забыли пароль? / Первый вход»'
@@ -122,7 +124,7 @@ test('«Забыли пароль? / Первый вход» → одна кно
   expect(screen.queryByRole('button', { name: 'Код в Telegram' })).not.toBeInTheDocument()
   expect(screen.queryByRole('button', { name: 'Код по SMS' })).not.toBeInTheDocument()
   // Номер не набирать заново
-  expect((screen.getByRole('textbox', { name: 'Номер телефона' }) as HTMLInputElement).value).toContain('700')
+  expect((screen.getByRole('textbox', { name: 'Логин или телефон' }) as HTMLInputElement).value).toContain('700')
   await user.click(screen.getByRole('button', { name: 'Получить код' }))
 
   const step = await screen.findByRole('form', { name: 'Код подтверждения' })
@@ -164,7 +166,7 @@ test('«Забыли пароль? / Первый вход» → одна кно
   expect(await screen.findByRole('navigation', { name: 'Разделы' })).toBeInTheDocument()
   expect(posts.map((p) => p.path)).toEqual(['password', 'code', 'verify', 'verify', 'new'])
   // Канал не выбираем — сервер решает сам
-  expect(posts[1]!.body).toEqual({ phone: '+996700000031' })
+  expect(posts[1]!.body).toEqual({ login: '+996700000031' })
   expect(posts.at(-1)!.body).toEqual({ token: 'tok-1', password: 'Тишина2026' })
 })
 
@@ -173,7 +175,7 @@ test('почта настроена: после номера — выбор ка
   const user = userEvent.setup()
   renderApp()
   await user.click(await screen.findByRole('button', { name: 'Забыли пароль? / Первый вход' }))
-  await user.type(screen.getByRole('textbox', { name: 'Номер телефона' }), '700000031')
+  await user.type(screen.getByRole('textbox', { name: 'Логин, телефон или почта' }), '700000031')
   await user.click(screen.getByRole('button', { name: 'Получить код' }))
 
   const choose = await screen.findByRole('group', { name: 'Куда прислать код' })
@@ -185,7 +187,9 @@ test('почта настроена: после номера — выбор ка
   await user.click(screen.getByRole('button', { name: 'На почту из «Моего профиля»' }))
 
   const step = await screen.findByRole('form', { name: 'Код подтверждения' })
-  expect(step).toHaveTextContent('Если к номеру добавлена почта — код уже в письме (проверьте «Спам»). Не добавляли — выберите Telegram или SMS.')
+  expect(step).toHaveTextContent('Если к номеру добавлена почта — код уже в письме (проверьте «Спам»).')
+  // «А если почта не указана?» — куда идти дальше
+  expect(step).toHaveTextContent(NO_MAIL)
   expect(step).toHaveTextContent('Код действует 10 минут')
   expect(step).not.toHaveTextContent('@')
   // Про SMS на шаге письма не говорим: повтор — снова письмо
@@ -200,7 +204,7 @@ test('почта настроена: после номера — выбор ка
 
   expect(await screen.findByRole('navigation', { name: 'Разделы' })).toBeInTheDocument()
   expect(posts.map((p) => p.path)).toEqual(['code', 'verify', 'new'])
-  expect(posts[0]!.body).toEqual({ phone: '+996700000031', channel: 'mail' })
+  expect(posts[0]!.body).toEqual({ login: '+996700000031', channel: 'mail' })
   expect(posts.every((p) => p.header === '1')).toBe(true)
 })
 
@@ -209,11 +213,85 @@ test('почта не настроена — выбора канала нет, �
   const user = userEvent.setup()
   renderApp()
   await user.click(await screen.findByRole('button', { name: 'Забыли пароль? / Первый вход' }))
-  await user.type(screen.getByRole('textbox', { name: 'Номер телефона' }), '700000031')
+  await user.type(screen.getByRole('textbox', { name: 'Логин или телефон' }), '700000031')
   await user.click(screen.getByRole('button', { name: 'Получить код' }))
   await screen.findByRole('form', { name: 'Код подтверждения' })
   expect(screen.queryByRole('button', { name: /На почту/ })).not.toBeInTheDocument()
   expect(posts.map((p) => p.path)).toEqual(['code'])
+})
+
+test('вписали почту — выбора канала нет: сразу «код отправлен на почту, если она добавлена в Tish» → код → пароль → вход', async () => {
+  const posts = backend({ mail: true })
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('button', { name: 'Забыли пароль? / Первый вход' }))
+  const form = screen.getByRole('form', { name: 'Код для входа' })
+  expect(form).toHaveTextContent('Впишите логин, номер или почту из «Моего профиля»')
+  await user.type(screen.getByRole('textbox', { name: 'Логин, телефон или почта' }), ' aigerim.test@gmail.com ')
+  await user.click(screen.getByRole('button', { name: 'Получить код' }))
+
+  const step = await screen.findByRole('form', { name: 'Код подтверждения' })
+  expect(screen.queryByRole('group', { name: 'Куда прислать код' })).not.toBeInTheDocument()
+  expect(step).toHaveTextContent('Код отправлен на почту, если она добавлена в Tish (проверьте «Спам»). Код действует 10 минут.')
+  expect(step).toHaveTextContent(NO_MAIL_BY_EMAIL)
+  // Выбирать канал после почты нечего; вернуться — «Другая почта или номер»
+  expect(screen.queryByRole('button', { name: 'Другой способ' })).not.toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Другая почта или номер' })).toBeInTheDocument()
+  await user.type(screen.getByRole('textbox', { name: 'Код подтверждения' }), '123456')
+  await user.click(screen.getByRole('button', { name: 'Подтвердить' }))
+  expect(await screen.findByRole('form', { name: 'Придумайте пароль' })).toHaveTextContent('Код подтверждён.')
+  await user.type(screen.getByLabelText('Новый пароль'), 'Тишина2026')
+  await user.type(screen.getByLabelText('Повторите пароль'), 'Тишина2026')
+  await user.click(screen.getByRole('button', { name: 'Сохранить и войти' }))
+
+  expect(await screen.findByRole('navigation', { name: 'Разделы' })).toBeInTheDocument()
+  expect(posts.map((p) => p.path)).toEqual(['code', 'verify', 'new'])
+  // Почта — только в теле, как вписали (без пробелов); канал — письмо
+  expect(posts[0]!.body).toEqual({ login: 'aigerim.test@gmail.com', channel: 'mail' })
+  expect(posts[1]!.body).toEqual({ login: 'aigerim.test@gmail.com', code: '123456' })
+  expect(window.location.href).not.toContain('aigerim')
+  expect(JSON.stringify({ ...localStorage, ...sessionStorage })).not.toContain('aigerim')
+})
+
+test('вписали логин — выбор канала с логином, код уходит по логину', async () => {
+  const posts = backend({ mail: true })
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('button', { name: 'Забыли пароль? / Первый вход' }))
+  await user.type(screen.getByRole('textbox', { name: 'Логин, телефон или почта' }), 'aigul')
+  await user.click(screen.getByRole('button', { name: 'Получить код' }))
+  const choice = await screen.findByRole('group', { name: 'Куда прислать код' })
+  expect(choice).toHaveTextContent('Логин aigul')
+  await user.click(within(choice).getByRole('button', { name: 'В Telegram' }))
+  await screen.findByRole('form', { name: 'Код подтверждения' })
+  expect(posts[0]!.body).toEqual({ login: 'aigul' })
+  expect(screen.getByRole('button', { name: 'Другой логин или номер' })).toBeInTheDocument()
+})
+
+test('почта не настроена — поле «Логин или телефон», о почте ни слова; вписали почту — просим логин или номер', async () => {
+  const posts = backend({ mail: false })
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('button', { name: 'Забыли пароль? / Первый вход' }))
+  const form = screen.getByRole('form', { name: 'Код для входа' })
+  expect(screen.queryByRole('textbox', { name: 'Логин, телефон или почта' })).not.toBeInTheDocument()
+  expect(form).not.toHaveTextContent(/почт/i)
+  await user.type(screen.getByRole('textbox', { name: 'Логин или телефон' }), 'aigerim.test@gmail.com')
+  await user.click(screen.getByRole('button', { name: 'Получить код' }))
+  expect(await screen.findByRole('alert')).toHaveTextContent('Введите логин или номер телефона')
+  expect(posts).toEqual([])
+})
+
+test('перезагрузили после кода на почту — маска почты, не номера', async () => {
+  backend({ mail: true })
+  server.use(http.get('*/web/login/phone/pending', () => HttpResponse.json({
+    step: 'code', phoneMasked: 'a***@gmail.com', secondsLeft: 500, resendSeconds: 0, temporary: false, mail: true, entered: 'email',
+  } satisfies LoginPending)))
+  renderApp()
+  const step = await screen.findByRole('form', { name: 'Код подтверждения' })
+  expect(step).toHaveTextContent('Код отправлен на почту a***@gmail.com, если она добавлена в Tish')
+  expect(step).toHaveTextContent('Код действует ещё 9 мин.')
+  expect(step).not.toHaveTextContent('+996')
 })
 
 test('«Не пришло? Отправить по SMS» появляется через 60 секунд и явно просит SMS', async () => {
@@ -224,7 +302,7 @@ test('«Не пришло? Отправить по SMS» появляется ч
     renderApp()
     await user.click(await screen.findByRole('button', { name: 'Забыли пароль? / Первый вход' }))
     expect(screen.queryByLabelText('Пароль')).not.toBeInTheDocument()
-    await user.type(screen.getByRole('textbox', { name: 'Номер телефона' }), '700000031')
+    await user.type(screen.getByRole('textbox', { name: 'Логин или телефон' }), '700000031')
     await user.click(screen.getByRole('button', { name: 'Получить код' }))
     await screen.findByRole('form', { name: 'Код подтверждения' })
 
@@ -238,7 +316,7 @@ test('«Не пришло? Отправить по SMS» появляется ч
     await user.click(screen.getByRole('button', { name: 'Не пришло? Отправить по SMS' }))
 
     expect(await screen.findByText(/Отправили SMS с кодом на этот номер/)).toBeInTheDocument()
-    expect(posts.at(-1)!.body).toEqual({ phone: '+996700000031', channel: 'sms' })
+    expect(posts.at(-1)!.body).toEqual({ login: '+996700000031', channel: 'sms' })
     // Снова минута до следующей отправки
     expect(screen.queryByRole('button', { name: 'Не пришло? Отправить по SMS' })).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Другой номер' }))
@@ -301,7 +379,7 @@ test('SMS не подключены — «Получить код» (Telegram), 
     // Как на сервере по умолчанию (SMS_LOGIN_CODES выключены): код только в Telegram, нет Telegram — временный пароль
     expect(screen.getByText(/Код приходит только в Telegram/)).toHaveTextContent('попросите руководителя клиники выдать временный пароль')
     expect(document.body).not.toHaveTextContent(/SMS/)
-    await user.type(screen.getByRole('textbox', { name: 'Номер телефона' }), '700000031')
+    await user.type(screen.getByRole('textbox', { name: 'Логин или телефон' }), '700000031')
     await user.click(screen.getByRole('button', { name: 'Получить код' }))
     const step = await screen.findByRole('form', { name: 'Код подтверждения' })
     expect(step).toHaveTextContent('Отправили код в Telegram (от бота клиники), если номер привязан к вашему Telegram.')
@@ -320,15 +398,17 @@ test('SMS выключены, почта есть — выбор «В Telegram»
   const user = userEvent.setup()
   renderApp()
   await user.click(await screen.findByRole('button', { name: 'Забыли пароль? / Первый вход' }))
-  await user.type(screen.getByRole('textbox', { name: 'Номер телефона' }), '700000031')
+  await user.type(screen.getByRole('textbox', { name: 'Логин, телефон или почта' }), '700000031')
   await user.click(screen.getByRole('button', { name: 'Получить код' }))
   const choice = await screen.findByRole('group', { name: 'Куда прислать код' })
   expect(within(choice).getByRole('button', { name: 'В Telegram' })).toBeInTheDocument()
   expect(within(choice).queryByRole('button', { name: 'По SMS' })).not.toBeInTheDocument()
   expect(document.body).not.toHaveTextContent(/SMS/)
+  // «А если почта не указана?» — уже на выборе канала
+  expect(choice).toHaveTextContent(NO_MAIL)
   await user.click(within(choice).getByRole('button', { name: 'На почту из «Моего профиля»' }))
   const step = await screen.findByRole('form', { name: 'Код подтверждения' })
-  expect(step).toHaveTextContent('Не добавляли — выберите Telegram.')
+  expect(step).toHaveTextContent(NO_MAIL)
   expect(document.body).not.toHaveTextContent(/SMS/)
 })
 
@@ -415,7 +495,7 @@ test('«Другой номер» после перезагрузки гасит
   await screen.findByRole('form', { name: 'Код подтверждения' })
   await user.click(screen.getByRole('button', { name: 'Другой номер' }))
   expect(screen.getByRole('form', { name: 'Код для входа' })).toBeInTheDocument()
-  expect((screen.getByRole('textbox', { name: 'Номер телефона' }) as HTMLInputElement).value).toBe('')
+  expect((screen.getByRole('textbox', { name: 'Логин или телефон' }) as HTMLInputElement).value).toBe('')
   await waitForSlow(() => expect(forgotten).toEqual(['1']))
 })
 
