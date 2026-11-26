@@ -221,7 +221,6 @@ export function DayList({ me, doctors, date, onDate, onOpen, onQuick, onNew, onN
                       ) : (
                         <FreeRow key={`f${item.at}`} start={item.at} end={item.end} canEdit={canEditDoctor(item.doctorId)}
                           doctor={many ? g.doctor.name : undefined} short={many && !inToolbar}
-                          waiting={onWindows ? waitingIn(windows, item.doctorId, item.at, item.end) : 0} onWindows={onWindows}
                           onPick={() => onNew(item.doctorId, minutesOf(item.at))} />
                       ))}
                     {g.items.length === 0 && <li className="hint day-empty">Нет записей</li>}
@@ -256,20 +255,30 @@ export function DayList({ me, doctors, date, onDate, onOpen, onQuick, onNew, onN
               // (WebKit) при перестановке в прокручиваемом блоке со scroll-snap оставлял «призрак» прежней колонки
               // поверх соседней, пока экран не перерисуется
               <div key={order} ref={columns} className={groups.length > 2 ? 'doctor-columns peek' : 'doctor-columns'} style={{ '--cols': groups.length } as CSSProperties}>{blocks}</div>
-            ) : blocks}{empty}</>
+            ) : blocks}{empty}<WaitingLine windows={windows} onWindows={onWindows} /></>
           })()}
     </div>
   )
 }
 
-/** Сколько пациентов из листа ожидания подходят в это свободное время врача (окна сервера, пересечение по времени). */
-function waitingIn(windows: FreeWindow[], doctorId: number, start: string, end: string): number {
-  const ids = new Set(windows.filter((w) => w.doctorId === doctorId && w.start < end && w.end > start)
-    .flatMap((w) => w.matches.filter((m) => !m.declined).map((m) => m.entryId)))
-  return ids.size
+/**
+ * Лист ожидания — одной тонкой строкой под днём (владелец, 2026-11-26: «🔔 1 из листа» у каждого свободного окна
+ * занимало слишком много места): сколько пациентов из листа подходят в свободное время этого дня. Нажать — окна с
+ * «Предложить»; то же — в «Пациенты → Лист ожидания». Никого — строки нет.
+ */
+function WaitingLine({ windows, onWindows }: { windows: FreeWindow[]; onWindows?: () => void }) {
+  if (!onWindows) return null
+  const n = new Set(windows.flatMap((w) => w.matches.filter((m) => !m.declined).map((m) => m.entryId))).size
+  if (n === 0) return null
+  return (
+    <button type="button" className="waiting-line" onClick={onWindows}>
+      <span aria-hidden="true">🔔</span> Лист ожидания: {n} {plural(n, 'пациент подходит', 'пациента подходят', 'пациентов подходят')} в свободное время
+      <span className="waiting-line-go" aria-hidden="true">›</span>
+    </button>
+  )
 }
 
-function FreeRow({ start, end, canEdit, doctor, short = false, onPick, waiting = 0, onWindows }: {
+function FreeRow({ start, end, canEdit, doctor, short = false, onPick }: {
   start: string
   end: string
   canEdit: boolean
@@ -278,22 +287,14 @@ function FreeRow({ start, end, canEdit, doctor, short = false, onPick, waiting =
   /** Узкая колонка (телефон, «Все врачи»): коротко «до 13:00» */
   short?: boolean
   onPick: () => void
-  /** Подходят из листа ожидания — «🔔 2 из листа» справа, нажать — окна с «Предложить» */
-  waiting?: number
-  onWindows?: () => void
 }) {
   const text = <>{short ? 'до' : 'свободно до'} {timeOf(end)}</>
-  const bell = waiting > 0 && onWindows ? (
-    <button type="button" className="free-waiting" aria-label={`Лист ожидания: ${waiting} ${plural(waiting, 'подходит', 'подходят', 'подходят')} на ${timeOf(start)} — предложить`}
-      onClick={onWindows}>🔔 {waiting}{short ? '' : ' из листа'}</button>
-  ) : null
-  if (!canEdit) return <li className="row free readonly"><span className="time num">{timeOf(start)}</span><span className="hint">{text}</span>{bell}</li>
+  if (!canEdit) return <li className="row free readonly"><span className="time num">{timeOf(start)}</span><span className="hint">{text}</span></li>
   return (
-    <li className={bell ? 'row free with-waiting' : 'row free'}>
+    <li className="row free">
       <button type="button" className="row-button" aria-label={`Свободно с ${timeOf(start)} до ${timeOf(end)}${doctor ? ` у врача ${doctor}` : ''}, записать`} onClick={onPick}>
         <span className="time num">{timeOf(start)}</span><span className="hint">{text}</span><span className="plus" aria-hidden="true">＋</span>
       </button>
-      {bell}
     </li>
   )
 }

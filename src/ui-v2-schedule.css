@@ -52,6 +52,10 @@
 .ui-v2 .day-list .row.s-done .name { color: var(--hint); }
 /* Свободное время и перерыв — без тени, тише записей */
 .ui-v2 .day-list .row.free { border: 1.5px dashed color-mix(in srgb, var(--accent) 30%, var(--separator)); background: color-mix(in srgb, var(--v2-card) 45%, transparent); box-shadow: none; }
+/* Свободное время — тоньше записей (владелец, 2026-11-26): одна строка, меньше отступы и шрифт */
+.ui-v2 .day-list .row.free .row-button { padding-block: 6px; min-height: 40px; }
+.ui-v2 .day-list .row.free :is(.time, .hint) { font-size: .92rem; }
+.ui-v2 .day-list .row.free.readonly { padding-block: 6px; }
 .ui-v2 .day-list .row.pause { background: color-mix(in srgb, var(--sunken) 70%, transparent); box-shadow: none; }
 .ui-v2 .doctor-day-head { background: var(--v2-page); color: var(--v2-ink); }
 .ui-v2 .doctor-day-count { font-weight: 700; }
