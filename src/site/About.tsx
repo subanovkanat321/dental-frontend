@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 
-import { FREE_LINE, TISH_INSTAGRAM, TISH_INSTAGRAM_NAME, TISH_PHONE, TISH_TELEGRAM, tishWhatsapp } from '../lib/brand'
+import { FREE_LINE, TISH_CHANNEL, TISH_INSTAGRAM, TISH_INSTAGRAM_NAME, TISH_PHONE, TISH_TELEGRAM, tishWhatsapp } from '../lib/brand'
 import { DEMO_PATH } from '../lib/demo'
 import { CaseBlock } from './CaseBlock'
 import { getJson, useDemoEnabled, type JoinCase } from './web'
@@ -416,6 +416,8 @@ export function About() {
                 <span className="ico" aria-hidden="true">📸</span><span><small>Instagram</small>{' '}<strong>{TISH_INSTAGRAM_NAME}</strong></span></a></li>
               <li><a href={ABOUT_CONTACTS.whatsapp} target="_blank" rel="noopener noreferrer">
                 <span className="ico" aria-hidden="true">💬</span><span><small>WhatsApp</small>{' '}<strong className="num">0773 565 895</strong></span></a></li>
+              <li><a href={TISH_CHANNEL} target="_blank" rel="noopener noreferrer">
+                <span className="ico" aria-hidden="true">📣</span><span><small>Канал для стоматологов</small>{' '}<strong>Tish в Telegram</strong></span></a></li>
               <li><a href={ABOUT_CONTACTS.telegram} target="_blank" rel="noopener noreferrer">
                 <span className="ico" aria-hidden="true">✈️</span><span><small>Telegram</small>{' '}<strong>@veratti_16</strong></span></a></li>
               <li><a href={ABOUT_CONTACTS.phone}>

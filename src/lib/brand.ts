@@ -2,6 +2,8 @@
 export const TISH_INSTAGRAM = 'https://www.instagram.com/tish.app.kg/'
 /** Бот Tish в Telegram — запись пациентов и вход сотрудников (в JSON-LD главной — sameAs, index.html). */
 export const TISH_BOT = 'https://t.me/dental_stom_bot'
+/** Канал Tish в Telegram для стоматологов: новости и советы (подвал главной, контакты /about, sameAs в index.html). */
+export const TISH_CHANNEL = 'https://t.me/+tYKBuv9OgZ40YTky'
 export const TISH_INSTAGRAM_NAME = '@tish.app.kg'
 
 /**

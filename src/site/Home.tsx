@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 
 import { cityName, useClinicFilter, withCity } from '../lib/clinicSearch'
-import { TISH_INSTAGRAM, TISH_TELEGRAM, tishWhatsapp } from '../lib/brand'
+import { TISH_INSTAGRAM, TISH_TELEGRAM, tishWhatsapp, TISH_CHANNEL } from '../lib/brand'
 import { getJson, inAppBrowser, initials, tgLink, useSiteLang, type DirectoryClinic, type Links } from './web'
 import './home.css'
 
@@ -30,7 +30,7 @@ const TEXTS = {
     bandText: 'Подключите клинику к Tish и получайте пациентов через онлайн-запись. Расписание, медкарта и касса — в одном приложении.',
     free: 'Это бесплатно!', freeBadge: 'Бесплатно',
     join: 'Подключить клинику — бесплатно', signIn: 'Войти', aboutTish: 'Подробнее о Tish',
-    patients: 'Пациентам', allClinics: 'Все клиники', clinics: 'Клиникам', about: 'О Tish', tour: 'Тур по Tish', guide: 'Руководство',
+    patients: 'Пациентам', allClinics: 'Все клиники', clinics: 'Клиникам', about: 'О Tish', tour: 'Тур по Tish', guide: 'Руководство', channel: 'Канал для стоматологов',
     made: 'Сделано в Кыргызстане', contact: 'Связаться с нами', waText: 'Здравствуйте! Вопрос про Tish',
     preview: { doctor: 'Врач-стоматолог', days: ['Пн', 'Вт', 'Ср', 'Чт'], free: 'Свободно сегодня', example: 'Пример',
       label: 'Пример записи: выберите день и время', hint: 'Выберите клинику — и запишитесь к её врачу' },
@@ -57,7 +57,7 @@ const TEXTS = {
     bandText: 'Клиникаңызды Tish’ке туташтырып, бейтаптарды онлайн жазылуу аркылуу алыңыз. Жадыбал, медкарта жана касса — бир тиркемеде.',
     free: 'Бул акысыз!', freeBadge: 'Акысыз',
     join: 'Клиниканы туташтыруу — акысыз', signIn: 'Кирүү', aboutTish: 'Tish жөнүндө кененирээк',
-    patients: 'Бейтаптарга', allClinics: 'Бардык клиникалар', clinics: 'Клиникаларга', about: 'Tish жөнүндө', tour: 'Tish боюнча тур', guide: 'Колдонмо',
+    patients: 'Бейтаптарга', allClinics: 'Бардык клиникалар', clinics: 'Клиникаларга', about: 'Tish жөнүндө', tour: 'Tish боюнча тур', guide: 'Колдонмо', channel: 'Тиш дарыгерлери үчүн канал',
     made: 'Кыргызстанда жасалган', contact: 'Биз менен байланышуу', waText: 'Саламатсызбы! Tish боюнча суроо бар',
     preview: { doctor: 'Тиш дарыгери', days: ['Дш', 'Шш', 'Шр', 'Бш'], free: 'Бүгүн бош', example: 'Үлгү',
       label: 'Жазылуу үлгүсү: күндү жана убакытты тандаңыз', hint: 'Клиниканы тандаңыз — анан анын дарыгерине жазылыңыз' },
@@ -219,6 +219,7 @@ export function Home() {
             <a href="/about">{t.about}</a>
             <a href="/tour">{t.tour}</a>
             <a href="/guide">{t.guide}</a>
+            <a href={TISH_CHANNEL} target="_blank" rel="noopener noreferrer">{t.channel}</a>
             <a href="/join">{t.join}</a>
             <a href="/login">{t.login}</a>
           </nav>
