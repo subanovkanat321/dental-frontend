@@ -23,7 +23,9 @@ export function HoursLink({ who }: { who: Who }) {
     <button type="button" className="fold-head hours-link" aria-label={`Часы работы: ${summary} — открыть в «Рабочем времени»`}
       onClick={() => openWeekOf(personKey(who))}>
       <span className="fold-title">Часы работы</span>
-      <span className="fold-meta num">{summary}</span>
+      {/* Части — «Пн–Чт, Сб–Вс 9–22», «Пт 9–18» — не рвутся посередине: перенос только между ними */}
+      <span className="fold-meta num">{summary.split(', ').map((part, i, all) => (
+        <span key={i} className="hours-part">{part}{i < all.length - 1 ? ', ' : ''}</span>))}</span>
       <span className="fold-chev" aria-hidden="true">›</span>
     </button>
   )

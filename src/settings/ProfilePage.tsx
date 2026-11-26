@@ -350,7 +350,7 @@ function MyPhoneCard({ state }: { state: MyPhoneState }) {
               )}
             </div>
           </div>
-          {!state.sms && !state.telegram && <p className="hint">SMS не подключены — номер для входа сейчас не задать.</p>}
+          {!state.sms && !state.telegram && <p className="hint">Номер подтверждается кнопкой в Telegram. Telegram нет — номер и пароль для входа выдаст руководитель («Клиника → Персонал» → «Логин и пароль»).</p>}
           {viaTelegram.busy && state.phone && state.sms && <p className="hint" role="status"><Spinner />Ждём номер из Telegram…</p>}
           {remove.error && <p className="error" role="alert">{remove.error.message}</p>}
           {viaTelegram.note && <p className="hint" role="status">{viaTelegram.note}</p>}

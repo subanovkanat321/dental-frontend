@@ -822,7 +822,12 @@ button.grid-head:not(:disabled):hover .grid-head-name { color: var(--link); }
    Сводка переносится, а не обрезается многоточием: на телефоне неделя длинная */
 .hours-line { display: grid; gap: 4px; }
 .hours-link { margin: 0; color: var(--text); text-align: left; }
-.hours-link .fold-meta { white-space: normal; text-align: right; overflow: visible; color: var(--link); }
+/* «Часы работы» сверху, сами часы — под ним слева, ›  справа по центру (владелец, 2026-11-26: справа текст рвался «9– / 18») */
+.hours-link.fold-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 8px; row-gap: 2px; align-items: center; }
+.hours-link .fold-title { grid-column: 1; }
+.hours-link .fold-meta { grid-column: 1; grid-row: 2; justify-self: start; margin-left: 0; white-space: normal; text-align: left; overflow: visible; color: var(--link); }
+.hours-link .fold-chev { grid-column: 2; grid-row: 1 / span 2; }
+.hours-link .hours-part { white-space: nowrap; }
 /* «?» у короткой подсказки — раскрыть пояснение */
 .hint-more { display: inline-grid; place-items: center; width: 20px; height: 20px; padding: 0; border: 1px solid var(--line-strong); border-radius: 50%;
   background: none; color: var(--hint); font: 600 .75rem/1 inherit; cursor: pointer; vertical-align: 1px; }

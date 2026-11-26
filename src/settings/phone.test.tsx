@@ -117,11 +117,11 @@ test('«Мой профиль»: шаг пароля после подтверж
   await waitForSlow(() => expect(asked).toHaveBeenCalledWith(expect.stringContaining('можно задать позже')))
 })
 
-test('«Мой профиль»: SMS не подключены — номер для входа не задать', async () => {
+test('«Мой профиль»: без SMS и Telegram — подсказка: номер и пароль выдаст руководитель', async () => {
   backend({ phoneOnly: false, sms: false, telegram: false })
   renderApp()
   const section = await screen.findByRole('region', { name: 'Телефон' })
-  expect(await within(section).findByText('SMS не подключены — номер для входа сейчас не задать.')).toBeInTheDocument()
+  expect(await within(section).findByText(/номер и пароль для входа выдаст руководитель/)).toBeInTheDocument()
   expect(within(section).queryByRole('button', { name: 'Указать телефон' })).not.toBeInTheDocument()
 })
 
@@ -168,7 +168,7 @@ test('«Подтвердить через Telegram» на сайте — ссы�
   const user = userEvent.setup()
   renderApp()
   const section = await screen.findByRole('region', { name: 'Телефон' })
-  expect(within(section).queryByText(/SMS не подключены/)).not.toBeInTheDocument()
+  expect(within(section).queryByText(/выдаст руководитель/)).not.toBeInTheDocument()
   const button = await within(section).findByRole('button', { name: 'Подтвердить через Telegram' })
   await waitForSlow(async () => {
     await user.click(button)
