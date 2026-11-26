@@ -104,3 +104,48 @@
 .rating-complaint.long { display: grid; gap: 2px; width: 100%; cursor: pointer; }
 .rating-complaint:not(.open) .rating-complaint-text { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .rating-complaint .link { justify-self: start; font-size: .85rem; }
+
+/*
+ * «Пациенты → Все» (PatientTable.tsx). Телефон и узкое окно — прежняя спокойная строка: имя, телефон, дата справа;
+ * колонки компьютера и шапка спрятаны. Широкий экран (2026-11-26, владелец: «на мониторе только ФИО, номер, дата и
+ * большие пробелы») — таблица общими колонками (subgrid): ФИО, телефон, врач, «Долг / аванс» (кому видны деньги),
+ * последний визит, следующая запись, метки; сортировка — заголовками, выпадающий «Порядок» не нужен.
+ */
+.pl-head, .pl-cell { display: none; }
+@media (min-width: 1100px) {
+  .patients-order { display: none; }
+  .calm-list.patients-table { grid-template-columns: minmax(180px, 2.2fr) 136px minmax(120px, 170px) 116px 130px minmax(90px, 1fr); }
+  .calm-list.patients-table.with-money { grid-template-columns: minmax(180px, 2.2fr) 136px minmax(120px, 170px) 120px 124px 130px minmax(90px, 1fr); }
+  .patients-table > .pl-row .pl-phone-meta { display: none; }
+  .patients-table > .pl-row { min-height: 52px; }
+  .patients-table .pl-cell { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: .875rem; color: var(--text); }
+  .patients-table .pl-ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .patients-table .pl-avatar { width: 24px; height: 24px; font-size: .68rem; }
+  .patients-table .pl-money { flex-direction: column; align-items: flex-end; justify-content: center; gap: 0; text-align: right; white-space: nowrap; font-weight: 500; }
+  .patients-table .pl-debt { color: var(--bad-ink); }
+  .patients-table .pl-advance { color: var(--ok-ink); }
+  .patients-table .pl-last { color: var(--hint); white-space: nowrap; }
+  /* Сумма прижата вправо, дата — влево: между ними чуть больше воздуха, чтобы не слипались */
+  .patients-table.with-money :is(.pl-last, .pl-h-last) { padding-left: 8px; }
+  .patients-table .pl-next { white-space: nowrap; }
+  .patients-table .pl-none { color: var(--hint); opacity: .8; }
+  .patients-table .pl-tags { flex-wrap: wrap; gap: 4px; }
+  .patients-table .pl-tags .tag-chip { max-width: 100%; overflow: hidden; text-overflow: ellipsis; font-size: .78rem; }
+  /* Шапка: те же колонки, мелко и серым; прилипает при прокрутке длинного списка */
+  .calm-list.patients-table > .pl-head { grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; column-gap: 16px; align-items: center;
+    position: sticky; top: 0; z-index: 2; padding: 8px 16px; border-bottom: 1px solid var(--separator); border-radius: var(--radius) var(--radius) 0 0;
+    background: var(--card); color: var(--hint); font-size: .8rem; font-weight: 500; }
+  .patients-table .pl-h { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .patients-table .pl-h-money { text-align: right; }
+  .patients-table .pl-sort { display: inline-flex; align-items: center; gap: 4px; padding: 2px 4px; margin: 0 -4px; border: 0; border-radius: var(--r-sm); background: none;
+    color: inherit; font: inherit; cursor: pointer; }
+  .patients-table .pl-sort:hover { background: var(--sunken); color: var(--text); }
+  .patients-table .pl-sort[aria-pressed=true] { color: var(--text); font-weight: 600; }
+  .patients-table .pl-arrow { font-size: .75rem; opacity: .55; }
+  .patients-table .pl-sort[aria-pressed=true] .pl-arrow { opacity: 1; color: var(--accent); }
+  .patients-table > .pl-head + .calm-row { border-top: 0; }
+  /* Открыта карточка справа — места меньше: метки убираем (они есть в карточке), колонки уже */
+  .with-panel .calm-list.patients-table { grid-template-columns: minmax(150px, 1.4fr) 140px minmax(110px, 1fr) 108px 140px; }
+  .with-panel .calm-list.patients-table.with-money { grid-template-columns: minmax(150px, 1.4fr) 140px minmax(110px, 1fr) 118px 108px 140px; }
+  .with-panel .patients-table :is(.pl-tags, .pl-h-tags) { display: none; }
+}

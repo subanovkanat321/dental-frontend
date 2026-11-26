@@ -14849,6 +14849,13 @@ export interface components {
             lastVisit?: string;
             /** Format: date-time */
             nextVisit?: string;
+            /** Format: int64 */
+            doctorId?: number;
+            /** Format: int32 */
+            debtSom?: number;
+            /** Format: int32 */
+            advanceSom?: number;
+            tagIds?: number[];
         };
         BotCoverageControllerCoverage: {
             /** Format: int64 */
