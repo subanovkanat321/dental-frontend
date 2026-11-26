@@ -21,6 +21,10 @@ body.site {
 .site-back { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding-right: 12px;
   color: var(--text); font-weight: 600; text-decoration: none; }
 .site-back span { font-size: 1.5rem; line-height: 1; color: var(--accent); }
+.site-top-right { display: inline-flex; align-items: center; gap: 14px; }
+.site-about { display: inline-flex; align-items: center; min-height: 36px; padding: 0 14px; border: 1px solid var(--line-strong); border-radius: 999px;
+  background: var(--card); color: var(--text) !important; font-weight: 600; font-size: .9rem; text-decoration: none; }
+.site-about:hover { border-color: var(--accent); }
 .site-brand { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; color: var(--text); font: 600 1rem var(--display); text-decoration: none; }
 .site-page .lang-switch { display: flex; gap: 4px; }
 .site-page .lang-switch button { min-height: 36px; padding: 4px 12px; border: 1px solid var(--separator); border-radius: 999px; background: var(--card);

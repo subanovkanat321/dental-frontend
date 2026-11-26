@@ -16,8 +16,12 @@ export function SiteHeader({ back = 'Назад', children }: { back?: string; c
     <nav className="site-top" aria-label="Навигация">
       <a className="site-back" href={SITE_HOME} onClick={goBack}><span aria-hidden="true">‹</span> {back}</a>
       {children ?? (
-        <a className="site-brand" href={SITE_HOME}>
-          <img src={`${import.meta.env.BASE_URL}tishka-icon.svg`} alt="" width={16} height={24} /> Tish</a>
+        <span className="site-top-right">
+          {/* «Для клиник» → /about: на всех страницах сайта сверху (владелец, 2026-11-26) */}
+          <a className="site-about" href="/about">Для клиник</a>
+          <a className="site-brand" href={SITE_HOME}>
+            <img src={`${import.meta.env.BASE_URL}tishka-icon.svg`} alt="" width={16} height={24} /> Tish</a>
+        </span>
       )}
     </nav>
   )

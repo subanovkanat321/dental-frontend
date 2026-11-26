@@ -1650,7 +1650,7 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
 @media (min-width: 761px) { .login-card { display: grid; } }
 /* Вход сотрудника (Login): колонки — обёртки; на телефоне и до 900px их как бы нет, всё одной колонкой, как раньше */
 .staff-login :is(.login-intro, .login-main) { display: contents; }
-.staff-login .login-lead { display: none; }
+.staff-login .login-lead, .staff-login .login-about { display: none; }
 /* Ноутбук и шире — на всю ширину: слева Тишка, «Вход для клиники» и о Tish, справа Telegram и форма */
 @media (min-width: 900px) {
   .staff-login .login-card { width: min(1040px, 100%); grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center;
@@ -1662,6 +1662,10 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
   .staff-login .login-intro h1 { margin: 0; font-size: 2.4rem; }
   .staff-login .login-lead { display: block; max-width: 400px; color: var(--hint); font-size: 1.05rem; line-height: 1.5; }
   .staff-login .login-intro .logged-out { text-align: left; }
+  /* Ссылка на «О Tish» — на ноутбуке под текстом слева (владелец, 2026-11-26: «сверху нет кнопки для about») */
+  .staff-login .login-about { display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px; border: 1px solid var(--line-strong);
+    border-radius: 999px; background: var(--card); color: var(--text); font-weight: 600; text-decoration: none; }
+  .staff-login .login-about:hover { border-color: var(--accent); }
   .staff-login .login-main { justify-items: center; padding: 48px 56px; }
   .staff-login .login-main > :is(.phone-login, .telegram-login, .login-or) { width: 100%; max-width: 380px; }
   /* Регистрация клиники (/start) — та же раскладка; форма справа — до 420px */

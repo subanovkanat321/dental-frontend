@@ -80,6 +80,7 @@ export function Tour() {
         <a className="tour-brand" href="/about" aria-label="Tish — всё о программе">
           <img src={`${import.meta.env.BASE_URL}tishka-icon.svg`} alt="" width={20} height={30} /> Tish</a>
         <nav className="tour-top-links" aria-label="Ссылки">
+          <a href="/about">О Tish</a>
           <a href="/login">Вход для клиники</a>
           <a className="tour-btn primary small" href={TOUR_START}>{OFFER}</a>
         </nav>

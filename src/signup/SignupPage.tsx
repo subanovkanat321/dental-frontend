@@ -405,6 +405,7 @@ export function SignupPage({ onDone = () => window.location.assign('/'), userAge
           <a href="/about" aria-label="О Tish"><img src={`${import.meta.env.BASE_URL}tishka.svg`} alt="Тишка — талисман Tish" width={96} height={92} /></a>
           <p className="login-lead">Tish бесплатный: онлайн-запись пациентов, расписание, медкарта, касса и склад. Клиника готова за 5 минут —
             с телефона или компьютера.</p>
+          <a className="login-about" href="/about">Подробнее о Tish →</a>
         </div>
         <div className="login-main">
           {body}

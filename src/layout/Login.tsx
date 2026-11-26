@@ -82,6 +82,7 @@ export function Login() {
           {loggedOut && <LoggedOutHint onClose={() => setLoggedOut(false)} />}
           <h1>Вход для клиники</h1>
           <p className="login-lead">{LEAD}</p>
+          <a className="login-about" href="/about">Подробнее о Tish →</a>
         </div>
         <div className="login-main">
           {bot.isPending && <Loading />}
