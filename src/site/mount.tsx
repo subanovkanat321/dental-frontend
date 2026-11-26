@@ -22,8 +22,7 @@ import './site.css'
 export function mount(page: ReactNode, { theme = 'light' }: { theme?: 'light' | 'system' } = {}): void {
   // Всегда светлые, как посты Instagram: в тёмной теме телефона (и во встроенном браузере
   // Instagram) страница была тёмной. data-theme=light отключает тёмные цвета из tokens.css
-  // Исключение — сайт-визитка /about (theme: 'system'): её открывают и на компьютере в клинике,
-  // тёмная тема там — по настройке системы, как у CRM
+  // /about тоже всегда светлая и белая (владелец, 2026-11-26); theme: 'system' — по настройке системы, как у CRM
   if (theme === 'light') document.documentElement.dataset.theme = 'light'
   // Ошибки страницы — владельцу в бот, как у CRM (lib/clientErrors)
   startErrorReports()

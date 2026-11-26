@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-import { OFFER, TISH_INSTAGRAM, TISH_INSTAGRAM_NAME } from '../lib/brand'
+import { TISH_INSTAGRAM, TISH_INSTAGRAM_NAME } from '../lib/brand'
 import { DEMO_PATH } from '../lib/demo'
 import { ContactLinks } from '../lib/ContactLinks'
 import { getJson, useDemoEnabled, type Links, type PublicMaterials } from './web'
@@ -27,7 +27,7 @@ function GoLink({ icon, title, sub, href, main, badge }: {
  * Одна ссылка для профиля Instagram (/go), как Taplink. Покупатель — владелец клиники или частный врач (аудит
  * Instagram 2026-11-20): сначала клиникам — подключиться (сразу к форме /start), «Тур по Tish» (/tour), ролик «Как это работает», спросить
  * в WhatsApp или Telegram, войти; пациентам — своим блоком ниже (выбрать клинику и записаться). Оффер — одна фраза
- * {@link OFFER} везде. Контакты — из «Сведений о платформе»: WhatsApp и Telegram — только если заданы.
+ * «Начать» (OFFER) везде. Контакты — из «Сведений о платформе»: WhatsApp и Telegram — только если заданы.
  */
 export function Go() {
   const [c, setC] = useState<Links>({})
@@ -51,7 +51,7 @@ export function Go() {
         <section className="site-section" aria-labelledby="go-clinics">
           <h2 id="go-clinics">Для клиник и частных врачей</h2>
           {/* Оффер — сама кнопка: нажали — сразу регистрация клиники (/start, без заявки) */}
-          <GoLink icon="🎁" title={`Подключить клинику — ${OFFER.toLowerCase()}`} sub="Tish бесплатный — клиника готова за 5 минут" href="/start" main />
+          <GoLink icon="🎁" title="Подключить клинику — бесплатно" sub="Tish бесплатный — клиника готова за 5 минут" href="/start" main />
           {/* Тур — 10 шагов со скриншотами (/tour): главное «как это выглядит» для владельца клиники */}
           <GoLink icon="▶" title="Тур по Tish — 2 минуты" sub="10 шагов со скриншотами: запись, медкарта, касса" href="/tour" />
           {/* Демо-клиника без регистрации — только если включена на сервере (GET /web/demo) */}

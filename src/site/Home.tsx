@@ -115,7 +115,7 @@ export function Home() {
             <span>Tish</span>
           </a>
           <nav className="home-nav" aria-label={t.nav}>
-            <a className="home-nav-link" href="/about">{t.forClinics}</a>
+            <a className="home-btn home-nav-link" href="/about">{t.forClinics}</a>
             <HomeLang lang={lang} onChange={setLang} />
             {/* Регистрация клиники — сразу в шапке (на узком экране — строкой под поиском: в шапке не помещается) */}
             <a className="home-btn home-join" href="/join">{t.connect}</a>

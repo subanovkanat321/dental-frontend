@@ -43,6 +43,8 @@
 .home-nav { display: flex; align-items: center; gap: 8px; }
 .home-nav-link { padding: 10px 8px; color: var(--text) !important; font-weight: 600; text-decoration: none; }
 .home-nav-link:hover { color: var(--link) !important; }
+/* «Для клиник» — кнопкой, как «Подключить клинику» (владелец, 2026-11-26) */
+.home-btn.home-nav-link { padding: 0 18px; }
 .home-lang { display: inline-flex; padding: 3px; border-radius: 999px; background: var(--card); border: 1px solid var(--separator); }
 .home-lang button { min-height: 32px; padding: 0 10px; border: 0; border-radius: 999px; background: none; color: var(--hint);
   font: 600 .82rem/1 var(--ui); cursor: pointer; }

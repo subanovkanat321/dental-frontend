@@ -22,7 +22,7 @@ test('сайт-визитка /about: герой, части ролика, за�
     expect(screen.getByRole('heading', { level: 2, name: title })).toBeInTheDocument()
   }
   // «Начать бесплатно» — регистрация клиники самой (/start): вверху, в «Как начать» и внизу
-  const tries = screen.getAllByRole('link', { name: 'Начать бесплатно' })
+  const tries = screen.getAllByRole('link', { name: 'Начать' })
   expect(tries.length).toBeGreaterThanOrEqual(4)
   for (const a of tries) expect(a).toHaveAttribute('href', '/start')
   // «Тур по Tish» (/tour): в шапке, под первым экраном и в подвале

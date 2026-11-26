@@ -6,7 +6,7 @@ import { PhoneInput } from '../clinic/PhoneInput'
 import { phoneFromInput } from '../clinic/phone'
 import { CaseBlock } from './CaseBlock'
 import { SiteHeader } from './SiteHeader'
-import { FREE_LINE } from '../lib/brand'
+import { FREE_LINE, OFFER } from '../lib/brand'
 import { refFromUrl } from '../lib/referral'
 import { getJson, inAppBrowser, type JoinCase, type Links, type PublicMaterials, type ReferralInvite } from './web'
 
@@ -109,7 +109,7 @@ export function Join() {
         <div className="site-promo site-invite" role="note" aria-label="Приглашение">
           <h2>🎁 Вас пригласила клиника «{invite.data.clinicName}»</h2>
           <p>Tish бесплатный: всё приложение, без оплаты и пробного срока. Клиника готова за 5 минут.</p>
-          <a className="btn primary" href={startHref}>Начать бесплатно</a>
+          <a className="btn primary" href={startHref}>{OFFER}</a>
         </div>
       )}
       <div className="site-hero">
@@ -117,7 +117,7 @@ export function Join() {
         <a className="site-hero-home" href="/" aria-label="Открыть Tish — расписание" title="Открыть расписание"><img src={`${import.meta.env.BASE_URL}tishka.svg`} alt="" width={84} height={80} /></a>
         <div><h1>Запись пациентов для стоматологии</h1>
           <p>Пациенты записываются в Telegram, бот напоминает о приёме. Работать можно в Telegram и на сайте — с телефона и компьютера.</p>
-          <p className="site-ctas"><a className="btn primary" href={startHref}>Начать бесплатно</a>
+          <p className="site-ctas"><a className="btn primary" href={startHref}>{OFFER}</a>
             <a className="btn" href="#form">Хочу, чтобы помогли подключить</a></p></div>
       </div>
       <div className="site-cols join-cols">
@@ -141,19 +141,19 @@ export function Join() {
           <ul className="site-features">
             {FEATURES.map(([icon, title, text]) => <li key={title}><span className="ico" aria-hidden="true">{icon}</span><span><strong>{title}</strong><span>{text}</span></span></li>)}
           </ul>
-          <p className="site-tour-link"><a href="/tour">▶ Тур по Tish — 2 минуты</a>: как выглядит программа, 10 шагов со скриншотами</p>
+          <a className="btn site-tour-btn" href="/tour"><span className="tour-ico" aria-hidden="true">▶</span><span className="tour-txt">Тур по Tish — 2 минуты<small>как выглядит программа: 10 шагов со скриншотами</small></span></a>
           {story && <CaseBlock story={story} />}
           {/* Tish бесплатный для всех (владелец, 2026-11-25): вместо цен — что входит. Якорь #tariffs — для старых ссылок */}
           <section id="tariffs" className="site-promo site-free" aria-label="Бесплатно">
             <h2>🎁 Бесплатно</h2>
             <p>{FREE_LINE}</p>
             <ul>{FREE_INCLUDED.map((x) => <li key={x}>{x}</li>)}</ul>
-            <a className="btn primary" href={startHref}>Начать бесплатно</a>
+            <a className="btn primary" href={startHref}>{OFFER}</a>
           </section>
         </div>
         <aside className="site-col join-side" aria-label="Заявка на подключение">
           <h2 id="form">Хочу, чтобы помогли подключить</h2>
-          <p className="hint">Создать клинику самим — 5 минут: <a href={startHref}>Начать бесплатно</a>. Хотите, чтобы мы настроили всё и перенесли
+          <p className="hint">Создать клинику самим — 5 минут: <a href={startHref}>{OFFER}</a>. Хотите, чтобы мы настроили всё и перенесли
             пациентов из тетради или Excel, — оставьте заявку, мы позвоним.</p>
           {inAppBrowser() && (
             <p className="tone-wait">Открыли из Instagram? Если клавиатура закрывается — нажмите ⋮ вверху → «Открыть в браузере»
