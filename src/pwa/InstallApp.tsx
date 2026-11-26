@@ -130,15 +130,31 @@ export function InstallBody() {
       </>
     )
   } else if (isIos() && /CriOS|FxiOS|EdgiOS/.test(navigator.userAgent)) {
-    // Chrome, Firefox, Edge на iPhone: одной кнопкой тоже нельзя (Apple не даёт) — «Поделиться» → «На экран «Домой»» (iOS 16.4+)
+    // Chrome, Firefox, Edge на iPhone: советуем Safari (владелец, 2026-11-26) — там шаги с картинками и меньше сюрпризов
+    // («Открыть» вместо «Добавить» и т. п.); путь через этот браузер — запасным, свёрнутым
+    const copySafari = () => {
+      navigator.clipboard?.writeText(appUrl()).then(() => setCopied(true), () => setCopied(false))
+    }
     body = (
-      <ol className="pwa-steps">
-        <li>Нажмите <ShareIcon /> <strong>Поделиться</strong> — в Chrome он справа в адресной строке (или в меню <strong>⋯</strong>).</li>
-        <li>Выберите <strong>На экран «Домой»</strong> (нет в списке — нажмите <strong>Ещё</strong>).</li>
-        <li>Нажмите <strong>Добавить</strong> — на экране появится значок Tish.</li>
-        <li className="hint">Нет такого пункта — обновите iPhone до iOS 16.4 или новее либо откройте эту страницу в Safari.</li>
-        <li className="hint">{ALREADY_ON_HOME}</li>
-      </ol>
+      <>
+        <p><strong>Установите через Safari</strong> — на iPhone так надёжнее всего.</p>
+        <ol className="pwa-steps">
+          <li>Скопируйте ссылку и откройте <strong>Safari</strong>.</li>
+          <li>Вставьте ссылку в адресную строку и откройте — там будут шаги с картинками.</li>
+        </ol>
+        <p className="pwa-link"><input readOnly aria-label="Ссылка для Safari" value={appUrl()} onFocus={(e) => e.currentTarget.select()} /></p>
+        <div className="actions"><button type="button" className="btn primary" onClick={copySafari}>{copied ? 'Ссылка скопирована ✓' : 'Скопировать ссылку'}</button></div>
+        <details className="pwa-other">
+          <summary>Всё-таки из этого браузера</summary>
+          <ol className="pwa-steps">
+            <li>Нажмите <ShareIcon /> <strong>Поделиться</strong> — в Chrome он справа в адресной строке (или в меню <strong>⋯</strong>).</li>
+            <li>Выберите <strong>На экран «Домой»</strong> (нет в списке — нажмите <strong>Ещё</strong>).</li>
+            <li>Нажмите <strong>Добавить</strong> — на экране появится значок Tish.</li>
+            <li className="hint">Нет такого пункта — обновите iPhone до iOS 16.4 или новее либо установите через Safari.</li>
+            <li className="hint">{ALREADY_ON_HOME}</li>
+          </ol>
+        </details>
+      </>
     )
   } else if (isIos()) {
     body = <IosSteps />
