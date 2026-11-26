@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 
-import { FREE_LINE, TISH_CHANNEL, TISH_INSTAGRAM, TISH_INSTAGRAM_NAME, TISH_PHONE, TISH_TELEGRAM, tishWhatsapp } from '../lib/brand'
+import { FREE_LINE, OFFER, TISH_CHANNEL, TISH_INSTAGRAM, TISH_INSTAGRAM_NAME, TISH_PHONE, TISH_TELEGRAM, tishWhatsapp } from '../lib/brand'
 import { DEMO_PATH } from '../lib/demo'
 import { CaseBlock } from './CaseBlock'
 import { getJson, useDemoEnabled, type JoinCase } from './web'
@@ -172,7 +172,7 @@ const HERO_POINTS: ReactNode[] = [
 
 /** «Как начать за 5 минут» — те же шаги, что на /start. */
 const HOW: [string, string][] = [
-  ['Нажмите «Начать бесплатно»', ' — название клиники, город, ваше имя и телефон.'],
+  ['Нажмите «Начать»', ' — название клиники, город, ваше имя и телефон.'],
   ['Подтвердите, что это вы', ' — одной кнопкой в Telegram. Клиника создана, вы уже внутри — руководитель и врач: услуги с ценами «от» и часы работы готовы.'],
   ['Отправьте ссылку пациентам и пригласите коллег', ' — запись по ссылке работает сразу. Подсказки «Что настроить» — прямо в приложении.'],
 ]
@@ -306,7 +306,7 @@ export function About() {
           <a href="/tour">Тур по Tish</a>
           <a href="#contacts">Контакты</a>
           <a href="/login">Вход для клиники</a>
-          <a className="about-btn primary small" href={START}>Начать бесплатно</a>
+          <a className="about-btn primary small" href={START}>{OFFER}</a>
         </nav>
       </header>
 
@@ -320,13 +320,13 @@ export function About() {
                 частного врача и для большой клиники.</p>
               <ul className="about-points hero-points">{HERO_POINTS.map((x, i) => <li key={i}>{x}</li>)}</ul>
               <div className="about-ctas">
-                <a className="about-btn primary" href={START}>Начать бесплатно</a>
+                <a className="about-btn primary" href={START}>{OFFER}</a>
                 {demo && <a className="about-btn" href={DEMO_PATH}><span aria-hidden="true">👀</span> Посмотреть демо</a>}
                 <a className="about-btn" href={ABOUT_CONTACTS.whatsapp} target="_blank" rel="noopener noreferrer">
                   <span aria-hidden="true">💬</span> Написать нам в WhatsApp</a>
               </div>
               <p className="about-note">Tish бесплатный — без оплаты и пробного срока, клиника готова за 5 минут, с телефона или компьютера</p>
-              <p className="about-note"><a className="about-tour-link" href="/tour">▶ Тур по Tish — 2 минуты</a>: 10 шагов со скриншотами</p>
+              <a className="about-btn about-tour-btn" href="/tour"><span className="tour-ico" aria-hidden="true">▶</span><span className="tour-txt">Тур по Tish — 2 минуты<small>10 шагов со скриншотами</small></span></a>
             </div>
             <HeroVideo />
           </div>
@@ -385,7 +385,7 @@ export function About() {
                 <li key={title}><span className="num" aria-hidden="true">{i + 1}</span><span><strong>{title}</strong>{text}</span></li>
               ))}
             </ol>
-            <div className="about-ctas center"><a className="about-btn primary" href={START}>Начать бесплатно</a></div>
+            <div className="about-ctas center"><a className="about-btn primary" href={START}>{OFFER}</a></div>
             <p className="about-note">Хотите, чтобы помогли подключить и перенесли пациентов? <a href="/join#form">Оставьте заявку</a> — позвоним.</p>
           </div>
         </section>
@@ -405,7 +405,7 @@ export function About() {
             <p className="about-lead">{FREE_LINE} Клиника создаётся за пару минут,
               а с переносом данных и настройкой поможем — просто напишите.</p>
             <div className="about-ctas center">
-              <a className="about-btn primary big" href={START}>Начать бесплатно</a>
+              <a className="about-btn primary big" href={START}>{OFFER}</a>
               {demo && <a className="about-btn big" href={DEMO_PATH}><span aria-hidden="true">👀</span> Посмотреть демо</a>}
               <a className="about-btn big" href={ABOUT_CONTACTS.whatsapp} target="_blank" rel="noopener noreferrer">
                 <span aria-hidden="true">💬</span> Написать нам в WhatsApp</a>
@@ -442,7 +442,7 @@ export function About() {
       {/* Телефон: кнопки всегда под пальцем — после первого экрана и до контактов */}
       <div className={`about-sticky${pastHero && !atContacts ? ' shown' : ''}`} aria-hidden={!pastHero || atContacts}>
         <a className="about-btn" href={ABOUT_CONTACTS.whatsapp} target="_blank" rel="noopener noreferrer" tabIndex={pastHero && !atContacts ? 0 : -1}>WhatsApp</a>
-        <a className="about-btn primary" href={START} tabIndex={pastHero && !atContacts ? 0 : -1}>Начать бесплатно</a>
+        <a className="about-btn primary" href={START} tabIndex={pastHero && !atContacts ? 0 : -1}>{OFFER}</a>
       </div>
     </div>
   )

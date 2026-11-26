@@ -23,7 +23,7 @@ test('/join?ref=…: «Вас пригласила клиника «…»» — 
   render(<Join />)
   expect(await screen.findByRole('heading', { name: '🎁 Вас пригласила клиника «Стоматология Тест»' })).toBeInTheDocument()
   expect(asked).toBe('abc2def')
-  for (const a of screen.getAllByRole('link', { name: 'Начать бесплатно' })) expect(a).toHaveAttribute('href', '/start?ref=abc2def')
+  for (const a of screen.getAllByRole('link', { name: 'Начать' })) expect(a).toHaveAttribute('href', '/start?ref=abc2def')
 })
 
 test('/join с неизвестным или кривым кодом — страница как обычно, без приглашения', async () => {
@@ -31,7 +31,7 @@ test('/join с неизвестным или кривым кодом — стр�
   render(<Join />)
   expect(await screen.findByText(/Tish бесплатный: всё приложение/)).toBeInTheDocument()
   expect(screen.queryByRole('note', { name: 'Приглашение' })).not.toBeInTheDocument()
-  for (const a of screen.getAllByRole('link', { name: 'Начать бесплатно' })) expect(a).toHaveAttribute('href', '/start')
+  for (const a of screen.getAllByRole('link', { name: 'Начать' })) expect(a).toHaveAttribute('href', '/start')
 
   window.history.replaceState(null, '', '/join?ref=<script>')
   render(<Join />)

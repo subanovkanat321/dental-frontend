@@ -192,3 +192,11 @@ body.site {
 .pay-page-qr { width: min(100%, 320px); aspect-ratio: 1; object-fit: contain; justify-self: center; background: #fff; border-radius: 12px; }
 .pay-details h2 { margin: 0 0 4px; font-size: 1rem; }
 .pay-details p { margin: 0; white-space: pre-line; overflow-wrap: anywhere; }
+/* «▶ Тур по Tish» на /join — заметной кнопкой с подписью, а не ссылкой в строке текста (владелец, 2026-11-26) */
+.site-page .site-tour-btn { display: inline-flex; align-items: center; gap: 12px; justify-self: start; width: auto; min-height: 0; margin: 18px 0 0;
+  padding: 10px 18px 10px 12px; border: 1.5px solid var(--accent); border-radius: 14px; background: var(--accent-soft);
+  color: var(--accent-ink) !important; font-weight: 700; text-align: left; text-decoration: none; }
+.site-tour-btn .tour-ico, .about-tour-btn .tour-ico { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%;
+  background: var(--accent); color: var(--accent-text); font-size: .85rem; }
+.site-tour-btn .tour-txt, .about-tour-btn .tour-txt { display: grid; gap: 2px; }
+.site-tour-btn small, .about-tour-btn small { color: var(--hint); font-size: .85rem; font-weight: 400; }

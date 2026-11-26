@@ -52,17 +52,17 @@ test('/demo: входит гостем нужной ролью и открыва
   expect(sent).toEqual([{ role: 'RECEPTION' }])
 })
 
-test('/demo: демо выключено — понятный текст и «Начать бесплатно»', async () => {
+test('/demo: демо выключено — понятный текст и «Начать»', async () => {
   server.use(http.post('*/web/demo/enter', () => HttpResponse.json({ status: 404, detail: 'Демо-клиника сейчас выключена' }, { status: 404 })))
   vi.stubGlobal('location', { ...window.location, pathname: '/demo', search: '', hash: '', replace: vi.fn(), origin: window.location.origin })
 
   renderApp()
 
   expect(await screen.findByRole('alert')).toHaveTextContent('Демо-клиника сейчас выключена')
-  expect(screen.getByRole('link', { name: 'Начать бесплатно' })).toHaveAttribute('href', DEMO_SIGNUP)
+  expect(screen.getByRole('link', { name: 'Начать' })).toHaveAttribute('href', DEMO_SIGNUP)
 })
 
-test('плашка демо на экранах CRM: вымышленные данные, «Начать бесплатно →», «Смотреть как» и «Выйти из демо»', async () => {
+test('плашка демо на экранах CRM: вымышленные данные, «Начать →», «Смотреть как» и «Выйти из демо»', async () => {
   demoCookie('owner')
   const roles: unknown[] = []
   server.use(
@@ -81,7 +81,7 @@ test('плашка демо на экранах CRM: вымышленные да
 
   const banner = await screen.findByRole('note', { name: 'Демо-клиника' })
   expect(banner).toHaveTextContent('Это демо-клиника с вымышленными данными')
-  expect(screen.getByRole('link', { name: 'Начать бесплатно →' })).toHaveAttribute('href', '/start?from=demo')
+  expect(screen.getByRole('link', { name: 'Начать →' })).toHaveAttribute('href', '/start?from=demo')
   await user.selectOptions(await screen.findByRole('combobox', { name: 'Смотреть как' }), 'RECEPTION')
   await waitFor(() => expect(reload).toHaveBeenCalled())
   expect(roles).toEqual([{ role: 'RECEPTION' }])

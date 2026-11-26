@@ -144,7 +144,7 @@ test('заявка клиники: ошибки полей с сервера, п
   expect(screen.queryByRole('heading', { name: 'Сколько стоит' })).not.toBeInTheDocument()
   expect(document.body.textContent).not.toMatch(/\d\s?сом|сом\/мес|в месяц|договоримся об условиях|пробн[а-я]* период/)
   // Главный путь — регистрация самим; заявка — «помогите подключить»
-  for (const a of screen.getAllByRole('link', { name: 'Начать бесплатно' })) expect(a).toHaveAttribute('href', '/start')
+  for (const a of screen.getAllByRole('link', { name: OFFER })) expect(a).toHaveAttribute('href', '/start')
   expect(screen.getByRole('heading', { name: 'Хочу, чтобы помогли подключить' })).toBeInTheDocument()
   // «Тур по Tish» — под «Что умеет» и в подвале
   for (const a of screen.getAllByRole('link', { name: /Тур по Tish/ })) expect(a).toHaveAttribute('href', '/tour')
@@ -185,7 +185,7 @@ test('/go: сначала клиникам (оффер → /start, ролик, W
   expect(within(clinics).getByRole('link', { name: /Тур по Tish — 2 минуты/ })).toHaveAttribute('href', '/tour')
   const links = within(clinics).getAllByRole('link')
   expect(links.map((a) => a.getAttribute('href'))).toEqual(['/start', '/tour', '/join#materials', 'https://wa.me/996770444555', 'https://t.me/tish_support', '/login'])
-  expect(links[0]).toHaveAccessibleName(expect.stringContaining(`Подключить клинику — ${OFFER.toLowerCase()}`))
+  expect(links[0]).toHaveAccessibleName(expect.stringContaining('Подключить клинику — бесплатно'))
   expect(links[0]).toHaveAccessibleName(expect.stringContaining('Tish бесплатный'))
   expect(container.textContent).not.toMatch(/дней|месяц/)
   expect(links[0]).toHaveClass('main')
