@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { SHARE_PAGES, sharePageHtml } from '../../vite.config'
-import { TISH_INSTAGRAM } from './brand'
+import { TISH_BOT, TISH_INSTAGRAM } from './brand'
 
 // Готовый index.html сборки: из исходного шаблона, со скриптом-бандлом, стилями и меткой версии, как их ставит Vite
 const built = readFileSync(resolve(import.meta.dirname, '../../index.html'), 'utf8')
@@ -30,7 +30,7 @@ test('index.html: JSON-LD Organization и WebSite — имя, другие на�
   expect(ld).not.toBeNull()
   const graph = (JSON.parse(ld?.[1] ?? '') as { '@graph': Record<string, unknown>[] })['@graph']
   const org = graph.find((n) => n['@type'] === 'Organization')!
-  expect(org).toMatchObject({ name: 'Tish', alternateName: ['Тиш', 'tish.kg'], url: 'https://tish.kg/', logo: 'https://tish.kg/icon-512.png', sameAs: [TISH_INSTAGRAM] })
+  expect(org).toMatchObject({ name: 'Tish', alternateName: ['Тиш', 'tish.kg'], url: 'https://tish.kg/', logo: 'https://tish.kg/icon-512.png', sameAs: [TISH_INSTAGRAM, TISH_BOT] })
   expect(graph.find((n) => n['@type'] === 'WebSite')).toMatchObject({ name: 'Tish', url: 'https://tish.kg/' })
 })
 

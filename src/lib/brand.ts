@@ -1,5 +1,7 @@
 /** Instagram Tish (платформы, не клиники): видео-инструкции, советы, новости. Один адрес на всё приложение. */
 export const TISH_INSTAGRAM = 'https://www.instagram.com/tish.app.kg/'
+/** Бот Tish в Telegram — запись пациентов и вход сотрудников (в JSON-LD главной — sameAs, index.html). */
+export const TISH_BOT = 'https://t.me/dental_stom_bot'
 export const TISH_INSTAGRAM_NAME = '@tish.app.kg'
 
 /**
