@@ -247,7 +247,6 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .form.narrow { max-width: 520px; }
-.about > .btn { justify-self: start; margin-top: 12px; }
 .card-block > .btn, .card-block > label.btn, .form.narrow > label.btn { justify-self: start; }
 fieldset.form { margin: 0; padding: 0; border: 0; min-width: 0; }
 /* Эмодзи у кнопок (lib/buttonIcons.ts): «/ ""» — скринридер читает только подпись */
@@ -384,7 +383,7 @@ input[type=date], input[type=month] { min-width: 0; max-width: 100%; }
 .loading .spinner { margin-right: 0; }
 /* Карточка и узкая форма — сетки с шагом 10px: у абзацев внутри свои поля не нужны, иначе дыры по 26px
    (в пунктах «Настроек» абзацы стояли то плотно, то с дырами) */
-.form.narrow > p, .settings-item :is(.card-block, .form, fieldset, .about-col, .doctor-group) > p { margin: 0; }
+.form.narrow > p, .settings-item :is(.card-block, .form, fieldset, .doctor-group) > p { margin: 0; }
 
 /* Свой выпадающий список (layout/Select.tsx) вместо системного: поле — как прежний select */
 .ui-select { display: flex; align-items: center; min-width: 0; max-width: 100%; min-height: 36px; padding: 6px 34px 6px 10px; font: inherit; text-align: left;

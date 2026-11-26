@@ -75,7 +75,7 @@ test('админ: сохранить «О клинике» с днями и What
   expect(screen.queryByRole('button', { name: 'Удалить все записи' })).not.toBeInTheDocument()
 })
 
-test('«Страница для Instagram»: «Скопировать» кладёт ссылку в буфер, подсказка ведёт на раздел руководства', async () => {
+test('«Страница клиники» в «Так клиника видна пациентам»: «Скопировать ссылку» кладёт её в буфер, «Открыть» — она же, подсказка ведёт на раздел руководства', async () => {
   server.use(http.get('*/api/patient/me', () => HttpResponse.json({ ...me, admin: true, doctorId: 1 })))
   const user = userEvent.setup()
   renderApp()
@@ -83,6 +83,7 @@ test('«Страница для Instagram»: «Скопировать» клад
   const page = `${window.location.origin}/c/test1`
   expect(within(form).getByText(/Поставьте в Instagram \(Ссылки в профиле\), 2ГИС \(поле «Сайт»\)/)).toBeInTheDocument()
   expect(within(form).getByRole('link', { name: 'Как и куда поставить' })).toHaveAttribute('href', '/guide?from=app#ssylka-na-zapis')
+  expect(within(form).getByRole('link', { name: 'Открыть' })).toHaveAttribute('href', page)
   await user.click(within(form).getByRole('button', { name: 'Скопировать ссылку на страницу записи' }))
   expect(await within(form).findByText('Ссылка на запись скопирована')).toBeInTheDocument()
   expect(await navigator.clipboard.readText()).toBe(page)
@@ -95,6 +96,9 @@ test('регистратура: «О клинике» только просмо�
   expect(within(form).getByText(/Только просмотр/)).toBeInTheDocument()
   expect(within(form).getByRole('textbox', { name: 'Название для пациентов' })).toBeDisabled()
   expect(within(form).queryByRole('button', { name: 'Сохранить' })).not.toBeInTheDocument()
+  // Ссылки (страница клиники, веб-версия) скопировать можно и в «только просмотре»
+  expect(within(form).getByRole('button', { name: 'Скопировать ссылку на страницу записи' })).toBeEnabled()
+  expect(within(form).getByRole('button', { name: 'Скопировать ссылку' })).toBeEnabled()
   expect(screen.queryByText('Предоплата за запись')).not.toBeInTheDocument()
   expect(screen.queryByText('Начать с чистого листа')).not.toBeInTheDocument()
 })
@@ -346,4 +350,33 @@ test('врач (не руководитель): часы клиники и «О 
   const about = await screen.findByRole('form', { name: 'О клинике' })
   expect(within(about).getByText(/Только просмотр: «О клинике», цены и часы клиники меняет руководитель/)).toBeInTheDocument()
   expect(within(about).getByRole('textbox', { name: 'Название для пациентов' })).toBeDisabled()
+})
+
+test('«Так клиника видна пациентам»: меняется сразу при вводе; «Заполнено N из 6» и «Осталось заполнить» ведут к пустым полям', async () => {
+  server.use(http.get('*/api/patient/me', () => HttpResponse.json(me)))
+  const user = userEvent.setup()
+  renderApp()
+  const form = await screen.findByRole('form', { name: 'О клинике' })
+  const preview = within(form).getByText('Так клиника видна пациентам').closest('details')!
+  // Есть название и телефон; нет ИП, адреса, города и 2ГИС
+  expect(within(preview).getByText('Заполнено 2 из 6')).toHaveClass('todo')
+  expect(within(preview).getByText('Стоматология «Тест»')).toBeInTheDocument()
+  expect(within(preview).getAllByText('+996 555 123 456')).toHaveLength(2)
+  expect(within(preview).getByText('Пн–Пт, 09:00–18:00')).toBeInTheDocument()
+  expect(within(preview).getByText('Адрес не указан')).toBeInTheDocument()
+
+  // «Клиника или ИП · для согласия пациентов» — к полю, курсор в нём
+  await user.click(within(preview).getByRole('button', { name: /Клиника или ИП/ }))
+  expect(within(form).getByRole('textbox', { name: 'Клиника или ИП' })).toHaveFocus()
+  await user.keyboard('ИП Тестова А.')
+  await user.type(within(form).getByRole('textbox', { name: 'Адрес' }), 'Бишкек, Тестовая 1')
+  await user.type(within(form).getByRole('textbox', { name: 'Название для пациентов' }), ' 2')
+  // Обязательное заполнено — счётчик уже не янтарный; город подставился из адреса
+  expect(within(preview).getByText('Заполнено 5 из 6')).not.toHaveClass('todo')
+  expect(within(preview).getByText('Стоматология «Тест» 2')).toBeInTheDocument()
+  expect(within(preview).getByText('Бишкек, Тестовая 1')).toBeInTheDocument()
+  expect(within(preview).getByText('Можно дополнить:')).toBeInTheDocument()
+  await user.type(within(form).getByRole('textbox', { name: 'Ссылка 2ГИС' }), 'https://2gis.kg/bishkek/firm/1')
+  expect(within(preview).getByText('Заполнено 6 из 6')).toHaveClass('done')
+  expect(within(preview).getByRole('link', { name: 'Маршрут в 2ГИС' })).toHaveAttribute('href', 'https://2gis.kg/bishkek/firm/1')
 })

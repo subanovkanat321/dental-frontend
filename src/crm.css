@@ -540,12 +540,8 @@ p.hours-off { margin: 4px 0 0; font-size: .9rem; }
 .recall-default .field.inline { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .recall-default .field.inline > span { font-size: inherit; color: var(--text); }
 .recall-default .field.inline .ui-select { width: auto; min-width: 110px; }
-.about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 0; padding: 0; border: 0; min-width: 0; }
-.about-col { display: grid; gap: 10px; align-content: start; }
-.about-col h2 { margin: 8px 0 0; }
 .qr-row { display: flex; align-items: center; gap: 12px; }
 .pay-qr { width: 120px; height: 120px; object-fit: contain; border-radius: var(--r-md); background: #fff; }
-@media (max-width: 720px) { .about-grid { grid-template-columns: 1fr; } }
 .news-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
 .news-item { display: grid; gap: 4px; justify-items: start; padding: 10px 0; border-top: 1px solid var(--separator); }
 .news-item p { margin: 0; white-space: pre-wrap; }
@@ -774,7 +770,6 @@ button.remind-sent { background: none; border: 0; padding: 6px 4px; font-family:
 .hours-doctor { border-top: 1px solid var(--separator); padding: 4px 0; }
 .hours-toggle { display: flex; justify-content: space-between; width: 100%; padding: 10px 0; border: 0; background: none; color: var(--text); font: inherit; cursor: pointer; text-align: left; }
 .hours-toggle .hours-kind { margin-left: auto; margin-right: 8px; font-weight: 400; }
-.web-version { display: grid; gap: 6px; padding-bottom: 12px; margin-bottom: 4px; border-bottom: 1px solid var(--separator); }
 .mobile-only { display: none; }
 @media (max-width: 760px) { .mobile-only { display: grid; } .toolbar .back { flex-basis: 100%; justify-content: flex-start; } }
 .profile-card { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 14px; padding: 14px; border: 1px solid var(--separator); border-radius: var(--radius); background: var(--card); }
@@ -3680,6 +3675,4 @@ button.history-link:hover .history-text { color: var(--link); }
     display: grid !important; grid-template-columns: minmax(0, 1fr) !important; gap: 16px; }
   .settings-item:not([data-host=help]) :is(section, div, form):has(> :is(.card-block, .settings-group) + :is(.card-block, .settings-group)) > *,
   .settings-item:not([data-host=help]) .page-grid > * { grid-column: 1 / -1 !important; }
-  /* «О клинике»: две колонки внутри формы — тоже одной, сверху вниз */
-  .settings-item .about-grid { grid-template-columns: minmax(0, 1fr); }
 }

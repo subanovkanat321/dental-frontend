@@ -93,7 +93,7 @@ export function SetupChecklist({ me }: { me: Me }) {
           {!doctors && <span className="hint"> — сначала добавьте врача</span>}
         </p>
       )}
-      <p className="hint">Ссылка для пациентов: «О клинике» → «Страница для Instagram» → «Скопировать» (Instagram, 2ГИС, WhatsApp).</p>
+      <p className="hint">Ссылка для пациентов: «О клинике» → «Так клиника видна пациентам» → «Скопировать ссылку» (Instagram, 2ГИС, WhatsApp).</p>
       <p className="hint">Пациенты и цены уже в таблице?{' '}
         <button type="button" className="link" onClick={() => openSettings('data')}>Загрузить из Excel</button> — перенесём без ручного ввода.</p>
       {error && <p className="error" role="alert">{error}</p>}
