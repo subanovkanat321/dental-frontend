@@ -36,6 +36,7 @@ function IosSteps() {
           <span className="hint">Нет кнопки <MoreIcon />? Тогда сразу нажмите <ShareIcon /> внизу посередине.</span></li>
         <li>Пролистайте вниз и нажмите <strong>На экран «Домой»</strong> (не видно — <strong>Ещё</strong>).</li>
         <li>Нажмите <strong>Добавить</strong> — готово, значок Tish на экране.</li>
+        <li className="hint">{ALREADY_ON_HOME}</li>
       </ol>
     </>
   )
@@ -85,6 +86,12 @@ function ShareAppLink() {
   )
 }
 
+/**
+ * iPhone показывает «Открыть» вместо «Добавить», когда Tish уже есть на экране «Домой» (например, добавили раньше из
+ * Safari): второй значок того же приложения iOS не ставит, а предлагает открыть установленное (владелец, 2026-11-26).
+ */
+export const ALREADY_ON_HOME = 'Вместо «Добавить» кнопка «Открыть»? Значит, Tish уже стоит на экране «Домой» (может, добавили раньше из Safari) — найдите значок Tish. Поставить заново: удалите старый значок (подержите → «Удалить закладку») и добавьте снова.'
+
 /** Что сделать для установки здесь и сейчас — кнопка, шаги для iPhone или подсказка из Telegram. */
 export function InstallBody() {
   const { prompt, installed } = usePwa()
@@ -130,6 +137,7 @@ export function InstallBody() {
         <li>Выберите <strong>На экран «Домой»</strong> (нет в списке — нажмите <strong>Ещё</strong>).</li>
         <li>Нажмите <strong>Добавить</strong> — на экране появится значок Tish.</li>
         <li className="hint">Нет такого пункта — обновите iPhone до iOS 16.4 или новее либо откройте эту страницу в Safari.</li>
+        <li className="hint">{ALREADY_ON_HOME}</li>
       </ol>
     )
   } else if (isIos()) {
