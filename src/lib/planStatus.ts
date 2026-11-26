@@ -56,3 +56,16 @@ export function progressShare(p: Pick<Progress, 'done' | 'total' | 'doneSom' | '
   if (p.totalSom != null && p.totalSom > 0) return Math.min(1, (p.doneSom ?? 0) / p.totalSom)
   return p.total ? p.done / p.total : 0
 }
+
+/**
+ * Коротко для строки «План лечения» в карточке приёма: «0 из 12 этапов · 99 000 сом», начали — «3 из 12 этапов ·
+ * 12 000 из 99 000 сом»; сумм нет (ассистент) — только этапы. «Из 1 этапа, из 21 этапа» — родительный падеж.
+ */
+export function progressShort(p: Pick<Progress, 'done' | 'total' | 'doneSom' | 'totalSom'>): string[] {
+  const word = p.total % 10 === 1 && p.total % 100 !== 11 ? 'этапа' : 'этапов'
+  const parts = [`${p.done} из ${p.total} ${word}`]
+  if (p.totalSom != null && p.totalSom > 0) {
+    parts.push(`${p.doneSom ? `${number.format(p.doneSom)} из ` : ''}${number.format(p.totalSom)} сом`)
+  }
+  return parts
+}

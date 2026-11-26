@@ -8,6 +8,7 @@ import { createQueryClient } from '../api/queryClient'
 import { childText } from '../lib/age'
 import { dentitionByAge, isToothNumber, toothAt } from './dentition'
 import { MedicalRecord } from './MedicalRecord'
+import { PlanTeethPicker } from './PlanTeethPicker'
 import { ToothGlyph } from './ToothGlyph'
 import { server } from '../test/server'
 
@@ -127,4 +128,30 @@ test('сохранённый прикус важнее возраста; асс�
   await userEvent.click(screen.getByRole('button', { name: 'Молочные' }))
   expect(await screen.findByRole('button', { name: /^Зуб 85:/ })).toBeInTheDocument()
   expect(calls).toEqual([])
+})
+
+function picker(patient: Patient) {
+  const client = createQueryClient({ queries: { retry: false } })
+  render(<QueryClientProvider client={client}>
+    <PlanTeethPicker patient={patient} steps={[]} picked={[]} onPick={() => {}} onWhat={() => {}} onGeneral={() => {}} onTemplate={() => {}} readOnly={false} />
+  </QueryClientProvider>)
+}
+
+test('план лечения: прикус свёрнут в «Зубы: сменный прикус ▾» и меняет только вид', async () => {
+  const calls = backend()
+  picker({ id: 7, fullName: 'Вымышленный Эмир', birthDate: bornYearsAgo(9), telegram: false })
+  const toggle = await screen.findByRole('button', { name: /Зубы: сменный прикус/ })
+  expect(screen.queryByRole('group', { name: 'Прикус' })).toBeNull()
+  await userEvent.click(toggle)
+  await userEvent.click(screen.getByRole('button', { name: 'Постоянные' }))
+  expect(await screen.findByRole('button', { name: /^Зуб 18:/ })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /Зубы: постоянные/ })).toHaveAttribute('aria-expanded', 'false')
+  expect(calls).toEqual([])
+})
+
+test('план лечения: взрослому переключатель прикуса не показываем', async () => {
+  backend()
+  picker({ id: 7, fullName: 'Вымышленная Аружан', birthDate: bornYearsAgo(30), telegram: false })
+  expect(await screen.findByRole('button', { name: /^Зуб 18:/ })).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /^Зубы:/ })).toBeNull()
 })
