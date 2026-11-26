@@ -16,8 +16,11 @@
     <!-- «/» без входа в браузере — главная для пациентов (src/site/Home.tsx): её находят поисковики и ей делятся,
          поэтому title, описание и превью — про запись к стоматологу. Сотрудник с входом видит CRM, у вкладки — своё название
          (App.tsx). Для /start, /login и /app сборка делает копии со своими текстами (vite.config.ts → tish-share-pages) -->
-    <title>Tish — запись к стоматологу в Бишкеке онлайн</title>
-    <meta name="description" content="Выберите стоматологию и врача в Бишкеке и других городах Кыргызстана, посмотрите свободное время и запишитесь онлайн за минуту — без звонков." />
+    <!-- «Tish (Тиш)» — в title и описании: по запросу и латиницей, и кириллицей поисковик находит главную
+         (docs/research/google-search.md бэкенда). canonical — один адрес: «/» отдаёт и любые неизвестные адреса -->
+    <title>Tish (Тиш) — онлайн-запись к стоматологу в Бишкеке</title>
+    <meta name="description" content="Tish (Тиш) — онлайн-запись к стоматологу: выберите стоматологию и врача в Бишкеке и других городах Кыргызстана, посмотрите свободное время и запишитесь за минуту — без звонков." />
+    <link rel="canonical" href="https://tish.kg/" />
     <meta property="og:title" content="Tish — запись к стоматологу онлайн" />
     <meta property="og:description" content="Клиники и врачи-стоматологи: выберите свободное время и запишитесь за минуту — на сайте или в Telegram." />
     <meta property="og:type" content="website" />
@@ -29,6 +32,34 @@
     <meta property="og:locale" content="ru_RU" />
     <meta property="og:site_name" content="Tish" />
     <meta name="twitter:card" content="summary_large_image" />
+    <!-- Карточка бренда для поисковиков (schema.org): название, другие написания, логотип, Instagram (src/lib/brand.ts,
+         сверяет sharePages.test.ts). Это данные, а не скрипт: CSP их не касается -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://tish.kg/#organization",
+            "name": "Tish",
+            "alternateName": ["Тиш", "tish.kg"],
+            "url": "https://tish.kg/",
+            "logo": "https://tish.kg/icon-512.png",
+            "description": "Онлайн-запись к стоматологу в Кыргызстане и программа для стоматологических клиник.",
+            "sameAs": ["https://www.instagram.com/tish.app.kg/"]
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://tish.kg/#website",
+            "name": "Tish",
+            "alternateName": ["Тиш", "tish.kg"],
+            "url": "https://tish.kg/",
+            "inLanguage": ["ru", "ky"],
+            "publisher": { "@id": "https://tish.kg/#organization" }
+          }
+        ]
+      }
+    </script>
     <!-- Telegram Mini App: CRM открывается и из бота (ADR 0002); вне Telegram скрипт ничего не делает -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
   </head>
@@ -36,9 +67,9 @@
     <div id="root"></div>
     <!-- Без JavaScript (часть роботов) — суть главной и ссылки: каталог клиник и вход для клиник -->
     <noscript>
-      <h1>Tish — запись к стоматологу онлайн</h1>
+      <h1>Tish (Тиш) — онлайн-запись к стоматологу в Бишкеке</h1>
       <p>Выберите клинику и врача, посмотрите свободное время и запишитесь за минуту.</p>
-      <p><a href="/clinics">Все клиники</a> · <a href="/about">Для клиник</a> · <a href="/login">Вход для клиник</a></p>
+      <p><a href="/clinics">Все клиники</a> · <a href="/about">Для клиник</a> · <a href="/tour">Тур по Tish</a> · <a href="/login">Вход для клиник</a></p>
     </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>

@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="color-scheme" content="light" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- Поисковики (docs/research/google-search.md бэкенда): на /c/<код> nginx (SSI) заменяет блок «seo» тегами клиники
+         от приложения — название, адрес, canonical, JSON-LD (SeoController). Без SSI (npm run dev, /clinic) и если
+         приложение не ответило — остаются эти общие теги; комментарии-команды браузер не показывает -->
+    <!--# block name="seo" -->
     <title>Запись к стоматологу</title>
     <meta name="description" content="Запись к стоматологу онлайн: Telegram, WhatsApp, телефон. Врачи, услуги и цены, адрес." />
     <!-- Превью ссылки в Instagram, Telegram и WhatsApp. Картинка — в public/assets (nginx отдаёт /assets/ как файлы; новая картинка — новое имя: кэш на год) -->
@@ -15,6 +19,8 @@
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="Тишка — талисман Tish: запись к стоматологу в Telegram" />
     <meta name="twitter:card" content="summary_large_image" />
+    <!--# endblock -->
+    <!--# include virtual="/seo/clinic/$clinic_code" stub="seo" -->
     <link rel="icon" href="/tishka-icon.svg" />
   </head>
   <body class="site">

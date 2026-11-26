@@ -138,6 +138,8 @@ export function sharePageHtml(indexHtml: string, page: SharePage): string {
   return indexHtml
     .replace(SHARE_META, '')
     .replace(/<title>[^<]*<\/title>/, () => `<title>${escapeHtml(page.title)}</title>\n    ${shareTags(page)}`)
+    // canonical index.html — «/»: у копии свой адрес, иначе поисковик счёл бы её дублем главной
+    .replace(/<link rel="canonical" href="[^"]*" \/>/, () => `<link rel="canonical" href="${escapeHtml(page.url)}" />`)
 }
 
 /**

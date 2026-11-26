@@ -89,7 +89,8 @@ export function ClinicSite() {
   }, [])
   const d = state.data
   useEffect(() => {
-    if (d) document.title = d.name || TEXTS.ru.title
+    // Как в <title> от nginx (SeoController бэкенда): поисковик видит одно и то же до и после JS
+    if (d) document.title = d.name ? `${d.name} — запись к стоматологу онлайн | Tish` : TEXTS.ru.title
   }, [d])
   if (state.failed) return <main className="site-page"><SiteHeader back={t.back} /><p className="site-message">{t.error}</p></main>
   if (!d) return <main className="site-page"><SiteHeader back={t.back} /><Loading className="site-message" text={t.loading} /></main>

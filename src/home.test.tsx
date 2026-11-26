@@ -27,7 +27,7 @@ test('tish.kg без входа — главная для пациентов: п
   const user = userEvent.setup()
   renderApp()
   expect(await screen.findByRole('heading', { level: 1, name: 'Запишитесь к стоматологу без звонков' })).toBeInTheDocument()
-  expect(document.title).toBe('Tish — запись к стоматологу в Бишкеке онлайн')
+  expect(document.title).toBe('Tish (Тиш) — онлайн-запись к стоматологу в Бишкеке')
   // Шапка: «Для клиник» (сайт-визитка) и «Вход для клиник» (тот же вход, что /login)
   const nav = screen.getByRole('navigation', { name: 'Главное меню' })
   expect(within(nav).getByRole('link', { name: 'Для клиник' })).toHaveAttribute('href', '/about')
