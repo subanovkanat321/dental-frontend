@@ -12,6 +12,10 @@
   font-size: 1.0625rem;
   line-height: 1.55;
   overflow-x: clip;
+  /* Белый экран (решение владельца 2026-11-26): фон страницы и секций — белый, карточки внутри — чуть тонированные */
+  --about-soft: #F4F7F6;
+  --page: #FFFFFF;
+  background: var(--page);
 }
 .about a { color: inherit; }
 .about :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
@@ -96,14 +100,14 @@
   border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-size: .8rem; font-weight: 600; }
 
 /* Слайды-высказывания: крупный текст по центру на мягкой плашке */
-.about-statement { background: var(--card); border-block: 1px solid var(--separator); }
+.about-statement { background: var(--page); border-block: 1px solid var(--separator); }
 .about-promises { list-style: none; margin: 40px auto 0; padding: 0; display: grid; gap: 14px; max-width: 560px; text-align: left; }
-.about-promises li { display: flex; align-items: center; gap: 16px; padding: 18px 22px; border-radius: 16px; background: var(--page);
+.about-promises li { display: flex; align-items: center; gap: 16px; padding: 18px 22px; border-radius: 16px; background: var(--about-soft);
   font: 500 clamp(1.125rem, 2vw, 1.375rem)/1.3 var(--ui); }
 .about-promises li > span:first-child { flex: none; font-size: 1.6rem; }
 .about-promises strong { color: var(--accent); font-weight: 600; }
 .about-cards { display: grid; gap: 14px; margin-top: 36px; text-align: left; }
-.about-card { display: grid; gap: 4px; padding: 24px; border-radius: 18px; background: var(--page); border: 1px solid var(--separator); }
+.about-card { display: grid; gap: 4px; padding: 24px; border-radius: 18px; background: var(--about-soft); border: 1px solid var(--separator); }
 .about-card .ico { display: grid; place-items: center; width: 52px; height: 52px; margin-bottom: 8px; border-radius: 14px; background: var(--accent-soft); font-size: 1.6rem; }
 .about-card strong { font: 600 1.375rem var(--display); }
 .about-card span:last-child { color: var(--hint); }
@@ -181,23 +185,26 @@
   .about-btn, .about-sticky, .about-contacts a, .about-dots a::before { transition: none; }
   .about-btn:active { transform: none; }
 }
+html:has(.about), html:has(.about) body { background: #FFFFFF; }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme=light]) .about { --frame: #050D0F; }
+  :root:not([data-theme=light]) .about { --frame: #050D0F; --page: var(--card); --about-soft: color-mix(in srgb, var(--text) 6%, var(--card)); }
+  :root:not([data-theme=light]):has(.about), :root:not([data-theme=light]):has(.about) body { background: var(--card); }
 }
-:root[data-theme=dark] .about { --frame: #050D0F; }
+:root[data-theme=dark] .about { --frame: #050D0F; --page: var(--card); --about-soft: color-mix(in srgb, var(--text) 6%, var(--card)); }
+:root[data-theme=dark]:has(.about), :root[data-theme=dark]:has(.about) body { background: var(--card); }
 @media (prefers-reduced-motion: no-preference) { html:has(.about) { scroll-behavior: smooth; } }
 
 /* «Как начать за 5 минут» — три шага с номерами; «Частые вопросы» — раскрывающиеся строки */
 .about-steps { list-style: none; margin: 28px 0 0; padding: 0; display: grid; gap: 14px; text-align: left; }
 .about-steps li { display: grid; grid-template-columns: 40px 1fr; gap: 14px; align-items: start; padding: 18px 20px;
-  border-radius: 18px; background: var(--page); border: 1px solid var(--separator); font-size: 1.0625rem; }
+  border-radius: 18px; background: var(--about-soft); border: 1px solid var(--separator); font-size: 1.0625rem; }
 .about-steps .num { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--accent);
   color: #fff; font-weight: 700; }
 .about-faq { margin-top: 28px; display: grid; gap: 10px; text-align: left; }
-.about-faq details { padding: 14px 18px; border-radius: 14px; background: var(--page); border: 1px solid var(--separator); }
+.about-faq details { padding: 14px 18px; border-radius: 14px; background: var(--about-soft); border: 1px solid var(--separator); }
 .about-faq summary { cursor: pointer; font-weight: 600; font-size: 1.0625rem; min-height: 28px; }
 .about-faq details p { margin: 10px 0 0; color: var(--hint); }
 .about-case { text-align: left; }
 .about-case .site-case-metrics { display: flex; flex-wrap: wrap; gap: 12px; padding: 0; list-style: none; }
-.about-case .site-case-metrics li { display: grid; padding: 12px 16px; border-radius: 14px; background: var(--page); border: 1px solid var(--separator); }
+.about-case .site-case-metrics li { display: grid; padding: 12px 16px; border-radius: 14px; background: var(--about-soft); border: 1px solid var(--separator); }
 .about-case .site-case-metrics b { font-size: 1.5rem; color: var(--accent); }
