@@ -1648,6 +1648,23 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
 }
 .login-card { display: contents; }
 @media (min-width: 761px) { .login-card { display: grid; } }
+/* Вход сотрудника (Login): колонки — обёртки; на телефоне и до 900px их как бы нет, всё одной колонкой, как раньше */
+.staff-login :is(.login-intro, .login-main) { display: contents; }
+.staff-login .login-lead { display: none; }
+/* Ноутбук и шире — на всю ширину: слева Тишка, «Вход для клиники» и о Tish, справа Telegram и форма */
+@media (min-width: 900px) {
+  .staff-login .login-card { width: min(1040px, 100%); grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center;
+    justify-items: stretch; gap: 0; padding: 0; overflow: hidden; }
+  .staff-login :is(.login-intro, .login-main) { display: grid; gap: 14px; align-content: center; }
+  .staff-login .login-intro { justify-items: start; text-align: left; align-self: stretch; padding: 56px 48px;
+    background: radial-gradient(circle at 0% 0%, var(--accent-soft), transparent 70%); }
+  .staff-login .login-intro img { width: 168px; height: auto; }
+  .staff-login .login-intro h1 { margin: 0; font-size: 2.4rem; }
+  .staff-login .login-lead { display: block; max-width: 400px; color: var(--hint); font-size: 1.05rem; line-height: 1.5; }
+  .staff-login .login-intro .logged-out { text-align: left; }
+  .staff-login .login-main { justify-items: center; padding: 48px 56px; }
+  .staff-login .login-main > :is(.phone-login, .telegram-login, .login-or) { width: 100%; max-width: 380px; }
+}
 /* Ссылка-приглашение (/invite): Telegram — главная кнопка, регистрация по номеру — скромной ссылкой ниже */
 .invite-page .invite-phone-link { text-align: center; font-size: .9rem; }
 .invite-page .invite-form { width: 100%; text-align: left; }

@@ -114,7 +114,7 @@ function Register({ token, onDone }: { token: string; onDone: (d: Done) => void 
       setCheck(problem)
       if (!problem) send.mutate()
     }}>
-      <p className="hint">Войти потом — на сайте по этому номеру и паролю. SMS не нужна.</p>
+      <p className="hint">Войти потом — на сайте по этому номеру и паролю. Код подтверждения не нужен.</p>
       <label className="field"><span>Номер телефона</span>
         <PhoneInput label="Ваш номер телефона" value={phone} onChange={setPhone} />
       </label>

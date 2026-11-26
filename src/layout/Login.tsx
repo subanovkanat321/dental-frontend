@@ -14,6 +14,9 @@ import { TelegramLogin } from './TelegramLogin'
 /** Свёрнутая ссылка: запасные способы входа (Google, если подключён) — главное на странице только Telegram и пароль. */
 export const OTHER_WAYS = 'Другие способы входа'
 
+/** Строка под заголовком — видна на компьютере (на телефоне экран входа короткий, как был). */
+export const LEAD = 'Tish бесплатный: запись пациентов, расписание, карты, касса и склад — для всей клиники, на компьютере и в Telegram.'
+
 /** Только что нажали «Выйти» в этой вкладке? Флаг читаем при открытии экрана, стираем после показа. */
 function justLoggedOut(): boolean {
   try {
@@ -71,31 +74,37 @@ export function Login() {
   const viaTelegram = !!config?.telegramLogin && !telegram()
   const hasOthers = externalLoginShown(config)
   return (
-    <div className="center login">
+    <div className="center login staff-login">
       <div className="login-card">
-      <img src={`${import.meta.env.BASE_URL}tishka.svg`} alt="Тишка — талисман Tish" width={147} height={140} />
-      {loggedOut && <LoggedOutHint onClose={() => setLoggedOut(false)} />}
-      <h1>Вход для клиники</h1>
-      {bot.isPending && <Loading />}
-      {bot.isSuccess && !config && <p className="error">Вход сейчас недоступен: сервер не настроен или не отвечает. Обновите страницу через минуту.</p>}
-      {viaTelegram && <TelegramLogin onDone={entered} onWaiting={onWaiting} />}
-      {config && !tgWaiting && (
-        <>
-          {viaTelegram && <p className="login-or"><span>или логин и пароль</span></p>}
-          <PhoneLogin onDone={entered} sms={config.smsLogin} telegram={config.telegramCode} password={config.passwordLogin}
-            mail={config.mailCode} secondary={viaTelegram} />
-          {hasOthers && !others && (
-            <button type="button" className="link login-others" aria-expanded={false} onClick={() => setOthers(true)}>{OTHER_WAYS}</button>
+        {/* Компьютер (от 900px) — две колонки: слева Тишка и о Tish, справа Telegram и форма; телефон — одной колонкой, как был */}
+        <div className="login-intro">
+          <img src={`${import.meta.env.BASE_URL}tishka.svg`} alt="Тишка — талисман Tish" width={147} height={140} />
+          {loggedOut && <LoggedOutHint onClose={() => setLoggedOut(false)} />}
+          <h1>Вход для клиники</h1>
+          <p className="login-lead">{LEAD}</p>
+        </div>
+        <div className="login-main">
+          {bot.isPending && <Loading />}
+          {bot.isSuccess && !config && <p className="error">Вход сейчас недоступен: сервер не настроен или не отвечает. Обновите страницу через минуту.</p>}
+          {viaTelegram && <TelegramLogin onDone={entered} onWaiting={onWaiting} />}
+          {config && !tgWaiting && (
+            <>
+              {viaTelegram && <p className="login-or"><span>или логин и пароль</span></p>}
+              <PhoneLogin onDone={entered} sms={config.smsLogin} telegram={config.telegramCode} password={config.passwordLogin}
+                mail={config.mailCode} secondary={viaTelegram} />
+              {hasOthers && !others && (
+                <button type="button" className="link login-others" aria-expanded={false} onClick={() => setOthers(true)}>{OTHER_WAYS}</button>
+              )}
+              {hasOthers && others && (
+                <div className="login-others-open" role="group" aria-label={OTHER_WAYS}>
+                  <ExternalLogin config={config} onDone={entered} />
+                </div>
+              )}
+            </>
           )}
-          {hasOthers && others && (
-            <div className="login-others-open" role="group" aria-label={OTHER_WAYS}>
-              <ExternalLogin config={config} onDone={entered} />
-            </div>
-          )}
-        </>
-      )}
-      <InstallHint />
-      <p className="hint small">Пациенты записываются через бота в Telegram: <a href="/clinics">выбрать клинику</a></p>
+          <InstallHint />
+          <p className="hint small">Пациенты записываются через бота в Telegram: <a href="/clinics">выбрать клинику</a></p>
+        </div>
       </div>
     </div>
   )

@@ -22,6 +22,12 @@ type Step = 'checking' | 'password' | 'phone' | 'channel' | 'code' | 'new-passwo
 /** Подпись поля входа: логин (V264 бэкенда) или номер в любом виде. */
 export const LOGIN_LABEL = 'Логин или телефон'
 
+/** Код без SMS (SMS_LOGIN_CODES выключены, 2026-11-26): куда идти, если Telegram у человека нет или номер не привязан. */
+export const TELEGRAM_ONLY = 'Код приходит только в Telegram — от бота клиники, если номер привязан к вашему Telegram (в боте: «📱\u00a0Поделиться номером»). Нет Telegram — попросите руководителя клиники выдать временный пароль («Клиника → Персонал»).'
+
+/** 503 без текста от сервера. */
+const NO_CODE = 'Код сейчас не отправить — попросите руководителя клиники выдать временный пароль'
+
 /** Ответ сервера, когда cookie «ждём код» истекла: тогда — снова номер. */
 const CODE_EXPIRED = 'Время на ввод кода вышло'
 
@@ -31,7 +37,8 @@ const CODE_EXPIRED = 'Время на ввод кода вышло'
  * <li>обычно — «логин или телефон» + пароль: одно поле, сервер сам поймёт (есть латинская буква — логин);</li>
  * <li>первый вход или забыли пароль — номер → «Получить код» → код → «Подтвердить» → только потом
  * «Придумайте пароль» → вход. Канал выбирает сервер: Telegram (бот сотрудников, бесплатно), если номер к
- * нему привязан и бот доставил, иначе SMS — чтобы не тратить лимит SMS;</li>
+ * нему привязан и бот доставил; SMS — только если на сервере включены SMS-коды ({@code sms}, SMS_LOGIN_CODES; по
+ * умолчанию нет — тогда ни «По SMS», ни «Отправить по SMS», ни «иначе — SMS» на экране нет);</li>
  * <li>временный пароль от админа — входит им и сразу придумывает свой.</li>
  * <li>почта на сервере настроена ({@code mail}) — после номера выбор канала: «В Telegram» (сервер сам: Telegram,
  * иначе SMS), «По SMS», «На почту из „Моего профиля“». Адреса (даже маской) не показываем: он выдал бы, что у номера
@@ -106,7 +113,7 @@ export function PhoneLogin({ onDone, sms, telegram = true, password: byPassword 
 
   const explain = (e: unknown) => {
     if (!(e instanceof ApiError) || e.status === 0) return 'Нет связи с сервером'
-    if (e.status === 503) return e.message || 'Коды по SMS пока не подключены'
+    if (e.status === 503) return e.message || NO_CODE
     return e.fieldErrors.phone ?? e.fieldErrors.password ?? e.message
   }
 
@@ -248,10 +255,10 @@ export function PhoneLogin({ onDone, sms, telegram = true, password: byPassword 
           <button type="submit" className="btn primary" disabled={busy || !phone.trim()}>
             {busy ? <><Spinner />Отправляем…</> : 'Получить код'}</button>
         )}
-        {telegram && !mail && (
+        {telegram && !mail && (sms ? (
           <p className="hint small">Код бесплатно придёт в Telegram от бота клиники, если номер привязан к вашему Telegram
-            (в боте: «📱&nbsp;Поделиться номером»){sms ? ', иначе — SMS на этот номер.' : '.'}</p>
-        )}
+            (в боте: «📱&nbsp;Поделиться номером»), иначе — SMS на этот номер.</p>
+        ) : <p className="hint small">{TELEGRAM_ONLY}</p>)}
         {!canRecover && <p className="hint">Коды сейчас не отправляются — попросите руководителя задать временный пароль.</p>}
         {error && <p className="error" role="alert">{error}</p>}
         {byPassword && <button type="button" className="link" onClick={() => go('password')}>Назад: вход по паролю</button>}
@@ -307,7 +314,8 @@ export function PhoneLogin({ onDone, sms, telegram = true, password: byPassword 
             сотрудник работает через Telegram, а номер для входа ещё не привязал */}
         {telegram && !byMail && wait === 0 && (
           <p className="hint small">Не приходит код? Если вы работаете в Tish через Telegram, сначала привяжите номер: в боте
-            нажмите «📱&nbsp;Поделиться номером» или в приложении — нажмите на себя внизу меню → «Мой профиль» → «Телефон».</p>
+            нажмите «📱&nbsp;Поделиться номером» или в приложении — нажмите на себя внизу меню → «Мой профиль» → «Телефон».
+            {!sms && ' Нет Telegram — попросите руководителя клиники выдать временный пароль.'}</p>
         )}
       </form>
     )

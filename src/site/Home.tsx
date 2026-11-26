@@ -10,7 +10,8 @@ type Lang = 'ru' | 'ky'
 const TEXTS = {
   ru: {
     docTitle: 'Tish — запись к стоматологу в Бишкеке онлайн',
-    forClinics: 'Для клиник', login: 'Вход для клиник', loginShort: 'Вход', nav: 'Главное меню',
+    forClinics: 'Для клиник', login: 'Вход для клиник', loginShort: 'Вход', nav: 'Главное меню', connect: 'Подключить клинику',
+    clinicAsk: 'Вы клиника?', clinicGo: 'Подключитесь бесплатно →',
     eyebrow: 'Онлайн-запись к стоматологу', title: 'Запишитесь к стоматологу без звонков',
     tagline: 'Выберите клинику и врача, посмотрите свободное время и запишитесь за минуту — на сайте или в Telegram.',
     search: 'Клиника, врач или адрес', find: 'Найти', cities: 'Город', allCities: 'Все города',
@@ -31,11 +32,13 @@ const TEXTS = {
     join: 'Подключить клинику — бесплатно', signIn: 'Войти', aboutTish: 'Подробнее о Tish',
     patients: 'Пациентам', allClinics: 'Все клиники', clinics: 'Клиникам', about: 'О Tish', tour: 'Тур по Tish', guide: 'Руководство',
     made: 'Сделано в Кыргызстане', contact: 'Связаться с нами', waText: 'Здравствуйте! Вопрос про Tish',
-    preview: { doctor: 'Врач-стоматолог', days: ['Пн', 'Вт', 'Ср', 'Чт'], free: 'Свободно сегодня' },
+    preview: { doctor: 'Врач-стоматолог', days: ['Пн', 'Вт', 'Ср', 'Чт'], free: 'Свободно сегодня', example: 'Пример',
+      label: 'Пример записи: выберите день и время', hint: 'Выберите клинику — и запишитесь к её врачу' },
   },
   ky: {
     docTitle: 'Tish — Бишкекте тиш дарыгерине онлайн жазылуу',
-    forClinics: 'Клиникаларга', login: 'Клиникалар үчүн кирүү', loginShort: 'Кирүү', nav: 'Башкы меню',
+    forClinics: 'Клиникаларга', login: 'Клиникалар үчүн кирүү', loginShort: 'Кирүү', nav: 'Башкы меню', connect: 'Клиниканы туташтыруу',
+    clinicAsk: 'Сиз клиникасызбы?', clinicGo: 'Акысыз туташыңыз →',
     eyebrow: 'Тиш дарыгерине онлайн жазылуу', title: 'Тиш дарыгерине чалбай эле жазылыңыз',
     tagline: 'Клиниканы жана дарыгерди тандап, бош убакытты көрүп, бир мүнөттө жазылыңыз — сайтта же Telegram аркылуу.',
     search: 'Клиника, дарыгер же дарек', find: 'Издөө', cities: 'Шаар', allCities: 'Бардык шаарлар',
@@ -56,7 +59,8 @@ const TEXTS = {
     join: 'Клиниканы туташтыруу — акысыз', signIn: 'Кирүү', aboutTish: 'Tish жөнүндө кененирээк',
     patients: 'Бейтаптарга', allClinics: 'Бардык клиникалар', clinics: 'Клиникаларга', about: 'Tish жөнүндө', tour: 'Tish боюнча тур', guide: 'Колдонмо',
     made: 'Кыргызстанда жасалган', contact: 'Биз менен байланышуу', waText: 'Саламатсызбы! Tish боюнча суроо бар',
-    preview: { doctor: 'Тиш дарыгери', days: ['Дш', 'Шш', 'Шр', 'Бш'], free: 'Бүгүн бош' },
+    preview: { doctor: 'Тиш дарыгери', days: ['Дш', 'Шш', 'Шр', 'Бш'], free: 'Бүгүн бош', example: 'Үлгү',
+      label: 'Жазылуу үлгүсү: күндү жана убакытты тандаңыз', hint: 'Клиниканы тандаңыз — анан анын дарыгерине жазылыңыз' },
   },
 }
 
@@ -95,6 +99,12 @@ export function Home() {
     results.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' })
   }
   const reset = () => { filter.setQuery(''); filter.setCity('') }
+  /** «Записаться» в примере: пример не настоящий — плавно к списку клиник с подсказкой, куда нажать. */
+  const [pickHint, setPickHint] = useState(false)
+  const showClinics = () => {
+    setPickHint(true)
+    results.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' })
+  }
   const inApp = inAppBrowser()
   return (
     <div className="home">
@@ -107,6 +117,8 @@ export function Home() {
           <nav className="home-nav" aria-label={t.nav}>
             <a className="home-nav-link" href="/about">{t.forClinics}</a>
             <HomeLang lang={lang} onChange={setLang} />
+            {/* Регистрация клиники — сразу в шапке (на узком экране — строкой под поиском: в шапке не помещается) */}
+            <a className="home-btn home-join" href="/join">{t.connect}</a>
             <a className="home-btn home-btn-primary home-login" href="/login">
               <span className="home-wide">{t.login}</span><span className="home-narrow">{t.loginShort}</span>
             </a>
@@ -139,8 +151,9 @@ export function Home() {
                   ))}
                 </div>
               )}
+              <p className="home-clinic-cta">{t.clinicAsk} <a href="/join">{t.clinicGo}</a></p>
             </div>
-            <BookingPreview t={t.preview} book={t.book} />
+            <BookingPreview t={t.preview} book={t.book} onBook={showClinics} />
           </div>
         </section>
 
@@ -148,6 +161,7 @@ export function Home() {
 
         <section className="home-wrap home-list" ref={results} aria-labelledby="home-list-title" aria-busy={clinics === null}>
           <h2 id="home-list-title">{t.list}{Array.isArray(clinics) && clinics.length > 0 && <span className="home-count">{filter.shown.length}</span>}</h2>
+          {pickHint && <p className="home-pick-hint" role="status">👇 {t.preview.hint}</p>}
           {clinics === 'error' ? <p className="home-message">{t.error}</p> : clinics === null ? (
             <div className="home-grid" role="status" aria-label={t.loading}>
               {[0, 1, 2].map((i) => <div key={i} className="home-card home-skeleton" aria-hidden="true" />)}
@@ -276,22 +290,41 @@ function HomeLang({ lang, onChange }: { lang: Lang; onChange: (l: Lang) => void 
   )
 }
 
-/** Картинка справа в шапке на компьютере: так выглядит выбор времени (вымышленные окна, не данные). */
-function BookingPreview({ t, book }: { t: Texts['preview']; book: string }) {
+/** Время в примере — вымышленные окна, не данные врача; у каждого дня свои. */
+const PREVIEW_TIMES = [
+  ['09:00', '10:30', '12:00', '14:30', '16:00', '17:30'],
+  ['09:30', '11:00', '12:30', '14:00', '15:30', '17:00'],
+  ['10:00', '11:30', '13:00', '15:00', '16:30', '18:00'],
+  ['09:00', '09:30', '11:30', '13:30', '15:00', '16:30'],
+]
+
+/**
+ * Пример записи справа в шапке (компьютер): день и время можно выбрать, как в настоящей записи, а «Записаться» — плавно
+ * к списку клиник с подсказкой «Выберите клинику…»: врач тут вымышленный, поэтому в углу метка «Пример».
+ */
+function BookingPreview({ t, book, onBook }: { t: Texts['preview']; book: string; onBook: () => void }) {
+  const [day, setDay] = useState(1)
+  const [time, setTime] = useState(3)
   return (
-    <div className="home-preview" aria-hidden="true">
-      <div className="home-preview-card">
+    <div className="home-preview">
+      <div className="home-preview-card" role="group" aria-label={t.label}>
+        <span className="home-preview-example">{t.example}</span>
         <div className="home-preview-doc">
-          <span className="home-avatar small">Д</span>
+          <span className="home-avatar small" aria-hidden="true">Д</span>
           <span><strong>{t.doctor}</strong><span>{t.free}</span></span>
         </div>
         <div className="home-preview-days">
-          {t.days.map((d, i) => <span key={d} className={i === 1 ? 'on' : undefined}><small>{d}</small>{i + 8}</span>)}
+          {t.days.map((d, i) => (
+            <button key={d} type="button" aria-pressed={day === i} className={day === i ? 'on' : undefined}
+              onClick={() => { setDay(i); setTime(-1) }}><small>{d}</small>{i + 8}</button>
+          ))}
         </div>
         <div className="home-preview-times">
-          {['09:30', '11:00', '12:30', '14:00', '15:30', '17:00'].map((x, i) => <span key={x} className={i === 3 ? 'on' : undefined}>{x}</span>)}
+          {(PREVIEW_TIMES[day] ?? []).map((x, i) => (
+            <button key={x} type="button" aria-pressed={time === i} className={time === i ? 'on' : undefined} onClick={() => setTime(i)}>{x}</button>
+          ))}
         </div>
-        <span className="home-preview-btn">{book}</span>
+        <button type="button" className="home-preview-btn" onClick={onBook}>{book}</button>
       </div>
       <img className="home-preview-tishka" src={`${import.meta.env.BASE_URL}tishka.svg`} alt="" width={132} height={125} />
     </div>

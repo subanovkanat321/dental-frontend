@@ -72,6 +72,35 @@ test('tish.kg без входа — главная для пациентов: п
   expect(document.title).toBe('Tish — Бишкекте тиш дарыгерине онлайн жазылуу')
 })
 
+test('регистрация клиники видна сразу: «Подключить клинику» в шапке и «Вы клиника?» под поиском — /join', async () => {
+  server.use(unauthorized(), http.get('*/web/clinics', () => HttpResponse.json(CLINICS)))
+  renderApp()
+  const nav = await screen.findByRole('navigation', { name: 'Главное меню' })
+  expect(within(nav).getByRole('link', { name: 'Подключить клинику' })).toHaveAttribute('href', '/join')
+  const hero = screen.getByRole('region', { name: 'Запишитесь к стоматологу без звонков' })
+  expect(hero).toHaveTextContent('Вы клиника?')
+  expect(within(hero).getByRole('link', { name: 'Подключитесь бесплатно →' })).toHaveAttribute('href', '/join')
+})
+
+test('пример записи в шапке — с меткой «Пример»: день и время выбираются, «Записаться» ведёт к списку клиник', async () => {
+  server.use(unauthorized(), http.get('*/web/clinics', () => HttpResponse.json(CLINICS)))
+  const scrolled = vi.fn()
+  Element.prototype.scrollIntoView = scrolled
+  const user = userEvent.setup()
+  renderApp()
+  const example = await screen.findByRole('group', { name: 'Пример записи: выберите день и время' })
+  expect(example).toHaveTextContent('Пример')
+  await user.click(within(example).getByRole('button', { name: /Чт/ }))
+  expect(within(example).getByRole('button', { name: /Чт/ })).toHaveAttribute('aria-pressed', 'true')
+  await user.click(within(example).getByRole('button', { name: '15:00' }))
+  expect(within(example).getByRole('button', { name: '15:00' })).toHaveAttribute('aria-pressed', 'true')
+  expect(screen.queryByText(/Выберите клинику — и запишитесь/)).not.toBeInTheDocument()
+  await user.click(within(example).getByRole('button', { name: 'Записаться' }))
+  expect(scrolled).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' })
+  expect(screen.getByText(/Выберите клинику — и запишитесь к её врачу/)).toHaveAttribute('role', 'status')
+  delete (Element.prototype as Partial<Element>).scrollIntoView
+})
+
 test('«Вход для клиник» (/login) — страница входа сотрудников, не главная', async () => {
   server.use(unauthorized(), http.get('*/web/config', () => HttpResponse.json({ botUsername: 'tish_test_bot', passwordLogin: true })))
   window.history.replaceState(null, '', '/login')

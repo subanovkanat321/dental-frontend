@@ -36,7 +36,7 @@ export function CodeInput({ value, onChange }: { value: string; onChange: (v: st
         onChange(code)
         setNote('')
       } else {
-        setNote('В буфере нет кода из 6 цифр — скопируйте его в Telegram или SMS')
+        setNote('В буфере нет кода из 6 цифр — скопируйте его из сообщения с кодом')
       }
     } catch {
       setNote('Браузер не дал прочитать буфер — вставьте код в поле вручную')

@@ -224,6 +224,16 @@ test('ошибки: поле под полем, номер уже в клини�
   expect(within(alert).getByRole('link', { name: 'Войти в Tish' })).toHaveAttribute('href', '/login')
 })
 
+test('как на сервере по умолчанию (SIGNUP_SMS_ENABLED и SIGNUP_EMAIL_ENABLED выключены) — только Telegram, ни SMS, ни почты', async () => {
+  backend({ sms: false, telegram: true, email: false })
+  show()
+  const form = await screen.findByRole('form', { name: 'Регистрация клиники' })
+  expect(within(form).getByRole('button', { name: 'Подтвердить через Telegram' })).toBeInTheDocument()
+  expect(screen.queryByText(/SMS/)).not.toBeInTheDocument()
+  expect(screen.queryByText(/почт|письм/i)).not.toBeInTheDocument()
+  expect(screen.queryByRole('textbox', { name: 'Почта' })).not.toBeInTheDocument()
+})
+
 test('регистрация выключена на сервере — понятное сообщение и путь «помогите подключить»', async () => {
   backend({ sms: false, telegram: false, email: false })
   show()

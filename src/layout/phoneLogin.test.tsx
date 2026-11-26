@@ -1,4 +1,4 @@
-import { act, screen, waitFor } from '@testing-library/react'
+import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
@@ -298,6 +298,9 @@ test('SMS не подключены — «Получить код» (Telegram), 
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
     renderApp()
     await user.click(await screen.findByRole('button', { name: 'Забыли пароль? / Первый вход' }))
+    // Как на сервере по умолчанию (SMS_LOGIN_CODES выключены): код только в Telegram, нет Telegram — временный пароль
+    expect(screen.getByText(/Код приходит только в Telegram/)).toHaveTextContent('попросите руководителя клиники выдать временный пароль')
+    expect(document.body).not.toHaveTextContent(/SMS/)
     await user.type(screen.getByRole('textbox', { name: 'Номер телефона' }), '700000031')
     await user.click(screen.getByRole('button', { name: 'Получить код' }))
     const step = await screen.findByRole('form', { name: 'Код подтверждения' })
@@ -305,9 +308,28 @@ test('SMS не подключены — «Получить код» (Telegram), 
     for (let i = 0; i < 60; i++) await act(async () => { vi.advanceTimersByTime(1000) })
     expect(screen.queryByRole('button', { name: 'Не пришло? Отправить по SMS' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Отправить код ещё раз' })).toBeInTheDocument()
+    expect(step).toHaveTextContent('Нет Telegram — попросите руководителя клиники выдать временный пароль.')
+    expect(document.body).not.toHaveTextContent(/SMS/)
   } finally {
     vi.useRealTimers()
   }
+})
+
+test('SMS выключены, почта есть — выбор «В Telegram» и «На почту», без «По SMS» и «иначе — SMS»', async () => {
+  backend({ sms: false, mail: true })
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('button', { name: 'Забыли пароль? / Первый вход' }))
+  await user.type(screen.getByRole('textbox', { name: 'Номер телефона' }), '700000031')
+  await user.click(screen.getByRole('button', { name: 'Получить код' }))
+  const choice = await screen.findByRole('group', { name: 'Куда прислать код' })
+  expect(within(choice).getByRole('button', { name: 'В Telegram' })).toBeInTheDocument()
+  expect(within(choice).queryByRole('button', { name: 'По SMS' })).not.toBeInTheDocument()
+  expect(document.body).not.toHaveTextContent(/SMS/)
+  await user.click(within(choice).getByRole('button', { name: 'На почту из «Моего профиля»' }))
+  const step = await screen.findByRole('form', { name: 'Код подтверждения' })
+  expect(step).toHaveTextContent('Не добавляли — выберите Telegram.')
+  expect(document.body).not.toHaveTextContent(/SMS/)
 })
 
 test('ни Telegram-кодов, ни SMS — подсказка про временный пароль от админа', async () => {

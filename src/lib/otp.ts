@@ -18,7 +18,7 @@ const SENT_SMS = 'Отправили SMS с кодом на этот номер.
  * @param sms SMS подключены
  */
 export function sentText(bySms: boolean, telegram: boolean, sms: boolean): string {
-  if (bySms || !telegram) return SENT_SMS
+  if (bySms || (!telegram && sms)) return SENT_SMS
   return sms ? SENT_AUTO : SENT_TELEGRAM
 }
 
