@@ -1650,7 +1650,9 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
 @media (min-width: 761px) { .login-card { display: grid; } }
 /* Вход сотрудника (Login): колонки — обёртки; на телефоне и до 900px их как бы нет, всё одной колонкой, как раньше */
 .staff-login :is(.login-intro, .login-main) { display: contents; }
-.staff-login .login-lead, .staff-login .login-about { display: none; }
+.staff-login .login-lead { display: none; }
+/* «Подробнее о Tish →» — на телефоне тихой ссылкой под заголовком; на ноутбуке — кнопкой слева (ниже) */
+.staff-login .login-about { color: var(--link); font-size: .92rem; font-weight: 600; text-decoration: none; }
 /* Ноутбук и шире — на всю ширину: слева Тишка, «Вход для клиники» и о Tish, справа Telegram и форма */
 @media (min-width: 900px) {
   .staff-login .login-card { width: min(1040px, 100%); grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center;

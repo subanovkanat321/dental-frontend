@@ -54,14 +54,19 @@
 /* «Подключить клинику» в шапке — где помещается; уже — строка «Вы клиника?» под поиском */
 .home-join { display: none; }
 @media (min-width: 860px) { .home-join { display: inline-flex; } }
+/* Телефон: «Для клиник» тоже в шапке (владелец, 2026-11-26), всё компактнее, чтобы поместилось в 360px */
 @media (max-width: 640px) {
-  .home-nav-link { display: none; }
-  .home-login { padding: 0 16px; }
+  .home-top-row { gap: 8px; }
+  .home-nav { gap: 6px; }
+  .home .home-btn.home-nav-link, .home .home-login { min-height: 40px; padding: 0 12px; font-size: .85rem; }
+  .home-lang button { padding: 0 8px; }
 }
-@media (max-width: 380px) {
+/* Телефон — «Вход» вместо «Вход для клиник»; совсем узкий — знак без подписи «Tish» */
+@media (max-width: 640px) {
   .home-wide { display: none; }
   .home-narrow { display: inline; }
 }
+@media (max-width: 370px) { .home-brand span { display: none; } }
 
 /* Первый экран: метка, большой заголовок, поиск; справа — как выглядит выбор времени */
 .home-hero { padding: 28px 0 8px; }
