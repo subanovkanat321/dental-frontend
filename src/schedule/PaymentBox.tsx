@@ -374,7 +374,7 @@ function PayForm({ a, me, billOnly, parts: initialParts, spentHere = 0, prefillC
   const [discount, setDiscount] = useState<DiscountDraft | null>(() => draftOf(a.discount))
   const policy = useDiscountPolicy()
   // Скидка по метке (V255 бэкенда): у пациента «Друг» со скидкой 10 % — подставим её в новую оплату (ещё нет ни оплаты,
-  // ни скидки), если сотруднику можно давать такую скидку («Настройки → Скидки»). Больше его предела — не подставляем и не
+  // ни скидки), если сотруднику можно давать такую скидку («Настройки → Пациенты и скидки → Скидки»). Больше его предела — не подставляем и не
   // урезаем молча, а подсказываем: решает руководитель. Деньги меняются, только когда сотрудник сохранит оплату
   const tagList = usePatientTags((a.patient?.tagIds?.length ?? 0) > 0)
   const offer = tagDiscount(a.patient?.tagIds, tagList.data)

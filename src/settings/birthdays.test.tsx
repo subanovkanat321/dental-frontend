@@ -12,7 +12,7 @@ type Settings = Schemas['BirthdaysSettings']
 
 afterEach(() => { window.location.hash = '' })
 
-test('«Настройки → Дни рождения»: по умолчанию выключено; включить и час — сохраняются сразу', async () => {
+test('«Настройки → Привлечение пациентов → Дни рождения»: по умолчанию выключено; включить и час — сохраняются сразу', async () => {
   const puts: Settings[] = []
   let state: Settings = { autoGreet: false, greetHour: 10 }
   server.use(

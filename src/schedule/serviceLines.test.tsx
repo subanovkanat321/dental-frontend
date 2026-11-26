@@ -187,7 +187,7 @@ test('новая запись: две услуги — чипы, длитель�
   expect(body).toMatchObject({ serviceTypeId: 1, durationMinutes: 105 })
 })
 
-test('«Настройки → Правка приёмов»: руководитель выбирает «Всегда» — PUT /api/clinic/visit-edit', async () => {
+test('«Настройки → Приём → Правка приёмов»: руководитель выбирает «Всегда» — PUT /api/clinic/visit-edit', async () => {
   const sent: unknown[] = []
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),

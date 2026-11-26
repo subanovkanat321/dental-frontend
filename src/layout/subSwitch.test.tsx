@@ -211,13 +211,14 @@ test('телефон: «Настройки» — строка над стран�
   renderApp()
   await userEvent.click(await bar('Настройки'))
   const sheet = sheetOf('Настройки')
-  expect(rows(sheet)[0]).toBe('Напоминание о приёме')
-  expect([...sheet.querySelectorAll('.nav-group')].map((p) => p.textContent)).toEqual(['Что получают пациенты', 'Аккаунт клиники', 'Приём', 'Карточка пациента', 'Деньги'])
+  expect(rows(sheet)[0]).toBe('Сообщения пациентам')
+  expect([...sheet.querySelectorAll('.nav-group')].map((p) => p.textContent)).toEqual(['Пациентам', 'Работа клиники', 'Аккаунт'])
   for (const a of within(sheet).getAllByRole('menuitem')) expect(a.querySelector('svg.sub-ico')).toHaveAttribute('aria-hidden', 'true')
-  // Подсказки — из пунктов «Настроек»
-  expect(within(sheet).getByRole('menuitem', { name: 'Пригласить коллег' })).toHaveTextContent('Tish бесплатный — поделитесь с коллегами')
-  await userEvent.click(within(sheet).getByRole('menuitem', { name: 'Пригласить коллег' }))
-  expect(window.location.hash).toBe('#/settings/plan')
+  // Подсказки — из пунктов «Настроек»: что внутри, вкладками
+  expect(within(sheet).getByRole('menuitem', { name: 'Клиника в Tish' })).toHaveTextContent('Коллеги, договор, импорт, ИИ')
+  await userEvent.click(within(sheet).getByRole('menuitem', { name: 'Клиника в Tish' }))
+  expect(window.location.hash).toBe('#/settings/account')
+  expect(await screen.findByRole('tab', { name: 'Коллеги' })).toHaveAttribute('aria-selected', 'true')
 })
 
 test('подсказка про подразделы — один раз: закрыли крестиком — больше нет; тап по строке — тоже закрывает', async () => {

@@ -47,7 +47,7 @@ function backend(view: View) {
 
 afterEach(() => { window.location.hash = '' })
 
-test('«Настройки → WhatsApp» не подключён: что это и «Подключение — через владельца Tish»', async () => {
+test('«Настройки → Сообщения пациентам → WhatsApp» не подключён: что это и «Подключение — через владельца Tish»', async () => {
   backend({ available: false, connected: false, confirmation: true, reminder: true, soon: true, templates: [], recent: [] })
   renderApp()
   openItem('whatsapp')
@@ -57,7 +57,7 @@ test('«Настройки → WhatsApp» не подключён: что это
   expect(screen.queryByRole('region', { name: 'Что отправлять' })).not.toBeInTheDocument()
 })
 
-test('«Настройки → WhatsApp» подключён: номер, галочки, статусы шаблонов, последние сообщения без имён и номеров', async () => {
+test('«Настройки → Сообщения пациентам → WhatsApp» подключён: номер, галочки, статусы шаблонов, последние сообщения без имён и номеров', async () => {
   const { puts, submits } = backend(connected)
   renderApp()
   openItem('whatsapp')

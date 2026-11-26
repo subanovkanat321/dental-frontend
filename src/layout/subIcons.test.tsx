@@ -56,8 +56,8 @@ test('у пунктов «Настроек» и «Платформы» — св�
     // Почти у каждого свой: повторов мало (палитра приглушённая, без кислотных цветов)
     expect(tones.size, page).toBeGreaterThanOrEqual(Math.min(subs.length, 10))
   }
-  expect(tone('settings', 'plan')).toContain('var(--ico-cash)')
-  expect(tone('settings', 'ai')).toContain('var(--ico-ai)')
+  expect(tone('settings', 'messages')).toContain('var(--ico-stock)')
+  expect(tone('settings', 'attract')).toContain('var(--ico-instagram)')
   expect(tone('platform', 'marketing')).toContain('var(--ico-instagram)')
   expect(tone('platform', 'feedback')).toContain('var(--ico-support)')
   // Остальные разделы — оттенком раздела

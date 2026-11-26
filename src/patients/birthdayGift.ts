@@ -87,7 +87,7 @@ export function draftSomAt(price: number | null, d: DiscountDraft | null): numbe
   return d.kind === 'percent' ? Math.round((price * v) / 100) : Math.min(v, price)
 }
 
-/** Подходит под «Настройки → Скидки»: давать можно и не больше моего предела. */
+/** Подходит под «Настройки → Пациенты и скидки → Скидки»: давать можно и не больше моего предела. */
 export function fitsPolicy(d: DiscountDraft | null, price: number | null, policy?: Policy): boolean {
   if (!d || !policy?.canGive) return false
   const max = policy.myMaxPercent ?? 100

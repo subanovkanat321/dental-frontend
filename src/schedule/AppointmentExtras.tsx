@@ -171,7 +171,7 @@ export function PromoEdit({ appointment: a, onDone }: { appointment: Appointment
           {offered.map((p) => <option key={p.id} value={p.code}>{`🎟 ${p.code}${p.description ? ` · ${p.description}` : ''}`}</option>)}
         </Select>
       </label>
-      {codes.data?.length === 0 && <p className="hint small">Промокодов нет — их заводят в «Настройки → Откуда приходят пациенты → Промокоды».</p>}
+      {codes.data?.length === 0 && <p className="hint small">Промокодов нет — их заводят в «Настройки → Привлечение пациентов → Промокоды».</p>}
       {action.error && <p className="error" role="alert">{errorText(action.error)}</p>}
       <div className="actions">
         <button type="submit" className="btn primary" disabled={action.isPending}>Сохранить</button>

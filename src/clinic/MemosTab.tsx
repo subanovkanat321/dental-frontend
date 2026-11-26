@@ -221,7 +221,7 @@ function KyFields({ form, memo: m, onChange, titleError, bodyError }: {
           onClick={() => translate.mutate()}>{translate.isPending ? 'Переводим…' : ai.data?.on ? '✨ Перевести с ИИ' : '📝 Перевести по шаблону'}</button>
       </div>
       {!ai.data?.on && <p className="hint small">По шаблону переводятся строки стандартных памяток Tish; свою строку переведите сами.
-        {ai.data?.available ? ' Перевод с ИИ — когда руководитель включит ИИ клиники в «Настройки → ИИ в клинике».' : ''}</p>}
+        {ai.data?.available ? ' Перевод с ИИ — когда руководитель включит ИИ клиники в «Настройки → Клиника в Tish → ИИ в клинике».' : ''}</p>}
       {translate.isSuccess && <p className="hint small" role="status">{translate.data.template
         ? 'Перевод по шаблону стандартных памяток — в полях выше. Проверьте и сохраните.'
         : 'Перевод ИИ — в полях выше. Проверьте и сохраните.'}</p>}
@@ -255,7 +255,7 @@ export function ServiceMemo({ serviceId }: { serviceId: number }) {
           {memos.data.filter((m) => m.active !== false || m.id === current).map((m) => <option key={m.id} value={m.id}>{m.title}</option>)}
         </Select>
       </label>
-      <p className="hint small">Предложим отдать пациенту после приёма. Тексты — в «Настройки → Памятки после процедур».</p>
+      <p className="hint small">Предложим отдать пациенту после приёма. Тексты — в «Настройки → Документы для пациента → Памятки».</p>
       {save.error && <p className="error" role="alert">{save.error.message}</p>}
     </section>
   )

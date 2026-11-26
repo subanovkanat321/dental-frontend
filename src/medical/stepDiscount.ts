@@ -62,7 +62,7 @@ export function setDiscount(d: PriceDraft, discount: StepDiscount | null): Price
  *
  * - `priceSom` / `discount` — тело запроса (скидка — только если её можно дать);
  * - `off` — скидка в сомах, `base` — цена до скидки;
- * - `blocked` — скидку дать нельзя (политика «Настройки → Скидки»): сохраним просто цену этапа, как раньше, — решает руководитель.
+ * - `blocked` — скидку дать нельзя (политика «Настройки → Пациенты и скидки → Скидки»): сохраним просто цену этапа, как раньше, — решает руководитель.
  */
 export function priceOf(d: PriceDraft, policy?: Policy): {
   priceSom?: number; discount?: { percent?: number; som?: number }; off: number; base: number | null; blocked: string

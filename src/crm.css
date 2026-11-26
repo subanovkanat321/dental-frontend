@@ -428,6 +428,15 @@
 /* Лист ожидания: вкладки «Пациентов», блок в карточке */
 .segments.tabs { min-width: 0; overflow-x: auto; scrollbar-width: thin; } /* много вкладок на узком ноутбуке — прокрутка, а не обрезка */
 .segments.tabs button { padding: 7px 14px; white-space: nowrap; }
+/* Вкладки пункта «Настроек» (settings/ItemTabs): на телефоне 5 вкладок («Привлечение пациентов») — одной строкой с прокруткой
+   вбок, а не «облаком» в два ряда; до 4 — делят ширину (tokens.css) */
+@media (max-width: 760px) {
+  html .segments.tabs.item-tabs:has(> button:nth-child(5)) { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain;
+    /* края — тающие: видно, что вбок есть ещё вкладки */
+    mask-image: linear-gradient(to right, transparent, #000 14px, #000 calc(100% - 14px), transparent); }
+  html .segments.tabs.item-tabs:has(> button:nth-child(5))::-webkit-scrollbar { display: none; }
+  html .segments.tabs.item-tabs:has(> button:nth-child(5)) > button { flex: 0 0 auto; min-width: auto; white-space: nowrap; padding-inline: 14px; }
+}
 .waitlist-box { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .waitlist-box select, .waitlist-box .ui-select { font: inherit; height: 36px; padding: 0 8px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
 .candidates { display: grid; gap: 6px; padding: 10px; border-radius: var(--r-md); background: var(--wait-bg); }
@@ -3351,7 +3360,7 @@ button.cash-entry:hover, button.cash-entry.active { background: var(--sunken); }
 /* Меню у точки (правая кнопка, «⋯»): не под кнопкой, а там, где нажали (ActionPopup ставит left/top) */
 .pop-menu.action-menu.at-point { position: fixed; top: auto; left: auto; min-width: 220px; }
 .quick-error { position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom)); z-index: 70; transform: translateX(-50%); max-width: min(480px, calc(100vw - 32px)); }
-/* «Настройки → Метки пациентов» */
+/* «Настройки → Пациенты и скидки → Метки» */
 .tag-list { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 2px; max-width: 640px; }
 .tag-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 8px 10px; border-radius: var(--r-md); background: var(--card); }
 .tag-row .tag-dot { width: 12px; height: 12px; }

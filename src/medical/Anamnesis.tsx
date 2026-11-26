@@ -62,7 +62,7 @@ type Answer = { yes: boolean; text: string }
 
 /**
  * Анкета в медкарте: вопросы клиники галочками, «да» открывает «что именно». Одна на пациента —
- * врачи клиники видят одно и то же. Вопросы настраивают в «Настройки → Анкета пациента».
+ * врачи клиники видят одно и то же. Вопросы настраивают в «Настройки → Документы для пациента → Анкета».
  */
 export function AnamnesisBlock({ patientId, readOnly = false }: { patientId: number; readOnly?: boolean }) {
   const an = useAnamnesis(patientId)
@@ -105,7 +105,7 @@ function AnamnesisForm({ patientId, an, readOnly }: { patientId: number; an: Ana
     e.preventDefault()
     save.mutate()
   }
-  if (!items.length) return <p className="hint">В анкете клиники нет вопросов — добавьте их в «Настройки → Анкета пациента».</p>
+  if (!items.length) return <p className="hint">В анкете клиники нет вопросов — добавьте их в «Настройки → Документы для пациента → Анкета».</p>
 
   const field = (i: Item) => {
     const a = answers[i.questionId]!

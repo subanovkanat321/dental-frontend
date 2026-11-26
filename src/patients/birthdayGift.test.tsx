@@ -167,7 +167,7 @@ describe('оплата: подарок на день рождения', () => {
   })
 })
 
-describe('«Настройки → Дни рождения» → «🎁 Подарок на день рождения»', () => {
+describe('«Настройки → Привлечение пациентов → Дни рождения» → «🎁 Подарок на день рождения»', () => {
   test('карточки: скидка 15 % одним касанием, образец ru / ky, свой промокод и профчистка', async () => {
     let state = gift({ preset: 'NONE', active: false, promoCodeId: undefined, code: undefined, discountPercent: undefined, label: undefined,
       previewRu: '🎂 С днём рождения!\n\nЗдравствуйте, Айгуль Асанова!' })

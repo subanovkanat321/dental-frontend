@@ -146,11 +146,11 @@ test('права в дереве: ассистент — без «Кассы» �
   expect(within(nav()).queryByRole('button', { name: /^Касса/ })).not.toBeInTheDocument()
   await userEvent.click(within(nav()).getByRole('button', { name: 'Раскрыть подразделы: Настройки' }))
   const settings = within(nav()).getByRole('group', { name: 'Настройки' })
-  expect(within(settings).getByRole('link', { name: /Памятки после процедур/ })).toBeInTheDocument()
-  expect(within(settings).queryByRole('link', { name: /Пригласить коллег/ })).not.toBeInTheDocument()
-  // Группы — подписями внутри раздела; «Аккаунт клиники» у ассистента пуст — подписи нет
-  expect(within(settings).getByText('Что получают пациенты')).toBeInTheDocument()
-  expect(within(settings).queryByText('Аккаунт клиники')).not.toBeInTheDocument()
+  expect(within(settings).getByRole('link', { name: /Документы для пациента/ })).toBeInTheDocument()
+  expect(within(settings).queryByRole('link', { name: /Клиника в Tish/ })).not.toBeInTheDocument()
+  // Группы — подписями внутри раздела; «Аккаунт» у ассистента пуст — подписи нет
+  expect(within(settings).getByText('Пациентам')).toBeInTheDocument()
+  expect(within(settings).queryByText('Аккаунт')).not.toBeInTheDocument()
   expect(within(settings).queryByText('Мои настройки')).not.toBeInTheDocument()
   // «Клиника» — без «Услуг и цен» (цены ассистенту не показываем)
   await userEvent.click(within(nav()).getByRole('button', { name: 'Раскрыть подразделы: Клиника' }))
@@ -252,17 +252,27 @@ test('«Настройки» — пунктами над страницей (в�
   window.location.hash = '/settings'
   renderApp()
   const bar = await findSubs('Настройки')
-  expect(bar.get('Напоминание о приёме')).toHaveAttribute('aria-current', 'page')
-  expect(bar.titles()).toHaveLength(20) // + «Приведи друга» (V260), «WhatsApp» (V256), «Дни рождения» (шаг 6Б), «Правка приёмов» (шаг 5А); «Отметки приёма» убраны 2026-11-21
+  expect(bar.get('Сообщения пациентам')).toHaveAttribute('aria-current', 'page')
+  // 2026-11-26: 20 пунктов → 6 с вкладками внутри (владелец: «слишком много подвкладок»)
+  expect(bar.titles()).toEqual(['Сообщения пациентам', 'Привлечение пациентов', 'Документы для пациента', 'Приём', 'Пациенты и скидки', 'Клиника в Tish'])
   expect(within(nav()).queryByRole('group', { name: 'Настройки' })).not.toBeInTheDocument()
   expect(within(nav()).getByRole('button', { name: 'Раскрыть подразделы: Настройки' })).toHaveAttribute('aria-expanded', 'false')
-  await userEvent.click(bar.get('Памятки после процедур'))
-  expect(window.location.hash).toBe('#/settings/memos')
-  expect(await screen.findByRole('heading', { name: 'Памятки после процедур' })).toBeInTheDocument()
+  await userEvent.click(bar.get('Документы для пациента'))
+  expect(window.location.hash).toBe('#/settings/documents')
+  expect(await screen.findByRole('heading', { name: 'Документы для пациента' })).toBeInTheDocument()
+  expect(await screen.findByRole('tab', { name: 'Анкета' })).toHaveAttribute('aria-selected', 'true')
+  // Вкладка — в адресе (заменой)
+  await userEvent.click(screen.getByRole('tab', { name: 'Памятки' }))
+  expect(window.location.hash).toBe('#/settings/documents/memos')
   expect(screen.queryByRole('button', { name: '‹ Настройки' })).not.toBeInTheDocument()
-  // Старые ссылки (бот, подсказки): #/settings/promo — вкладка «Откуда приходят пациенты»
+  // Старые ссылки (бот, подсказки): #/settings/promo — «Привлечение пациентов» на вкладке «Промокоды»
   go('/settings/promo')
-  await waitFor(async () => expect((await findSubs('Настройки')).get('Откуда приходят пациенты')).toHaveAttribute('aria-current', 'page'))
+  await waitFor(async () => expect((await findSubs('Настройки')).get('Привлечение пациентов')).toHaveAttribute('aria-current', 'page'))
+  expect(window.location.hash).toBe('#/settings/attract/promo')
+  expect(await screen.findByRole('tab', { name: 'Промокоды' })).toHaveAttribute('aria-selected', 'true')
+  // Открытый пункт переключает вкладку по ссылке на другой прежний пункт того же пункта
+  go('/settings/sources')
+  await waitFor(() => expect(screen.getByRole('tab', { name: 'Откуда узнают' })).toHaveAttribute('aria-selected', 'true'))
 })
 
 test('«Настройки» у ассистента: только его пункты; пункт не для его роли — первый его пункт', async () => {
@@ -271,8 +281,11 @@ test('«Настройки» у ассистента: только его пун
   renderApp()
   const bar = await findSubs('Настройки')
   // Тарифа ассистенту нет — открыт первый его пункт
-  expect(bar.titles()).toEqual(['Памятки после процедур', 'Откуда приходят пациенты'])
-  expect(bar.get('Памятки после процедур')).toHaveAttribute('aria-current', 'page')
+  expect(bar.titles()).toEqual(['Привлечение пациентов', 'Документы для пациента'])
+  expect(bar.get('Привлечение пациентов')).toHaveAttribute('aria-current', 'page')
+  // Видна одна вкладка («Откуда узнают»: промокодов ассистенту нет) — без ряда вкладок
+  expect(await screen.findByRole('heading', { name: 'Привлечение пациентов' })).toBeInTheDocument()
+  expect(screen.queryByRole('tablist', { name: 'Привлечение пациентов' })).not.toBeInTheDocument()
 })
 
 test('старый вид (?ui=v1): у «Настроек» и «Клиники» — вкладки-ссылки; v2: круглая «‹» с тем же именем открывает лист пунктов', async () => {

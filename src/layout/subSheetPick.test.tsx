@@ -89,7 +89,7 @@ async function openSheet(title: string) {
 }
 
 test.each([
-  ['settings', 'Настройки', 'Напоминание о приёме', 'Пригласить коллег', '#/settings/plan'],
+  ['settings', 'Настройки', 'Сообщения пациентам', 'Клиника в Tish', '#/settings/account'],
   ['cash', 'Касса', 'Деньги', 'Должники', '#/cash/debtors'],
 ])('%s: пункт из листа подразделов открывается; сначала лист снимает свою запись истории, потом переход', async (page, title, first, pick, hash) => {
   window.location.hash = `/${page}`
@@ -119,20 +119,22 @@ test.each([
 test('Настройки: вкладка и экран — из одного источника; закрыли лист без выбора — пункт тот же', async () => {
   window.location.hash = '/settings/plan'
   renderApp()
-  expect(await screen.findByRole('heading', { name: 'Пригласить коллег' })).toBeInTheDocument()
+  expect(await screen.findByRole('heading', { name: 'Клиника в Tish' })).toBeInTheDocument()
+  // Телефон — короткое название вкладки
+  expect(await screen.findByRole('tab', { name: 'Коллеги' })).toHaveAttribute('aria-selected', 'true')
   // Вернулись на адрес раздела без пункта (назад, ссылка) — и вкладка, и экран: последний открытый пункт
   window.location.hash = '/settings'
   await new Promise((r) => setTimeout(r, 50))
-  expect(await current('Настройки')).toBe('Пригласить коллег')
-  expect(screen.getByRole('heading', { name: 'Пригласить коллег' })).toBeInTheDocument()
+  expect(await current('Настройки')).toBe('Клиника в Tish')
+  expect(screen.getByRole('heading', { name: 'Клиника в Tish' })).toBeInTheDocument()
 
   const sheet = await openSheet('Настройки')
   await userEvent.click(within(sheet).getByRole('button', { name: 'Закрыть' }))
   expect(screen.queryByRole('menu', { name: 'Подразделы: Настройки' })).not.toBeInTheDocument()
   await waitForSlow(() => expect(depth()).toBe(0))
   expect(window.location.hash).toBe('#/settings')
-  expect(await current('Настройки')).toBe('Пригласить коллег')
-  expect(screen.getByRole('heading', { name: 'Пригласить коллег' })).toBeInTheDocument()
+  expect(await current('Настройки')).toBe('Клиника в Tish')
+  expect(screen.getByRole('heading', { name: 'Клиника в Tish' })).toBeInTheDocument()
 })
 
 test('«назад» (история браузера) закрывает лист из нижнего меню — раздел не меняется', async () => {

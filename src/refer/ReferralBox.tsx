@@ -52,7 +52,7 @@ export function ReferralBox({ patient, canEdit, link, onCloseLink, onOpenPatient
     <section className="referral-box" aria-label="Приведи друга">
       <h3>🎁 Приведи друга</h3>
       {link && c.enabled && <ReferralLink patient={patient} onClose={onCloseLink} />}
-      {link && !c.enabled && <p className="hint" role="status">«Приведи друга» выключено — включает руководитель в «Настройки → Приведи друга».</p>}
+      {link && !c.enabled && <p className="hint" role="status">«Приведи друга» выключено — включает руководитель в «Настройки → Привлечение пациентов → Приведи друга».</p>}
       {c.inviterId != null ? (
         <p>Пригласил: {name(c.inviterId, c.inviterName ?? 'пациент')}
           <span className="hint small"> · {c.channel ? CHANNEL[c.channel] : ''}{c.referredAt ? `, ${shortDate(c.referredAt)}` : ''}</span>

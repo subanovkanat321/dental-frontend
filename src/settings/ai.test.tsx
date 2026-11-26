@@ -91,8 +91,9 @@ test('пункт «ИИ в клинике» — только у админист
   renderApp()
   openItem('')
   const tabs = await findSubs('Настройки')
-  expect(tabs.get('Памятки после процедур')).toBeInTheDocument()
-  expect(tabs.query(/ИИ в клинике/)).not.toBeInTheDocument()
+  expect(tabs.get('Документы для пациента')).toBeInTheDocument()
+  // «ИИ в клинике» — вкладка «Клиники в Tish»: у врача без прав руководителя нет ни пункта, ни вкладки
+  expect(tabs.query(/Клиника в Tish/)).not.toBeInTheDocument()
 })
 
 test('лимит ИИ клинике пока не показываем: счётчика «N из M» нет', async () => {

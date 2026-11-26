@@ -32,15 +32,11 @@ async function groups(who: Me): Promise<[string, string[]][]> {
   return result
 }
 
-test('порядок: в «Настройках» группы — пациентам, аккаунт клиники, приём и карточка пациента (метки); «Для пациента» — только раздел меню, без дубля', async () => {
+test('порядок: в «Настройках» 6 пунктов с вкладками (2026-11-26, было 20) — пациентам, работа клиники, аккаунт; «Для пациента» — только раздел меню, без дубля', async () => {
   expect(await groups(me)).toEqual([
-    ['Что получают пациенты', ['Напоминание о приёме', 'Напоминание о долге', 'Оценка приёма', 'Дни рождения', 'Приведи друга', 'WhatsApp', 'Анкета пациента', 'Договор с пациентом', 'Памятки после процедур', 'Новости для пациентов', 'Откуда приходят пациенты']],
-    ['Аккаунт клиники', ['Пригласить коллег', 'Договор с Tish', 'Импорт, выгрузка, журнал', 'ИИ в клинике']],
-    // Шаг 2: шаблоны приёма и разделы заметки — врачам и руководителю
-    ['Приём', ['Шаблоны и заметка', 'Шаблоны плана', 'Правка приёмов']],
-    ['Карточка пациента', ['Метки пациентов']],
-    // Шаг 3Б: кто может давать скидку — руководитель
-    ['Деньги', ['Скидки']],
+    ['Пациентам', ['Сообщения пациентам', 'Привлечение пациентов', 'Документы для пациента']],
+    ['Работа клиники', ['Приём', 'Пациенты и скидки']],
+    ['Аккаунт', ['Клиника в Tish']],
   ])
   // Профиль, установка, уведомления и выход — в блоке «Я» внизу меню, не на главной «Настроек»
   expect(screen.queryByRole('button', { name: 'Изменить профиль' })).not.toBeInTheDocument()
@@ -58,8 +54,8 @@ async function clinicItems(who: Me): Promise<string[]> {
 
 test('роли: каждый видит те же пункты, что и раньше (с учётом переезда в «Клинику»)', async () => {
   const flat = async (who: Me) => (await groups(who)).flatMap(([, items]) => items)
-  // Врач без прав админа: без текста напоминания, договора, новостей, тарифа, договора с Tish, данных и ИИ
-  expect(await flat(doctor)).toEqual(['Анкета пациента', 'Памятки после процедур', 'Откуда приходят пациенты', 'Шаблоны и заметка', 'Шаблоны плана'])
+  // Врач без прав админа: без сообщений пациентам, меток и скидок, «Клиники в Tish»; внутри пунктов — только его вкладки
+  expect(await flat(doctor)).toEqual(['Привлечение пациентов', 'Документы для пациента', 'Приём'])
   document.body.innerHTML = ''
   expect(await clinicItems(doctor)).toEqual(['О клинике', 'Персонал', 'Услуги и цены', 'Рабочее время'])
   document.body.innerHTML = ''
@@ -68,20 +64,20 @@ test('роли: каждый видит те же пункты, что и ран
 
 test('роли: ассистенту — без цен услуг и анкеты; регистратуре — услуги без анкеты', async () => {
   const flat = async (who: Me) => (await groups(who)).flatMap(([, items]) => items)
-  expect(await flat(assistant)).toEqual(['Памятки после процедур', 'Откуда приходят пациенты'])
+  expect(await flat(assistant)).toEqual(['Привлечение пациентов', 'Документы для пациента'])
   document.body.innerHTML = ''
   expect(await clinicItems(assistant)).toEqual(['О клинике', 'Персонал', 'Рабочее время'])
   document.body.innerHTML = ''
-  expect(await flat(reception)).toEqual(['Памятки после процедур', 'Откуда приходят пациенты'])
+  expect(await flat(reception)).toEqual(['Привлечение пациентов', 'Документы для пациента'])
   document.body.innerHTML = ''
   expect(await clinicItems(reception)).toEqual(['О клинике', 'Персонал', 'Услуги и цены', 'Рабочее время'])
 })
 
-test('«Откуда приходят пациенты»: вкладки «Откуда узнают» и «Промокоды»; старый адрес промокодов открывает их вкладку; ассистенту — без промокодов', async () => {
+test('«Привлечение пациентов»: вкладки «Откуда узнают» и «Промокоды»; старый адрес промокодов открывает их вкладку; ассистенту — без промокодов', async () => {
   server.use(http.get('*/api/patient/me', () => HttpResponse.json(me)))
   openItem('promo')
   const { unmount } = renderApp()
-  expect(await screen.findByRole('heading', { name: 'Откуда приходят пациенты' })).toBeInTheDocument()
+  expect(await screen.findByRole('heading', { name: 'Привлечение пациентов' })).toBeInTheDocument()
   expect(await screen.findByRole('tab', { name: 'Промокоды' })).toHaveAttribute('aria-selected', 'true')
   await userEvent.click(screen.getByRole('tab', { name: 'Откуда узнают' }))
   expect(await screen.findByRole('table', { name: 'Откуда узнают о клинике' })).toBeInTheDocument()
@@ -90,7 +86,7 @@ test('«Откуда приходят пациенты»: вкладки «От�
   server.use(http.get('*/api/patient/me', () => HttpResponse.json(assistant)))
   openItem('sources')
   renderApp()
-  expect(await screen.findByRole('heading', { name: 'Откуда приходят пациенты' })).toBeInTheDocument()
+  expect(await screen.findByRole('heading', { name: 'Привлечение пациентов' })).toBeInTheDocument()
   expect(screen.queryByRole('tab', { name: 'Промокоды' })).not.toBeInTheDocument()
 })
 

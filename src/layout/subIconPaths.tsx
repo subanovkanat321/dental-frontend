@@ -70,11 +70,8 @@ export const SUB_ICONS: Partial<Record<Page, Record<string, ReactNode>>> = {
     ai: P.sparkles, health: P.pulse, settings: P.sliders,
   },
   clinic: { about: P.clinic, staff: P.people, services: P.tag, hours: P.clock, chairs: P.chair },
-  settings: {
-    reminder: P.bell, debt: P.debtor, reviews: P.star, birthdays: P.gift, referral: P.people, whatsapp: P.chat, questions: P.clipList, contract: P.signDoc, memos: P.note, 'patient-news': P.news, sources: P.megaphone,
-    tags: P.tag, plan: P.card, agreement: P.checkDoc, data: P.database, ai: P.sparkles, 'visit-templates': P.layers, discounts: P.wallet,
-    'plan-templates': P.list, 'visit-edit': P.clock,
-  },
+  // С 2026-11-26 — 6 пунктов с вкладками (settings/items)
+  settings: { messages: P.bell, attract: P.megaphone, documents: P.clipList, visits: P.layers, patients: P.tag, account: P.sliders },
 }
 
 
@@ -84,11 +81,7 @@ export const SUB_ICONS: Partial<Record<Page, Record<string, ReactNode>>> = {
  * оттенок раздела. Разделы с ярким своим цветом (Пациенты, Касса, Склад) — одним оттенком: там он и так виден.
  */
 export const SUB_TONES: Partial<Record<Page, Record<string, string>>> = {
-  settings: {
-    reminder: 'stock', debt: 'cash', reviews: 'instagram', birthdays: 'memo', referral: 'patients', whatsapp: 'patients', questions: 'patients', contract: 'schedule', memos: 'memo', 'patient-news': 'platform', sources: 'instagram',
-    tags: 'patients', plan: 'cash', agreement: 'settings', data: 'data', ai: 'ai', 'visit-templates': 'schedule', discounts: 'cash',
-    'plan-templates': 'patients', 'visit-edit': 'schedule',
-  },
+  settings: { messages: 'stock', attract: 'instagram', documents: 'memo', visits: 'schedule', patients: 'patients', account: 'settings' },
   clinic: { about: 'clinic', staff: 'patients', services: 'stock', hours: 'schedule', chairs: 'learn' },
   platform: {
     clinics: 'platform', analytics: 'patients', finance: 'finance', feedback: 'support', mailing: 'schedule', marketing: 'instagram',

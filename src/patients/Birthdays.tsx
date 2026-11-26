@@ -64,7 +64,7 @@ export function BirthdayList({ onOpen, onSettings }: { onOpen?: (patientId: numb
 
 /**
  * «🎁 Подарок: скидка 10 % (код ДР10) · изменить» над списком (2026-11-24: владелец не нашёл, где подарок). «Изменить» —
- * только руководителю: ведёт в «Настройки → Дни рождения».
+ * только руководителю: ведёт в «Настройки → Привлечение пациентов → Дни рождения».
  */
 function GiftLine({ gift, code, onSettings }: { gift?: string; code?: string; onSettings?: () => void }) {
   const me = useMe()

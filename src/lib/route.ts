@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 
+import { SETTINGS_ALIAS } from '../settings/items'
+
 /**
  * Разделы CRM. Адрес — во фрагменте (#/patients): CRM отдаёт nginx одним index.html.
  * «Клиника» (#/clinic/<пункт>) — раздел меню с 2026-11-10 (бывшая группа «Настроек»). «Я» (#/me/<пункт>)
@@ -52,6 +54,8 @@ export function hashParts(): [string, string | undefined] {
   const [name = '', item] = window.location.hash.replace(/^#\/?/, '').split('/')
   let to: string | undefined
   if (name === 'settings' && item && MOVED[item]) to = MOVED[item]
+  // Пункт «Настроек», ставший вкладкой (2026-11-26): #/settings/reminder → #/settings/messages/reminder
+  else if (name === 'settings' && item && SETTINGS_ALIAS[item]) to = `settings/${SETTINGS_ALIAS[item]}/${item}`
   else if (OLD[name]) to = OLD[name]
   else if (name === 'clinic' && (item === 'doctors' || item === 'members')) to = 'clinic/staff'
   else if (name === 'platform' && item && PLATFORM_MOVED[item]) to = `platform/${PLATFORM_MOVED[item]}`
@@ -67,7 +71,7 @@ function current(): Page {
   return (PAGES as readonly string[]).includes(name) ? (name as Page) : 'schedule'
 }
 
-/** Пункт раздела из адреса: #/settings/reminder → 'reminder', #/me/profile → 'profile'; без пункта — null. */
+/** Пункт раздела из адреса: #/settings/messages → 'messages', #/me/profile → 'profile'; без пункта — null. */
 export function itemOf(page: Page): string | null {
   const [name, item] = hashParts()
   return name === page && item ? item : null
@@ -143,6 +147,20 @@ export function platformModeInHash(sub: string): string | null {
   hashParts()
   const [name, item, mode] = window.location.hash.replace(/^#\/?/, '').split('/')
   return name === 'platform' && item === sub && mode ? mode : null
+}
+
+/** Вкладка пункта «Настроек» из адреса: #/settings/messages/debt → 'debt'; нет — null. */
+export function settingsTabInHash(item: string): string | null {
+  hashParts()
+  const [name, sub, tab] = window.location.hash.replace(/^#\/?/, '').split('/')
+  return name === 'settings' && sub === item && tab ? tab : null
+}
+
+/** Выбрали вкладку пункта «Настроек» — адрес заменой (как режимы «Платформы»): обновили страницу — та же вкладка. */
+export function setSettingsTabInHash(item: string, tab: string): void {
+  const [name, sub] = window.location.hash.replace(/^#\/?/, '').split('/')
+  if (name !== 'settings' || (sub && sub !== item)) return
+  window.history.replaceState(window.history.state, '', `${window.location.pathname}${window.location.search}#/settings/${item}/${tab}`)
 }
 
 /** Карточка «Позвать снова» из адреса: #/patients/comeback/dropped → 'dropped'; нет — null. */

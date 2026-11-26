@@ -63,7 +63,8 @@ test('«Напоминание о приёме»: для справки — по
   backend()
   renderApp()
   openItem('reminder')
-  expect(await screen.findByRole('heading', { name: 'Напоминание о приёме' })).toBeInTheDocument()
+  expect(await screen.findByRole('heading', { name: 'Сообщения пациентам' })).toBeInTheDocument()
+  expect(screen.getByRole('tab', { name: 'Напоминание о приёме' })).toHaveAttribute('aria-selected', 'true')
   expect(await screen.findByText(/за 2 часа до приёма бот сам пишет/)).toBeInTheDocument()
   const others = screen.getByRole('region', { name: 'Другие сообщения о приёме' })
   expect(within(others).getByRole('figure', { name: 'За 2 часа до приёма' }))
@@ -109,8 +110,8 @@ test('не админ пункта не видит', async () => {
   renderApp()
   openItem('')
   const tabs = await findSubs('Настройки')
-  expect(tabs.get('Памятки после процедур')).toBeInTheDocument()
-  expect(tabs.query(/Напоминание о приёме/)).not.toBeInTheDocument()
+  expect(tabs.get('Документы для пациента')).toBeInTheDocument()
+  expect(tabs.query(/Сообщения пациентам/)).not.toBeInTheDocument()
 })
 
 test('«Номер в напоминаниях»: по умолчанию клиники; «Номер врача приёма» сохраняется сразу, предпросмотр — с номером врача', async () => {

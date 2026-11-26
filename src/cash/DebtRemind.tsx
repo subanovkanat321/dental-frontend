@@ -12,7 +12,7 @@ import './debtors.css'
 type Debt = Schemas['PaymentQueryDebt']
 
 /**
- * «Напомнить о долге»: текст с суммой с сервера (свой шаблон клиники — «Настройки → Напоминание о долге»), как он
+ * «Напомнить о долге»: текст с суммой с сервера (свой шаблон клиники — «Настройки → Сообщения пациентам → Напоминание о долге»), как он
  * уйдёт пациенту, и кнопки: «📤 В Telegram» — бот отправит сам, «WhatsApp» — откроется с этим текстом. Текст здесь
  * не правят: сумма — только с сервера. Напоминали меньше 3 дней назад — кнопок нет, вместо них — когда можно снова.
  */
@@ -51,7 +51,7 @@ export function DebtRemindForm({ patientId, name, onDone }: { patientId: number;
   const early = d.nextAt != null
   return (
     <form className="form debt-remind" aria-label={`Напоминание о долге${name ? `: ${name}` : ''}`} onSubmit={(e) => e.preventDefault()}>
-      <p className="hint small">Так увидит пациент{d.lang === 'KY' ? ' (на кыргызском — выбрал в боте)' : ''}. Текст — в «Настройки → Напоминание о долге».</p>
+      <p className="hint small">Так увидит пациент{d.lang === 'KY' ? ' (на кыргызском — выбрал в боте)' : ''}. Текст — в «Настройки → Сообщения пациентам → Напоминание о долге».</p>
       <p className="debt-bubble">{d.text}</p>
       {d.qr && d.telegram && <p className="hint small">📎 В Telegram следом уйдёт картинка QR для оплаты; в WhatsApp — ссылка на неё.</p>}
       {early ? (

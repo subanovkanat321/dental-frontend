@@ -172,7 +172,7 @@ export function AgreementsBlock({ id, opened, onOpen }: { id?: string; opened: n
       <div className="block-head">
         <h2>Договор с клиниками{versions.length > 0 && <span className="hint num"> · версий: {versions.length}</span>}
           <HelpHint title="Договор с клиниками">Неопубликованную версию видите только вы. Опубликованную видят руководители клиник, которым она адресована
-            (всем или выбранным), и подписывают её в «Настройки → Договор с Tish»; менять текст нельзя — выпустите новую. Какую версию подписать
+            (всем или выбранным), и подписывают её в «Настройки → Клиника в Tish → Договор с Tish»; менять текст нельзя — выпустите новую. Какую версию подписать
             конкретной клинике — в её карточке («Клиники → клиника → Договор»). Перед публикацией — показать юристу.</HelpHint></h2>
         {versions.length > 0 && !draft && <button type="button" className="btn primary" disabled={start.isPending} onClick={() => start.mutate()}>Новая версия (из действующей)</button>}
       </div>

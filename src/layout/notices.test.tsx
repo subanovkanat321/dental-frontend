@@ -22,7 +22,9 @@ test('админу: новый договор — напоминание вед�
   expect(screen.queryByText(/Приложение:|Продлить|оплат/)).not.toBeInTheDocument()
   expect(billingAsked).toBe(false)
   await userEvent.click(await screen.findByRole('button', { name: /Договор с платформой обновился \(версия 2\)/ }))
-  expect(window.location.hash).toBe('#/settings/agreement')
+  // Старый адрес пункта — вкладка «Договор с Tish» пункта «Клиника в Tish» (2026-11-26)
+  expect(window.location.hash).toBe('#/settings/account/agreement')
+  expect(await screen.findByRole('tab', { name: 'Договор с Tish' })).toHaveAttribute('aria-selected', 'true')
 })
 
 test('врачу напоминаний нет', async () => {

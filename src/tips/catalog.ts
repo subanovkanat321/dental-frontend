@@ -3,6 +3,7 @@ import { subsOf } from '../layout/nav'
 import type { Page } from '../lib/route'
 import { TISH_INSTAGRAM } from '../lib/brand'
 import { isAssistant, seesAllMoney, seesOwnEarnings } from '../lib/roles'
+import { settingsVisible } from '../settings/items'
 
 type Me = Schemas['BookingViewsMe']
 
@@ -34,6 +35,8 @@ export type Tip = {
 /** Подраздел есть у этого человека в меню (Касса — не у ассистента: денег он не видит). */
 function hasSub(me: Me, page: Page, sub: string): boolean {
   if (page === 'cash' && isAssistant(me)) return false
+  // Прежние пункты «Настроек» с 2026-11-26 — вкладки объединённых пунктов: видна ли вкладка
+  if (page === 'settings') return settingsVisible(me, sub)
   return subsOf(page, me).some((s) => s.key === sub)
 }
 
@@ -365,7 +368,7 @@ export const TIPS: Tip[] = [
   {
     id: 'patient-tags',
     title: 'Свои метки пациентов',
-    text: '«Боится», «Опаздывает», «По рекомендации» — цветные точки у имени в расписании и в карточке пациента. Список — «Настройки → Метки пациентов».',
+    text: '«Боится», «Опаздывает», «По рекомендации» — цветные точки у имени в расписании и в карточке пациента. Список — «Настройки → Пациенты и скидки → Метки».',
     action: { show: 'settings/tags' },
     show: (me) => hasSub(me, 'settings', 'tags'),
   },

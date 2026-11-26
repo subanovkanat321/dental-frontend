@@ -168,7 +168,7 @@ test('ассистент только смотрит: подписанный д�
   expect(within(box).queryByRole('button', { name: '📎 Загрузить скан' })).not.toBeInTheDocument()
 })
 
-test('«Настройки → Договор с пациентом»: подстановка кнопкой, неизвестная — предупреждение, сохранить', async () => {
+test('«Настройки → Документы для пациента → Договор»: подстановка кнопкой, неизвестная — предупреждение, сохранить', async () => {
   const template: Schemas['PatientContractsTemplate'] = {
     title: 'Договор', body: 'Пациент: {пациент}.', requisites: '', custom: false,
     variables: ['клиника', 'пациент', 'дата рождения', 'реквизиты', 'врач'], defaultTitle: 'Договор', defaultBody: 'Пациент: {пациент}.',
@@ -277,7 +277,7 @@ test('ассистенту «⋯ → Оформить договор» нет: �
   expect(screen.queryByRole('menuitem', { name: /^Оформить договор/ })).not.toBeInTheDocument()
 })
 
-test('«Настройки → Договор с пациентом»: «Предлагать договор всем пациентам» — сохраняется сразу', async () => {
+test('«Настройки → Документы для пациента → Договор»: «Предлагать договор всем пациентам» — сохраняется сразу', async () => {
   const template: Schemas['PatientContractsTemplate'] = {
     title: 'Договор', body: 'Пациент: {пациент}.', requisites: '', custom: false, variables: ['пациент'], defaultTitle: 'Договор',
     defaultBody: 'Пациент: {пациент}.',

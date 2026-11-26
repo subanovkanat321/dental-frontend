@@ -21,7 +21,7 @@ export function fromLine(line: Pick<Line, 'priceSom' | 'qty' | 'amountSom' | 'di
 
 /**
  * Тело PUT строки: цена за единицу и скидка на строку. Цена ниже цены строки — скидка на разницу × количество; нельзя по
- * «Настройки → Скидки» — просто новая цена (как раньше). Скидки нет — снять (`{}`).
+ * «Настройки → Пациенты и скидки → Скидки» — просто новая цена (как раньше). Скидки нет — снять (`{}`).
  */
 export function lineMoney(d: PriceDraft, qty: number, policy?: Policy): {
   priceSom?: number; discount: { percent?: number; som?: number }; off: number; blocked: string

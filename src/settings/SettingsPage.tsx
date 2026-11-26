@@ -4,7 +4,7 @@ import { PaintSwitch } from '../schedule/PaintSwitch'
 import type { AccountTab } from '../account/AccountPage'
 import { logout, logoutEverywhere, type Schemas } from '../api/client'
 import type { ClinicTab } from '../clinic/ClinicPage'
-import { backFromMine, itemOf } from '../lib/route'
+import { backFromMine, itemOf, setSettingsTabInHash, settingsTabInHash } from '../lib/route'
 import { ask, notify } from '../lib/confirm'
 import { telegram } from '../lib/telegram'
 import { setTextSize, setThemeChoice, TEXT_SIZES, textSize, themeChoice, THEMES } from '../lib/theme'
@@ -13,8 +13,10 @@ import { InstallApp } from '../pwa/InstallApp'
 import { Notifications } from '../pwa/Notifications'
 import { Loading } from '../layout/Loading'
 import { useSub } from '../lib/sub'
-import { CLINIC_ITEMS, HELP_ITEMS, ME_ITEMS, SETTINGS_GROUPS, type SettingsItem } from './items'
-import { ItemHost, type ItemHostKind } from './itemHost'
+import { useMedia } from '../lib/useMedia'
+import { CLINIC_ITEMS, HELP_ITEMS, ME_ITEMS, SETTINGS_ALIAS, SETTINGS_GROUPS, type SettingsItem } from './items'
+import { ItemChrome, ItemHost, type ItemHostKind } from './itemHost'
+import { ItemTabs } from './ItemTabs'
 import { SubHeader } from './SubHeader'
 
 // Экраны пунктов — своими чанками: список «Настроек» открывается сразу (~10 КБ вместо ~110 КБ),
@@ -36,7 +38,6 @@ const ReminderTextPage = lazy(() => import('./ReminderTextPage').then((m) => ({ 
 const VisitTemplatesPage = lazy(() => import('./VisitTemplatesPage').then((m) => ({ default: m.VisitTemplatesPage })))
 const PlanTemplatesPage = lazy(() => import('./PlanTemplatesPage').then((m) => ({ default: m.PlanTemplatesPage })))
 const AiPage = lazy(() => import('./AiPage').then((m) => ({ default: m.AiPage })))
-const SourcesPage = lazy(() => import('./SourcesPage').then((m) => ({ default: m.SourcesPage })))
 const ContractTemplatePage = lazy(() => import('../contract/ContractTemplatePage').then((m) => ({ default: m.ContractTemplatePage })))
 const TagsPage = lazy(() => import('./TagsPage').then((m) => ({ default: m.TagsPage })))
 const DiscountsPage = lazy(() => import('./DiscountsPage').then((m) => ({ default: m.DiscountsPage })))
@@ -75,8 +76,8 @@ const RENDER: Record<string, (title: string) => Render> = {
   contract: () => (me, back) => <ContractTemplatePage me={me} onBack={back} />,
   memos: (t) => clinic('memos', t),
   'patient-news': (t) => clinic('news', t),
-  sources: () => (me, back) => <SourcesPage me={me} onBack={back} initial="sources" />,
-  promo: () => (me, back) => <SourcesPage me={me} onBack={back} initial="promo" />,
+  sources: (t) => clinic('sources', t),
+  promo: (t) => clinic('promo', t),
   tags: () => (me, back) => <TagsPage me={me} onBack={back} />,
   discounts: () => (me, back) => <DiscountsPage me={me} onBack={back} />,
   'visit-edit': () => (me, back) => <VisitEditPage me={me} onBack={back} />,
@@ -101,21 +102,58 @@ const RENDER: Record<string, (title: string) => Render> = {
 }
 
 /** Экран пункта — своим кусочком кода (Suspense); key — свой экран у каждого пункта: «Мой профиль» и «Персонал» не делят открытую карточку. */
-function ItemScreen({ host, item, me, back, ticketId }: { host: ItemHostKind; item: SettingsItem; me: Me; back: () => void; ticketId?: number }) {
+function ItemScreen({ host, item, me, back, ticketId, tab }: { host: ItemHostKind; item: SettingsItem; me: Me; back: () => void; ticketId?: number; tab?: string }) {
   return (
     <ItemHost.Provider value={host}>
       <div key={item.key} className="settings-item" data-host={host}>
-        {/* «Клиника» и «Настройки»: пока грузится кусочек кода пункта — уже его шапка, чтобы вкладки подразделов на телефоне
-            не пропадали на миг (страница под ними прыгала бы на их высоту) */}
-        <Suspense fallback={host === 'clinic' || host === 'settings' ? <><SubHeader title={item.title} onBack={back} /><Loading /></> : <Loading />}>{RENDER[item.key]!(item.title)(me, back, { ticketId })}</Suspense>
+        {item.tabs ? <TabbedItem item={item} me={me} back={back} initial={tab} /> : (
+          /* «Клиника» и «Настройки»: пока грузится кусочек кода пункта — уже его шапка, чтобы вкладки подразделов на телефоне
+             не пропадали на миг (страница под ними прыгала бы на их высоту) */
+          <Suspense fallback={host === 'clinic' || host === 'settings' ? <><SubHeader title={item.title} onBack={back} /><Loading /></> : <Loading />}>{RENDER[item.key]!(item.title)(me, back, { ticketId })}</Suspense>
+        )}
       </div>
     </ItemHost.Provider>
   )
 }
 
-/** Пункт по ключу — если он есть, виден этой роли и у него есть экран. */
+/**
+ * Пункт «Настроек» с вкладками (с 2026-11-26): вкладка — прежний пункт со своим экраном и правами. Видна одна —
+ * без ряда вкладок. Выбранная — в адресе (#/settings/messages/debt, заменой: вкладки не копят шаги «назад»); ссылка
+ * на прежний пункт (#/settings/debt) приходит сюда уже вкладкой (lib/route) — и открытый пункт переключается на неё.
+ * На телефоне названия вкладок короче (`short`): четыре полных в 390px не помещаются.
+ */
+function TabbedItem({ item, me, back, initial }: { item: SettingsItem; me: Me; back: () => void; initial?: string }) {
+  const tabs = (item.tabs ?? []).filter((t) => t.show(me) && RENDER[t.key])
+  const [chosen, setChosen] = useState(() => settingsTabInHash(item.key) ?? initial)
+  useEffect(() => {
+    const onHash = () => {
+      const t = settingsTabInHash(item.key)
+      if (t) setChosen(t)
+    }
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
+  }, [item.key])
+  // Та же граница, что у телефонного вида вкладок (crm.css, tokens.css)
+  const phone = useMedia('(max-width: 760px)')
+  const current = tabs.find((t) => t.key === chosen) ?? tabs[0]
+  if (!current) return null
+  const pick = (key: string) => {
+    setChosen(key)
+    setSettingsTabInHash(item.key, key)
+  }
+  const bar = tabs.length > 1
+    ? <ItemTabs label={item.title} value={current.key} onChange={pick} tabs={tabs.map((t) => [t.key, phone && t.short ? t.short : t.title])} />
+    : null
+  return (
+    <ItemChrome.Provider value={{ title: item.title, tabs: bar }}>
+      <Suspense key={current.key} fallback={<><SubHeader title={item.title} onBack={back} /><Loading /></>}>{RENDER[current.key]!(current.title)(me, back, {})}</Suspense>
+    </ItemChrome.Provider>
+  )
+}
+
+/** Пункт по ключу — если он есть, виден этой роли и у него есть экран (или вкладки). */
 function findItem(items: SettingsItem[], key: string | null | undefined, me: Me): SettingsItem | undefined {
-  return items.find((i) => i.key === key && i.show(me) && RENDER[i.key])
+  return items.find((i) => i.key === key && i.show(me) && (i.tabs || RENDER[i.key]))
 }
 
 /** Следим за адресом: пункт раздела (#/me/profile → 'profile'). */
@@ -156,20 +194,22 @@ export function MineSection({ me, page, initialTicket }: { me: Me; page: 'me' | 
 }
 
 /**
- * «Настройки» (#/settings/<пункт>) — с 2026-11-13 раздел с подразделами, как «Клиника»: пункты — вкладками сверху,
- * весь список группами («Что получают пациенты», «Аккаунт клиники») — в листе «⌄» и в панели у меню. Без пункта
- * в адресе (или пункт не для этой роли) — первый пункт роли; скрытые пункты (#/settings/promo) открываются, вкладка —
- * их основной пункт (SETTINGS_ALIAS). Отдельной страницы-списка больше нет. Остальное, что было здесь до 2026-11-10:
+ * «Настройки» (#/settings/<пункт>) — с 2026-11-13 раздел с подразделами, как «Клиника»: весь список группами — в листе
+ * «‹» и в панели у меню. С 2026-11-26 пункты — с вкладками (#/settings/<пункт>/<вкладка>, TabbedItem). Без пункта
+ * в адресе (или пункт не для этой роли) — первый пункт роли; прежние пункты (#/settings/reminder) — вкладками своего
+ * пункта (SETTINGS_ALIAS). Отдельной страницы-списка больше нет. Остальное, что было здесь до 2026-11-10:
  * «Клиника» — раздел меню, своё — блок «Я» внизу меню, «Помощь» — внизу меню.
  */
 export function SettingsPage({ me }: { me: Me }) {
   // Тот же источник, что у вкладок (Shell, lib/sub), — а не свой слушатель адреса: иначе вкладка и экран могли
   // разойтись (вкладка — выбранный пункт, экран — первый; 2026-11-13, лист «⌄» на iPhone)
   const current = useSub('settings')
+  // Прежний пункт, ставший вкладкой (запомненный последним до 2026-11-26), — его пункт на этой вкладке
+  const merged = current ? SETTINGS_ALIAS[current] : undefined
   const items = SETTINGS_GROUPS.flatMap(([, list]) => list)
-  const found = findItem(items, current, me) ?? items.find((i) => !i.hidden && i.show(me) && RENDER[i.key])
+  const found = findItem(items, merged ?? current, me) ?? items.find((i) => !i.hidden && i.show(me) && (i.tabs || RENDER[i.key]))
   if (!found) return null
-  return <ItemScreen host="settings" item={found} me={me} back={() => {}} />
+  return <ItemScreen host="settings" item={found} me={me} back={() => {}} tab={merged ? current! : undefined} />
 }
 
 const EVERYWHERE_SITE = 'Выйти на всех устройствах? Закроются все входы на сайт Tish — на всех компьютерах и телефонах, '

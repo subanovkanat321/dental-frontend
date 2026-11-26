@@ -22,7 +22,7 @@ afterEach(() => {
   window.location.hash = ''
 })
 
-describe('«Настройки → Метки пациентов»', () => {
+describe('«Настройки → Пациенты и скидки → Метки»', () => {
   beforeEach(() => {
     window.location.hash = '/settings/tags'
   })

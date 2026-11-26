@@ -67,7 +67,7 @@ export function canTag(me: Me): boolean {
   return Boolean(me.admin || me.reception)
 }
 
-/** Список меток меняет руководитель («Настройки → Метки пациентов»). */
+/** Список меток меняет руководитель («Настройки → Пациенты и скидки → Метки»). */
 export function canManageTags(me: Me): boolean {
   return Boolean(me.admin)
 }

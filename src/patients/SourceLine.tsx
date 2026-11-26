@@ -29,7 +29,7 @@ export function SourceLine({ patient: p, canEdit, compact = false, admin = false
   const [open, setOpen] = useState(false)
   const [adding, setAdding] = useState(false)
   const [title, setTitle] = useState('')
-  // Новый вариант: создаём в списке клиники («Настройки → Откуда приходят пациенты») и сразу выбираем пациенту
+  // Новый вариант: создаём в списке клиники («Настройки → Привлечение пациентов → Откуда узнают») и сразу выбираем пациенту
   const add = useMutation<Schemas['PatientSourcesOption'][], ApiError, string>({
     mutationFn: (t) => unwrap(api.POST('/api/patient-sources', { body: { emoji: '', title: t } })),
     // Ответ — весь список вариантов клиники: новый — с этим названием и самым большим id

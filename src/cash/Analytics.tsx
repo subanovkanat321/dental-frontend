@@ -502,7 +502,7 @@ function PromoChart({ period, scope }: { period: Period; scope: { doctorId?: num
         : data.error ? <p className="error">{data.error.message}</p>
           : rows.length === 0 ? (
             data.data?.rows?.length ? <EmptyState compact title="По промокодам за этот период записей нет" />
-              : <EmptyState compact title="Промокодов нет">Заведите код для рекламы в «Настройки → Откуда приходят пациенты → Промокоды» — здесь будет видно, приводит ли он пациентов.</EmptyState>
+              : <EmptyState compact title="Промокодов нет">Заведите код для рекламы в «Настройки → Привлечение пациентов → Промокоды» — здесь будет видно, приводит ли он пациентов.</EmptyState>
           ) : (
             <table className="table" aria-label="Промокоды за период">
               <thead><tr><th>Промокод</th><th className="num">Записей</th><th className="num">Пришли</th><th className="num">Новых</th>

@@ -21,18 +21,14 @@ type Tab = ClinicTab
  * (памятки, анкета, откуда узнают, промокоды, новости): у каждого свой адрес, вкладки здесь — только
  * запасной вид без пункта. Вкладка сама рисует рабочую область и карточку справа.
  */
-export function ClinicPage({ me, only, title, onBack, tabs: itemTabs }: {
-  me: Me; only?: Tab; title?: string; onBack?: () => void
-  /** Вкладки пункта «Настроек», где вместе две вкладки (Откуда узнают + Промокоды) */
-  tabs?: React.ReactNode
-}) {
+export function ClinicPage({ me, only, title, onBack }: { me: Me; only?: Tab; title?: string; onBack?: () => void }) {
   const tabs: [Tab, string][] = [['services', 'Услуги'], ['memos', 'Памятки'], ['about', 'О клинике'], ['questions', 'Анкета'], ['sources', 'Откуда узнают'], ['promo', 'Промокоды'],
     ...(me.admin ? [['news', 'Новости'] as [Tab, string]] : [])]
   const [chosen, setTab] = useState<Tab>('services')
   const tab = only ?? chosen
   const [panel, setPanel] = useState(false)
   const [slot, setSlot] = useHeadSlot()
-  const header = only && onBack ? <SubHeader title={title ?? ''} onBack={onBack} slotRef={setSlot}>{itemTabs}</SubHeader> : (
+  const header = only && onBack ? <SubHeader title={title ?? ''} onBack={onBack} slotRef={setSlot} /> : (
     <header className="toolbar">
       <h1>Клиника</h1>
       <div className="segments tabs" role="tablist" aria-label="Разделы клиники">
