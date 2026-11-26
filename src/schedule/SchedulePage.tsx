@@ -473,13 +473,10 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
       <button type="button" className="doctor-chip order" title="Врачи в расписании: кого показывать и в каком порядке" aria-label="Врачи в расписании…" onClick={() => setOrdering(true)}>⇅</button>
     </div>
   )) || (doctors.length === 1 && (
-    // Один врач — переключать нечего, но чьё расписание, видно (владелец, 2026-11-26): кружок с цветом и имя
-    <div className="doctor-chips single" role="note" aria-label={`Расписание врача: ${doctors[0]!.fullName}`}>
-      <span className="doctor-chip" aria-hidden="true">
-        <span className="avatar" style={{ background: colorOf(doctors[0]!) }}>{initials(doctors[0]!.fullName)}</span>
-        {doctors[0]!.fullName}{doctors[0]!.id === me.doctorId ? ' (я)' : ''}
-      </span>
-    </div>
+    // Один врач — переключать нечего, но чьё расписание, видно (владелец, 2026-11-26): тот же вид, что у выбора врача,
+    // только без ▾ и списка
+    <DoctorPicker me={me} doctors={doctors} view={doctors[0]!.id} date={date} onChange={() => {}} colorDoctors={clinicDoctors}
+      compact={!narrow} readOnly onCalendar={(id) => setCalendar({ id, anchor: null })} />
   ))
 
   if (medical) {

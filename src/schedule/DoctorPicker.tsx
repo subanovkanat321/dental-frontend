@@ -23,7 +23,7 @@ function appointmentsText(n: number): string {
  * из бота; «Все врачи» — последним. Здесь — только своё для расписания: счётчики, «показано 4 из 10», 📅 и
  * «Врачи в расписании…».
  */
-export function DoctorPicker({ me, doctors, view, date, onChange, colorDoctors = doctors, onOrder, shownCount, compact = false, onCalendar }: {
+export function DoctorPicker({ me, doctors, view, date, onChange, colorDoctors = doctors, onOrder, shownCount, compact = false, onCalendar, readOnly = false }: {
   me: Me
   /** Врачи в порядке на экране (schedule/doctorOrder.ts) */
   doctors: Doctor[]
@@ -40,6 +40,8 @@ export function DoctorPicker({ me, doctors, view, date, onChange, colorDoctors =
   compact?: boolean
   /** 📅 рядом с выбранным врачом — его мини-календарь на месяц (DoctorCalendar); у «Все врачи» кнопки нет */
   onCalendar?: (doctorId: number) => void
+  /** Врач один — переключать нечего: вид кнопки без ▾ и списка */
+  readOnly?: boolean
 }) {
   // Сколько записей у каждого врача в этот день — тот же запрос, что у ленты дней раньше
   const counts = useQueries({
@@ -61,7 +63,7 @@ export function DoctorPicker({ me, doctors, view, date, onChange, colorDoctors =
 
   return (
     <DoctorFilter label="Чьё расписание" options={options} value={view === 'all' ? null : view} onChange={(next) => onChange(next ?? 'all')}
-      variant={compact ? 'pill' : 'card'} className={compact ? 'compact' : undefined}
+      variant={compact ? 'pill' : 'card'} className={compact ? 'compact' : undefined} readOnly={readOnly}
       buttonSub={`${appointmentsText(index >= 0 ? booked(index) : total)} ${day}`}
       all={{
         sub: `${appointmentsText(total)} ${day}${partial ? ` · показано ${shownCount} из ${doctors.length}` : ''}`,

@@ -42,5 +42,3 @@
 .doctor-order-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .doctor-order-list .btn { flex: none; width: 44px; min-height: 44px; padding: 0; font-size: 1.15rem; }
 .doctor-order-list .btn:disabled { opacity: .35; cursor: default; }
-/* Один врач в клинике — имя видно, но это не кнопка */
-.doctor-chips.single .doctor-chip { cursor: default; }

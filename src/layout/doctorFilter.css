@@ -39,3 +39,6 @@
 @media (min-width: 761px) {
   .cash > .toolbar > .doctor-picker.doctor-filter { order: 3; margin-left: auto; }
 }
+/* Один врач — тот же вид, но не кнопка: без ▾, без подсветки при наведении */
+.doctor-picker .pick-current.readonly { cursor: default; }
+.doctor-picker .pick-current.readonly:hover { border-color: inherit; }
