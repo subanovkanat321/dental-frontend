@@ -32,6 +32,7 @@ import {
 import { READY_ORDER, keyOfSlug, refOfCard, slugOf, sourceOf, type BoardFilter, type CardKey } from './comebackCards'
 import './comeback.css'
 import './groups.css'
+import { whenHistorySettled } from '../lib/back'
 
 type Me = Schemas['BookingViewsMe']
 type Candidate = Schemas['ComebacksCandidate']
@@ -110,7 +111,9 @@ export function ComebackTab({ me, onOpen, onBook, canEditServices = false }: {
     choose(f)
     setLimit(PAGE)
     setDoctorId(myDoctor)
-    setComebackCardInHash(slugOf(f))
+    // Адрес — после того, как лист выбора на телефоне снимет свою запись истории: иначе его шаг «назад» возвращал
+    // прежний адрес, и hashchange ставил карточку обратно («Все») — фильтр будто не работал (2026-11-26)
+    whenHistorySettled(() => setComebackCardInHash(slugOf(f)))
   }
   // Карточку сменили адресом, пока вкладка открыта (совет «Бросили лечение», ссылка «Открыть список») — показать её
   // (QA 2026-11-25: список оставался прежним, а в адресе — другая карточка)
