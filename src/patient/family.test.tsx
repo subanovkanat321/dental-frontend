@@ -39,7 +39,7 @@ const mom = (extra: Partial<Me> = {}): Me => ({
   doctors: [{ id: 1, fullName: 'Айгерим Садыкова', active: true, telegramLinked: false }],
   services: [{ id: 5, name: 'Осмотр', durationMinutes: 30, active: true }],
   clinic: { brandName: 'Стоматология «Тест»', legalName: 'ИП Тест', independentDoctors: false, listed: true, separateSupplies: false, settingUp: false, ownHours: false, recallMonths: 6 },
-  hasCard: true, maxRelatives: 6, relatives: [{ id: 41, fullName: 'Аружан Асанова', relation: 'CHILD' }],
+  hasCard: true, maxRelatives: 6, platformPasswordShort: false, relatives: [{ id: 41, fullName: 'Аружан Асанова', relation: 'CHILD' }],
   admin: false, reception: false, owner: false, canChangeClinic: false, waiting: false, hasReception: false,
   ...extra,
 })

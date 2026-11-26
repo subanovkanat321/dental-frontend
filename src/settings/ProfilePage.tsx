@@ -17,6 +17,7 @@ import { NewPasswordFields } from '../layout/PasswordFields'
 import { passwordProblem } from '../lib/password'
 import { telegram } from '../lib/telegram'
 import { PasswordSection } from './PasswordSection'
+import { showsPlatform } from '../platform/platformAccess'
 import { ExternalLoginsSection } from './ExternalLoginsSection'
 import { HelpHint } from '../help/HelpHint'
 import { Icon } from '../layout/Icon'
@@ -64,7 +65,7 @@ export function ProfilePage({ me, onBack, footer }: { me: Me; onBack: () => void
             : <><MyPhone /><p className="hint">Профиль не найден — обновите страницу.</p></>}
       {/* Внизу, не «надо сделать»: быстрый вход без пароля (Google) и логин с паролем — для входа без Telegram */}
       <ExternalLoginsSection />
-      <PasswordSection />
+      <PasswordSection platform={showsPlatform(me)} />
       {footer}
     </section>
   )

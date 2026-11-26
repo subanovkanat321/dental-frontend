@@ -28,7 +28,7 @@ function backend(extra: Partial<Me>, onBook: (body: Book) => Response) {
     doctors: [{ id: 1, fullName: 'Айгерим Садыкова', active: true, telegramLinked: false }],
     services: [{ id: 5, name: 'Лечение кариеса', durationMinutes: 60, active: true }],
     clinic: { brandName: 'Стоматология «Тест»', legalName: 'ИП Тест', independentDoctors: false, listed: true, separateSupplies: false, settingUp: false, ownHours: false, recallMonths: 6 },
-    admin: false, reception: false, owner: false, canChangeClinic: false, waiting: false, hasReception: false, hasCard: false, maxRelatives: 0, ...extra,
+    admin: false, reception: false, owner: false, canChangeClinic: false, waiting: false, hasReception: false, hasCard: false, maxRelatives: 0, platformPasswordShort: false, ...extra,
   }
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),

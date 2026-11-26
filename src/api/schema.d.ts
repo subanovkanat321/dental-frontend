@@ -14935,6 +14935,7 @@ export interface components {
             hasCard: boolean;
             /** Format: int32 */
             maxRelatives: number;
+            platformPasswordShort: boolean;
         };
         ClinicLinksChoice: {
             /** Format: int64 */

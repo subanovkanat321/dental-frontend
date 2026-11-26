@@ -35423,9 +35423,12 @@
           "maxRelatives" : {
             "type" : "integer",
             "format" : "int32"
+          },
+          "platformPasswordShort" : {
+            "type" : "boolean"
           }
         },
-        "required" : [ "admin", "bookingEnabled", "canChangeClinic", "daysAhead", "doctor", "hasCard", "hasReception", "maxRelatives", "owner", "platform", "reception", "waiting" ]
+        "required" : [ "admin", "bookingEnabled", "canChangeClinic", "daysAhead", "doctor", "hasCard", "hasReception", "maxRelatives", "owner", "platform", "platformPasswordShort", "reception", "waiting" ]
       },
       "ClinicLinksChoice" : {
         "properties" : {

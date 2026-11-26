@@ -173,7 +173,7 @@ test('тур — первым: плашки «Заполните профиль�
 test('команде платформы без клиники тур не показываем', async () => {
   const marks: string[] = []
   server.use(
-    http.get('*/api/patient/me', () => HttpResponse.json({ doctor: false, platform: true, owner: true, fullName: 'Команда', admin: false, reception: false, bookingEnabled: false, daysAhead: 0, canChangeClinic: false, waiting: false, hasReception: false, hasCard: false, maxRelatives: 6 } satisfies Me)),
+    http.get('*/api/patient/me', () => HttpResponse.json({ doctor: false, platform: true, owner: true, fullName: 'Команда', admin: false, reception: false, bookingEnabled: false, daysAhead: 0, canChangeClinic: false, waiting: false, hasReception: false, hasCard: false, maxRelatives: 6, platformPasswordShort: false } satisfies Me)),
     http.get('*/api/me/tour', () => { marks.push('get'); return HttpResponse.json({}) }),
     http.get('*/api/platform/*', () => HttpResponse.json([])),
   )

@@ -39,7 +39,7 @@ const me = (extra: Partial<Me> = {}): Me => ({
     { id: 6, name: 'Удаление зуба', durationMinutes: 45, priceSom: 1500, group: 'SURGERY', active: true },
   ],
   clinic: { brandName: 'Стоматология «Тест»', legalName: 'ИП Тест', independentDoctors: false, listed: true, separateSupplies: false, settingUp: false, ownHours: false, recallMonths: 6 },
-  admin: false, reception: false, owner: false, canChangeClinic: false, waiting: false, hasReception: false, hasCard: false, maxRelatives: 6,
+  admin: false, reception: false, owner: false, canChangeClinic: false, waiting: false, hasReception: false, hasCard: false, maxRelatives: 6, platformPasswordShort: false,
   ...extra,
 })
 

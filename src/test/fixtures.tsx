@@ -18,7 +18,7 @@ beforeAll(warmSchedule, 60_000)
 export const me: Schemas['BookingViewsMe'] = {
   doctor: true, admin: true, reception: false, doctorId: 1, fullName: 'Айгерим',
   clinic: { brandName: 'Стоматология «Тест»', workStart: '09:00:00', workEnd: '18:00:00', independentDoctors: false, listed: true, separateSupplies: false, settingUp: false, ownHours: false, recallMonths: 6, patientContracts: true },
-  doctors: [{ id: 1, fullName: 'Айгерим Садыкова', active: true, telegramLinked: false }, { id: 2, fullName: 'Дастан Т.', active: true, telegramLinked: false }], owner: false, platform: false, bookingEnabled: false, daysAhead: 0, canChangeClinic: false, waiting: false, hasReception: false, hasCard: false, maxRelatives: 6
+  doctors: [{ id: 1, fullName: 'Айгерим Садыкова', active: true, telegramLinked: false }, { id: 2, fullName: 'Дастан Т.', active: true, telegramLinked: false }], owner: false, platform: false, bookingEnabled: false, daysAhead: 0, canChangeClinic: false, waiting: false, hasReception: false, hasCard: false, maxRelatives: 6, platformPasswordShort: false
 }
 
 /** Клиника отмечает приход (флаг V245; пункт настройки убран 2026-11-21, у старых клиник может быть включён): цепочка «Пришёл» → «Начать приём» → «Приём состоялся». */

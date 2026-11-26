@@ -10,7 +10,7 @@ import { ownRole } from './guides'
 import { ItemHost } from './itemHost'
 
 type Me = Schemas['BookingViewsMe']
-const me = (over: Partial<Me>): Me => ({ admin: false, reception: false, doctors: [], doctor: false, owner: false, platform: false, bookingEnabled: false, daysAhead: 0, canChangeClinic: false, waiting: false, hasReception: false, hasCard: false, maxRelatives: 0, ...over }) as Me
+const me = (over: Partial<Me>): Me => ({ admin: false, reception: false, doctors: [], doctor: false, owner: false, platform: false, bookingEnabled: false, daysAhead: 0, canChangeClinic: false, waiting: false, hasReception: false, hasCard: false, maxRelatives: 0, platformPasswordShort: false, ...over }) as Me
 
 afterEach(() => {
   window.localStorage.clear()

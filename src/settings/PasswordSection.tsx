@@ -33,7 +33,7 @@ type CodeStep = 'send' | 'code' | 'new'
  * Ушли в Telegram за кодом, а телефон перезагрузил страницу — при открытии спрашиваем сервер, ждёт ли он код
  * на ваш номер ({@code GET /api/me/password/code}), и сразу открываем шаг «Код» с оставшимся отсчётом.
  */
-export function PasswordSection() {
+export function PasswordSection({ platform = false }: { platform?: boolean } = {}) {
   const client = useQueryClient()
   const state = useQuery({ queryKey: ['me-password'], queryFn: () => unwrap(api.GET('/api/me/password')) })
   const [open, setOpen] = useState(false)
@@ -87,6 +87,8 @@ export function PasswordSection() {
     onSuccess: () => {
       reset()
       void client.invalidateQueries({ queryKey: ['me-password'] })
+      // Пароль от 12 символов открывает «Платформу» команде Tish сразу, без нового входа (ADR 0009 бэкенда)
+      if (platform) void client.invalidateQueries({ queryKey: ['me'] })
       void notify('Пароль сохранён. На других устройствах нужно войти заново.')
     },
     onError: (e) => {
@@ -148,6 +150,8 @@ export function PasswordSection() {
       <h2>Логин и пароль</h2>
       <div className="card-block">
         <UsernameLine username={s.username ?? null} />
+        {platform && <p className="hint small">Для «Платформы» по паролю нужен пароль от 12 символов (короче — откроется только
+          своя клиника). Через Telegram — без этого требования.</p>}
         {!open ? (
           <div className="setting-line">
             <div className="setting-what">

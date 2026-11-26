@@ -1,4 +1,4 @@
-import { act, screen, within } from '@testing-library/react'
+import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
@@ -232,4 +232,35 @@ test('перезагрузили, пока ходили за кодом в Teleg
   expect(await screen.findByText(/Пароль сохранён/)).toBeInTheDocument()
   expect(codes()).toBe(0)
   expect(changes).toEqual([{ setupToken: 'tok-9', newPassword: 'Новый-пароль-3' }])
+})
+
+test('владелец платформы с коротким паролем: подсказка «от 12 символов», после смены пароля «Платформа» открывается без нового входа', async () => {
+  backend({ phoneLogin: true, passwordSet: true, temporary: false, sms: true, setAt: '2026-11-01T06:00:00Z', telegram: false, telegramCode: false })
+  let changed = false
+  let platformCalls = 0
+  server.use(
+    http.get('*/api/platform/*', () => {
+      platformCalls++
+      return HttpResponse.json([])
+    }),
+    http.get('*/api/patient/me', () => HttpResponse.json({ ...me, platform: changed, owner: changed, platformPasswordShort: !changed })),
+    http.put('*/api/me/password', () => {
+      changed = true
+      return new HttpResponse(null, { status: 204 })
+    }),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  const section = await screen.findByRole('region', { name: 'Логин и пароль' })
+  expect(section).toHaveTextContent('Для «Платформы» по паролю нужен пароль от 12 символов')
+  await user.click(within(section).getByRole('button', { name: 'Сменить пароль' }))
+  await user.type(within(section).getByLabelText('Текущий пароль'), 'Тишина2026')
+  await user.type(within(section).getByLabelText('Новый пароль'), 'ТишинаИУлыбка2026')
+  await user.type(within(section).getByLabelText('Повторите пароль'), 'ТишинаИУлыбка2026')
+  await user.click(within(section).getByRole('button', { name: 'Сохранить пароль' }))
+  // Сервер выдал новую cookie — данные «я» перечитаны: «Платформа» открыта, подсказки больше нет
+  const nav = await screen.findByRole('navigation', { name: 'Разделы' })
+  await user.click(within(nav).getByRole('button', { name: /^Платформа/ }))
+  await waitFor(() => expect(platformCalls).toBeGreaterThan(0))
+  expect(screen.queryByText(/нужен пароль от 12 символов — смените/)).not.toBeInTheDocument()
 })

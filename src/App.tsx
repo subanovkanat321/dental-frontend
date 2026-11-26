@@ -21,6 +21,7 @@ import { UpdateToast } from './pwa/UpdateToast'
 import { closeAtlas, useAtlasRoute } from './atlas/route'
 import { AtlasBoot, Loading } from './layout/Loading'
 import { UpdatingScreen } from './layout/OfflineNotice'
+import { PlatformPasswordHint } from './platform/PlatformPasswordHint'
 
 // Оболочка CRM (меню, плашки) и вход — своими чанками: Mini App пациента их не скачивает
 const Shell = lazy(() => import('./layout/Shell').then((m) => ({ default: m.Shell })))
@@ -165,7 +166,8 @@ function Screens() {
       case 'clinic': return <ClinicSection me={me.data} />
       case 'me': return <MineSection me={me.data} page="me" />
       case 'help': return <MineSection me={me.data} page="help" initialTicket={l?.ticketId} />
-      case 'platform': return me.data.platform ? <PlatformPage me={me.data} /> : null
+      case 'platform': return me.data.platform ? <PlatformPage me={me.data} />
+        : me.data.platformPasswordShort ? <PlatformPasswordHint onProfile={() => go('me')} /> : null
       case 'schedule': return l?.assistToken
         ? <LinkedAssist token={l.assistToken} me={me.data} onNavigate={go} onOpenPatient={openPatient}
           onTask={(draft) => linkTo({ page: 'patients', tab: 'tasks', taskDraft: draft })} />

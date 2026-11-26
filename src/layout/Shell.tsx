@@ -38,6 +38,7 @@ import { PushPrompt } from '../pwa/PushPrompt'
 import { TipOfDay } from '../tips/TipOfDay'
 import { useFullView } from '../lib/fullView'
 import { confirmLeave } from '../lib/unsaved'
+import { showsPlatform } from '../platform/platformAccess'
 
 type Me = Schemas['BookingViewsMe']
 
@@ -71,7 +72,8 @@ function sectionsOf(me: Me): readonly { key: Page; title: string }[] {
   // (страховка: сейчас «Памятки» и «Откуда приходят пациенты» в «Настройках» видны всем ролям)
   const clinic = CLINIC_SECTIONS.filter((s) => !(s.key === 'cash' && isAssistant(me))
     && !((s.key === 'settings' || s.key === 'clinic') && subsOf(s.key, me).length === 0))
-  return [...(me.doctor ? clinic : []), ...(me.platform ? [PLATFORM] : [])]
+  // «Платформа» — и при коротком пароле: внутри подсказка «нужен пароль от 12 символов» (ADR 0009 бэкенда)
+  return [...(me.doctor ? clinic : []), ...(showsPlatform(me) ? [PLATFORM] : [])]
 }
 
 /**
