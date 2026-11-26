@@ -398,11 +398,18 @@ export function SignupPage({ onDone = () => window.location.assign('/'), userAge
     )
   }
   return (
-    <div className="center login invite-page signup-page">
+    // Ноутбук (≥900px) — как вход сотрудника: слева Тишка и коротко о Tish, справа форма; телефон — одной колонкой (crm.css)
+    <div className="center login invite-page signup-page staff-login">
       <div className="login-card">
-        <a href="/about" aria-label="О Tish"><img src={`${import.meta.env.BASE_URL}tishka.svg`} alt="Тишка — талисман Tish" width={96} height={92} /></a>
-        {body}
-        {formBody}
+        <div className="login-intro">
+          <a href="/about" aria-label="О Tish"><img src={`${import.meta.env.BASE_URL}tishka.svg`} alt="Тишка — талисман Tish" width={96} height={92} /></a>
+          <p className="login-lead">Tish бесплатный: онлайн-запись пациентов, расписание, медкарта, касса и склад. Клиника готова за 5 минут —
+            с телефона или компьютера.</p>
+        </div>
+        <div className="login-main">
+          {body}
+          {formBody}
+        </div>
       </div>
     </div>
   )

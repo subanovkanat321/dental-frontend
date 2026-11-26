@@ -1664,6 +1664,8 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
   .staff-login .login-intro .logged-out { text-align: left; }
   .staff-login .login-main { justify-items: center; padding: 48px 56px; }
   .staff-login .login-main > :is(.phone-login, .telegram-login, .login-or) { width: 100%; max-width: 380px; }
+  /* Регистрация клиники (/start) — та же раскладка; форма справа — до 420px */
+  .signup-page.staff-login .login-main > * { width: 100%; max-width: 420px; }
 }
 /* Ссылка-приглашение (/invite): Telegram — главная кнопка, регистрация по номеру — скромной ссылкой ниже */
 .invite-page .invite-phone-link { text-align: center; font-size: .9rem; }
