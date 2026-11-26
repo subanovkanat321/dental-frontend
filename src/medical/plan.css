@@ -7,6 +7,21 @@
 .plan li { grid-template-columns: 1fr; grid-auto-flow: column; grid-auto-columns: auto; }
 .plan li.plan-stage { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .plan li.plan-assign-row { display: block; border-bottom: 0; }
+
+/* Срочность (V267): заголовок группы «🔴 Срочно · 12 000 сом» — цветная полоска слева, текст обычного цвета */
+.plan li.plan-prio { display: flex; align-items: center; gap: 8px; margin-top: 12px; padding: 4px 10px; border-bottom: 0;
+  border-radius: var(--r-sm); font-weight: 600; font-size: .92rem; box-shadow: inset 3px 0 0 var(--prio-ink, var(--line-strong));
+  background: var(--prio-bg, transparent); }
+.plan li.plan-prio:first-child { margin-top: 4px; }
+.plan li.plan-prio .num { font-weight: 600; }
+.prio-urgent { --prio-bg: var(--bad-bg); --prio-ink: var(--bad-ink); }
+.prio-desired { --prio-bg: var(--wait-bg); --prio-ink: var(--wait-ink); }
+.prio-later { --prio-bg: var(--ok-bg); --prio-ink: var(--ok-ink); }
+.plan li.plan-prio.prio-done { background: transparent; box-shadow: none; padding-left: 0; color: var(--hint); font-weight: 500; }
+/* Выбор срочности — три кнопки; выбранная — в цвет своей группы */
+.plan-priority .chip.prio-chip[aria-pressed='true'] { background: var(--prio-bg); color: var(--prio-ink); border-color: var(--prio-ink); }
+.plan-priority .chips-pick { flex-wrap: wrap; }
+.step-edit .plan-priority { flex: 1 1 100%; grid-column: 1 / -1; margin: 0; }
 .plan li.overdue { box-shadow: inset 3px 0 0 var(--bad-ink); padding-left: 8px; }
 
 /* «👤 Иванова А. · до 15 дек» под названием этапа; просрочен — красным */
@@ -166,4 +181,15 @@
   .plan .step-price-text { display: inline-flex; flex-direction: column; line-height: 1.15; }
   .plan .step-price-was { font-size: .8rem; }
   .step-price .field { max-width: none; }
+}
+
+/* «🔴 2 срочно» в сводке плана карточки приёма (V267) */
+.plan-meta .plan-meta-urgent { color: var(--bad-ink); }
+
+/* Правка этапа на телефоне: название — на всю ширину, «Зуб» и «Этап» — рядом, «Сохранить / Отмена» — пополам (кнопки не
+   сжимаются в узкую колонку зуба) */
+@media (max-width: 760px) {
+  .plan-add.step-edit { grid-template-columns: 1fr 1fr; }
+  .plan-add.step-edit > input[aria-label='Что сделать на этапе'] { grid-column: 1 / -1; order: -1; }
+  .plan-add.step-edit > .btn { min-height: 44px; }
 }

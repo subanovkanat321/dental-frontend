@@ -131,7 +131,7 @@ test('с зубов: два зуба → «Что сделать» → услу�
   expect(sheet).toHaveTextContent(/4\s000 сом × 2 зуба = 8\s000 сом/)
   await userEvent.click(within(sheet).getByRole('button', { name: '＋ Добавить в план' }))
   // Врач — тот, кто добавляет; срок — через неделю (этап 1)
-  expect(sent).toContainEqual({ batch: { teeth: [16, 17], title: 'Пломба композит', priceSom: 4000, stage: 1, serviceTypeId: 3, doctorId: 1, dueOn: '2026-11-18' } })
+  expect(sent).toContainEqual({ batch: { teeth: [16, 17], title: 'Пломба композит', priceSom: 4000, stage: 1, serviceTypeId: 3, doctorId: 1, dueOn: '2026-11-18', priority: 'DESIRED' } })
   const list = screen.getByRole('list', { name: 'Этапы лечения' })
   expect(await within(list).findAllByText(/Пломба композит/)).toHaveLength(2)
 })

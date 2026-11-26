@@ -146,7 +146,7 @@ test('отмеченные зубы списком; зуб → «В план л�
   await userEvent.type(within(edit).getByLabelText('Цена этапа, сом'), '3500')
   await userEvent.click(within(edit).getByRole('button', { name: 'Сохранить' }))
   expect(await within(plan).findByText('Пломба композит')).toBeInTheDocument()
-  expect(sent).toContainEqual({ step: 1, tooth: 16, title: 'Пломба композит', priceSom: 3500, stage: 1, done: false, discount: {} })
+  expect(sent).toContainEqual({ step: 1, tooth: 16, title: 'Пломба композит', priceSom: 3500, stage: 1, done: false, discount: {}, priority: 'DESIRED' })
 })
 
 test('«Заметки»: заметок нет — подсказка, где их пишут, а не пустая вкладка (QA 2026-11-25)', async () => {

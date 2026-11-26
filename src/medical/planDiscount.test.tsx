@@ -117,7 +117,7 @@ test('«Что сделать»: цена ниже прайса — скидка
   expect(within(sheet).getByText(/По умолчанию: этап 1 — через неделю/)).toBeInTheDocument()
   await userEvent.click(within(sheet).getByRole('button', { name: '＋ Добавить в план' }))
   expect(sent).toContainEqual({ add: { tooth: 17, title: 'Коронка', priceSom: 7000, discount: { percent: 10 }, stage: 1, serviceTypeId: 4, doctorId: 1,
-    dueOn: '2026-11-18' } })
+    dueOn: '2026-11-18', priority: 'DESIRED' } })
 })
 
 test('нельзя давать скидку — цена ниже прайса сохраняется просто ценой, с подсказкой «решает руководитель»', async () => {

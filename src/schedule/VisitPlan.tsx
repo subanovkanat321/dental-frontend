@@ -8,6 +8,7 @@ import { totalsOf } from '../medical/stepDiscount'
 import { progressShort, usePlanStatus } from '../lib/planStatus'
 import { PlanStatusChip } from '../medical/PlanProgress'
 import { canMarkPlan, planMeta } from './planDoneStore'
+import { priorityOf } from '../lib/planPriority'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
@@ -24,6 +25,7 @@ const number = new Intl.NumberFormat('ru-RU')
  *
  * Сводка — один раз, в заголовке: «План лечения [Предложен]», под ним «0 из 12 этапов · 99 000 сом · 113 000 − 14 000
  * скидка · +1 сегодня» (суммы — кто видит деньги: ассистенту сервер их не отдаёт). Внутри статус и прогресс не повторяем.
+ * Есть несделанные «🔴 Срочно» (V267) — кусок «🔴 2 срочно» сразу после прогресса.
  */
 export function VisitPlan({ appointment: a, me }: { appointment: Appointment; me: Me }) {
   const patientId = a.patient.id
@@ -53,8 +55,12 @@ function Summary({ steps, a, progress }: { steps: Step[]; a: Appointment; progre
   // Скидка — один раз и мелко; суммы видит не каждый (ассистенту сервер их не отдаёт — тогда и скидки нет)
   const t = progress.totalSom ? totalsOf(steps) : null
   const off = t && t.off > 0 ? `${number.format(t.full)} − ${number.format(t.off)} скидка` : null
+  const urgent = steps.filter((s) => !s.doneAt && priorityOf(s) === 'URGENT').length
+  const progressPieces = progressShort(progress).map((x) => ({ x, cls: 'nowrap' }))
   const pieces = [
-    ...progressShort(progress).map((x) => ({ x, cls: 'nowrap' })),
+    ...progressPieces.slice(0, 1),
+    ...(urgent > 0 ? [{ x: `🔴 ${urgent} срочно`, cls: 'nowrap plan-meta-urgent' }] : []),
+    ...progressPieces.slice(1),
     ...(off ? [{ x: off, cls: 'nowrap plan-meta-off' }] : []),
     ...today.map((x) => ({ x, cls: 'nowrap plan-meta-today' })),
   ]

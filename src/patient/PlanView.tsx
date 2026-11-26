@@ -18,7 +18,8 @@ const dayOf = (instant: string) =>
 
 /**
  * План лечения глазами пациента (V140): этапы, процедуры и цены, итоги, срок и «цены действительны
- * до», кнопки «Согласен» / «Есть вопрос» / «Записаться на 1-й этап». Один и тот же вид в Mini App
+ * до», кнопки «Согласен» / «Есть вопрос» / «Записаться на 1-й этап». Врач отметил срочность этапов (V267) — процедуры
+ * группами «🔴 Срочно / 🟡 Желательно / 🟢 Можно позже» с суммой группы (с сервера), у процедуры — «этап 2», если этапов несколько. Один и тот же вид в Mini App
  * (PatientApp) и на странице по ссылке из WhatsApp (site/PlanPage) — запросы делает тот, кто вставил.
  *
  * @param onBook нет — кнопки записи нет (на странице по ссылке записываются в боте или по телефону)
@@ -42,6 +43,8 @@ export function PlanView({ plan, t, onAgree, onAsk, onBook, busy = false, error 
   // Скидка этапов (V257): итог — к оплате; цена до скидки — итог + скидка
   const discount = (variant ? variant.discountSom : plan.discountSom) ?? 0
   const chart = variant ? variant.chart : plan.chart
+  // Срочность (V267): сервер прислал суммы групп — процедуры группами «🔴 Срочно · 12 000 сом»; нет — по этапам, как раньше
+  const priorities = variant ? variant.priorities : plan.priorities
   const agreed = Boolean(plan.agreedAt)
   const [tooth, setTooth] = useState<number | null>(null)
   const label = (n: number, name?: string | null) => `${t('planVariant', { n })}${name ? ` — ${name}` : ''}`
@@ -66,7 +69,8 @@ export function PlanView({ plan, t, onAgree, onAsk, onBook, busy = false, error 
       )}
       {plan.chosenNumber != null && <p className="tone-ok plan-view-chosen">✅ {t('planChosen', { v: label(plan.chosenNumber, plan.chosenName) })}</p>}
       {chart && <PlanTeeth key={variant?.id ?? 0} chart={chart} t={t} selected={tooth} onSelect={(n) => setTooth((cur) => (cur === n ? null : n))} />}
-      <Stages stages={stages} t={t} tooth={tooth} />
+      {priorities?.length ? <PriorityGroups stages={stages} groups={priorities} t={t} tooth={tooth} />
+        : <Stages stages={stages} t={t} tooth={tooth} />}
       {total > 0 && discount > 0 && (
         <div className="plan-view-total plan-view-discount">
           <p>{variant ? t('planVariantTotal') : t('planTotal')}: <s className="num">{somText(total + discount)}</s></p>
@@ -119,6 +123,41 @@ function Stages({ stages, t, tooth }: { stages: NonNullable<Plan['stages']>; t: 
           )}
         </section>
       ))}
+    </>
+  )
+}
+
+type Group = NonNullable<Plan['priorities']>[number]
+
+/** Процедуры группами по срочности: заголовок с суммой группы, у срочных — «лучше не откладывать»; пустых групп сервер не шлёт. */
+function PriorityGroups({ stages, groups, t, tooth }: { stages: NonNullable<Plan['stages']>; groups: Group[]; t: T; tooth: number | null }) {
+  const many = stages.length > 1
+  const items = stages.flatMap((st) => (st.items ?? []).map((item) => ({ ...item, stage: st.stage })))
+  return (
+    <>
+      {groups.map((g) => {
+        const p = g.priority ?? 'DESIRED'
+        const title = t(`planPriority${p}`)
+        const mine = items.filter((x) => (x.priority ?? 'DESIRED') === p)
+        return (
+          <section key={p} className={`plan-view-stage plan-view-prio prio-${p.toLowerCase()}`} aria-label={title}>
+            <h2><span>{title}</span>{g.totalSom > 0 && <span className="num nowrap">{somText(g.totalSom)}</span>}</h2>
+            {p === 'URGENT' && <p className="hint small">{t('planUrgentHint')}</p>}
+            <ul>
+              {mine.map((item, i) => (
+                <li key={i} className={item.tooth != null && item.tooth === tooth ? 'selected' : undefined}>
+                  <span>{item.tooth ? <b>{t('planTooth', { n: item.tooth })} · </b> : null}{item.title}
+                    {many && <span className="hint small"> · {t('planChartStages', { n: item.stage })}</span>}</span>
+                  <span className="num nowrap">{item.priceSom == null ? <span className="hint">{t('planPriceLater')}</span>
+                    : item.discountSom ? <><s className="hint">{somText(item.priceSom)}</s> <b>{somText(item.priceSom - item.discountSom)}</b></>
+                      : somText(item.priceSom)}</span>
+                </li>
+              ))}
+            </ul>
+            {g.discountSom ? <p className="plan-view-sub hint small">{t('planDiscount')} −{somText(g.discountSom)}</p> : null}
+          </section>
+        )
+      })}
     </>
   )
 }

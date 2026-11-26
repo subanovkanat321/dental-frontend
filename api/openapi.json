@@ -24076,6 +24076,10 @@
           },
           "discount" : {
             "$ref" : "#/components/schemas/TreatmentPlanStepDiscount"
+          },
+          "priority" : {
+            "type" : "string",
+            "enum" : [ "URGENT", "DESIRED", "LATER" ]
           }
         }
       },
@@ -24149,6 +24153,10 @@
           "netSom" : {
             "type" : "integer",
             "format" : "int32"
+          },
+          "priority" : {
+            "type" : "string",
+            "enum" : [ "URGENT", "DESIRED", "LATER" ]
           }
         },
         "required" : [ "id", "stage" ]
@@ -27298,6 +27306,10 @@
           "discountSom" : {
             "type" : "integer",
             "format" : "int32"
+          },
+          "priority" : {
+            "type" : "string",
+            "enum" : [ "URGENT", "DESIRED", "LATER" ]
           }
         }
       },
@@ -27376,6 +27388,12 @@
           "discountSom" : {
             "type" : "integer",
             "format" : "int32"
+          },
+          "priorities" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/StepPriorityGroup"
+            }
           }
         },
         "required" : [ "id", "totalSom" ]
@@ -27432,6 +27450,12 @@
           "discountSom" : {
             "type" : "integer",
             "format" : "int32"
+          },
+          "priorities" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/StepPriorityGroup"
+            }
           }
         },
         "required" : [ "id", "number", "totalSom" ]
@@ -27483,6 +27507,23 @@
           }
         },
         "required" : [ "number" ]
+      },
+      "StepPriorityGroup" : {
+        "properties" : {
+          "priority" : {
+            "type" : "string",
+            "enum" : [ "URGENT", "DESIRED", "LATER" ]
+          },
+          "totalSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "discountSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "totalSom" ]
       },
       "ProblemDetail" : {
         "properties" : {
@@ -29160,6 +29201,10 @@
           },
           "discount" : {
             "$ref" : "#/components/schemas/TreatmentPlanStepDiscount"
+          },
+          "priority" : {
+            "type" : "string",
+            "enum" : [ "URGENT", "DESIRED", "LATER" ]
           }
         }
       },
@@ -36461,9 +36506,13 @@
           },
           "cancelled" : {
             "$ref" : "#/components/schemas/ComebacksCancelled"
+          },
+          "urgent" : {
+            "type" : "integer",
+            "format" : "int32"
           }
         },
-        "required" : [ "invites", "patientId", "planSom", "telegram" ]
+        "required" : [ "invites", "patientId", "planSom", "telegram", "urgent" ]
       },
       "ComebacksResult" : {
         "properties" : {

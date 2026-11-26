@@ -7,9 +7,11 @@ import { DateInput } from '../layout/DateInput'
 import { Sheet } from '../layout/Sheet'
 import { Select } from '../layout/Select'
 import { dueText } from '../lib/planSteps'
+import { suggestPriority, type Priority } from '../lib/planPriority'
 import { GENERAL, LAST, lastStage } from '../lib/planVariants'
 import { addDays, somText, todayIn } from '../lib/time'
 import { useDiscountPolicy } from '../schedule/discountDraft'
+import { PriorityChips } from './PriorityChips'
 import { StepPrice, StepPriceText } from './StepPrice'
 import { defaultDue, EMPTY_PRICE, fromList, priceOf, type PriceDraft } from './stepDiscount'
 
@@ -46,6 +48,8 @@ function remember(serviceId: number) {
  * цену можно поправить; или вписать своё. Несколько зубов — по этапу на каждый (один запрос, всё или ничего). Цену сервер
  * сохраняет как подсказку, итог считает сам. Цена ниже прайса — скидка (StepPrice, V257). Врач этапа по умолчанию — тот, кто
  * добавляет (руководитель без кресла — лечащий врач: решает сервер); срок — по номеру этапа ({@link defaultDue}), всё меняется.
+ * Срочность (V267) — «🔴 Срочно · 🟡 Желательно · 🟢 Можно позже» одним нажатием; пока врач её не трогал, услуга подсказывает
+ * («Удаление» — срочно, «Отбеливание» — можно позже), иначе «Желательно».
  *
  * @param teeth выбранные зубы; пусто — этап на весь рот
  * @param variantId вариант плана (V254); нет — основной
@@ -75,6 +79,10 @@ export function PlanStepSheet({ patientId, teeth, steps, variantId, onClose, onA
   const [dueChosen, setDueChosen] = useState<string | null>(null)
   const [stage, setStage] = useState(general ? 'end' : '1')
   const [missing, setMissing] = useState(false)
+  // Срочность: пока не нажимали (null) — по услуге или «Желательно»; нажали — как выбрали
+  const [priorityChosen, setPriorityChosen] = useState<Priority | null>(null)
+  const suggested = suggestPriority(title)
+  const priority = priorityChosen ?? suggested ?? 'DESIRED'
   const counts = frequent()
   const q = query.trim().toLowerCase()
   const sorted = [...active].sort((a, b) => (counts[b.id] ?? 0) - (counts[a.id] ?? 0))
@@ -95,7 +103,7 @@ export function PlanStepSheet({ patientId, teeth, steps, variantId, onClose, onA
     mutationFn: () => {
       const body = {
         title: title.trim(), priceSom: priced.priceSom, discount: priced.discount, stage: stageNumber, serviceTypeId: service?.id,
-        doctorId: doctor ? Number(doctor) : undefined, dueOn: due || undefined,
+        doctorId: doctor ? Number(doctor) : undefined, dueOn: due || undefined, priority,
       }
       const query = variantId != null ? { variantId } : undefined
       return teeth.length > 1
@@ -169,6 +177,8 @@ export function PlanStepSheet({ patientId, teeth, steps, variantId, onClose, onA
             </Select>
           </label>
         </div>
+        <PriorityChips value={priority} onChange={setPriorityChosen}
+          note={priorityChosen == null && suggested ? `Подобрано по услуге — поменяйте, если нужно` : undefined} />
         <StepPrice value={money} onChange={setMoney} policy={policy.data} label={teeth.length > 1 ? 'Цена за зуб' : 'Цена'} />
         {service?.durationMinutes ? <p className="hint small">⏱ По прайсу на приём — {service.durationMinutes} мин</p> : null}
         <div className="plan-step-fields plan-step-who">

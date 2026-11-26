@@ -21,6 +21,8 @@ import { PlanTeethPicker } from './PlanTeethPicker'
 import { PlanVariantBar } from './PlanVariants'
 import { variantsKey } from '../lib/planVariants'
 import { overdueCount } from '../lib/planSteps'
+import { PRIORITY, priorityGroups, priorityGrouped, priorityOf, priorityText, type Priority } from '../lib/planPriority'
+import { PriorityChips } from './PriorityChips'
 import { useDiscountPolicy } from '../schedule/discountDraft'
 import { PlanDiscountForm } from './PlanDiscount'
 import { StepPrice, StepPriceText } from './StepPrice'
@@ -39,6 +41,9 @@ type Step = Schemas['TreatmentStepView']
  * приёма (строка «План лечения ›»). Права — на сервере (ChartService.requireEdit): readOnly — ассистент, он план только смотрит.
  * Скидки (V257): у этапа «~~4 500~~ 4 050 сом (−10 %)», итог «…, скидка −…, к оплате …», «🏷 Скидка на выбранные» (зубы на формуле)
  * и «🏷 Скидка на весь план» — по правилам «Настройки → Скидки».
+ * Срочность (V267): есть этап не «🟡 Желательно» — несделанные группами «🔴 Срочно · 12 000 сом», «🟡 Желательно · …»,
+ * «🟢 Можно позже · …» (порядок — с сервера: срочность, этап, ↑↓), внутри — «Этап N», ниже «✓ Сделано»; пустых групп нет,
+ * «↑ ↓» — внутри группы. Все «Желательно» — как раньше, без групп.
  *
  * @param prefill зуб из карты зубов («В план лечения») — сразу открыть «Что сделать» с этим зубом
  * @param heading заголовок «План лечения» — в медкарте; в строке карточки приёма заголовок уже есть
@@ -125,6 +130,10 @@ export function TreatmentPlan({ patient, prefill = null, readOnly, heading = tru
   const open = steps.filter((x) => !x.doneAt)
   const stages = stagesOf(open)
   const staged = stages.length > 1
+  // Срочность (V267): группы — только если есть этап не «Желательно»; сумма группы — к оплате, со скидками этапов
+  const grouped = priorityGrouped(open)
+  const groups = grouped ? priorityGroups(open) : []
+  const groupOf = (p: Priority) => groups.find((g) => g.priority === p)?.items ?? open
   const all = totalsOf(steps)
   const total = all.pay
   const left = totalsOf(open).pay
@@ -153,19 +162,33 @@ export function TreatmentPlan({ patient, prefill = null, readOnly, heading = tru
       {steps.length > 0 && (
         <ul className="plan" aria-label="Этапы лечения">
           {steps.map((s, i) => {
-            const at = open.indexOf(s)
+            // «↑ ↓» — внутри группы срочности (сервер двигает этап среди этапов той же срочности)
+            const mine = grouped ? groupOf(priorityOf(s)) : open
+            const at = mine.indexOf(s)
+            const prev = steps[i - 1]
+            const newGroup = grouped && !s.doneAt && (!prev || priorityOf(prev) !== priorityOf(s))
+            const newStage = staged && !s.doneAt && (newGroup || prev?.stage !== s.stage)
+            const stageSum = grouped ? mine.filter((x) => x.stage === s.stage).reduce((sum, x) => sum + (x.netSom ?? x.priceSom ?? 0), 0)
+              : stageTotal(stages, s.stage)
+            const group = newGroup ? groups.find((g) => g.priority === priorityOf(s)) : undefined
             return (
             <Fragment key={s.id}>
-            {staged && !s.doneAt && steps[i - 1]?.stage !== s.stage && (
+            {group && (
+              <li className={`plan-prio prio-${PRIORITY[group.priority].tone}`} title={PRIORITY[group.priority].hint}>
+                <span>{priorityText(group.priority)}{group.total ? <span className="num"> · {somText(group.total)}</span> : null}</span>
+              </li>
+            )}
+            {grouped && s.doneAt && !prev?.doneAt && <li className="plan-prio prio-done"><span>✓ Сделано</span></li>}
+            {newStage && (
               <li className="plan-stage">
-                <span>Этап {s.stage}{stageTotal(stages, s.stage) ? <span className="hint"> · {somText(stageTotal(stages, s.stage))}</span> : null}</span>
+                <span>Этап {s.stage}{stageSum ? <span className="hint"> · {somText(stageSum)}</span> : null}</span>
                 {!readOnly && (
                   <button type="button" className="btn ghost small" aria-label={`Врач и срок: этап ${s.stage}`} title="Врач и срок всего этапа"
                     onClick={() => setAssigning(`stage-${s.stage}`)}>👤</button>
                 )}
               </li>
             )}
-            {staged && !s.doneAt && steps[i - 1]?.stage !== s.stage && assigning === `stage-${s.stage}` && (
+            {newStage && assigning === `stage-${s.stage}` && (
               <li className="plan-assign-row">
                 <StepAssignForm patientId={patientId} label={`Врач и срок: этап ${s.stage}`} current={s}
                   stepIds={open.filter((x) => x.stage === s.stage).map((x) => x.id)}
@@ -195,7 +218,7 @@ export function TreatmentPlan({ patient, prefill = null, readOnly, heading = tru
                     <span className="plan-move">
                       <button type="button" className="btn ghost small" aria-label={`Выше: ${s.title}`} title="Выше" disabled={at <= 0 || move.isPending}
                         onClick={() => move.mutate({ stepId: s.id, up: true })}>↑</button>
-                      <button type="button" className="btn ghost small" aria-label={`Ниже: ${s.title}`} title="Ниже" disabled={at >= open.length - 1 || move.isPending}
+                      <button type="button" className="btn ghost small" aria-label={`Ниже: ${s.title}`} title="Ниже" disabled={at >= mine.length - 1 || move.isPending}
                         onClick={() => move.mutate({ stepId: s.id, up: false })}>↓</button>
                     </span>
                   )}
@@ -273,7 +296,7 @@ function stageTotal(stages: ReturnType<typeof stagesOf<Step>>, stage?: number): 
 }
 
 /**
- * Правка этапа: зуб, что сделать, цена (со скидкой — StepPrice) и этап; отметка «сделано» остаётся как была. Скидку
+ * Правка этапа: зуб, что сделать, цена (со скидкой — StepPrice), этап и срочность; отметка «сделано» остаётся как была. Скидку
  * присылаем всегда: пустая — снять (сервер без поля оставил бы прежнюю).
  */
 function StepEdit({ patientId, step, policy, listPrice, onDone }: {
@@ -281,13 +304,14 @@ function StepEdit({ patientId, step, policy, listPrice, onDone }: {
 }) {
   const [f, setF] = useState({ tooth: step.tooth != null ? String(step.tooth) : '', title: step.title ?? '', stage: String(step.stage) })
   const [money, setMoney] = useState(() => fromStep(step))
+  const [priority, setPriority] = useState<Priority>(priorityOf(step))
   const save = useMutation<Step[], ApiError>({
     mutationFn: () => {
       const p = priceOf(money, policy)
       return unwrap(api.PUT('/api/patients/{patientId}/plan/{stepId}', {
         params: { path: { patientId, stepId: step.id } },
         body: { tooth: f.tooth ? Number(f.tooth) : undefined, title: f.title.trim(), priceSom: p.priceSom,
-          stage: Number(f.stage), done: Boolean(step.doneAt), discount: p.discount ?? {} },
+          stage: Number(f.stage), done: Boolean(step.doneAt), discount: p.discount ?? {}, priority },
       }))
     },
     onSuccess: (steps) => onDone(steps),
@@ -300,6 +324,7 @@ function StepEdit({ patientId, step, policy, listPrice, onDone }: {
         {STAGES.map((n) => <option key={n} value={String(n)}>Этап {n}</option>)}
       </Select>
       <StepPrice value={money} onChange={setMoney} policy={policy} listPrice={listPrice} inputLabel="Цена этапа, сом" />
+      <PriorityChips value={priority} onChange={setPriority} />
       <button type="submit" className="btn primary" disabled={save.isPending || !f.title.trim()}>Сохранить</button>
       <button type="button" className="btn ghost" onClick={() => onDone()}>Отмена</button>
       {save.error && <p className="error" role="alert">{Object.values(save.error.fieldErrors)[0] ?? save.error.message}</p>}

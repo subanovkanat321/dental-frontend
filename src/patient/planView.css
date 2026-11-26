@@ -5,6 +5,13 @@
 .plan-view ul { list-style: none; margin: 0; padding: 0; display: grid; }
 .plan-view li { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--separator); }
 .plan-view-sub { text-align: right; }
+/* Срочность (V267): группа — заголовок с цветной полоской и суммой справа */
+.plan-view-prio h2 { display: flex; justify-content: space-between; gap: 12px; padding: 6px 10px; border-radius: var(--r-md, 8px);
+  background: var(--prio-bg); box-shadow: inset 3px 0 0 var(--prio-ink); }
+.plan-view-prio > .hint { margin-top: 4px; }
+.plan-view-prio.prio-urgent { --prio-bg: var(--bad-bg, #FFDCDC); --prio-ink: var(--bad-ink, #A11F1F); }
+.plan-view-prio.prio-desired { --prio-bg: var(--wait-bg, #FFEAC0); --prio-ink: var(--wait-ink, #7A4600); }
+.plan-view-prio.prio-later { --prio-bg: var(--ok-bg, #D3F0DE); --prio-ink: var(--ok-ink, #11683A); }
 .plan-view-total { font-size: 1.15rem; padding: 10px 12px; border-radius: var(--r-md); background: var(--accent-soft); }
 .plan-view-actions { display: grid; gap: 8px; }
 .plan-view li.selected { margin: 0 -8px; padding: 8px; border-radius: var(--r-md); background: var(--accent-soft); border-bottom-color: transparent; }

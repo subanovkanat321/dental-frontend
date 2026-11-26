@@ -359,7 +359,13 @@ function BoardRows({ rows, onOpen, onBook, skip }: {
     <ul className="calm-list" aria-label="Кого вернуть">
       {rows.map((c) => (
         <CalmRow key={c.patientId} open={inviting !== c.patientId && (() => onOpen(c.patientId))} name={c.fullName}
-          flags={c.planAgreedAt && <span className="chip calm-flag s-ok">План согласован</span>}
+          flags={(c.planAgreedAt || (c.urgent ?? 0) > 0) && (
+            <>
+              {/* Срочность (V267): в плане остались «🔴 Срочно» — такие пациенты сверху (сортирует сервер) */}
+              {(c.urgent ?? 0) > 0 && <span className="chip calm-flag s-bad" title="В плане несделанные срочные этапы — их лучше не откладывать">🔴 есть срочное</span>}
+              {c.planAgreedAt && <span className="chip calm-flag s-ok">План согласован</span>}
+            </>
+          )}
           sub={reasonLine(c)}
           meta={(c.planSom > 0 || c.invitedAt) && (
             <>

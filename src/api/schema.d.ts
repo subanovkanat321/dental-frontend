@@ -10420,6 +10420,8 @@ export interface components {
             /** Format: date */
             dueOn?: string;
             discount?: components["schemas"]["TreatmentPlanStepDiscount"];
+            /** @enum {string} */
+            priority?: "URGENT" | "DESIRED" | "LATER";
         };
         TreatmentPlanStepDiscount: {
             /** Format: int32 */
@@ -10455,6 +10457,8 @@ export interface components {
             discountSom?: number;
             /** Format: int32 */
             netSom?: number;
+            /** @enum {string} */
+            priority?: "URGENT" | "DESIRED" | "LATER";
         };
         PlanVariantsRename: {
             name?: string;
@@ -11724,6 +11728,8 @@ export interface components {
             priceSom?: number;
             /** Format: int32 */
             discountSom?: number;
+            /** @enum {string} */
+            priority?: "URGENT" | "DESIRED" | "LATER";
         };
         PlanOffersPatientPlan: {
             /** Format: int64 */
@@ -11753,6 +11759,7 @@ export interface components {
             chosenName?: string;
             /** Format: int32 */
             discountSom?: number;
+            priorities?: components["schemas"]["StepPriorityGroup"][];
         };
         PlanOffersStage: {
             /** Format: int32 */
@@ -11775,6 +11782,7 @@ export interface components {
             chart?: components["schemas"]["PlanPictureChart"];
             /** Format: int32 */
             discountSom?: number;
+            priorities?: components["schemas"]["StepPriorityGroup"][];
         };
         PlanPictureChart: {
             /** @enum {string} */
@@ -11789,6 +11797,14 @@ export interface components {
             state?: "HEALTHY" | "CARIES" | "TREATING" | "FILLING" | "CROWN" | "IMPLANT" | "MISSING";
             surfaces?: ("M" | "O" | "D" | "B" | "L")[];
             stages?: number[];
+        };
+        StepPriorityGroup: {
+            /** @enum {string} */
+            priority?: "URGENT" | "DESIRED" | "LATER";
+            /** Format: int32 */
+            totalSom: number;
+            /** Format: int32 */
+            discountSom?: number;
         };
         ProblemDetail: {
             /** Format: uri */
@@ -12479,6 +12495,8 @@ export interface components {
             /** Format: date */
             dueOn?: string;
             discount?: components["schemas"]["TreatmentPlanStepDiscount"];
+            /** @enum {string} */
+            priority?: "URGENT" | "DESIRED" | "LATER";
         };
         DebtReminderControllerRemind: {
             /** @enum {string} */
@@ -15358,6 +15376,8 @@ export interface components {
             /** Format: date-time */
             planAgreedAt?: string;
             cancelled?: components["schemas"]["ComebacksCancelled"];
+            /** Format: int32 */
+            urgent: number;
         };
         ComebacksResult: {
             /** Format: int32 */

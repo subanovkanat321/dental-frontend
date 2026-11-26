@@ -10,6 +10,7 @@ import { stagesOf } from '../lib/planStages'
 import { totalsOf, totalText } from '../medical/stepDiscount'
 import { PriceCell } from '../medical/StepPrice'
 import { assignText, byTooth } from '../lib/planSteps'
+import { priorityGroups, priorityGrouped, priorityText } from '../lib/planPriority'
 import { canPrint, docDate } from './paper'
 import { PrintSheet } from './PrintSheet'
 import { DocActions } from './SendToPatient'
@@ -84,15 +85,18 @@ function PlainPlanDocs({ patient, steps, variants }: { patient: Patient; steps: 
  * присылает, долг не запрашиваем); снять галочку — экземпляр пациенту без цен. «📤 Пациенту» — ссылка на план в WhatsApp
  * или план в бот (PlanSendSheet) — у тех, кто ведёт план. «📷 Отправить листом» — этот же лист картинкой (SheetSend): фото
  * в бот, «Поделиться» в WhatsApp или «Скачать картинку». В Telegram (Mini App) лист открывается без печати — ради этой кнопки.
+ * Срочность (V267): есть этап не «Желательно» — вид «По срочности» (группы «🔴 Срочно» с итогом) и он по умолчанию.
  */
-type View = 'stages' | 'teeth'
+type View = 'stages' | 'teeth' | 'priority'
 
 function PlanPrint({ patient, steps, variants, image = false, onClose }: {
   patient: Patient; steps: Step[]; variants?: Variant[]; image?: boolean; onClose: () => void
 }) {
   const me = useMe().data
   const [note, setNote] = useState('')
-  const [view, setView] = useState<View>('stages')
+  // Есть срочность — лист по срочности сразу (сделанное — отдельной группой внизу)
+  const prioritized = priorityGrouped(steps.filter((s) => !s.doneAt)) || Boolean(variants?.some((v) => priorityGrouped((v.steps ?? []).filter((s) => !s.doneAt))))
+  const [view, setView] = useState<View>(prioritized ? 'priority' : 'stages')
   const money = Boolean(me && !isAssistant(me))
   const [withPrices, setWithPrices] = useState(true)
   const [sending, setSending] = useState(false)
@@ -105,6 +109,7 @@ function PlanPrint({ patient, steps, variants, image = false, onClose }: {
           <div className="segments" role="group" aria-label="Вид плана">
             <button type="button" aria-pressed={view === 'stages'} onClick={() => setView('stages')}>По этапам</button>
             <button type="button" aria-pressed={view === 'teeth'} onClick={() => setView('teeth')}>По зубам</button>
+            {prioritized && <button type="button" aria-pressed={view === 'priority'} onClick={() => setView('priority')}>По срочности</button>}
           </div>
           {money && steps.some((s) => s.priceSom != null) && (
             <label className="check"><input type="checkbox" checked={withPrices} onChange={(e) => setWithPrices(e.target.checked)} /> С ценами</label>
@@ -210,7 +215,13 @@ function PlanPaper({ patient, steps, variants, view = 'stages', withPrices = tru
 /** Таблица этапов листа: «По этапам» или «По зубам», сквозной номер, врач и срок, цена и статус. */
 function PlanTable({ steps, view, prices, assigned }: { steps: Step[]; view: View; prices: boolean; assigned: boolean }) {
   const stages = stagesOf(steps)
-  const groups = view === 'stages'
+  const open = steps.filter((s) => !s.doneAt)
+  const done = steps.filter((s) => s.doneAt)
+  const groups = view === 'priority' && priorityGrouped(open)
+    ? [...priorityGroups(open).map((g) => ({ key: `p${g.priority}`, title: priorityText(g.priority), items: g.items, total: g.total,
+      subtotal: `Итого: ${priorityText(g.priority)}` })),
+    ...(done.length ? [{ key: 'done', title: '✓ Сделано', items: done, total: 0, subtotal: '' }] : [])]
+    : view !== 'teeth'
     ? stages.map((st) => ({ key: `s${st.stage}`, title: stages.length > 1 ? `Этап ${st.stage}` : null, items: st.items, total: st.total,
       subtotal: `Итого за этап ${st.stage}` }))
     : byTooth(steps).map((g) => ({ key: `t${g.tooth ?? 0}`, title: g.tooth != null ? `Зуб ${g.tooth}` : 'Вся полость рта', items: g.items,
@@ -232,13 +243,13 @@ function PlanTable({ steps, view, prices, assigned }: { steps: Step[]; view: Vie
             <tr key={s.id}>
               <td>{number.get(s.id)}</td>
               <td>{view === 'teeth' ? `этап ${s.stage}` : s.tooth ?? '—'}</td>
-              <td>{s.title}</td>
+              <td>{s.title}{view === 'priority' && stages.length > 1 && !s.doneAt ? <small> · этап {s.stage}</small> : null}</td>
               {assigned && <td className={s.overdue ? 'assign overdue' : 'assign'}>{assignText(s)}{s.overdue ? ' · просрочен' : ''}</td>}
               {prices && <td className="r"><PriceCell step={s} /></td>}
               <td>{s.doneAt ? `сделано ${docDate(s.doneAt)}` : 'в плане'}</td>
             </tr>
           ))}
-          {prices && groups.length > 1 && g.total > 0 && (view === 'stages' || g.items.length > 1) && (
+          {prices && groups.length > 1 && g.total > 0 && (view !== 'teeth' || g.items.length > 1) && (
             <tr className="subtotal"><td colSpan={3 + (assigned ? 1 : 0)} className="r">{g.subtotal}</td><td className="r">{somText(g.total)}</td><td /></tr>
           )}
         </tbody>
