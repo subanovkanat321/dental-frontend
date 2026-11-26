@@ -21,6 +21,8 @@ import { phoneSearchDigits } from '../lib/phone'
 import { useHeadSlot } from '../layout/headSlot'
 import { EmptyState } from '../layout/EmptyState'
 import { isUiV2 } from '../lib/uiVersion'
+import { DoctorFilter } from '../layout/DoctorFilter'
+import { doctorOptions } from '../layout/doctorOptions'
 import { Select } from '../layout/Select'
 import { Spinner } from '../layout/Loading'
 import { HelpHint } from '../help/HelpHint'
@@ -154,10 +156,7 @@ export function PatientsPage({ me, onBook, onBookLead, initialPatient, initialQu
                 <input type="search" className="search" aria-label="Поиск пациента" placeholder="Имя или номер телефона"
                   value={query} onChange={(e) => setQuery(e.target.value)} autoFocus />
                 {doctors.length > 1 && (
-                  <Select aria-label="Чьи пациенты" value={doctorId ?? ''} onChange={(e) => setDoctorId(e.target.value ? Number(e.target.value) : null)}>
-                    <option value="">Все врачи</option>
-                    {doctors.map((d) => <option key={d.id} value={d.id}>{d.fullName}{d.id === me.doctorId ? ' (я)' : ''}</option>)}
-                  </Select>
+                  <DoctorFilter label="Чьи пациенты" value={doctorId} onChange={setDoctorId} options={doctorOptions(doctors, { me })} />
                 )}
                 {(birthdayCount > 0 || birthdaysOnly) && (
                   <button type="button" className="btn small" aria-pressed={birthdaysOnly} onClick={() => { setBirthdaysOnly(!birthdaysOnly); setDupsOnly(false) }}

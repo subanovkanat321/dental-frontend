@@ -74,7 +74,7 @@ test('сводка и список: новые сверху, врач, кана�
   expect(asked.at(-1)!.get('low')).toBe('true')
 
   await userEvent.click(screen.getByRole('button', { name: 'Год' }))
-  await choose(screen.getByRole('combobox', { name: 'Врач' }), 'Дастан Т.')
+  await choose(screen.getByRole('button', { name: /^Врач:/ }), 'Дастан Т.')
   expect(asked.at(-1)!.get('days')).toBe('365')
   expect(asked.at(-1)!.get('doctorId')).toBe('2')
 

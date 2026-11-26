@@ -60,7 +60,7 @@ test('админ: выручка за месяц, по способам; выб�
   // Под переключателем видно, какие даты входят в «Месяц»
   expect(screen.getByLabelText('Даты периода')).toHaveTextContent(periodText('month', month, todayIn()))
 
-  await choose(screen.getByLabelText('Чья касса'), 'Дастан Т.')
+  await choose(screen.getByRole('button', { name: /^Чья касса:/ }), 'Дастан Т.')
   expect(await screen.findByLabelText('Выручка за период')).toHaveTextContent(/7\s000 сом/)
   expect(screen.getByLabelText('Касса за период')).toHaveTextContent(/8\s000 сом/)
   expect(asked).toContain(`${month.from}..${month.to} 2`)
@@ -116,7 +116,7 @@ test('врач: на месте выбора врача — «ваша касс�
   renderApp()
   // Подпись — текст, не выбор
   expect(await screen.findByLabelText('Чья касса')).toHaveTextContent('🧑‍⚕️ Айгерим Садыкова — ваша касса')
-  expect(screen.queryByRole('combobox', { name: 'Чья касса' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /^Чья касса/ })).not.toBeInTheDocument()
   expect(await screen.findByText(/Оплачено приёмов: 1/)).toHaveTextContent(/в долг: 1 \(2\s000 сом\)/)
   expect(asked).toContain('1')
 
@@ -173,7 +173,7 @@ test('«Врачи работают независимо»: владелец (а
     http.get('*/api/appointments/debts', () => HttpResponse.json([])),
   )
   renderApp()
-  expect(await screen.findByRole('combobox', { name: 'Чья касса' })).toHaveTextContent('Вся клиника')
+  expect(await screen.findByRole('button', { name: /^Чья касса:/ })).toHaveTextContent('Вся клиника')
 })
 
 test('«Должники»: по пациентам — кто сколько должен, с какого числа, просрочено; приём — в карточку', async () => {

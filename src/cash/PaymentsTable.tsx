@@ -6,6 +6,9 @@ import { addDays, shortDate, somText, todayIn, ZONE } from '../lib/time'
 import { useSort } from '../lib/useSort'
 import { DateInput } from '../layout/DateInput'
 import { Select } from '../layout/Select'
+import { DoctorFilter } from '../layout/DoctorFilter'
+import { colorOf } from '../lib/avatars'
+import { plural } from '../lib/plural'
 import { EmptyState } from '../layout/EmptyState'
 import { rowOpen } from '../lib/rowClick'
 
@@ -27,8 +30,10 @@ const STATUS_TEXT: Record<string, [string, string]> = {
  * Приёмы с оплатами таблицей: по умолчанию новые сверху; сортировка по любой колонке, поиск по
  * пациенту и услуге, фильтры «способ оплаты», «врач», «только с долгом». Нажать строку — карточка приёма.
  */
-export function PaymentsTable({ rows, label, onOpen, active, withStatus = false, days }: {
+export function PaymentsTable({ rows, label, onOpen, active, withStatus = false, days, doctors: clinicDoctors = [] }: {
   rows: Row[]
+  /** Врачи клиники: в выборе врача — их фото и цвет, как в «Расписании» (в строках отчёта только имя врача) */
+  doctors?: Schemas['DoctorView'][]
   label: string
   onOpen?: (id: number) => void
   active?: number | null
@@ -52,6 +57,8 @@ export function PaymentsTable({ rows, label, onOpen, active, withStatus = false,
   const [status, setStatus] = useState('')
   const statuses = [...new Set(rows.map((r) => r.status).filter((x): x is string => Boolean(x)))]
   const doctors = [...new Set(rows.map((r) => r.doctor).filter((d): d is string => Boolean(d)))].sort((a, b) => a.localeCompare(b, 'ru'))
+  // Цвет врача — по активным врачам клиники, как у колонок «Расписания»
+  const colorDoctors = clinicDoctors.filter((d) => d.active !== false)
   const methods = [...new Set(rows.map((r) => r.method).filter((m): m is string => Boolean(m)))]
   const text = query.trim().toLowerCase()
   const filtered = rows.filter((r) => (!text || `${r.patient ?? ''} ${r.service ?? ''}`.toLowerCase().includes(text))
@@ -76,10 +83,13 @@ export function PaymentsTable({ rows, label, onOpen, active, withStatus = false,
           </Select>
         )}
         {doctors.length > 1 && (
-          <Select aria-label="Врач" value={doctor} onChange={(e) => setDoctor(e.target.value)}>
-            <option value="">Все врачи</option>
-            {doctors.map((d) => <option key={d} value={d}>{d}</option>)}
-          </Select>
+          <DoctorFilter label="Врач" value={doctor || null} onChange={(d) => setDoctor(d ?? '')}
+            options={doctors.map((name) => {
+              const d = colorDoctors.find((x) => x.fullName === name)
+              const n = rows.filter((r) => r.doctor === name).length
+              return { id: name, name, photoUrl: d?.photoUrl, color: colorOf(colorDoctors, d?.id), sub: `${n} ${plural(n, 'приём', 'приёма', 'приёмов')}` }
+            })}
+            all={{ sub: `${rows.length} ${plural(rows.length, 'приём', 'приёма', 'приёмов')}` }} />
         )}
         {withStatus && statuses.length > 1 && (
           <Select aria-label="Статус" value={status} onChange={(e) => setStatus(e.target.value)}>

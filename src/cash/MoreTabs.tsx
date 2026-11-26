@@ -279,7 +279,13 @@ export function StatsTab({ doctorId }: { doctorId: number | null }) {
  * «Отчёт за месяц»: все приёмы с оплатой и долгами — таблицей; «Отправить в бот» — файл
  * придёт в Telegram (как в приложении), удобно переслать бухгалтеру.
  */
-export function ReportTab({ doctorId, onOpen, active }: { doctorId: number | null; onOpen?: (id: number) => void; active?: number | null }) {
+export function ReportTab({ doctorId, doctors, onOpen, active }: {
+  doctorId: number | null
+  /** Врачи клиники — цвет и фото в выборе врача таблицы */
+  doctors?: Schemas['DoctorView'][]
+  onOpen?: (id: number) => void
+  active?: number | null
+}) {
   const [month, setMonth] = useState(todayIn().slice(0, 7))
   const rows = useQuery({
     queryKey: ['report', month, doctorId],
@@ -310,7 +316,7 @@ export function ReportTab({ doctorId, onOpen, active }: { doctorId: number | nul
       {send.isSuccess && <p className="tone-ok" role="status">Отчёт отправлен в Telegram</p>}
       {send.error && <p className="error" role="alert">{errorText(send.error)}</p>}
       {rows.error && <p className="error">{rows.error.message}</p>}
-      {rows.data?.length ? <section className="card-block"><PaymentsTable rows={rows.data} label="Отчёт за месяц" withStatus onOpen={onOpen} active={active} days={monthRange(month)} /></section>
+      {rows.data?.length ? <section className="card-block"><PaymentsTable rows={rows.data} doctors={doctors} label="Отчёт за месяц" withStatus onOpen={onOpen} active={active} days={monthRange(month)} /></section>
         : rows.isSuccess ? <EmptyState fill title={`Приёмов за ${monthTitle(month)} нет`} /> : null}
     </>
   )

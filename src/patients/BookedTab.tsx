@@ -6,11 +6,13 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { useReminderText } from '../api/settings'
 import { Segments } from '../layout/Segments'
 import { EmptyState } from '../layout/EmptyState'
-import { Select } from '../layout/Select'
+import { DoctorFilter } from '../layout/DoctorFilter'
+import { doctorOptions } from '../layout/doctorOptions'
 import { canEditDoctor, isAssistant, myDoctorDefault } from '../lib/roles'
 import { openLink } from '../lib/telegram'
 import { whatsappUrl } from '../lib/texts'
 import { addDays, dateOf, dayTitle, timeOf, todayIn } from '../lib/time'
+import { plural } from '../lib/plural'
 import { statusOf } from '../schedule/status'
 import { Loading } from '../layout/Loading'
 import { HeadTools } from '../layout/PageHead'
@@ -68,19 +70,26 @@ export function BookedTab({ me, initial, onOpenAppointment }: {
     })),
   })
   const nameOf = new Map(doctors.map((d) => [d.id, d.fullName ?? '']))
-  const all = lists.flatMap((q) => q.data ?? [])
-    // Будущие: заявки и запланированные, ещё не закончившиеся; «Не отмечено» — наоборот, закончившиеся без отметки
-    .filter((a) => onlyUnmarked
-      ? a.status === 'SCHEDULED' && Boolean(a.endAt) && Date.parse(a.endAt!) < now
-      : (a.status === 'SCHEDULED' || a.status === 'REQUESTED') && (!a.endAt || Date.parse(a.endAt) >= now))
-    .filter((a) => onlyUnmarked || !onlyUnconfirmed || (a.status === 'REQUESTED' || a.reply !== 'CONFIRMED'))
+  // Будущие: заявки и запланированные, ещё не закончившиеся; «Не отмечено» — наоборот, закончившиеся без отметки
+  const keep = (a: Appointment) => (onlyUnmarked
+    ? a.status === 'SCHEDULED' && Boolean(a.endAt) && Date.parse(a.endAt!) < now
+    : (a.status === 'SCHEDULED' || a.status === 'REQUESTED') && (!a.endAt || Date.parse(a.endAt) >= now))
+    && (onlyUnmarked || !onlyUnconfirmed || (a.status === 'REQUESTED' || a.reply !== 'CONFIRMED'))
+  const all = lists.flatMap((q) => q.data ?? []).filter(keep)
     .sort((x, y) => Date.parse(x.startAt) - Date.parse(y.startAt))
+  // Сколько записей у врача — под именем в выборе врача: только из уже загруженного (при «Все врачи» — у всех), без новых запросов
+  const pending = lists.some((q) => q.isPending)
+  const client = useQueryClient()
+  const countOf = (doctorId: number) => {
+    const list = client.getQueryData<Appointment[]>(['appointments', 'range', from, days, doctorId])
+    if (!list) return undefined
+    return countText(list.filter(keep).length)
+  }
   const byDay = new Map<string, Appointment[]>()
   for (const a of all) {
     const day = dateOf(a.startAt)
     byDay.set(day, [...(byDay.get(day) ?? []), a])
   }
-  const pending = lists.some((q) => q.isPending)
   const failed = lists.find((q) => q.error)?.error
 
   return (
@@ -89,10 +98,9 @@ export function BookedTab({ me, initial, onOpenAppointment }: {
       <HeadTools>
         <Segments className="tabs" label="Период" value={period} onChange={setPeriod} options={PERIODS.map(([key, title]) => ({ value: key, label: title }))} />
         {doctors.length > 1 && (
-          <Select aria-label="Врач" value={doctorId ?? ''} onChange={(e) => setDoctorId(e.target.value ? Number(e.target.value) : null)}>
-            <option value="">Все врачи</option>
-            {doctors.map((d) => <option key={d.id} value={d.id}>{d.fullName}{d.id === me.doctorId ? ' (я)' : ''}</option>)}
-          </Select>
+          <DoctorFilter label="Врач" value={doctorId} onChange={setDoctorId}
+            options={doctorOptions(doctors, { me, sub: (d) => countOf(d.id) })}
+            all={{ sub: doctorId == null && !pending ? countText(all.length) : undefined }} />
         )}
         {!onlyUnmarked && (
           <label className="check">
@@ -167,4 +175,9 @@ function BookedRow({ a, doctor, canEdit, past, onOpen }: {
       {opened.error && <p className="error" role="alert">{opened.error.message}</p>}
     </CalmRow>
   )
+}
+
+/** «1 запись», «5 записей», «записей нет» — под именем врача в выборе. */
+function countText(n: number): string {
+  return n ? `${n} ${plural(n, 'запись', 'записи', 'записей')}` : 'записей нет'
 }

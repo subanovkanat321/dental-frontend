@@ -80,7 +80,7 @@ test('руководитель: врач в фильтре кассы — «Че
   const user = userEvent.setup()
   renderApp()
   await user.click(await findSub('Расходы'))
-  await choose(await screen.findByRole('combobox', { name: 'Чья касса' }), 'Дастан Т.')
+  await choose(await screen.findByRole('button', { name: /^Чья касса:/ }), 'Дастан Т.')
   const form = screen.getByRole('form', { name: 'Новый расход' })
   await waitFor(() => expect(within(form).getByRole('combobox', { name: 'Чей расход' })).toHaveTextContent('Дастан Т.'))
   await fill(form, '900')

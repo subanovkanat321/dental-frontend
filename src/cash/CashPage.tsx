@@ -20,7 +20,8 @@ import { HeadSlotProvider, HeadTools, PageHead } from '../layout/PageHead'
 import { useHeadSlot } from '../layout/headSlot'
 import { EmptyState } from '../layout/EmptyState'
 import { DateInput } from '../layout/DateInput'
-import { Select } from '../layout/Select'
+import { DoctorFilter } from '../layout/DoctorFilter'
+import { doctorOptions } from '../layout/doctorOptions'
 import { DebtorsTab } from './DebtorsTab'
 import { Loading } from '../layout/Loading'
 import { HelpHint } from '../help/HelpHint'
@@ -147,10 +148,8 @@ export function CashPage({ me, onOpenPatient }: { me: Me; onOpenPatient?: (patie
         <PageHead slotRef={setSlot} title={<SectionTitle page="cash" title="Касса" subTitle={subTitle} hint={<HelpHint hint="cash" />} />}>
           {/* «Мой заработок» и «Зарплата» от выбора врача не зависят — там выбора нет, а не пустой список в шапке */}
           {seesAll && doctors.length > 1 && tab !== 'earnings' && tab !== 'salary' && tab !== 'day' && (
-            <Select aria-label="Чья касса" value={doctorId ?? ''} onChange={(e) => setDoctorId(e.target.value ? Number(e.target.value) : null)}>
-              <option value="">Вся клиника</option>
-              {doctors.map((d) => <option key={d.id} value={d.id}>{d.fullName}</option>)}
-            </Select>
+            <DoctorFilter label="Чья касса" value={doctorId} onChange={setDoctorId} options={doctorOptions(doctors, { me })}
+              all={{ label: 'Вся клиника', icon: '🏥' }} />
           )}
           {!seesAll && money && ownName && tab !== 'earnings' && tab !== 'salary' && (
             <span className="own-cash" aria-label="Чья касса">🧑‍⚕️ {ownName} — ваша касса</span>
@@ -165,7 +164,7 @@ export function CashPage({ me, onOpenPatient }: { me: Me; onOpenPatient?: (patie
           onOpenPatient={onOpenPatient} />}
         {tab === 'salary' && <SalaryTab seesAll={seesAll} independent={Boolean(me.clinic?.independentDoctors)} />}
         {tab === 'stats' && <StatsTab doctorId={doctorId} />}
-        {tab === 'report' && <ReportTab doctorId={doctorId} onOpen={setOpened} active={opened} />}
+        {tab === 'report' && <ReportTab doctorId={doctorId} doctors={me.doctors} onOpen={setOpened} active={opened} />}
         {tab === 'money' && <>
 
         {toPayShown && (
@@ -288,7 +287,7 @@ export function CashPage({ me, onOpenPatient }: { me: Me; onOpenPatient?: (patie
           <section className="card-block">
             <h2>Последние оплаты</h2>
             {reports.some((q) => q.isPending) ? <Loading />
-              : <PaymentsTable rows={payments} label="Последние оплаты" onOpen={setOpened} active={opened} />}
+              : <PaymentsTable rows={payments} doctors={me.doctors} label="Последние оплаты" onOpen={setOpened} active={opened} />}
           </section>
         )}
 

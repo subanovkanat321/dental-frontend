@@ -36,15 +36,8 @@
 .off-days-show:hover { color: var(--text); }
 .shown-of { color: var(--hint); font-size: .85rem; white-space: nowrap; }
 
-/* Компьютер, больше 6 врачей: вместо ряда чипов — одна кнопка «Врачи: 4 из 10 ▾» (DoctorPicker compact) */
-.doctor-picker.compact { flex: none; margin: 0; }
-.doctor-picker.compact .pick-current { width: auto; min-height: 36px; gap: 8px; padding: 3px 12px 3px 4px; border-radius: 999px; }
-.doctor-picker.compact .pick-avatar { width: 28px; height: 28px; font-size: .72rem; }
-.doctor-picker.compact .pick-avatar.all { font-size: .9rem; }
-.doctor-picker.compact .pick-current .pick-text { display: flex; align-items: baseline; gap: 8px; }
-.doctor-picker.compact .pick-current .pick-text strong { font-size: .92rem; }
-.doctor-picker.compact .pick-current .pick-text .hint { font-size: .82rem; white-space: nowrap; }
-.doctor-picker.compact .pick-list { right: auto; width: 360px; max-height: 70vh; }
+/* Компьютер, больше 6 врачей: вместо ряда чипов — одна кнопка «Врачи: 4 из 10 ▾» (DoctorPicker compact) — таблеткой,
+   стили — layout/doctorFilter.css, общие с фильтрами врача в других разделах */
 .doctor-order-list .avatar { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; color: #fff; font-size: .78rem; font-weight: 600; flex: none; }
 .doctor-order-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .doctor-order-list .btn { flex: none; width: 44px; min-height: 44px; padding: 0; font-size: 1.15rem; }

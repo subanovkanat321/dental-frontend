@@ -1,0 +1,41 @@
+/* Выбор врача таблеткой (layout/DoctorFilter.tsx, вид pill) — в строке фильтров «Пациентов», «Склада», «Кассы» и над
+   сеткой «Расписания» на компьютере, когда врачей больше 6 (compact): кружок цвета врача, имя, ▾; список — карточками,
+   как «Чьё расписание» на телефоне. Специфичность выше, чем у .ui-v2 .pick-current (крупная карточка «Расписания»). */
+.doctor-picker:is(.doctor-filter, .compact) { flex: 0 1 auto; min-width: 0; max-width: 100%; margin: 0; }
+.doctor-picker:is(.doctor-filter, .compact) .pick-current {
+  width: auto; max-width: 100%; min-height: 36px; gap: 8px; padding: 3px 12px 3px 4px; border-radius: 999px; }
+.doctor-picker:is(.doctor-filter, .compact) .pick-current:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--line-strong)); }
+.doctor-picker:is(.doctor-filter, .compact) .pick-current:focus-visible { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+.doctor-picker:is(.doctor-filter, .compact) .pick-current .pick-avatar { width: 28px; height: 28px; font-size: .72rem; }
+.doctor-picker:is(.doctor-filter, .compact) .pick-current .pick-avatar.all { font-size: .9rem; }
+.doctor-picker:is(.doctor-filter, .compact) .pick-current .pick-text { display: flex; align-items: baseline; gap: 8px; }
+.doctor-picker:is(.doctor-filter, .compact) .pick-current .pick-text strong { font-size: .92rem; font-weight: 600; }
+.doctor-picker:is(.doctor-filter, .compact) .pick-current .pick-text .hint { font-size: .82rem; white-space: nowrap; }
+.doctor-picker:is(.doctor-filter, .compact) .pick-caret { font-size: .95rem; }
+.doctor-picker:is(.doctor-filter, .compact) .pick-list { right: auto; width: 340px; max-width: calc(100vw - 16px); max-height: 70vh; }
+.doctor-picker.doctor-filter .pick-list .pick-avatar { width: 38px; height: 38px; font-size: .9rem; }
+.doctor-picker.doctor-filter .pick-list .pick-text strong { font-size: 1rem; }
+.doctor-picker.doctor-filter .pick-list .pick-text .hint { font-size: .85rem; }
+
+/* Новый вид: таблетка белая с тенью, как поиск и выпадающие списки шапки */
+.ui-v2 .doctor-picker:is(.doctor-filter, .compact) .pick-current { min-height: 40px; border: 0; background: var(--v2-card); box-shadow: var(--v2-shadow); }
+.ui-v2 .doctor-picker:is(.doctor-filter, .compact) .pick-current[aria-expanded=true] { box-shadow: inset 0 0 0 2px var(--accent), var(--v2-shadow); }
+.ui-v2 .doctor-picker:is(.doctor-filter, .compact) .pick-current .pick-text strong { color: var(--v2-ink); font-size: .95rem; }
+.ui-v2 .doctor-picker:is(.doctor-filter, .compact) .pick-list { border: 0; border-radius: var(--v2-r-card); box-shadow: var(--v2-shadow-float); }
+
+@media (max-width: 760px) {
+  /* Телефон: таблетка выше — под палец (как поле поиска и «Все лаборатории»); делит строку с соседней кнопкой
+     («Лаборатории», чекбокс), а не уходит одна на свою строку из-за «(я)»: длинное имя — с многоточием */
+  .doctor-picker.doctor-filter { flex: 1 1 0; min-width: 170px; }
+  .doctor-picker.doctor-filter .pick-current { width: 100%; min-height: 42px; padding-right: 14px; }
+  .doctor-picker.doctor-filter .pick-current .pick-text { flex: 1; }
+  .ui-v2 .doctor-picker.doctor-filter .pick-current { min-height: 44px; }
+  .doctor-picker.doctor-filter .pick-current .pick-avatar { width: 32px; height: 32px; font-size: .78rem; }
+  .doctor-picker.doctor-filter .pick-current .pick-text strong { font-size: 1rem; }
+  .doctor-picker.doctor-filter .pick-list { width: min(360px, calc(100vw - 32px)); max-height: 60vh; }
+}
+
+/* «Касса» на компьютере: «Чья касса» — справа в шапке, как прежний выпадающий список */
+@media (min-width: 761px) {
+  .cash > .toolbar > .doctor-picker.doctor-filter { order: 3; margin-left: auto; }
+}

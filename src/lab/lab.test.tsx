@@ -40,7 +40,8 @@ function backend(start: Order[]) {
       const q = new URL(request.url).searchParams
       const fittedOnly = q.get('fitted')
       return HttpResponse.json(orders.filter((o) => (fittedOnly == null || (o.status === 'FITTED') === (fittedOnly === 'true'))
-        && (!q.get('patientId') || o.patientId === Number(q.get('patientId')))))
+        && (!q.get('patientId') || o.patientId === Number(q.get('patientId')))
+        && (!q.get('doctorId') || o.doctorId === Number(q.get('doctorId')))))
     }),
     http.post('*/api/lab-orders/:id/status', async ({ params, request }) => {
       const body = (await request.json()) as Schemas['LabControllerStatusChange']
@@ -94,6 +95,26 @@ test('«Склад → Лаборатория»: «Ждём» с просроч�
   await userEvent.click(within(waitingGroup).getByRole('button', { name: 'Пришла: Коронка 36' }))
   await waitForSlow(() => expect(calls).toContainEqual({ path: 'status 1', body: { status: 'READY' } }))
   expect(await screen.findByRole('region', { name: 'Готово — ждёт установки' })).toHaveTextContent('Коронка 36')
+})
+
+test('выбор врача — как «Чьё расписание»: свой по умолчанию, у врачей сколько работ ждём и готово, «Все врачи» — все', async () => {
+  window.location.hash = '/stock/lab'
+  backend([late, ready, { ...soon, doctorId: 2, doctorName: 'Дастан Т.' }, fitted])
+  renderApp()
+  const waitingGroup = await screen.findByRole('region', { name: 'Ждём' })
+  expect(waitingGroup).toHaveTextContent('Коронка 36')
+  expect(waitingGroup).not.toHaveTextContent('Мост 34, 35, 36')
+  const button = screen.getByRole('button', { name: 'Врач: Айгерим Садыкова (я)' })
+  await userEvent.click(button)
+  const options = within(screen.getByRole('listbox', { name: 'Врач' })).getAllByRole('option')
+  await waitForSlow(() => expect(options.map((o) => o.textContent)).toEqual([
+    'АСАйгерим Садыкова (я)ждём 1 · готово 1✓', 'ДТДастан Т.ждём 1', '👥Все врачиждём 2 · готово 1',
+  ]))
+  expect(options[0]).toHaveAttribute('aria-selected', 'true')
+  await userEvent.click(options[2]!)
+  expect(screen.queryByRole('listbox')).toBeNull()
+  expect(await screen.findByRole('region', { name: 'Ждём' })).toHaveTextContent('Мост 34, 35, 36')
+  expect(screen.getByRole('button', { name: 'Врач: Все врачи' })).toHaveTextContent('Все врачи')
 })
 
 test('оплата технику: «⋯ → Оплатить технику…», галочка «Записать в расходы»', async () => {

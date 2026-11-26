@@ -6,7 +6,8 @@ import { EmptyState } from '../layout/EmptyState'
 import { Loading, Spinner } from '../layout/Loading'
 import { HeadTools, SubHelp } from '../layout/PageHead'
 import { Segments } from '../layout/Segments'
-import { Select } from '../layout/Select'
+import { DoctorFilter } from '../layout/DoctorFilter'
+import { doctorOptions } from '../layout/doctorOptions'
 import { myDoctorDefault, seesAllMoney } from '../lib/roles'
 import { shortDate } from '../lib/time'
 import { CalmRow } from './CalmList'
@@ -59,10 +60,7 @@ export function RatingsTab({ me, onOpenAppointment, onOpenPatient }: {
       <HeadTools>
         <Segments label="Период" value={days} onChange={setDays} options={PERIODS.map(([value, label]) => ({ value, label }))} />
         {doctors.length > 1 && (
-          <Select aria-label="Врач" value={doctorId ?? ''} onChange={(e) => setDoctorId(e.target.value ? Number(e.target.value) : null)}>
-            <option value="">Все врачи</option>
-            {doctors.map((d) => <option key={d.id} value={d.id}>{d.fullName}{d.id === me.doctorId ? ' (я)' : ''}</option>)}
-          </Select>
+          <DoctorFilter label="Врач" value={doctorId} onChange={setDoctorId} options={doctorOptions(doctors, { me })} />
         )}
         <label className="check"><input type="checkbox" checked={low} onChange={(e) => setLow(e.target.checked)} /> Только 1–3 ★</label>
       </HeadTools>

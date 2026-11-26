@@ -7,7 +7,8 @@ import { EmptyState } from '../layout/EmptyState'
 import { Loading, Spinner } from '../layout/Loading'
 import { HeadTools, SubHelp } from '../layout/PageHead'
 import { Segments, type SegmentOption } from '../layout/Segments'
-import { Select } from '../layout/Select'
+import { DoctorFilter } from '../layout/DoctorFilter'
+import { doctorOptions } from '../layout/doctorOptions'
 import { Sheet } from '../layout/Sheet'
 import { ask } from '../lib/confirm'
 import { haptic, openLink } from '../lib/telegram'
@@ -263,10 +264,7 @@ export function ComebackTab({ me, onOpen, onBook, canEditServices = false }: {
         <>
           <div className="cb-tools">
             {pickDoctor && (
-              <Select aria-label="Врач" value={doctorId ?? ''} onChange={(e) => { setDoctorId(e.target.value ? Number(e.target.value) : null); setLimit(PAGE) }}>
-                <option value="">Все врачи</option>
-                {doctors.map((d) => <option key={d.id} value={d.id}>{d.fullName}</option>)}
-              </Select>
+              <DoctorFilter label="Врач" value={doctorId} onChange={(id) => { setDoctorId(id); setLimit(PAGE) }} options={doctorOptions(doctors, { me })} />
             )}
             {m && (
               <span className="head-note" aria-label="В группе">

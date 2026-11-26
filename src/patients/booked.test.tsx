@@ -40,9 +40,9 @@ test('«Пациенты → Записаны»: будущие записи в�
   const list = await screen.findByRole('region', { name: 'Записанные пациенты' })
   expect(await within(list).findByText('Айгуль Т.')).toBeInTheDocument()
   // По умолчанию — свой врач (2026-11-25): Нурлана (врач 2) нет, пока не выбрали «Все врачи»
-  expect(chosen(screen.getByRole('combobox', { name: 'Врач' }))).toContain('Айгерим')
+  expect(chosen(screen.getByRole('button', { name: /^Врач:/ }))).toContain('Айгерим')
   expect(within(list).queryByText('Нурлан К.')).toBeNull()
-  await choose(screen.getByRole('combobox', { name: 'Врач' }), 'Все врачи')
+  await choose(screen.getByRole('button', { name: /^Врач:/ }), 'Все врачи')
   expect(await within(list).findByText('Нурлан К.')).toBeInTheDocument()
   // Фильтры — в строке шапки «Пациентов» (PageHead); сколько — тихо у заголовка дня, общего счётчика нет
   expect(within(list).getAllByRole('heading', { level: 3 }).map((h) => h.textContent?.replace(/^.*·\s*/, ''))).toEqual(['2', '1'])
@@ -64,7 +64,7 @@ test('«Пациенты → Записаны»: будущие записи в�
   expect(within(list).getAllByRole('listitem')).toHaveLength(2)
 
   // Один врач и месяц — запрос с days=31 только по нему
-  await choose(screen.getByRole('combobox', { name: 'Врач' }), 'Дастан Т.')
+  await choose(screen.getByRole('button', { name: /^Врач:/ }), 'Дастан Т.')
   await userEvent.click(screen.getByRole('button', { name: 'Месяц' }))
   expect(await within(list).findByText('Нурлан К.')).toBeInTheDocument()
   expect(within(list).queryByText('Бакыт М.')).toBeNull()
@@ -88,7 +88,7 @@ test('кнопка сводки «📲 Напомнить» (?screen=booked&day=
   expect(within(list).queryByText('Айгуль Т.')).toBeNull()
   expect(screen.getByRole('button', { name: 'Завтра' })).toHaveAttribute('aria-pressed', 'true')
   expect(screen.getByRole('checkbox', { name: /не подтвердил/ })).toBeChecked()
-  expect(screen.getByRole('combobox', { name: 'Врач' })).toHaveTextContent('Дастан Т.')
+  expect(screen.getByRole('button', { name: /^Врач:/ })).toHaveTextContent('Дастан Т.')
   expect(asked).toEqual([`2:${addDays(todayIn(), 1)}:1`])
   // Адрес чистый: ссылку не открыть повторно обновлением страницы
   expect(window.location.search).toBe('')

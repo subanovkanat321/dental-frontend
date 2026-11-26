@@ -23,8 +23,10 @@ export function seesLabMoney(me: Me): boolean {
   return seesAllMoney(me) || (me.doctorId != null && !isAssistant(me))
 }
 
+export type LabGroups = { waiting: LabOrder[]; ready: LabOrder[] }
+
 /** Группы раздела: ждём (по сроку), готово — ждёт установки; установленные — отдельно, свёрнуто. */
-export function groupOrders(orders: readonly LabOrder[]): { waiting: LabOrder[]; ready: LabOrder[] } {
+export function groupOrders(orders: readonly LabOrder[]): LabGroups {
   return {
     waiting: orders.filter(waiting),
     // Готовые — по ближайшей примерке (без примерки — в конце)

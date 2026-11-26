@@ -1,9 +1,8 @@
 import { useQueries } from '@tanstack/react-query'
-import { useEffect, useRef, useState } from 'react'
 
 import { api, unwrap, type Schemas } from '../api/client'
-import { colorOf, initials } from '../lib/avatars'
-import { useBack } from '../lib/back'
+import { DoctorFilter } from '../layout/DoctorFilter'
+import { doctorOptions } from '../layout/doctorOptions'
 import { todayIn } from '../lib/time'
 
 type Me = Schemas['BookingViewsMe']
@@ -18,16 +17,11 @@ function appointmentsText(n: number): string {
   return n ? `${n} ${word}` : 'записей нет'
 }
 
-function Avatar({ doctor, color }: { doctor: Doctor; color: string }) {
-  return doctor.photoUrl
-    ? <img className="pick-avatar" src={doctor.photoUrl} alt="" />
-    : <span className="pick-avatar" style={{ background: color }} aria-hidden="true">{initials(doctor.fullName)}</span>
-}
-
 /**
- * Чьё расписание (телефон; компьютер — больше 6 врачей): кнопка с выбранным врачом, нажать — список врачей
- * карточками: фото или инициалы, имя, «я», сколько записей в выбранный день, заявки из бота;
- * «Все врачи» — последним. Свой список вместо системного: у системного — только текст.
+ * Чьё расписание (телефон; компьютер — больше 6 врачей): общий выбор врача (layout/DoctorFilter.tsx) — кнопка
+ * с выбранным врачом, список карточками: фото или инициалы, имя, «я», сколько записей в выбранный день, заявки
+ * из бота; «Все врачи» — последним. Здесь — только своё для расписания: счётчики, «показано 4 из 10», 📅 и
+ * «Врачи в расписании…».
  */
 export function DoctorPicker({ me, doctors, view, date, onChange, colorDoctors = doctors, onOrder, shownCount, compact = false, onCalendar }: {
   me: Me
@@ -47,20 +41,6 @@ export function DoctorPicker({ me, doctors, view, date, onChange, colorDoctors =
   /** 📅 рядом с выбранным врачом — его мини-календарь на месяц (DoctorCalendar); у «Все врачи» кнопки нет */
   onCalendar?: (doctorId: number) => void
 }) {
-  const [open, setOpen] = useState(false)
-  const root = useRef<HTMLDivElement>(null)
-  useBack(open ? () => setOpen(false) : null)
-  useEffect(() => {
-    if (!open) return
-    const outside = (e: PointerEvent) => { if (!root.current?.contains(e.target as Node)) setOpen(false) }
-    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
-    document.addEventListener('pointerdown', outside)
-    document.addEventListener('keydown', esc)
-    return () => {
-      document.removeEventListener('pointerdown', outside)
-      document.removeEventListener('keydown', esc)
-    }
-  }, [open])
   // Сколько записей у каждого врача в этот день — тот же запрос, что у ленты дней раньше
   const counts = useQueries({
     queries: doctors.map((d) => ({
@@ -74,66 +54,28 @@ export function DoctorPicker({ me, doctors, view, date, onChange, colorDoctors =
   const total = doctors.reduce((sum, _, i) => sum + booked(i), 0)
   const day = date === todayIn() ? 'сегодня' : 'в этот день'
   const index = doctors.findIndex((d) => d.id === view)
-  const current = index >= 0 ? doctors[index] : undefined
-  const pick = (next: View) => {
-    onChange(next)
-    setOpen(false)
-  }
-  const nameOf = (d: Doctor) => `${d.fullName ?? ''}${d.id === me.doctorId ? ' (я)' : ''}`
   // Записей — по всем врачам (как в заголовке дня), а «из скольких» — сколько колонок на экране
   const partial = shownCount != null && shownCount < doctors.length
-  const allLabel = partial ? `Врачи: ${shownCount} из ${doctors.length}` : 'Все врачи'
+  const options = doctorOptions(doctors, { me, colorDoctors, sub: (_, i) => `${appointmentsText(booked(i))} ${day}` })
+    .map((o, i) => (requested(i) > 0 ? { ...o, badge: <span className="chip small s-request" title="Заявки из бота">🆕 {requested(i)}</span> } : o))
 
   return (
-    <div ref={root} className={compact ? 'doctor-picker compact' : 'doctor-picker'}>
-      <div className="pick-row">
-      <button type="button" className="pick-current" aria-haspopup="listbox" aria-expanded={open}
-        aria-label={`Чьё расписание: ${current ? nameOf(current) : `Все врачи${partial ? `, показано ${shownCount} из ${doctors.length}` : ''}`}`}
-        onClick={() => setOpen(!open)}>
-        {current ? <Avatar doctor={current} color={colorOf(colorDoctors, current.id)} /> : <span className="pick-avatar all" aria-hidden="true">👥</span>}
-        <span className="pick-text">
-          <strong>{current ? nameOf(current) : allLabel}</strong>
-          <span className="hint">{appointmentsText(current ? booked(index) : total)} {day}</span>
-        </span>
-        <span className="pick-caret" aria-hidden="true">{open ? '▴' : '▾'}</span>
-      </button>
-      {current && onCalendar && (
-        <button type="button" className="pick-calendar" aria-haspopup="dialog" aria-label={`Календарь врача: ${current.fullName ?? ''}`}
-          title="Рабочие дни и свободное время на месяц" onClick={() => { setOpen(false); onCalendar(current.id) }}>📅</button>
-      )}
-      </div>
-      {open && (
-        <div className="pick-list">
-        <ul role="listbox" aria-label="Чьё расписание">
-          {doctors.map((d, i) => (
-            <li key={d.id} role="option" aria-selected={view === d.id} onClick={() => pick(d.id)}
-              onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && pick(d.id)} tabIndex={0}>
-              <Avatar doctor={d} color={colorOf(colorDoctors, d.id)} />
-              <span className="pick-text">
-                <strong>{nameOf(d)}</strong>
-                <span className="hint">{appointmentsText(booked(i))} {day}</span>
-              </span>
-              {requested(i) > 0 && <span className="chip small s-request" title="Заявки из бота">🆕 {requested(i)}</span>}
-              <span className="pick-check" aria-hidden="true">{view === d.id ? '✓' : ''}</span>
-            </li>
-          ))}
-          <li role="option" aria-selected={view === 'all'} onClick={() => pick('all')}
-            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && pick('all')} tabIndex={0}>
-            <span className="pick-avatar all" aria-hidden="true">👥</span>
-            <span className="pick-text">
-              <strong>Все врачи</strong>
-              <span className="hint">{appointmentsText(total)} {day}{partial ? ` · показано ${shownCount} из ${doctors.length}` : ''}</span>
-            </span>
-            <span className="pick-check" aria-hidden="true">{view === 'all' ? '✓' : ''}</span>
-          </li>
-        </ul>
-        {onOrder && (
-          <button type="button" className="pick-order" onClick={() => { setOpen(false); onOrder() }}>
-            <span aria-hidden="true">⇅</span> Врачи в расписании…
-          </button>
-        )}
-        </div>
-      )}
-    </div>
+    <DoctorFilter label="Чьё расписание" options={options} value={view === 'all' ? null : view} onChange={(next) => onChange(next ?? 'all')}
+      variant={compact ? 'pill' : 'card'} className={compact ? 'compact' : undefined}
+      buttonSub={`${appointmentsText(index >= 0 ? booked(index) : total)} ${day}`}
+      all={{
+        sub: `${appointmentsText(total)} ${day}${partial ? ` · показано ${shownCount} из ${doctors.length}` : ''}`,
+        buttonName: partial ? `Врачи: ${shownCount} из ${doctors.length}` : undefined,
+        buttonLabel: `Все врачи${partial ? `, показано ${shownCount} из ${doctors.length}` : ''}`,
+      }}
+      side={onCalendar && index >= 0 ? (close) => (
+        <button type="button" className="pick-calendar" aria-haspopup="dialog" aria-label={`Календарь врача: ${doctors[index]!.fullName ?? ''}`}
+          title="Рабочие дни и свободное время на месяц" onClick={() => { close(); onCalendar(doctors[index]!.id) }}>📅</button>
+      ) : undefined}
+      footer={onOrder ? (close) => (
+        <button type="button" className="pick-order" onClick={() => { close(); onOrder() }}>
+          <span aria-hidden="true">⇅</span> Врачи в расписании…
+        </button>
+      ) : undefined} />
   )
 }

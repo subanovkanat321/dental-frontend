@@ -8,11 +8,13 @@ import { EmptyState } from '../layout/EmptyState'
 import { Fold } from '../layout/Fold'
 import { HeadTools } from '../layout/PageHead'
 import { Loading } from '../layout/Loading'
+import { DoctorFilter } from '../layout/DoctorFilter'
+import { doctorOptions } from '../layout/doctorOptions'
 import { Select } from '../layout/Select'
 import { useArchiveLab, useLabDebts, useLabOrder, useLabOrders, useLabs, type Lab } from './api'
 import { LabForm, LabOrderDialog } from './LabOrderDialog'
 import { LabRow } from './LabRow'
-import { groupOrders, seesLabMoney } from './text'
+import { groupOrders, seesLabMoney, type LabGroups } from './text'
 import { useLabActions } from './useLabActions'
 import './lab.css'
 
@@ -45,6 +47,10 @@ export function LabTab({ me, initialOrder, onOpenPatient }: {
   const seesAll = Boolean(me.admin || me.reception)
   const doctors = (me.doctors ?? []).filter((d) => d.active !== false)
   const groups = groupOrders(open.data ?? [])
+  // Сколько работ у каждого врача — под именем в выборе врача: тот же запрос, что список при «Все врачи» (кэш общий)
+  const pickDoctor = seesAll && doctors.length > 1
+  const everyone = useLabOrders({ fitted: false, labId: filter.labId }, pickDoctor)
+  const workText = (orders: Schemas['LabOrderView'][] | undefined) => (orders ? labCountText(groupOrders(orders)) : undefined)
 
   // Пришли из бота («Открыть» под предупреждением) — сразу этот заказ; закрыли — больше не открываем
   const [linkClosed, setLinkClosed] = useState(false)
@@ -64,11 +70,10 @@ export function LabTab({ me, initialOrder, onOpenPatient }: {
             {labs.data!.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
           </Select>
         )}
-        {seesAll && doctors.length > 1 && (
-          <Select aria-label="Врач" value={doctorId} onChange={(e) => setDoctorId(e.target.value === '' ? '' : Number(e.target.value))}>
-            <option value="">Все врачи</option>
-            {doctors.map((d) => <option key={d.id} value={d.id}>{d.fullName}</option>)}
-          </Select>
+        {pickDoctor && (
+          <DoctorFilter label="Врач" value={doctorId === '' ? null : doctorId} onChange={(id) => setDoctorId(id ?? '')}
+            options={doctorOptions(doctors, { me, sub: (d) => workText(everyone.data?.filter((o) => o.doctorId === d.id)) })}
+            all={{ sub: workText(everyone.data) }} />
         )}
         <button type="button" className="btn" onClick={() => setDirectory(true)}>Лаборатории</button>
         <button type="button" className="btn primary head-end" onClick={() => setCreating(true)}>＋ Заказ</button>
@@ -127,4 +132,9 @@ function LabsDialog({ onClose }: { onClose: () => void }) {
       archive={{ keeps: 'Старые заказы останутся.', run: archive.mutate, error: archive.error }}
       form={(l, done, cancel) => <LabForm lab={l} onSaved={done} onCancel={cancel} />} />
   )
+}
+
+/** «ждём 2 · готово 1», «работ нет» — под именем врача в выборе. */
+function labCountText({ waiting, ready }: LabGroups): string {
+  return [waiting.length ? `ждём ${waiting.length}` : '', ready.length ? `готово ${ready.length}` : ''].filter(Boolean).join(' · ') || 'работ нет'
 }
