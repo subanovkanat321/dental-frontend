@@ -2276,6 +2276,8 @@ button.status-pill:focus-visible { outline: 2px solid var(--accent); outline-off
 .fold-head:hover .fold-title { color: var(--link); }
 .fold-head:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--r-sm); }
 .fold-title { font-weight: 600; flex: none; }
+/* Заголовок без пояснения справа — переносится, а не вылезает за карточку («Принимаете пациентов? Станьте и врачом», 2026-11-26) */
+.fold-head:not(:has(.fold-meta)) .fold-title { flex: 0 1 auto; min-width: 0; overflow-wrap: break-word; }
 .fold-meta { margin-left: auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--hint); font-size: .9rem; }
 .fold-chev { flex: none; color: var(--hint); font-size: 1.1rem; line-height: 1; transition: transform 150ms ease-in-out; }
 .fold-meta + .fold-chev, .fold-title + .fold-chev { margin-left: 0; }
