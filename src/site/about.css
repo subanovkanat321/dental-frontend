@@ -45,6 +45,8 @@
 .about-btn.big { min-height: 60px; padding: 0 36px; font-size: 1.125rem; border-radius: 16px; }
 .about-ctas { display: flex; flex-wrap: wrap; gap: 12px; }
 .about-ctas.center { justify-content: center; }
+/* Общий .center (tokens.css — экран входа) делал этот ряд колонкой 420px с отступами 12vh: под «Начать бесплатно» была пустота */
+.about .about-ctas.center { display: flex; max-width: none; margin: 32px 0 0; padding: 0; }
 
 /* Слайд: на компьютере — весь экран, содержимое по центру; на телефоне — своей высоты */
 .about-slide { position: relative; display: flex; align-items: center; padding: 72px 16px; scroll-margin-top: 56px; }
@@ -224,8 +226,6 @@ html:has(.about), html:has(.about) body { background: #FFFFFF; }
   .about-faq { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 12px 16px; }
   .about-contacts { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .about-steps li { align-content: start; }
-  /* Общий класс .center из tokens.css (узкая колонка 420px с отступом 12vh) ломал ряд кнопок: на ноутбуке — снова ряд */
-  .about-ctas.center { display: flex; max-width: none; margin: 32px 0 0; padding: 0; }
   /* Кейс — карточкой по центру, а не строкой у левого края широкого слайда */
   .about-case { display: grid; gap: 10px; max-width: 880px; margin-inline: auto; padding: 32px 36px; border-radius: 24px; background: var(--about-soft); border: 1px solid var(--separator); }
   .about-case .site-case-metrics li { background: var(--page); }
