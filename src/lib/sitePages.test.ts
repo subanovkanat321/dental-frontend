@@ -8,6 +8,7 @@ test('npm run dev: короткие адреса сайта открывают �
   expect(sitePageFor('/r/abc')).toBe('/site/review.html')
   expect(sitePageFor('/pay/tok')).toBe('/site/pay.html')
   expect(sitePageFor('/about')).toBe('/site/about.html')
+  expect(sitePageFor('/x')).toBe('/site/x.html')
   // CRM, Mini App, картинки сайта и сами HTML сайта — как есть
   expect(sitePageFor('/')).toBeNull()
   expect(sitePageFor('/start')).toBeNull()

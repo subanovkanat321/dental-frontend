@@ -8,6 +8,7 @@ import { EmptyState } from '../layout/EmptyState'
 import { shortDate, todayIn } from '../lib/time'
 import { useMedia } from '../lib/useMedia'
 import { PublicationBlock } from './BeforeAfter'
+import { FileSend } from './FileSend'
 import { isComposite } from './composite'
 import { resizePhoto } from './thumb'
 import { Thumb } from './Thumb'
@@ -39,8 +40,10 @@ const kindName = (k?: Kind) => KINDS.find(([x]) => x === k)?.[1].replace(/^\S+ /
  * «Выбрать файлы» или перетащить на блок) и
  * «до / после» для Instagram. В медкарте — целиком; в карточке приёма — свёрнуто под одной кнопкой.
  */
-export function PatientFiles({ patientId, readOnly, compact = false, defaultKind = 'XRAY', takenOn: day }: {
+export function PatientFiles({ patientId, readOnly, compact = false, defaultKind = 'XRAY', takenOn: day, phone }: {
   patientId: number
+  /** Телефон пациента или представителя — для «📤 Отправить пациенту» ссылкой в WhatsApp; нет — бот и QR */
+  phone?: string | null
   readOnly: boolean
   /** В карточке приёма: свёрнуто под одной кнопкой, видны последние 4 — остальное в медкарте */
   compact?: boolean
@@ -153,6 +156,7 @@ export function PatientFiles({ patientId, readOnly, compact = false, defaultKind
               <span>{f.caption ?? kindName(f.kind)}</span>
               <span className="hint">{f.takenOn ? shortDate(`${f.takenOn}T12:00:00Z`) : ''}{f.createdBy ? ` · ${f.createdBy}` : ''}</span>
               {f.postText && <PostTextCopy text={f.postText} />}
+              <FileSend patientId={patientId} file={f} phone={phone} />
               {f.canDelete && (
                 <button type="button" className="link danger-link" onClick={() => void ask('Удалить снимок?').then((ok) => ok && remove.mutate(f.id))}>Удалить</button>
               )}

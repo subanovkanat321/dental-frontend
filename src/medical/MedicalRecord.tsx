@@ -3,6 +3,7 @@ import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { useBack } from '../lib/back'
+import { contactPhone } from '../lib/guardian'
 import { shortDate } from '../lib/time'
 import { AnamnesisBlock, MedAlerts } from './Anamnesis'
 import { useAnamnesis } from '../api/anamnesis'
@@ -104,7 +105,7 @@ export function MedicalRecord({ patient, onBack, backLabel = '← К списк�
           )}
           {tab === 'plan' && <TreatmentPlan patient={patient} prefill={planTooth} readOnly={readOnly} />}
           {tab === 'anamnesis' && <AnamnesisBlock patientId={id} readOnly={readOnly} />}
-          {tab === 'files' && <PatientFiles patientId={id} readOnly={readOnly} />}
+          {tab === 'files' && <PatientFiles patientId={id} readOnly={readOnly} phone={contactPhone(patient)} />}
           {tab === 'notes' && <Notes patientId={id} />}
         </>
       )}

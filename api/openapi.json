@@ -10471,6 +10471,95 @@
         }
       }
     },
+    "/api/patients/{patientId}/files/{fileId}/send" : {
+      "post" : {
+        "tags" : [ "file-link-controller" ],
+        "operationId" : "send_4",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "fileId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        }
+      }
+    },
+    "/api/patients/{patientId}/files/{fileId}/link" : {
+      "post" : {
+        "tags" : [ "file-link-controller" ],
+        "operationId" : "link_1",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "fileId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/FileLinksLink"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "file-link-controller" ],
+        "operationId" : "revoke",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "fileId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        }
+      }
+    },
     "/api/patients/{patientId}/debt-reminder" : {
       "get" : {
         "tags" : [ "debt-reminder-controller" ],
@@ -11689,7 +11778,7 @@
     "/api/patient-groups/send" : {
       "post" : {
         "tags" : [ "segment-controller" ],
-        "operationId" : "send_4",
+        "operationId" : "send_5",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -12159,7 +12248,7 @@
     "/api/me/identities/{provider}" : {
       "post" : {
         "tags" : [ "external-login-controller" ],
-        "operationId" : "link_1",
+        "operationId" : "link_2",
         "parameters" : [ {
           "name" : "provider",
           "in" : "path",
@@ -13202,7 +13291,7 @@
       },
       "delete" : {
         "tags" : [ "platform-controller" ],
-        "operationId" : "revoke",
+        "operationId" : "revoke_1",
         "responses" : {
           "204" : {
             "description" : "No Content"
@@ -14292,7 +14381,7 @@
     "/api/appointments/{id}/visit-report/send" : {
       "post" : {
         "tags" : [ "visit-report-controller" ],
-        "operationId" : "send_5",
+        "operationId" : "send_6",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -14735,7 +14824,7 @@
       },
       "post" : {
         "tags" : [ "review-link-controller" ],
-        "operationId" : "send_6",
+        "operationId" : "send_7",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -14928,7 +15017,7 @@
     "/api/appointments/{id}/receipt/send" : {
       "post" : {
         "tags" : [ "receipt-controller" ],
-        "operationId" : "send_7",
+        "operationId" : "send_8",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -15284,7 +15373,7 @@
     "/api/appointments/{id}/care-memo/send" : {
       "post" : {
         "tags" : [ "care-memo-controller" ],
-        "operationId" : "send_8",
+        "operationId" : "send_9",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -15553,6 +15642,67 @@
         }
       }
     },
+    "/web/x/{token}" : {
+      "get" : {
+        "tags" : [ "file-page-controller" ],
+        "operationId" : "page_1",
+        "parameters" : [ {
+          "name" : "token",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/FileLinksPage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/x/{token}/image" : {
+      "get" : {
+        "tags" : [ "file-page-controller" ],
+        "operationId" : "image",
+        "parameters" : [ {
+          "name" : "token",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "download",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean",
+            "default" : false
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "byte"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/web/telegram-connect/status" : {
       "get" : {
         "tags" : [ "telegram-connect-controller" ],
@@ -15709,7 +15859,7 @@
     "/web/pay/{token}" : {
       "get" : {
         "tags" : [ "pay-requisites-controller" ],
-        "operationId" : "page_1",
+        "operationId" : "page_2",
         "parameters" : [ {
           "name" : "token",
           "in" : "path",
@@ -17036,7 +17186,7 @@
     "/api/platform/support/messages/{id}/image" : {
       "get" : {
         "tags" : [ "support-controller" ],
-        "operationId" : "image",
+        "operationId" : "image_1",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -17064,7 +17214,7 @@
     "/api/support/messages/{id}/image" : {
       "get" : {
         "tags" : [ "support-controller" ],
-        "operationId" : "image_1",
+        "operationId" : "image_2",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -17940,6 +18090,33 @@
         }
       }
     },
+    "/api/patients/{patientId}/files/send-target" : {
+      "get" : {
+        "tags" : [ "file-link-controller" ],
+        "operationId" : "target_1",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/FileLinksTarget"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/patients/{patientId}/expenses" : {
       "get" : {
         "tags" : [ "expense-controller" ],
@@ -18084,7 +18261,7 @@
     "/api/patients/{id}/referral/link" : {
       "get" : {
         "tags" : [ "patient-referral-controller" ],
-        "operationId" : "link_2",
+        "operationId" : "link_3",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -24423,6 +24600,10 @@
           },
           "postText" : {
             "type" : "string"
+          },
+          "linkUntil" : {
+            "type" : "string",
+            "format" : "date-time"
           }
         },
         "required" : [ "canDelete", "id", "sizeBytes" ]
@@ -29355,6 +29536,20 @@
           }
         }
       },
+      "FileLinksLink" : {
+        "properties" : {
+          "url" : {
+            "type" : "string"
+          },
+          "text" : {
+            "type" : "string"
+          },
+          "expiresAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }
+      },
       "DebtReminderControllerRemind" : {
         "properties" : {
           "channel" : {
@@ -31662,6 +31857,21 @@
           }
         },
         "required" : [ "patientId" ]
+      },
+      "FileLinksPage" : {
+        "properties" : {
+          "clinic" : {
+            "type" : "string"
+          },
+          "takenOn" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "expiresAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }
       },
       "TelegramConnectControllerConnectStatus" : {
         "properties" : {
@@ -35193,6 +35403,14 @@
           "lang" : {
             "type" : "string",
             "enum" : [ "RU", "KY" ]
+          }
+        },
+        "required" : [ "telegram" ]
+      },
+      "FileLinksTarget" : {
+        "properties" : {
+          "telegram" : {
+            "type" : "boolean"
           }
         },
         "required" : [ "telegram" ]

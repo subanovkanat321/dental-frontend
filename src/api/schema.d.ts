@@ -4052,6 +4052,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/patients/{patientId}/files/{fileId}/send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["send_4"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/patients/{patientId}/files/{fileId}/link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["link_1"];
+        delete: operations["revoke"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/patients/{patientId}/debt-reminder": {
         parameters: {
             query?: never;
@@ -4557,7 +4589,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["send_4"];
+        post: operations["send_5"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4829,7 +4861,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["link_1"];
+        post: operations["link_2"];
         delete: operations["unlink"];
         options?: never;
         head?: never;
@@ -5214,7 +5246,7 @@ export interface paths {
         get: operations["supportAccess"];
         put?: never;
         post: operations["grant"];
-        delete: operations["revoke"];
+        delete: operations["revoke_1"];
         options?: never;
         head?: never;
         patch?: never;
@@ -5629,7 +5661,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["send_5"];
+        post: operations["send_6"];
         delete?: never;
         options?: never;
         head?: never;
@@ -5789,7 +5821,7 @@ export interface paths {
         };
         get: operations["draft_5"];
         put?: never;
-        post: operations["send_6"];
+        post: operations["send_7"];
         delete?: never;
         options?: never;
         head?: never;
@@ -5885,7 +5917,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["send_7"];
+        post: operations["send_8"];
         delete?: never;
         options?: never;
         head?: never;
@@ -6045,7 +6077,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["send_8"];
+        post: operations["send_9"];
         delete?: never;
         options?: never;
         head?: never;
@@ -6142,6 +6174,38 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["alerts"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/x/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["page_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/x/{token}/image": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["image"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -6267,7 +6331,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["page_1"];
+        get: operations["page_2"];
         put?: never;
         post?: never;
         delete?: never;
@@ -7019,7 +7083,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["image"];
+        get: operations["image_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -7035,7 +7099,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["image_1"];
+        get: operations["image_2"];
         put?: never;
         post?: never;
         delete?: never;
@@ -7508,6 +7572,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/patients/{patientId}/files/send-target": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["target_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/patients/{patientId}/expenses": {
         parameters: {
             query?: never;
@@ -7579,7 +7659,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["link_2"];
+        get: operations["link_3"];
         put?: never;
         post?: never;
         delete?: never;
@@ -10570,6 +10650,8 @@ export interface components {
             createdBy?: string;
             canDelete: boolean;
             postText?: string;
+            /** Format: date-time */
+            linkUntil?: string;
         };
         ChartControllerDentitionRequest: {
             /** @enum {string} */
@@ -12561,6 +12643,12 @@ export interface components {
             /** @enum {string} */
             priority?: "URGENT" | "DESIRED" | "LATER";
         };
+        FileLinksLink: {
+            url?: string;
+            text?: string;
+            /** Format: date-time */
+            expiresAt?: string;
+        };
         DebtReminderControllerRemind: {
             /** @enum {string} */
             channel: "TELEGRAM" | "WHATSAPP";
@@ -13491,6 +13579,13 @@ export interface components {
             /** Format: int64 */
             patientId: number;
             text?: string;
+        };
+        FileLinksPage: {
+            clinic?: string;
+            /** Format: date */
+            takenOn?: string;
+            /** Format: date-time */
+            expiresAt?: string;
         };
         TelegramConnectControllerConnectStatus: {
             /** @enum {string} */
@@ -14866,6 +14961,9 @@ export interface components {
             telegram: boolean;
             /** @enum {string} */
             lang?: "RU" | "KY";
+        };
+        FileLinksTarget: {
+            telegram: boolean;
         };
         PatientDuplicatesMatch: {
             patient: components["schemas"]["PatientView"];
@@ -24579,6 +24677,71 @@ export interface operations {
             };
         };
     };
+    send_4: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: number;
+                fileId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    link_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: number;
+                fileId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FileLinksLink"];
+                };
+            };
+        };
+    };
+    revoke: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: number;
+                fileId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     draft: {
         parameters: {
             query?: never;
@@ -25540,7 +25703,7 @@ export interface operations {
             };
         };
     };
-    send_4: {
+    send_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -25969,7 +26132,7 @@ export interface operations {
             };
         };
     };
-    link_1: {
+    link_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -26807,7 +26970,7 @@ export interface operations {
             };
         };
     };
-    revoke: {
+    revoke_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -27635,7 +27798,7 @@ export interface operations {
             };
         };
     };
-    send_5: {
+    send_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -27939,7 +28102,7 @@ export interface operations {
             };
         };
     };
-    send_6: {
+    send_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -28097,7 +28260,7 @@ export interface operations {
             };
         };
     };
-    send_7: {
+    send_8: {
         parameters: {
             query?: never;
             header?: never;
@@ -28351,7 +28514,7 @@ export interface operations {
             };
         };
     };
-    send_8: {
+    send_9: {
         parameters: {
             query?: never;
             header?: never;
@@ -28564,6 +28727,52 @@ export interface operations {
             };
         };
     };
+    page_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FileLinksPage"];
+                };
+            };
+        };
+    };
+    image: {
+        parameters: {
+            query?: {
+                download?: boolean;
+            };
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+        };
+    };
     status_3: {
         parameters: {
             query?: never;
@@ -28710,7 +28919,7 @@ export interface operations {
             };
         };
     };
-    page_1: {
+    page_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -29768,7 +29977,7 @@ export interface operations {
             };
         };
     };
-    image: {
+    image_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -29790,7 +29999,7 @@ export interface operations {
             };
         };
     };
-    image_1: {
+    image_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -30491,6 +30700,28 @@ export interface operations {
             };
         };
     };
+    target_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FileLinksTarget"];
+                };
+            };
+        };
+    };
     ofPatient_1: {
         parameters: {
             query?: never;
@@ -30601,7 +30832,7 @@ export interface operations {
             };
         };
     };
-    link_2: {
+    link_3: {
         parameters: {
             query?: never;
             header?: never;

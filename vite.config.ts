@@ -186,14 +186,14 @@ const colorMixPostcss = {
 
 /**
  * Короткие адреса страниц сайта → их HTML — как nginx на проде (deploy/nginx/default.conf.template бэкенда): /clinics,
- * /c/<код>, /join, /go, /guide, /tour, /learn…, /plan, /r/<секрет>, /pay/<токен>, /about, /call.html. Без этого в
+ * /c/<код>, /join, /go, /guide, /tour, /learn…, /plan, /x, /r/<секрет>, /pay/<токен>, /about, /call.html. Без этого в
  * `npm run dev` /clinics открывал index.html (Mini App) — а страница клиники при 404 уводит на /clinics, и
  * Mini App без входа бесконечно просил /api/patient/me. null — не страница сайта (CRM, Mini App, файлы).
  */
 export function sitePageFor(path: string): string | null {
   const exact: Record<string, string> = {
     '/clinics': 'clinics', '/clinic': 'clinic', '/join': 'join', '/go': 'go', '/guide': 'guide', '/tour': 'tour',
-    '/call.html': 'call', '/learn': 'learn', '/plan': 'plan', '/about': 'about',
+    '/call.html': 'call', '/learn': 'learn', '/plan': 'plan', '/about': 'about', '/x': 'x',
   }
   const clean = path.length > 1 ? path.replace(/\/$/, '') : path
   if (exact[clean]) return `/site/${exact[clean]}.html`
@@ -235,7 +235,7 @@ export default defineConfig({
       // CRM и Mini App — index.html; страницы сайта — свои HTML с og:-тегами и лёгкими скриптами
       input: {
         main: resolve(import.meta.dirname, 'index.html'),
-        ...Object.fromEntries(['clinic', 'clinics', 'join', 'go', 'call', 'guide', 'plan', 'review', 'pay', 'learn', 'about', 'tour'].map((name) => [name, resolve(import.meta.dirname, `site/${name}.html`)])),
+        ...Object.fromEntries(['clinic', 'clinics', 'join', 'go', 'call', 'guide', 'plan', 'review', 'pay', 'learn', 'about', 'tour', 'x'].map((name) => [name, resolve(import.meta.dirname, `site/${name}.html`)])),
       },
     },
   },

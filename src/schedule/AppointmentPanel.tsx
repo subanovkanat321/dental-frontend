@@ -2,6 +2,7 @@ import { kindText, markText, statusTone } from '../lib/whatsapp'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { KidInfo } from '../patients/KidInfo'
 import { ask } from '../lib/confirm'
+import { contactPhone } from '../lib/guardian'
 import { PatientHistory } from './PatientHistory'
 import { useEffect, useRef, useState } from 'react'
 import { TaskDialog } from '../tasks/TaskDialog'
@@ -483,7 +484,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
           {visitTools && clinical && a.patient.id != null && <VisitPlan appointment={a} me={me} />}
           {/* Раскрывашки — по частоте (UX-аудит 2026-11-20): Зубы → План → Снимки → Материалы → Расход */}
           {canEdit && visitTools && clinical && a.patient.id != null && (
-            <PatientFiles patientId={a.patient.id} readOnly={isAssistant(me)} compact defaultKind="PHOTO" takenOn={date} />
+            <PatientFiles patientId={a.patient.id} readOnly={isAssistant(me)} compact defaultKind="PHOTO" takenOn={date} phone={contactPhone(a.patient)} />
           )}
           {/* Материалы списывает врач или ассистент — регистратуре не показываем */}
           {canEdit && visitTools && !desk && <Supplies appointment={a} me={me} />}
