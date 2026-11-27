@@ -4933,6 +4933,50 @@
         }
       }
     },
+    "/api/clinic/comeback-auto" : {
+      "get" : {
+        "tags" : [ "auto-comeback-controller" ],
+        "operationId" : "view_2",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AutoComebacksView"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "auto-comeback-controller" ],
+        "operationId" : "update_25",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AutoComebacksSettings"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AutoComebacksView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/clinic/bot-ai" : {
       "get" : {
         "tags" : [ "visit-report-controller" ],
@@ -4996,7 +5040,7 @@
       },
       "put" : {
         "tags" : [ "birthday-controller" ],
-        "operationId" : "update_25",
+        "operationId" : "update_26",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -5232,7 +5276,7 @@
     "/api/care-memos/{id}" : {
       "put" : {
         "tags" : [ "care-memo-controller" ],
-        "operationId" : "update_26",
+        "operationId" : "update_27",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -5418,7 +5462,7 @@
     "/api/appointments/{id}/services/{lineId}" : {
       "put" : {
         "tags" : [ "appointment-lines-controller" ],
-        "operationId" : "update_27",
+        "operationId" : "update_28",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -6399,7 +6443,7 @@
     "/web/invite" : {
       "post" : {
         "tags" : [ "invite-controller" ],
-        "operationId" : "view_2",
+        "operationId" : "view_3",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -10692,7 +10736,7 @@
     "/api/patients/{patientId}/advance" : {
       "get" : {
         "tags" : [ "advance-controller" ],
-        "operationId" : "view_3",
+        "operationId" : "view_4",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "path",
@@ -15307,7 +15351,7 @@
     "/api/appointments/report" : {
       "get" : {
         "tags" : [ "report-controller" ],
-        "operationId" : "view_4",
+        "operationId" : "view_5",
         "parameters" : [ {
           "name" : "month",
           "in" : "query",
@@ -15574,6 +15618,35 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/SignupControllerEmailWaiting"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/signup/clinics" : {
+      "get" : {
+        "tags" : [ "signup-controller" ],
+        "operationId" : "clinics_1",
+        "parameters" : [ {
+          "name" : "q",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ClinicLeadsMatch"
+                  }
                 }
               }
             }
@@ -16700,7 +16773,7 @@
     "/api/push" : {
       "get" : {
         "tags" : [ "push-controller" ],
-        "operationId" : "view_5",
+        "operationId" : "view_6",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -18363,7 +18436,7 @@
     "/api/patient/clinics" : {
       "get" : {
         "tags" : [ "patient-booking-controller" ],
-        "operationId" : "clinics_1",
+        "operationId" : "clinics_2",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -19290,7 +19363,7 @@
     "/api/clinic/pay" : {
       "get" : {
         "tags" : [ "pay-controller" ],
-        "operationId" : "view_6",
+        "operationId" : "view_7",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -23549,6 +23622,9 @@
           },
           "demo" : {
             "type" : "boolean"
+          },
+          "leadCheck" : {
+            "type" : "string"
           }
         },
         "required" : [ "appointments", "bookedWeek", "demo", "doctors", "done30", "hidden", "id", "listed", "noShow30", "patients", "selfBooked30", "selfSignup", "settingUp", "staff", "unmarked" ]
@@ -26415,6 +26491,70 @@
         },
         "required" : [ "custom" ]
       },
+      "AutoComebacksSettings" : {
+        "properties" : {
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "plan" : {
+            "type" : "boolean"
+          },
+          "recall" : {
+            "type" : "boolean"
+          },
+          "noShow" : {
+            "type" : "boolean"
+          },
+          "cancelled" : {
+            "type" : "boolean"
+          },
+          "sendHour" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "dailyLimit" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "cancelled", "dailyLimit", "enabled", "noShow", "plan", "recall", "sendHour" ]
+      },
+      "AutoComebacksRun" : {
+        "properties" : {
+          "day" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "sent" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "failed" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "noTelegram" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "finishedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "day", "failed", "noTelegram", "sent" ]
+      },
+      "AutoComebacksView" : {
+        "properties" : {
+          "settings" : {
+            "$ref" : "#/components/schemas/AutoComebacksSettings"
+          },
+          "lastRun" : {
+            "$ref" : "#/components/schemas/AutoComebacksRun"
+          }
+        },
+        "required" : [ "settings" ]
+      },
       "BirthdaysSettings" : {
         "properties" : {
           "autoGreet" : {
@@ -27129,6 +27269,13 @@
             "type" : "string"
           },
           "from" : {
+            "type" : "string"
+          },
+          "leadId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "address" : {
             "type" : "string"
           }
         }
@@ -31564,6 +31711,27 @@
           }
         },
         "required" : [ "secondsLeft", "state" ]
+      },
+      "ClinicLeadsMatch" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "city" : {
+            "type" : "string"
+          },
+          "address" : {
+            "type" : "string"
+          },
+          "alreadyInTish" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "alreadyInTish", "id" ]
       },
       "ClinicReferralsInvite" : {
         "properties" : {
@@ -36529,9 +36697,12 @@
           "urgent" : {
             "type" : "integer",
             "format" : "int32"
+          },
+          "invitedAuto" : {
+            "type" : "boolean"
           }
         },
-        "required" : [ "invites", "patientId", "planSom", "telegram", "urgent" ]
+        "required" : [ "invitedAuto", "invites", "patientId", "planSom", "telegram", "urgent" ]
       },
       "ComebacksResult" : {
         "properties" : {
@@ -37637,6 +37808,27 @@
         },
         "required" : [ "bookedMinutes", "chairs", "doctors", "doneMinutes", "from", "plannedMinutes", "to" ]
       },
+      "RecallResultsReturned" : {
+        "properties" : {
+          "patients" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "revenueSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "invited" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "autoInvited" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "autoInvited", "invited", "patients", "revenueSom" ]
+      },
       "TishReportControllerChannelRow" : {
         "properties" : {
           "channel" : {
@@ -37697,9 +37889,12 @@
             "items" : {
               "$ref" : "#/components/schemas/TishReportControllerChannelRow"
             }
+          },
+          "returned" : {
+            "$ref" : "#/components/schemas/RecallResultsReturned"
           }
         },
-        "required" : [ "channels", "current", "from", "month", "partial", "previous", "previousFrom", "previousTo", "to" ]
+        "required" : [ "channels", "current", "from", "month", "partial", "previous", "previousFrom", "previousTo", "returned", "to" ]
       },
       "TishReportControllerTotals" : {
         "properties" : {

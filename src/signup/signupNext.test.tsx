@@ -6,6 +6,7 @@ import { http, HttpResponse } from 'msw'
 import type { Schemas } from '../api/client'
 import { createQueryClient } from '../api/queryClient'
 import { server } from '../test/server'
+import { manualForm } from '../test/signup'
 import { ConfirmPage } from './ConfirmPage'
 import { NextSteps } from './NextSteps'
 import { SignupPage } from './SignupPage'
@@ -53,7 +54,7 @@ function withClient(ui: React.ReactNode) {
 }
 
 async function fill(user: ReturnType<typeof userEvent.setup>) {
-  const form = await screen.findByRole('form', { name: 'Регистрация клиники' })
+  const form = await manualForm()
   await user.type(within(form).getByRole('textbox', { name: 'Название клиники' }), 'Стоматолог Айгерим')
   await user.click(within(form).getByRole('combobox', { name: /Город/ }))
   await user.click(await screen.findByRole('option', { name: 'Ош' }))
@@ -66,7 +67,7 @@ async function fill(user: ReturnType<typeof userEvent.setup>) {
 test('/start во встроенном браузере Instagram: Telegram главный с подсказкой, SMS и почта — мелкими ссылками', async () => {
   backend()
   withClient(<SignupPage userAgent={INSTAGRAM_IOS} />)
-  const form = await screen.findByRole('form', { name: 'Регистрация клиники' })
+  const form = await manualForm()
   expect(within(form).getByRole('button', { name: 'Подтвердить через Telegram' })).toHaveClass('tg-login')
   expect(within(form).getByText('Через Telegram удобнее: Tish останется у вас в Telegram — кнопка «Открыть день»')).toBeInTheDocument()
   expect(within(form).getByRole('button', { name: 'или по SMS' })).toHaveClass('link')
@@ -77,7 +78,7 @@ test('/start во встроенном браузере Instagram: Telegram гл
 test('/start в обычном браузере — без подсказки; почта не настроена — ссылки на почту нет', async () => {
   backend({ sms: true, telegram: true, email: false })
   withClient(<SignupPage userAgent={SAFARI} />)
-  const form = await screen.findByRole('form', { name: 'Регистрация клиники' })
+  const form = await manualForm()
   expect(within(form).queryByText(/Через Telegram удобнее/)).not.toBeInTheDocument()
   expect(within(form).getByRole('button', { name: 'Получить код по SMS' })).toBeInTheDocument()
   expect(within(form).queryByRole('button', { name: 'или подтвердить по почте' })).not.toBeInTheDocument()

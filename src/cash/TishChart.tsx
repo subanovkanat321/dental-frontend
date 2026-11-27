@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 
-import { api, unwrap } from '../api/client'
+import { api, unwrap, type Schemas } from '../api/client'
 import { CHANNEL_LABELS } from '../lib/channels'
 import { changeOf, datesText } from '../lib/compare'
 import { somText } from '../lib/time'
@@ -48,6 +48,7 @@ export function TishChart({ month }: { month: string | null }) {
             <li>Выручка: <b>{somText(r.current.revenueSom)}</b></li>
             {r.current.allNewPatients > 0 && <li className="hint">из всех новых: {r.current.newPatients} из {r.current.allNewPatients}</li>}
           </ul>
+          <Returned r={r.returned} />
           <Compare now={r.current} was={r.previous} label={r.partial ? 'к тем же дням прошлого месяца' : 'к прошлому месяцу'}
             dates={datesText({ from: r.previousFrom, to: r.previousTo })} />
           {r.channels.length > 0 ? (
@@ -66,11 +67,36 @@ export function TishChart({ month }: { month: string | null }) {
           <p className="hint small tish-how">
             Как считали: новый пациент — первый приём в клинике в этом месяце ({datesText({ from: r.from, to: r.to })}), а первую запись он
             сделал сам через Tish — бот, Mini App, сайт клиники или ссылку с меткой. Записанных по телефону регистратурой здесь нет.
-            «Пришли» — был хотя бы один состоявшийся приём. Выручка — оплачено за их приёмы этого месяца.
+            «Пришли» — был хотя бы один состоявшийся приём. Выручка — оплачено за их приёмы этого месяца. «Вернули» — прежние
+            пациенты, которые записались не позже 30 дней после приглашения «Позвать снова» (от вас или от самого Tish), и
+            оплачено за эти записи.
           </p>
         </>
       )}
     </section>
+  )
+}
+
+/** 1 пациент, 2 пациента, 5 пациентов. */
+function plainPatients(n: number): string {
+  const d10 = n % 10
+  const d100 = n % 100
+  if (d10 === 1 && d100 !== 11) return 'пациент'
+  if (d10 >= 2 && d10 <= 4 && (d100 < 12 || d100 > 14)) return 'пациента'
+  return 'пациентов'
+}
+
+/**
+ * «Вернули: 3 пациента · 27 000 сом» (идея 2 «Рост клиник»): записались не позже 30 дней после приглашения «Позвать снова» —
+ * сотрудника или самого Tish; деньги — оплачено за эти записи. Никого не звали — строки нет.
+ */
+function Returned({ r }: { r: Schemas['RecallResultsReturned'] }) {
+  if (r.invited === 0 && r.patients === 0) return null
+  return (
+    <p className="tish-returned" aria-label="Вернули пациентов">
+      Вернули: <b className="num">{r.patients}</b> {plainPatients(r.patients)} · <b className="num">{somText(r.revenueSom)}</b>
+      <span className="hint small"> — позвали {r.invited}{r.autoInvited > 0 ? `, из них Tish сам — ${r.autoInvited}` : ''}, записались в течение 30 дней</span>
+    </p>
   )
 }
 

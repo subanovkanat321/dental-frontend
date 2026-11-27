@@ -214,3 +214,18 @@ test('адрес #/platform/clinics/<id> открывает карточку э�
   await waitForSlow(() => expect(screen.queryByRole('complementary', { name: 'Клиника на платформе' })).not.toBeInTheDocument())
   expect(window.location.hash).toBe('#/platform/clinics')
 })
+
+test('«Найдите свою клинику»: номер не подтверждает, что клиника их, — пометка «проверить» в списке', async () => {
+  backend([
+    clinic(1, 'Тиш Дент', { city: 'Бишкек' }),
+    clinic(6, 'Дентал Лид', { city: 'Ош', selfSignup: true, leadCheck: 'MISMATCH' }),
+    clinic(7, 'Улыбка Лид', { city: 'Ош', selfSignup: true, leadCheck: 'UNCONFIRMED' }),
+    clinic(8, 'Свои Лид', { city: 'Ош', selfSignup: true, leadCheck: 'TRUSTED' }),
+  ])
+  renderApp()
+  const table = await screen.findByRole('table', { name: 'Клиники' })
+  const row = (name: string) => within(table).getByRole('button', { name: new RegExp(name) }).closest('tr')!
+  await waitForSlow(() => expect(row('Дентал Лид')).toHaveTextContent('⚠️ номера нет в 2ГИС'))
+  expect(row('Улыбка Лид')).toHaveTextContent('⚠️ номер из 2ГИС не подтверждён')
+  expect(row('Свои Лид')).not.toHaveTextContent('⚠️')
+})

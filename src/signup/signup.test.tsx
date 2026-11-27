@@ -7,6 +7,7 @@ import type { Schemas } from '../api/client'
 import { createQueryClient } from '../api/queryClient'
 import { renderApp } from '../test/fixtures'
 import { server } from '../test/server'
+import { manualForm } from '../test/signup'
 import { waitForSlow } from '../test/wait'
 import { INSTAGRAM_SIGNUP } from '../lib/brand'
 import { signupFromUrl } from '../lib/referral'
@@ -73,7 +74,7 @@ function show(onDone = vi.fn()) {
 }
 
 async function fill(user: ReturnType<typeof userEvent.setup>, phone = '555 123 456') {
-  const form = await screen.findByRole('form', { name: 'Регистрация клиники' })
+  const form = await manualForm()
   await user.type(within(form).getByRole('textbox', { name: 'Название клиники' }), 'Стоматолог Айгерим')
   await user.click(within(form).getByRole('combobox', { name: /Город/ }))
   await user.click(await screen.findByRole('option', { name: 'Ош' }))
@@ -93,7 +94,7 @@ test('/start открывается без входа — форма регис�
   expect(screen.getByText(/Tish бесплатный: всё приложение, без оплаты, пробного срока/)).toBeInTheDocument()
   expect(screen.queryByText(/дней|месяц/)).not.toBeInTheDocument()
   // Выбора «частный врач / клиника» и галочки «тоже веду приём» нет: кто регистрируется — руководитель и врач
-  const form = screen.getByRole('form', { name: 'Регистрация клиники' })
+  const form = await manualForm()
   expect(within(form).queryByRole('button', { name: /частный врач|несколькими врачами/ })).not.toBeInTheDocument()
   expect(within(form).queryByRole('group', { name: 'Кто вы' })).not.toBeInTheDocument()
   expect(within(form).queryByRole('checkbox', { name: /веду приём/ })).not.toBeInTheDocument()
@@ -210,7 +211,7 @@ test('ошибки: поле под полем, номер уже в клини�
   backend({ sms: true, telegram: false, email: false })
   const user = userEvent.setup()
   show()
-  const form = await screen.findByRole('form', { name: 'Регистрация клиники' })
+  const form = await manualForm()
   expect(within(form).getByRole('button', { name: 'Получить код по SMS' })).toBeEnabled()
   expect(within(form).queryByRole('button', { name: 'Подтвердить через Telegram' })).not.toBeInTheDocument()
   await user.click(within(form).getByRole('button', { name: 'Получить код по SMS' }))
@@ -227,7 +228,7 @@ test('ошибки: поле под полем, номер уже в клини�
 test('как на сервере по умолчанию (SIGNUP_SMS_ENABLED и SIGNUP_EMAIL_ENABLED выключены) — только Telegram, ни SMS, ни почты', async () => {
   backend({ sms: false, telegram: true, email: false })
   show()
-  const form = await screen.findByRole('form', { name: 'Регистрация клиники' })
+  const form = await manualForm()
   expect(within(form).getByRole('button', { name: 'Подтвердить через Telegram' })).toBeInTheDocument()
   expect(screen.queryByText(/SMS/)).not.toBeInTheDocument()
   expect(screen.queryByText(/почт|письм/i)).not.toBeInTheDocument()

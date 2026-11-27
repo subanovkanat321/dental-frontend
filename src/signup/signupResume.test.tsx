@@ -66,7 +66,7 @@ test('«Уже есть код из письма?» → почта и код →
   const { sent, statusCalls } = backend()
   const user = userEvent.setup()
   show()
-  await screen.findByRole('form', { name: 'Регистрация клиники' })
+  await screen.findByRole('region', { name: 'Найдите свою клинику' })
   // Код не отправляли с этого устройства — ни подсказки, ни запроса статуса
   expect(screen.queryByText(/Отправляли код на почту/)).not.toBeInTheDocument()
   expect(statusCalls()).toBe(0)
@@ -106,7 +106,7 @@ test('«Уже есть код»: неверный код — «Код не по
   await user.click(within(resume).getByRole('button', { name: 'Дальше' }))
   const gone = await within(resume).findByText(/Код устарел — заполните форму ещё раз/)
   await user.click(within(gone).getByRole('button', { name: 'Заполнить форму' }))
-  expect(await screen.findByRole('form', { name: 'Регистрация клиники' })).toBeVisible()
+  expect(await screen.findByRole('region', { name: 'Найдите свою клинику' })).toBeVisible()
 })
 
 test('код недавно отправляли, cookie шага пропала — подсказка над формой ведёт в «Уже есть код»', async () => {
@@ -124,7 +124,7 @@ test('код отправляли давно — подсказки нет', asy
   markCodeSent(Date.now() - CODE_MARK_MS - 1000)
   const { statusCalls } = backend()
   show()
-  await screen.findByRole('form', { name: 'Регистрация клиники' })
+  await screen.findByRole('region', { name: 'Найдите свою клинику' })
   expect(screen.queryByText(/Отправляли код на почту/)).not.toBeInTheDocument()
   expect(statusCalls()).toBe(0)
 })

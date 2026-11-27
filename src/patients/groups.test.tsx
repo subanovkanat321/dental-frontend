@@ -266,7 +266,7 @@ test('«Позвать всех» у карточек «Позвать снов�
   const created: Schemas['SegmentServiceTasksRequest'][] = []
   server.use(
     http.get('*/api/comebacks', () => HttpResponse.json({
-      patients: [{ patientId: 5, fullName: 'Тест Динара', phone: '996555000295', telegram: false, reason: 'CANCELLED', planSom: 0, plan: [], invites: 0, urgent: 0,
+      patients: [{ patientId: 5, fullName: 'Тест Динара', phone: '996555000295', telegram: false, reason: 'CANCELLED', planSom: 0, plan: [], invites: 0, urgent: 0, invitedAuto: false,
         planSentAt: '2026-11-03T05:00:00Z', cancelled: { at: new Date(Date.now() - 3 * day).toISOString(), source: 'PATIENT', service: 'Чистка', doctorId: 2,
           doctor: 'Дастан Т.', startAt: '2026-11-08T05:00:00Z', minutes: 60 } }],
       planSom: 0, planPatients: 0, noShows: 0, recalls: 0, cancelled: 1, total: 1, sent: 1, agreed: 0,

@@ -7,7 +7,7 @@ import { agoText } from '../lib/texts'
 import { billingLine, PAY_PERIOD_TEXT } from '../account/texts'
 import { formatPhone, shortDate, somText, timeOf } from '../lib/time'
 import { ClinicPanel } from './ClinicPanel'
-import { byHealth, CLINIC_HEALTH, noShowShare } from './health'
+import { byHealth, CLINIC_HEALTH, leadWarning, noShowShare } from './health'
 import { Loading } from '../layout/Loading'
 import { SalesFunnel } from './SalesFunnel'
 import { adminsLine, remindedText, statusText } from './agreementTarget'
@@ -109,6 +109,8 @@ export function ClinicsTab({ me, header, onPanel }: { me: Me; header: ReactNode;
                   {me.clinic?.code === c.code && <span className="hint"> · вы здесь</span>}
                   {/* Клиника сама зарегистрировалась на /start — без заявки и одобрения */}
                   {c.selfSignup && <span className="hint"> · 🆕 сама зарегистрировалась</span>}
+                  {/* Выбрала себя в «Найдите свою клинику», а номер этого не подтверждает — проверить */}
+                  {leadWarning(c.leadCheck) && <span className="tone-wait"> · ⚠️ {leadWarning(c.leadCheck)}</span>}
                   {c.referredBy && <span className="hint"> · 🎁 по приглашению «{c.referredBy}»</span>}
                   {c.settingUp ? <span className="hint"> · 🛠 не видна пациентам</span> : c.listed === false ? <span className="hint"> · не в каталоге</span> : null}</div>
               </td>
