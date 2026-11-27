@@ -5,6 +5,7 @@ import { http, HttpResponse } from 'msw'
 import type { Schemas } from '../api/client'
 import { me, renderApp, medTab, openMedicalTab } from '../test/fixtures'
 import { server } from '../test/server'
+import { stepMenuItem } from '../test/planStep'
 
 beforeEach(() => {
   window.location.hash = '/patients'
@@ -138,7 +139,7 @@ test('отмеченные зубы списком; зуб → «В план л�
   await userEvent.click(within(sheet).getByRole('button', { name: 'Отмена' }))
 
   const plan = screen.getByRole('list', { name: 'Этапы лечения' })
-  await userEvent.click(within(plan).getByRole('button', { name: 'Изменить этап: Пломба' }))
+  await userEvent.click(await stepMenuItem(plan, 'Пломба', 'Изменить'))
   const edit = within(plan).getByRole('form', { name: 'Этап: Пломба' })
   await userEvent.clear(within(edit).getByLabelText('Что сделать на этапе'))
   await userEvent.type(within(edit).getByLabelText('Что сделать на этапе'), 'Пломба композит')

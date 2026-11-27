@@ -7,6 +7,7 @@ import { me, renderApp, medTab, openMedicalTab } from '../test/fixtures'
 import { server } from '../test/server'
 import { PlanPage } from '../site/PlanPage'
 import { defaultDue, fromStep, priceOf, typePrice, fromList, setDiscount } from './stepDiscount'
+import { stepMenuItem } from '../test/planStep'
 
 type Step = Schemas['TreatmentStepView']
 type Plan = Schemas['PlanOffersPatientPlan']
@@ -163,8 +164,7 @@ test('скидка на весь план и на выбранные зубы �
 test('правка старого этапа: цена ниже нынешнего прайса — «оформить разницу скидкой?» одной кнопкой', async () => {
   const sent = backend()
   const list = await openPlan()
-  const rows = within(list).getAllByRole('button', { name: 'Изменить этап: Пломба композит' })
-  await userEvent.click(rows[1]!)
+  await userEvent.click(await stepMenuItem(list, 'Пломба композит', 'Изменить', 1))
   const edit = screen.getByRole('form', { name: 'Этап: Пломба композит' })
   expect(edit).toHaveTextContent(/В прайсе сейчас 4\s000 сом/)
   await userEvent.click(within(edit).getByRole('button', { name: /оформить разницу 1\s500 сом скидкой/ }))

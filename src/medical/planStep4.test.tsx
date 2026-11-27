@@ -8,6 +8,7 @@ import { pickDate } from '../test/date'
 import { choose } from '../test/select'
 import { server } from '../test/server'
 import { addDays, todayIn } from '../lib/time'
+import { stepMenuItem, stepMenuName } from '../test/planStep'
 
 type Step = Schemas['TreatmentStepView']
 type Template = Schemas['PlanTemplatesView']
@@ -127,13 +128,13 @@ test('врач и срок у этапа: «просрочен» подсвеч�
   expect(await within(list).findAllByText(/Айгерим Садыкова · до/)).toHaveLength(2)
 
   // Один этап: снять срок и врача — «просрочен» уходит
-  await userEvent.click(within(list).getByRole('button', { name: 'Врач и срок: Имплантация' }))
+  await userEvent.click(await stepMenuItem(list, 'Имплантация', 'Врач'))
   const one = screen.getByRole('form', { name: 'Врач и срок: Имплантация' })
   await choose(within(one).getByRole('combobox', { name: 'Врач этапа' }), 'Без врача')
   await userEvent.click(within(one).getByRole('button', { name: 'Без срока' }))
   await userEvent.click(within(one).getByRole('button', { name: 'Сохранить' }))
   expect(sent).toContainEqual({ assign: { stepIds: [1] } })
-  await screen.findByRole('button', { name: 'Врач и срок: Имплантация' })
+  await screen.findByRole('button', { name: stepMenuName('Имплантация') })
   expect(screen.queryByText(/Просрочен/)).not.toBeInTheDocument()
 })
 

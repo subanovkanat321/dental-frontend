@@ -7,6 +7,7 @@ import { me, renderApp, medTab, openMedicalTab } from '../test/fixtures'
 import { choose } from '../test/select'
 import { server } from '../test/server'
 import { PlanPage } from '../site/PlanPage'
+import { stepMenuItem } from '../test/planStep'
 
 type Step = Schemas['TreatmentStepView']
 type Variants = Schemas['PlanVariantsVariants']
@@ -152,9 +153,9 @@ test('«＋ Без зуба»: профгигиена — быстрой кно�
   expect(sent).toContainEqual({ add: expect.objectContaining({ title: 'Профгигиена', priceSom: 3500, stage: 2, serviceTypeId: 5 }), variant: null })
   expect(list).toHaveTextContent(/Этап 1.*Имплант.*Этап 2.*Профгигиена/)
 
-  // Стрелки: у первого «↑» выключена, «↓» двигает
-  expect(within(list).getByRole('button', { name: 'Выше: Имплант' })).toBeDisabled()
-  await userEvent.click(within(list).getByRole('button', { name: 'Ниже: Имплант' }))
+  // «⋯ → Выше / Ниже»: у первого «Выше» выключен, «Ниже» двигает
+  expect(await stepMenuItem(list, 'Имплант', 'Выше')).toBeDisabled()
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Ниже' }))
   expect(sent).toContainEqual({ move: 1, up: false })
 })
 

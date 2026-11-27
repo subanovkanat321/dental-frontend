@@ -7,6 +7,7 @@ import { addDays, todayIn } from '../lib/time'
 import { me, renderApp, medTab, openMedicalTab } from '../test/fixtures'
 import { server } from '../test/server'
 import { waitForSlow } from '../test/wait'
+import { stepMenuItem } from '../test/planStep'
 
 type Step = Schemas['TreatmentStepView']
 type Offer = Schemas['PlanOffersOfferView']
@@ -89,7 +90,7 @@ test('план по этапам: заголовки «Этап 1 · 10 500 со
   expect(list).toHaveTextContent(/Этап 1 · 10\s500 сом/)
   expect(list).toHaveTextContent(/Этап 2 · 15\s000 сом/)
 
-  await userEvent.click(within(list).getByRole('button', { name: 'Изменить этап: Профчистка' }))
+  await userEvent.click(await stepMenuItem(list, 'Профчистка', 'Изменить'))
   await userEvent.click(screen.getByRole('combobox', { name: 'Этап лечения этого шага' }))
   await userEvent.click(screen.getByRole('option', { name: 'Этап 2' }))
   await userEvent.click(screen.getByRole('button', { name: 'Сохранить' }))
