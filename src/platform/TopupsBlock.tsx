@@ -12,16 +12,17 @@ type Finance = Schemas['PlatformFinanceFinance']
 type Balance = Schemas['PlatformFinanceBalance']
 type Topup = Schemas['PlatformTopupsTopup']
 
-const SERVICES: [string, string][] = [['AI', 'ИИ'], ['SMS', 'SMS']]
-const serviceName = (s?: string) => SERVICES.find(([k]) => k === s)?.[1] ?? s ?? ''
+/** Пополнять можно только ИИ; SMS — старые записи до 2026-11-27 (модуль SMS убран): видны, их можно удалить. */
+const SERVICE_NAMES: Record<string, string> = { AI: 'ИИ', SMS: 'SMS' }
+const serviceName = (s?: string) => (s ? SERVICE_NAMES[s] ?? s : '')
 
 /** 87.5 → «87,5». */
 const decimal = (n: number) => new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 }).format(n)
 const signed = (som: number) => (som < 0 ? `−${somText(-som)}` : somText(som))
 
 /**
- * «Балансы ИИ и SMS»: деньги, которые владелец заранее отправил провайдерам (Anthropic, SMS-провайдер), и
- * сколько из них уже ушло. Израсходовано — тот же авторасчёт, что в «Расходах» (токены, SMS × цена), с
+ * «Баланс ИИ»: деньги, которые владелец заранее отправил Anthropic, и
+ * сколько из них уже ушло. Израсходовано — тот же авторасчёт, что в «Расходах» (токены), с
  * дня первого пополнения; остаток ≈ пополнено − израсходовано. Остаток в минусе или меньше 10% последнего
  * пополнения — «пора пополнить». Сами пополнения в расход месяца не входят (иначе двойной счёт).
  */
@@ -32,16 +33,16 @@ export function TopupsBlock({ f, single }: { f: Finance; single: boolean }) {
   const topups = f.topups ?? []
   const scope = single ? 'за месяц' : 'за период'
   return (
-    <section className="card-block" aria-label="Балансы ИИ и SMS">
+    <section className="card-block" aria-label="Баланс ИИ">
       <div className="block-head">
-        <h2>Балансы ИИ и SMS</h2>
+        <h2>Баланс ИИ</h2>
         {!adding && <button type="button" className="btn primary small" onClick={() => { setAdding(true); setEditing(null) }}>＋ Пополнение</button>}
       </div>
       {balances.length > 0 ? (
         <div className="fin-balances">
           {balances.map((b) => <BalanceCard key={b.service} b={b} scope={scope} />)}
         </div>
-      ) : !adding && <EmptyState compact title="Пополнений ещё не было">Отправили деньги Anthropic или SMS-провайдеру — «＋ Пополнение».</EmptyState>}
+      ) : !adding && <EmptyState compact title="Пополнений ещё не было">Отправили деньги Anthropic — «＋ Пополнение».</EmptyState>}
       {adding && <TopupForm rate={f.settings?.lastUsdRate} onDone={() => setAdding(false)} />}
       {topups.length > 0 && (
         <>
@@ -89,7 +90,6 @@ function BalanceCard({ b, scope }: { b: Balance; scope: string }) {
       ) : (
         <p className="hint small">Пополнений ещё не было — остаток посчитаем с первого. Израсходовано {scope}: <span className="num nowrap">{somText(b.spentPeriodSom)}</span></p>
       )}
-      {b.needsPrice && <p className="hint small tone-wait">Цена SMS не указана — израсходованное считается как 0.</p>}
     </div>
   )
 }
@@ -97,7 +97,8 @@ function BalanceCard({ b, scope }: { b: Balance; scope: string }) {
 function TopupForm({ topup: t, rate, onDone }: { topup?: Topup; rate?: number; onDone: () => void }) {
   const client = useQueryClient()
   const today = todayIn()
-  const [service, setService] = useState(t?.service ?? 'AI')
+  // Старое пополнение SMS: сервер его больше не примет — только удалить
+  const legacy = t != null && t.service !== 'AI'
   const [usd, setUsd] = useState(t ? t.amountUsd != null : true)
   const [amount, setAmount] = useState(t ? String(t.amountUsd ?? t.amountSom ?? '') : '')
   const [usdRate, setUsdRate] = useState(String(t?.usdRate ?? rate ?? ''))
@@ -108,7 +109,7 @@ function TopupForm({ topup: t, rate, onDone }: { topup?: Topup; rate?: number; o
     onDone()
   }
   const body = (): Schemas['PlatformFinanceTopupForm'] => ({
-    service,
+    service: 'AI',
     ...(usd ? { amountUsd: Number(amount), usdRate: Number(usdRate) } : { amountSom: Number(amount) }),
     paidOn,
     comment: comment.trim() || undefined,
@@ -133,11 +134,7 @@ function TopupForm({ topup: t, rate, onDone }: { topup?: Topup; rate?: number; o
   const known = ['service', 'amountSom', 'amountUsd', 'usdRate', 'paidOn', 'comment']
   return (
     <form className="form sub-form fin-form" aria-label={t ? 'Исправить пополнение' : 'Новое пополнение'} onSubmit={submit}>
-      <div className="segments" role="group" aria-label="Услуга">
-        {SERVICES.map(([k, title]) => (
-          <button key={k} type="button" aria-pressed={service === k} onClick={() => setService(k)}>{title}</button>
-        ))}
-      </div>
+      {legacy && <p className="hint small tone-wait">Пополнение {serviceName(t.service)} — из прошлого: SMS в Tish больше нет, его можно только удалить.</p>}
       {err('service') && <p className="error">{err('service')}</p>}
       <div className="segments" role="group" aria-label="Валюта пополнения">
         <button type="button" aria-pressed={!usd} onClick={() => setUsd(false)}>В сомах</button>
@@ -172,7 +169,7 @@ function TopupForm({ topup: t, rate, onDone }: { topup?: Topup; rate?: number; o
       </div>
       {error && !known.some((k) => save.error?.fieldErrors[k]) && <p className="error" role="alert">{error.message}</p>}
       <div className="actions">
-        <button type="submit" className="btn primary" disabled={save.isPending}>{t ? 'Сохранить' : 'Добавить'}</button>
+        {!legacy && <button type="submit" className="btn primary" disabled={save.isPending}>{t ? 'Сохранить' : 'Добавить'}</button>}
         <button type="button" className="btn ghost" onClick={onDone}>Отмена</button>
         {t && (
           <button type="button" className="btn danger" disabled={remove.isPending}

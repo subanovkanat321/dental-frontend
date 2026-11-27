@@ -1359,27 +1359,6 @@
         }
       }
     },
-    "/api/platform/finance/settings" : {
-      "put" : {
-        "tags" : [ "platform-finance-controller" ],
-        "operationId" : "settings_1",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/PlatformFinanceControllerSettingsRequest"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "description" : "OK"
-          }
-        }
-      }
-    },
     "/api/platform/finance/expenses/{id}" : {
       "put" : {
         "tags" : [ "platform-finance-controller" ],
@@ -1761,7 +1740,7 @@
     "/api/platform/ai-usage/settings" : {
       "put" : {
         "tags" : [ "ai-usage-controller" ],
-        "operationId" : "settings_2",
+        "operationId" : "settings_1",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -4491,7 +4470,7 @@
     "/api/clinic/referral-settings" : {
       "get" : {
         "tags" : [ "patient-referral-controller" ],
-        "operationId" : "settings_3",
+        "operationId" : "settings_2",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -4767,7 +4746,7 @@
     "/api/clinic/deposit" : {
       "get" : {
         "tags" : [ "deposit-controller" ],
-        "operationId" : "settings_4",
+        "operationId" : "settings_3",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -4971,7 +4950,7 @@
     "/api/clinic/birthday-settings" : {
       "get" : {
         "tags" : [ "birthday-controller" ],
-        "operationId" : "settings_5",
+        "operationId" : "settings_4",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -5059,7 +5038,7 @@
     "/api/clinic/audit/settings" : {
       "get" : {
         "tags" : [ "audit-controller" ],
-        "operationId" : "settings_6",
+        "operationId" : "settings_5",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -16569,7 +16548,7 @@
     "/api/settings" : {
       "get" : {
         "tags" : [ "settings-controller" ],
-        "operationId" : "settings_7",
+        "operationId" : "settings_6",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -23204,13 +23183,6 @@
           }
         },
         "required" : [ "amountSom", "createdBy", "id" ]
-      },
-      "PlatformFinanceControllerSettingsRequest" : {
-        "properties" : {
-          "smsPriceSom" : {
-            "type" : "number"
-          }
-        }
       },
       "PlatformFinanceExpenseForm" : {
         "properties" : {
@@ -33732,9 +33704,6 @@
           "telegram" : {
             "$ref" : "#/components/schemas/HealthServiceTelegram"
           },
-          "sms" : {
-            "$ref" : "#/components/schemas/HealthServiceSms"
-          },
           "mail" : {
             "$ref" : "#/components/schemas/HealthServiceMail"
           },
@@ -33872,25 +33841,6 @@
           }
         },
         "required" : [ "failuresInRow", "opens", "unavailable" ]
-      },
-      "HealthServiceSms" : {
-        "properties" : {
-          "configured" : {
-            "type" : "boolean"
-          },
-          "lastSentAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "lastErrorAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "lastError" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "configured" ]
       },
       "HealthServiceTelegram" : {
         "properties" : {
@@ -34070,12 +34020,9 @@
           },
           "low" : {
             "type" : "boolean"
-          },
-          "needsPrice" : {
-            "type" : "boolean"
           }
         },
-        "required" : [ "balanceSom", "lastTopupSom", "low", "needsPrice", "spentPeriodSom", "spentSinceSom", "topupPeriodSom", "topupTotalSom" ]
+        "required" : [ "balanceSom", "lastTopupSom", "low", "spentPeriodSom", "spentSinceSom", "topupPeriodSom", "topupTotalSom" ]
       },
       "PlatformFinanceDue" : {
         "properties" : {
@@ -34230,12 +34177,9 @@
           "count" : {
             "type" : "integer",
             "format" : "int64"
-          },
-          "needsPrice" : {
-            "type" : "boolean"
           }
         },
-        "required" : [ "auto", "count", "needsPrice", "som" ]
+        "required" : [ "auto", "count", "som" ]
       },
       "PlatformFinanceMonthTotal" : {
         "properties" : {
@@ -34263,9 +34207,6 @@
       },
       "PlatformFinanceSettings" : {
         "properties" : {
-          "smsPriceSom" : {
-            "type" : "number"
-          },
           "lastUsdRate" : {
             "type" : "number"
           }

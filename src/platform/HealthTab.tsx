@@ -35,7 +35,7 @@ function Row({ name, children, tone }: { name: string; children: React.ReactNode
 
 /**
  * «Здоровье» — только владелец платформы (сервер отвечает 403 остальным): жив ли сервер, база, бэкап,
- * суточные рассылки и задачи по расписанию, Telegram (webhook и отправка), очередь уведомлений, SMS, почта, ИИ и
+ * суточные рассылки и задачи по расписанию, Telegram (webhook и отправка), очередь уведомлений, почта, ИИ и
  * ошибки 5xx за сутки; ниже — строки лога по номеру запроса из
  * оповещения. Данных пациентов тут нет: только числа, времена, классы ошибок и шаблоны путей.
  */
@@ -138,12 +138,6 @@ function Sections({ h }: { h: Health }) {
               <Row name="Очередь уведомлений" tone={h.notifications.rejected > 0 ? 'wait' : 'ok'}>
                 ждут {h.notifications.queued} · отправляются {h.notifications.active}
                 {h.notifications.rejected > 0 ? ` · не поставлено с запуска ${h.notifications.rejected}, последний раз ${when(h.notifications.lastRejectedAt)}` : ' · переполнений не было'}
-              </Row>
-            )}
-            {h.sms && (
-              <Row name="SMS" tone={!h.sms.configured ? undefined : h.sms.lastErrorAt ? 'wait' : 'ok'}>
-                {h.sms.configured ? 'подключены' : 'не подключены'} · последняя отправлена {when(h.sms.lastSentAt)}
-                {h.sms.lastErrorAt && ` · ошибка ${when(h.sms.lastErrorAt)}${h.sms.lastError ? `: ${h.sms.lastError}` : ''}`}
               </Row>
             )}
             {h.mail && (
@@ -275,7 +269,7 @@ const JOB_GROUPS: [string, string[]][] = [
   ['Контент', ['ContentBot', 'ContentAutoImport', 'InstagramTokens']],
   ['Сторожа и проверки', ['ServerErrorAlerts', 'ClientErrorAlerts', 'HealthAlerts', 'ErrorJournal', 'DailyJobs']],
   ['Файлы', ['FileMover', 'FileCleanup']],
-  ['Чистка и архивы', ['WebSessions', 'SmsCodes', 'PhonePasswords', 'StaffMembers', 'TelegramUpdates', 'AiUsageArchive', 'SmsLogArchive',
+  ['Чистка и архивы', ['WebSessions', 'SmsCodes', 'PhonePasswords', 'StaffMembers', 'TelegramUpdates', 'AiUsageArchive',
     'PendingBotActionCleanup']],
 ]
 const OTHER_GROUP = 'Прочее'

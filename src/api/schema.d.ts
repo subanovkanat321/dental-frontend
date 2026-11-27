@@ -484,22 +484,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/platform/finance/settings": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put: operations["settings_1"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/platform/finance/expenses/{id}": {
         parameters: {
             query?: never;
@@ -636,7 +620,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["settings_2"];
+        put: operations["settings_1"];
         post?: never;
         delete?: never;
         options?: never;
@@ -1595,7 +1579,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["settings_3"];
+        get: operations["settings_2"];
         put: operations["update_24"];
         post?: never;
         delete?: never;
@@ -1707,7 +1691,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["settings_4"];
+        get: operations["settings_3"];
         put: operations["setSettings_1"];
         post?: never;
         delete?: never;
@@ -1787,7 +1771,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["settings_5"];
+        get: operations["settings_4"];
         put: operations["update_26"];
         post?: never;
         delete?: never;
@@ -1819,7 +1803,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["settings_6"];
+        get: operations["settings_5"];
         put: operations["saveSettings"];
         post?: never;
         delete?: never;
@@ -6747,7 +6731,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["settings_7"];
+        get: operations["settings_6"];
         put?: never;
         post?: never;
         delete?: never;
@@ -10060,9 +10044,6 @@ export interface components {
             createdBy: number;
             /** Format: date-time */
             createdAt?: string;
-        };
-        PlatformFinanceControllerSettingsRequest: {
-            smsPriceSom?: number;
         };
         PlatformFinanceExpenseForm: {
             category?: string;
@@ -14276,7 +14257,6 @@ export interface components {
             jobs?: components["schemas"]["HealthServiceJob"][];
             daily?: components["schemas"]["HealthServiceDaily"][];
             telegram?: components["schemas"]["HealthServiceTelegram"];
-            sms?: components["schemas"]["HealthServiceSms"];
             mail?: components["schemas"]["HealthServiceMail"];
             ai?: components["schemas"]["HealthServiceAi"];
             notifications?: components["schemas"]["HealthServiceNotify"];
@@ -14333,14 +14313,6 @@ export interface components {
             lastOpenedAt?: string;
             /** Format: int32 */
             opens: number;
-        };
-        HealthServiceSms: {
-            configured: boolean;
-            /** Format: date-time */
-            lastSentAt?: string;
-            /** Format: date-time */
-            lastErrorAt?: string;
-            lastError?: string;
         };
         HealthServiceTelegram: {
             mode?: string;
@@ -14412,7 +14384,6 @@ export interface components {
             /** Format: int64 */
             lastTopupSom: number;
             low: boolean;
-            needsPrice: boolean;
         };
         PlatformFinanceDue: {
             /** Format: int64 */
@@ -14463,7 +14434,6 @@ export interface components {
             auto: boolean;
             /** Format: int64 */
             count: number;
-            needsPrice: boolean;
         };
         PlatformFinanceMonthTotal: {
             month?: string;
@@ -14477,7 +14447,6 @@ export interface components {
             pendingSom: number;
         };
         PlatformFinanceSettings: {
-            smsPriceSom?: number;
             lastUsdRate?: number;
         };
         DemoControllerEntries: {
@@ -17163,28 +17132,6 @@ export interface operations {
             };
         };
     };
-    settings_1: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["PlatformFinanceControllerSettingsRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
     update_9: {
         parameters: {
             query?: never;
@@ -17491,7 +17438,7 @@ export interface operations {
             };
         };
     };
-    settings_2: {
+    settings_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -19686,7 +19633,7 @@ export interface operations {
             };
         };
     };
-    settings_3: {
+    settings_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -19954,7 +19901,7 @@ export interface operations {
             };
         };
     };
-    settings_4: {
+    settings_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -20154,7 +20101,7 @@ export interface operations {
             };
         };
     };
-    settings_5: {
+    settings_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -20242,7 +20189,7 @@ export interface operations {
             };
         };
     };
-    settings_6: {
+    settings_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -29302,7 +29249,7 @@ export interface operations {
             };
         };
     };
-    settings_7: {
+    settings_6: {
         parameters: {
             query?: never;
             header?: never;

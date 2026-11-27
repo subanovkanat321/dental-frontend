@@ -48,10 +48,9 @@ function finance(month: string): Finance {
   return {
     month, incomeSom: 10470, expenseSom: 3055, profitSom: 7415,
     expenses: [
-      { key: 'AI', label: 'ИИ в приложении', som: 97, auto: true, count: 42, needsPrice: false },
-      { key: 'SMS', label: 'SMS', som: 0, auto: true, count: 3, needsPrice: true },
-      { key: 'Claude (разработка)', label: 'Claude (разработка)', som: 1750, auto: false, count: 1, needsPrice: false },
-      { key: 'Сервер и домен', label: 'Сервер и домен', som: 1200, auto: false, count: 1, needsPrice: false },
+      { key: 'AI', label: 'ИИ в приложении', som: 97, auto: true, count: 42 },
+      { key: 'Claude (разработка)', label: 'Claude (разработка)', som: 1750, auto: false, count: 1 },
+      { key: 'Сервер и домен', label: 'Сервер и домен', som: 1200, auto: false, count: 1 },
     ],
     income: [{ clinicId: 2, name: 'Стоматология «Альфа»', som: 7470, payments: 1 }, { clinicId: 1, name: 'Кабинет «Бета»', som: 3000, payments: 1 }],
     entries: [
@@ -60,14 +59,13 @@ function finance(month: string): Finance {
     ],
     history: history(month),
     settings: { lastUsdRate: 87.5 },
-    categories: ['Claude (разработка)', 'Реклама', 'Сервер и домен', 'SMS-провайдер (пополнение)', 'Прочее'], pendingSom: 0, topupSom: 0
+    categories: ['Claude (разработка)', 'Реклама', 'Сервер и домен', 'Прочее'], pendingSom: 0, topupSom: 0
   }
 }
 
 const emptyMonth = (month: string): Finance => ({
   month, incomeSom: 0, expenseSom: 0, profitSom: 0,
-  expenses: [{ key: 'AI', label: 'ИИ в приложении', som: 0, auto: true, count: 0, needsPrice: false },
-    { key: 'SMS', label: 'SMS', som: 0, auto: true, count: 0, needsPrice: true }],
+  expenses: [{ key: 'AI', label: 'ИИ в приложении', som: 0, auto: true, count: 0 }],
   income: [], entries: [], history: history(month).map((m) => ({ ...m, incomeSom: 0, expenseSom: 0, profitSom: 0, pendingSom: 0 })),
   settings: { lastUsdRate: 87 }, categories: [], pendingSom: 0, topupSom: 0
 })
@@ -92,7 +90,9 @@ test('владелец: «Финансы» — итог, авто-расходы
 
   const lines = screen.getByLabelText('Расходы по статьям')
   expect(within(lines).getByText('ИИ в приложении').closest('div')).toHaveTextContent('считается само · 42 запросов к ИИ')
-  expect(within(lines).getByText('SMS').closest('div')).toHaveTextContent('3 SMS · укажите цену SMS ниже')
+  // SMS убраны (2026-11-27): ни строки «SMS», ни формы цены SMS
+  expect(within(lines).queryByText('SMS')).not.toBeInTheDocument()
+  expect(screen.queryByLabelText(/Цена одной SMS/)).not.toBeInTheDocument()
   expect(within(lines).getByText('Claude (разработка)').closest('div')).toHaveTextContent('1 750 сом')
 
   const income = screen.getByRole('table', { name: 'Оплаты клиник за месяц' })
@@ -131,10 +131,6 @@ test('добавить расход в долларах, исправить (о�
       calls.push([`DELETE ${String(params.id)}`, null])
       return new HttpResponse(null, { status: 204 })
     }),
-    http.put('*/api/platform/finance/settings', async ({ request }) => {
-      calls.push(['SETTINGS', await request.json()])
-      return new HttpResponse(null, { status: 204 })
-    }),
   )
   const user = userEvent.setup()
   renderApp()
@@ -169,11 +165,6 @@ test('добавить расход в долларах, исправить (о�
   await screen.findByRole('button', { name: 'Исправить: Claude (разработка)' })
   expect(calls[2]).toEqual(['DELETE 5', null])
 
-  // Цена SMS
-  await user.type(screen.getByLabelText(/Цена одной SMS/), '1.5')
-  await user.click(within(screen.getByRole('form', { name: 'Цена SMS' })).getByRole('button', { name: 'Сохранить' }))
-  expect(await screen.findByText('Сохранено.')).toBeInTheDocument()
-  expect(calls[3]).toEqual(['SETTINGS', { smsPriceSom: 1.5 }])
 })
 
 test('ошибка сервера под полем: курс', async () => {
@@ -359,16 +350,14 @@ test('нет ожидаемых — блока нет и «ещё ожидает
   expect(screen.queryByText(/ещё ожидается/)).not.toBeInTheDocument()
 })
 
-/** Балансы: ИИ — с запасом, SMS — остаток 30 из последних 500 (меньше 10%) — «пора пополнить». */
+/** Баланс ИИ — с запасом; в списке ещё старое пополнение SMS (до 2026-11-27, только удалить). */
 function withTopups(month: string): Finance {
   return {
     ...finance(month),
-    topupSom: 4875,
+    topupSom: 4375,
     balances: [
       { service: 'AI', label: 'ИИ', topupTotalSom: 8750, topupPeriodSom: 4375, since: '2026-03-01', spentSinceSom: 1585,
-        spentPeriodSom: 97, balanceSom: 7165, lastTopupSom: 4375, low: false, needsPrice: false },
-      { service: 'SMS', label: 'SMS', topupTotalSom: 500, topupPeriodSom: 500, since: '2026-03-10', spentSinceSom: 470,
-        spentPeriodSom: 60, balanceSom: 30, lastTopupSom: 500, low: true, needsPrice: false },
+        spentPeriodSom: 97, balanceSom: 7165, lastTopupSom: 4375, low: false },
     ],
     topups: [
       { id: 3, service: 'SMS', amountSom: 500, paidOn: `${month}-03`, comment: 'SMSPRO', createdBy: 1 },
@@ -378,7 +367,7 @@ function withTopups(month: string): Finance {
   }
 }
 
-test('балансы ИИ и SMS: пополнено, израсходовано, остаток и «пора пополнить»; пополнения не в расходе', async () => {
+test('баланс ИИ: пополнено, израсходовано, остаток и «пора пополнить»; пополнения не в расходе', async () => {
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(owner)),
     http.get('*/api/platform/finance', () => HttpResponse.json(withTopups(current))),
@@ -386,7 +375,7 @@ test('балансы ИИ и SMS: пополнено, израсходовано
   const user = userEvent.setup()
   renderApp()
   await user.click(await findSub('Финансы'))
-  const block = await screen.findByRole('region', { name: 'Балансы ИИ и SMS' })
+  const block = await screen.findByRole('region', { name: 'Баланс ИИ' })
   const ai = within(block).getByRole('group', { name: 'Баланс ИИ' })
   expect(ai).toHaveTextContent('Пополнено')
   expect(ai).toHaveTextContent('8 750 сом')
@@ -395,25 +384,21 @@ test('балансы ИИ и SMS: пополнено, израсходовано
   expect(within(ai).getByLabelText('Остаток ИИ')).toHaveTextContent('7 165 сом')
   expect(within(ai).queryByText('пора пополнить')).not.toBeInTheDocument()
 
-  const sms = within(block).getByRole('group', { name: 'Баланс SMS' })
-  expect(within(sms).getByText('пора пополнить')).toBeInTheDocument()
-  expect(within(sms).getByLabelText('Остаток SMS')).toHaveTextContent('30 сом')
-  expect(within(sms).getByLabelText('Остаток SMS')).toHaveClass('tone-wait')
+  expect(within(block).queryByRole('group', { name: 'Баланс SMS' })).not.toBeInTheDocument()
 
   expect(within(block).getByRole('list', { name: 'Пополнения' })).toHaveTextContent('Anthropic $50')
   expect(within(block).getByRole('list', { name: 'Пополнения' })).toHaveTextContent('$50 × 87,5')
 
   // Итог месяца: расход — как был, пополнения — отдельной строкой
   expect(screen.getByLabelText('Расход за месяц')).toHaveTextContent('3 055 сом')
-  expect(screen.getByText(/^пополнения:/)).toHaveTextContent('пополнения: 4 875 сом — не в расходе')
+  expect(screen.getByText(/^пополнения:/)).toHaveTextContent('пополнения: 4 375 сом — не в расходе')
 })
 
 test('баланс в минусе — красный остаток; без пополнений — подсказка', async () => {
   const f = withTopups(current)
   f.balances = [
-    { service: 'AI', label: 'ИИ', topupTotalSom: 0, topupPeriodSom: 0, spentSinceSom: 0, spentPeriodSom: 97, balanceSom: 0, low: false, lastTopupSom: 0, needsPrice: false },
-    { service: 'SMS', label: 'SMS', topupTotalSom: 500, topupPeriodSom: 0, since: '2026-03-10', spentSinceSom: 520, spentPeriodSom: 60,
-      balanceSom: -20, lastTopupSom: 500, low: true, needsPrice: false },
+    { service: 'AI', label: 'ИИ', topupTotalSom: 500, topupPeriodSom: 0, since: '2026-03-10', spentSinceSom: 520, spentPeriodSom: 60,
+      balanceSom: -20, lastTopupSom: 500, low: true },
   ]
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(owner)),
@@ -422,15 +407,14 @@ test('баланс в минусе — красный остаток; без п�
   const user = userEvent.setup()
   renderApp()
   await user.click(await findSub('Финансы'))
-  const block = await screen.findByRole('region', { name: 'Балансы ИИ и SMS' })
-  expect(within(block).getByRole('group', { name: 'Баланс ИИ' })).toHaveTextContent('Пополнений ещё не было')
-  const sms = within(block).getByRole('group', { name: 'Баланс SMS' })
-  expect(within(sms).getByLabelText('Остаток SMS')).toHaveTextContent('−20 сом')
-  expect(within(sms).getByLabelText('Остаток SMS')).toHaveClass('tone-bad')
-  expect(within(sms).getByText('пора пополнить')).toBeInTheDocument()
+  const block = await screen.findByRole('region', { name: 'Баланс ИИ' })
+  const ai = within(block).getByRole('group', { name: 'Баланс ИИ' })
+  expect(within(ai).getByLabelText('Остаток ИИ')).toHaveTextContent('−20 сом')
+  expect(within(ai).getByLabelText('Остаток ИИ')).toHaveClass('tone-bad')
+  expect(within(ai).getByText('пора пополнить')).toBeInTheDocument()
 })
 
-test('пополнение: добавить в долларах, исправить и удалить', async () => {
+test('пополнение: добавить в долларах, исправить ИИ; старое SMS — только удалить', async () => {
   const calls: [string, unknown][] = []
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(owner)),
@@ -455,8 +439,8 @@ test('пополнение: добавить в долларах, исправи
   await user.click(await findSub('Финансы'))
   await user.click(await screen.findByRole('button', { name: '＋ Пополнение' }))
   const form = screen.getByRole('form', { name: 'Новое пополнение' })
-  // По умолчанию — ИИ в долларах по последнему курсу
-  expect(within(form).getByRole('button', { name: 'ИИ' })).toHaveAttribute('aria-pressed', 'true')
+  // ИИ в долларах по последнему курсу; выбора услуги нет — SMS убраны
+  expect(within(form).queryByRole('button', { name: 'SMS' })).not.toBeInTheDocument()
   expect(within(form).getByLabelText('Курс: сомов за $1')).toHaveValue(87.5)
   await user.type(within(form).getByLabelText('Сумма, $'), '50')
   expect(within(form).getByText(/≈ 4 375 сом/)).toBeInTheDocument()
@@ -465,18 +449,19 @@ test('пополнение: добавить в долларах, исправи
   await screen.findByRole('button', { name: '＋ Пополнение' })
   expect(calls[0]).toEqual(['POST', { service: 'AI', amountUsd: 50, usdRate: 87.5, paidOn: todayIn(), comment: 'Anthropic $50' }])
 
-  // Исправить: SMS 500 сом → 700
-  await user.click(screen.getByRole('button', { name: /^Исправить пополнение: SMS/ }))
+  // Исправить ИИ: $50 → $60
+  await user.click(screen.getAllByRole('button', { name: /^Исправить пополнение: ИИ/ })[0]!)
   const edit = screen.getByRole('form', { name: 'Исправить пополнение' })
-  expect(within(edit).getByRole('button', { name: 'SMS' })).toHaveAttribute('aria-pressed', 'true')
-  await user.clear(within(edit).getByLabelText('Сумма, сом'))
-  await user.type(within(edit).getByLabelText('Сумма, сом'), '700')
+  await user.clear(within(edit).getByLabelText('Сумма, $'))
+  await user.type(within(edit).getByLabelText('Сумма, $'), '60')
   await user.click(within(edit).getByRole('button', { name: 'Сохранить' }))
   await screen.findByRole('button', { name: /^Исправить пополнение: SMS/ })
-  expect(calls[1]).toEqual(['PUT 3', { service: 'SMS', amountSom: 700, paidOn: `${current}-03`, comment: 'SMSPRO' }])
+  expect(calls[1]).toEqual(['PUT 2', { service: 'AI', amountUsd: 60, usdRate: 87.5, paidOn: `${current}-01`, comment: 'Anthropic $50' }])
 
-  // Удалить — с подтверждением
+  // Старое пополнение SMS: сохранить нельзя (сервер не примет), только удалить — с подтверждением
   await user.click(screen.getByRole('button', { name: /^Исправить пополнение: SMS/ }))
+  expect(within(screen.getByRole('form', { name: 'Исправить пополнение' })).queryByRole('button', { name: 'Сохранить' })).not.toBeInTheDocument()
+  expect(screen.getByRole('form', { name: 'Исправить пополнение' })).toHaveTextContent('можно только удалить')
   await user.click(within(screen.getByRole('form', { name: 'Исправить пополнение' })).getByRole('button', { name: 'Удалить' }))
   await user.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Удалить' }))
   await screen.findByRole('button', { name: /^Исправить пополнение: SMS/ })

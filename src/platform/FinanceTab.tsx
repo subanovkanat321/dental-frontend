@@ -31,7 +31,7 @@ const longMonth = (m: string) => MONTH_LONG.format(new Date(`${m}-01T00:00:00Z`)
 const signed = (som: number) => (som < 0 ? `−${somText(-som)}` : somText(som))
 const tone = (som: number) => (som < 0 ? 'tone-bad' : som > 0 ? 'tone-ok' : undefined)
 
-/** 1.5 → «1,5»: цена SMS и курс — как пишут у нас. */
+/** 1.5 → «1,5»: курс — как пишут у нас. */
 const decimal = (n: number) => new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 }).format(n)
 
 type Period = 'month' | 'quarter' | 'year' | 'all' | 'custom'
@@ -59,7 +59,7 @@ const MONTH_NAME = new Intl.DateTimeFormat('ru-RU', { timeZone: 'UTC', month: 'l
 
 /**
  * «Платформа → Финансы» (только владелец платформы, сервер отвечает 403 остальным): доходы — оплаты
- * клиник за подписку, расходы — ИИ и SMS сами (из учёта токенов и журнала SMS) плюс ручные статьи
+ * клиник за подписку, расходы — ИИ сам (из учёта токенов) плюс ручные статьи
  * (Claude, реклама, сервер…; разовые и «каждый месяц»), прибыль. Период — месяц, квартал, год, всё
  * время или свой (с — по); за период больше месяца — график и таблица по месяцам. Считает сервер
  * (/api/platform/finance) — здесь только показываем и вводим ручные расходы.
@@ -120,7 +120,7 @@ export function FinanceTab() {
             <div className="survey-tiles fin-tiles">
               <div className="survey-tile"><span className="hint">Доход</span><b className="num" aria-label={`Доход ${scope}`}>{somText(f.incomeSom)}</b></div>
               <div className="survey-tile"><span className="hint">Расход<HelpHint title="Расход">Расход и прибыль — только оплаченное: «каждый месяц» без отметки «Оплачено» не считается.
-                Пополнения ИИ и SMS в расход не входят — ИИ и SMS считаются по использованию.</HelpHint></span><b className="num" aria-label={`Расход ${scope}`}>{somText(f.expenseSom)}</b>
+                Пополнения ИИ в расход не входят — ИИ считается по использованию.</HelpHint></span><b className="num" aria-label={`Расход ${scope}`}>{somText(f.expenseSom)}</b>
                 {pending > 0 && <span className="hint small fin-pending-note">ещё ожидается: <span className="num nowrap">{somText(pending)}</span></span>}
                 {(f.topups?.length ?? 0) > 0 && <span className="hint small fin-pending-note">пополнения: <span className="num nowrap">{somText(f.topupSom)}</span> — не в расходе</span>}</div>
               <div className="survey-tile hero"><span className="hint">{f.profitSom < 0 ? 'Убыток' : 'Прибыль'}</span>
@@ -135,7 +135,6 @@ export function FinanceTab() {
       {f && !single && (f.months?.length ?? 0) > 1 && <MonthsBlock months={f.months ?? []} onPick={openMonth} />}
       {f && <IncomeBlock f={f} single={single} />}
       {f && single && <HistoryBlock history={f.history ?? []} month={month} onPick={setMonth} />}
-      {f && <SmsPriceForm key={String(f.settings?.smsPriceSom ?? '')} price={f.settings?.smsPriceSom} />}
     </>
   )
 }
@@ -271,12 +270,8 @@ function Stepper({ label, text, onPrev, onNext }: { label: string; text: string;
 }
 
 /** Подпись строки расходов: что за число и откуда. */
-function lineNote(l: Line, price?: number): string {
+function lineNote(l: Line): string {
   if (l.key === 'AI') return l.count ? `${l.count} запросов к ИИ · как во вкладке «Расход ИИ»` : 'запросов к ИИ не было'
-  if (l.key === 'SMS') {
-    if (l.needsPrice) return `${l.count} SMS · укажите цену SMS ниже`
-    return `${l.count} SMS × ${decimal(price ?? 0)} сом`
-  }
   return l.count > 1 ? `записей: ${l.count}` : ''
 }
 
@@ -293,7 +288,7 @@ function ExpensesBlock({ f, single }: { f: Finance; single: boolean }) {
         {!adding && <button type="button" className="btn primary small" onClick={() => { setAdding(true); setEditing(null) }}>Добавить расход</button>}
       </div>
       {/* Структура расходов месяца — бублик; ниже те же статьи списком с пометками «считается само» */}
-      <Donut parts={lines.filter((l) => !l.needsPrice && l.som > 0).map((l) => ({ key: l.key ?? l.label ?? '', name: l.label ?? '', value: l.som }))}
+      <Donut parts={lines.filter((l) => l.som > 0).map((l) => ({ key: l.key ?? l.label ?? '', name: l.label ?? '', value: l.som }))}
         label={single ? 'Структура расходов за месяц' : 'Структура расходов за период'} format={somText} center={somText(f.expenseSom)}
         caption={single ? 'расходы месяца' : 'расходы за период'} empty={single ? 'Расходы за этот месяц — 0 сом.' : 'Расходы за этот период — 0 сом.'} />
       <dl className="net-lines fin-lines" aria-label="Расходы по статьям">
@@ -301,11 +296,9 @@ function ExpensesBlock({ f, single }: { f: Finance; single: boolean }) {
           <div key={l.key}>
             <dt>{l.label}
               {l.auto && <span className="chip small s-quiet">считается само</span>}
-              {lineNote(l, f.settings?.smsPriceSom) && (
-                <span className={`hint small${l.needsPrice ? ' tone-wait' : ''}`}> · {lineNote(l, f.settings?.smsPriceSom)}</span>
-              )}
+              {lineNote(l) && <span className="hint small"> · {lineNote(l)}</span>}
             </dt>
-            <dd className="num">{l.needsPrice ? '—' : somText(l.som)}</dd>
+            <dd className="num">{somText(l.som)}</dd>
           </div>
         ))}
         <div className="net-total"><dt>Всего расходов</dt><dd className="num">{somText(f.expenseSom)}</dd></div>
@@ -638,30 +631,3 @@ function MonthsBlock({ months, onPick }: { months: MonthTotal[]; onPick: (m: str
   )
 }
 
-/** Цена одной SMS в сомах — для строки «SMS» (отправлено × цена). Пусто — строка просит указать цену. */
-function SmsPriceForm({ price }: { price?: number }) {
-  const client = useQueryClient()
-  const [value, setValue] = useState(price != null ? String(price) : '')
-  const save = useMutation<unknown, ApiError>({
-    mutationFn: () => unwrap(api.PUT('/api/platform/finance/settings', { body: { smsPriceSom: value === '' ? undefined : Number(value) } })),
-    onSuccess: () => void client.invalidateQueries({ queryKey: ['platform-finance'] }),
-  })
-  const submit = (e: FormEvent) => {
-    e.preventDefault()
-    save.mutate()
-  }
-  return (
-    <section className="card-block" aria-label="Настройки финансов">
-      <h2>Настройки</h2>
-      <form className="form narrow" aria-label="Цена SMS" onSubmit={submit}>
-        <label className="field"><span>Цена одной SMS, сом (по тарифу SMS-провайдера)</span>
-          <input type="number" min={0} step="0.01" inputMode="decimal" value={value} placeholder="Например: 1,5"
-            onChange={(e) => { save.reset(); setValue(e.target.value) }} /></label>
-        {save.error && <p className="error" role="alert">{save.error.fieldErrors.smsPriceSom ?? save.error.message}</p>}
-        <p className="hint small">Курс доллара для ИИ и НДС — во вкладке «Расход ИИ».</p>
-        <button type="submit" className="btn" disabled={save.isPending}>Сохранить</button>
-        {save.isSuccess && <p className="hint" role="status">Сохранено.</p>}
-      </form>
-    </section>
-  )
-}
