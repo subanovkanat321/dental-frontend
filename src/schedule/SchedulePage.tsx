@@ -32,6 +32,7 @@ import { colorOf as doctorColor, initials, specialtyOf } from '../lib/avatars'
 import { NewAppointmentPanel, type Slot } from './NewAppointmentPanel'
 import { BookedToast } from './BookedToast'
 import { QuickMenu } from './QuickMenu'
+import { Greeting } from './Greeting'
 import { DoctorCalendar } from './DoctorCalendar'
 import { PaintSwitch } from './PaintSwitch'
 import { usePaintOf } from './paint'
@@ -496,6 +497,7 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
   return (
     <div className={[side ? 'schedule with-panel' : summary ? 'schedule with-summary' : 'schedule', listOne ? 'list-one' : ''].filter(Boolean).join(' ')}>
       <section className="schedule-main">
+        {date === today && !monthMode && !weekMode && <Greeting name={me.fullName} doctorId={me.doctorId} appointments={all} />}
         {/* Телефон: без заголовка дня — день выбирают в ленте (там же месяц и «📅 другой день») */}
         {(!dayList || listMode) && (
           <header ref={toolbar} className="toolbar schedule-toolbar">

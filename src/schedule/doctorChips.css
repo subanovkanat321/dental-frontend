@@ -42,3 +42,7 @@
 .doctor-order-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .doctor-order-list .btn { flex: none; width: 44px; min-height: 44px; padding: 0; font-size: 1.15rem; }
 .doctor-order-list .btn:disabled { opacity: .35; cursor: default; }
+/* Приветствие над расписанием (Greeting): тонкая строка */
+.greeting { margin: 0 0 8px; color: var(--hint); font-size: .95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.greeting strong { color: var(--text); font-weight: 700; }
+@media (max-width: 760px) { .greeting { margin: 0 0 6px; font-size: .88rem; white-space: normal; } }
