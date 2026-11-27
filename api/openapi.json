@@ -5924,6 +5924,33 @@
         }
       }
     },
+    "/web/signup/lead" : {
+      "post" : {
+        "tags" : [ "signup-controller" ],
+        "operationId" : "invitedLead",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SignupControllerInviteRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ClinicLeadsMatch"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/web/signup/email/resume" : {
       "post" : {
         "tags" : [ "signup-controller" ],
@@ -23158,6 +23185,13 @@
           "contactedVia" : {
             "type" : "string",
             "enum" : [ "WHATSAPP", "INSTAGRAM" ]
+          },
+          "inviteToken" : {
+            "type" : "string"
+          },
+          "inviteOpenedAt" : {
+            "type" : "string",
+            "format" : "date-time"
           }
         },
         "required" : [ "id", "solo" ]
@@ -23192,9 +23226,12 @@
           },
           "instagramVideoText" : {
             "type" : "string"
+          },
+          "signupUrl" : {
+            "type" : "string"
           }
         },
-        "required" : [ "custom", "remindAfterDays" ]
+        "required" : [ "custom", "remindAfterDays", "signupUrl" ]
       },
       "MaterialsControllerLinkRequest" : {
         "properties" : {
@@ -27537,6 +27574,34 @@
           }
         },
         "required" : [ "link", "secondsLeft" ]
+      },
+      "SignupControllerInviteRequest" : {
+        "properties" : {
+          "token" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ClinicLeadsMatch" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "city" : {
+            "type" : "string"
+          },
+          "address" : {
+            "type" : "string"
+          },
+          "alreadyInTish" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "alreadyInTish", "id" ]
       },
       "SignupControllerResumeRequest" : {
         "properties" : {
@@ -32128,27 +32193,6 @@
           }
         },
         "required" : [ "secondsLeft", "state" ]
-      },
-      "ClinicLeadsMatch" : {
-        "properties" : {
-          "id" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "name" : {
-            "type" : "string"
-          },
-          "city" : {
-            "type" : "string"
-          },
-          "address" : {
-            "type" : "string"
-          },
-          "alreadyInTish" : {
-            "type" : "boolean"
-          }
-        },
-        "required" : [ "alreadyInTish", "id" ]
       },
       "ClinicReferralsInvite" : {
         "properties" : {

@@ -8,6 +8,17 @@ export type Group = 'FRESH' | 'SENT' | 'FURTHER' | 'DECLINED'
 
 export const PLACEHOLDER = '{клиника}'
 
+/** Личная ссылка клиники на регистрацию (сервер, V272): /start?k=<код> — форма откроется сразу с этой клиникой. */
+export const LINK_PLACEHOLDER = '{ссылка}'
+
+/**
+ * Личная ссылка лида: signupUrl (с сервера, https://tish.kg/start) + ?k=<код>. Кода нет (старый сервер, клиника уже
+ * подключена) — просто страница регистрации.
+ */
+export function inviteLink(lead: Pick<OutreachLead, 'inviteToken'>, signupUrl: string): string {
+  return lead.inviteToken ? `${signupUrl}?k=${encodeURIComponent(lead.inviteToken)}` : signupUrl
+}
+
 /** Группы списка по этапу воронки: не писали, написали, ответили и дальше, отказались. */
 export const GROUPS: [Group, string][] = [['FRESH', 'Не писали'], ['SENT', 'Написали'], ['FURTHER', 'Ответили/дальше'], ['DECLINED', 'Отказались']]
 
@@ -20,10 +31,20 @@ export function groupOf(lead: OutreachLead): Group {
   }
 }
 
-/** Текст первого сообщения клинике: {клиника} → её название (везде, где встретится). */
-export function messageFor(template: string, clinicName: string): string {
+/**
+ * Текст сообщения клинике: {ссылка} → её личная ссылка, {клиника} → название (везде, где встретится). Свой текст
+ * владельца без {ссылка} уходит как написан (простой tish.kg/start в нём так и остаётся).
+ */
+export function messageFor(template: string, clinicName: string, link = ''): string {
   // Адрес сайта без https:// (в старом сохранённом тексте) — с https://: так WhatsApp делает его ссылкой
-  return template.split(PLACEHOLDER).join(clinicName).replace(/(^|[\s(«"])(tish\.kg(?:\/\S*)?)/g, '$1https://$2')
+  return template.split(LINK_PLACEHOLDER).join(link).split(PLACEHOLDER).join(clinicName)
+    .replace(/(^|[\s(«"])(tish\.kg(?:\/\S*)?)/g, '$1https://$2')
+}
+
+/** Пришли по личной ссылке: открыли её (до регистрации) и зарегистрировались ли после этого. */
+export function inviteState(lead: OutreachLead): 'registered' | 'opened' | null {
+  if (!lead.inviteOpenedAt) return null
+  return lead.clinicId != null ? 'registered' : 'opened'
 }
 
 /** Кому можно написать: ещё не писали, не просили не беспокоить, есть телефон, Instagram или ссылка. */

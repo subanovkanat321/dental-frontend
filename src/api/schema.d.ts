@@ -2116,6 +2116,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/web/signup/lead": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["invitedLead"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/web/signup/email/resume": {
         parameters: {
             query?: never;
@@ -10065,6 +10081,9 @@ export interface components {
             instagram?: string;
             /** @enum {string} */
             contactedVia?: "WHATSAPP" | "INSTAGRAM";
+            inviteToken?: string;
+            /** Format: date-time */
+            inviteOpenedAt?: string;
         };
         ClinicOutreachTemplateRequest: {
             text?: string;
@@ -10078,6 +10097,7 @@ export interface components {
             /** Format: int32 */
             remindAfterDays: number;
             instagramVideoText?: string;
+            signupUrl: string;
         };
         MaterialsControllerLinkRequest: {
             path?: string;
@@ -11825,6 +11845,17 @@ export interface components {
             link: string;
             /** Format: int64 */
             secondsLeft: number;
+        };
+        SignupControllerInviteRequest: {
+            token?: string;
+        };
+        ClinicLeadsMatch: {
+            /** Format: int64 */
+            id: number;
+            name?: string;
+            city?: string;
+            address?: string;
+            alreadyInTish: boolean;
         };
         SignupControllerResumeRequest: {
             email?: string;
@@ -13683,14 +13714,6 @@ export interface components {
             secondsLeft: number;
             link?: string;
             error?: string;
-        };
-        ClinicLeadsMatch: {
-            /** Format: int64 */
-            id: number;
-            name?: string;
-            city?: string;
-            address?: string;
-            alreadyInTish: boolean;
         };
         ClinicReferralsInvite: {
             clinicName: string;
@@ -21074,6 +21097,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SignupControllerTelegramStarted"];
+                };
+            };
+        };
+    };
+    invitedLead: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["SignupControllerInviteRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClinicLeadsMatch"];
                 };
             };
         };

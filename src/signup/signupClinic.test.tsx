@@ -131,3 +131,78 @@ test('клинику успели занять — сообщение серве
   await user.click(within(alert).getByRole('button', { name: 'Выбрать другую' }))
   expect(await screen.findByRole('region', { name: 'Найдите свою клинику' })).toBeInTheDocument()
 })
+
+describe('личная ссылка из сообщения клинике: /start?k=…', () => {
+  const TOKEN = 'FakeInviteToken_abc123'
+  afterEach(() => window.history.replaceState(null, '', '/'))
+
+  function invited(answer: () => Response) {
+    const tokens: unknown[] = []
+    server.use(http.post('*/web/signup/lead', async ({ request }) => {
+      tokens.push(((await request.json()) as { token?: string }).token)
+      return answer()
+    }))
+    return tokens
+  }
+
+  test('клиника сразу выбрана и форма заполнена; код — в теле запроса, адрес — без него', async () => {
+    const { sent } = backend()
+    const tokens = invited(() => HttpResponse.json(CLINICS[0]!))
+    window.history.replaceState(null, '', `/start?k=${TOKEN}&from=whatsapp`)
+    const user = userEvent.setup()
+    show()
+    const form = await screen.findByRole('form', { name: 'Регистрация клиники' })
+    expect(screen.getByRole('note', { name: 'Ваша клиника' })).toHaveTextContent('Стоматология Дентал Тест')
+    expect(within(form).getByRole('textbox', { name: 'Название клиники' })).toHaveValue('Стоматология Дентал Тест')
+    expect(within(form).getByRole('textbox', { name: 'Адрес' })).toHaveValue('ул. Примерная, 5')
+    expect(tokens).toEqual([TOKEN])
+    // Код убрали из адреса (метка канала осталась)
+    expect(window.location.pathname + window.location.search).toBe('/start?from=whatsapp')
+    await finishForm(user, form)
+    await screen.findByRole('heading', { name: 'Подтвердите в Telegram' })
+    expect(sent[0]).toMatchObject({ leadId: 41, from: 'whatsapp' })
+    expect(JSON.stringify(sent[0])).not.toContain(TOKEN)
+  })
+
+  test('«Не моя клиника» — обычный поиск', async () => {
+    backend()
+    invited(() => HttpResponse.json(CLINICS[0]!))
+    window.history.replaceState(null, '', `/start?k=${TOKEN}`)
+    const user = userEvent.setup()
+    show()
+    await user.click(await screen.findByRole('button', { name: 'Не моя клиника' }))
+    expect(await screen.findByRole('region', { name: 'Найдите свою клинику' })).toBeInTheDocument()
+    expect(screen.queryByRole('form', { name: 'Регистрация клиники' })).not.toBeInTheDocument()
+  })
+
+  test('код не найден (404) — обычный поиск, адрес чистый', async () => {
+    backend()
+    const tokens = invited(() => HttpResponse.json({ detail: 'Ссылка не найдена' }, { status: 404 }))
+    window.history.replaceState(null, '', `/start?k=${TOKEN}`)
+    show()
+    expect(await screen.findByRole('region', { name: 'Найдите свою клинику' })).toBeInTheDocument()
+    expect(tokens).toEqual([TOKEN])
+    expect(screen.queryByRole('form', { name: 'Регистрация клиники' })).not.toBeInTheDocument()
+    expect(window.location.pathname + window.location.search).toBe('/start')
+  })
+
+  test('кривой код — сервер не спрашиваем, обычный поиск', async () => {
+    backend()
+    const tokens = invited(() => HttpResponse.json(CLINICS[1]!))
+    window.history.replaceState(null, '', '/start?k=short')
+    show()
+    expect(await screen.findByRole('region', { name: 'Найдите свою клинику' })).toBeInTheDocument()
+    expect(tokens).toEqual([])
+    expect(window.location.search).toBe('')
+  })
+
+  test('клиника по ссылке уже в Tish — «попросите доступ», форма не открывается', async () => {
+    backend()
+    invited(() => HttpResponse.json(CLINICS[1]!))
+    window.history.replaceState(null, '', `/start?k=${TOKEN}`)
+    show()
+    expect(await screen.findByText(/«Дентал Подключённая» уже в Tish — попросите доступ у руководителя клиники/)).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Найдите свою клинику' })).toBeInTheDocument()
+    expect(screen.queryByRole('form', { name: 'Регистрация клиники' })).not.toBeInTheDocument()
+  })
+})
