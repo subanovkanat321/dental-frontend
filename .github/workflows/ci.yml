@@ -27,4 +27,6 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
+      # Время клиник — Бишкек при любой зоне компьютера: тесты времени ещё раз с TZ Москвы, Нью-Йорка и UTC (~40 с)
+      - run: npm run test:tz
       - run: npm run build

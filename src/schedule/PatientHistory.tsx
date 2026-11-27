@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 
 import { api, unwrap, type Schemas } from '../api/client'
 import { agoText } from '../lib/texts'
-import { shortDate } from '../lib/time'
+import { shortDate, todayIn } from '../lib/time'
 import { shortName } from '../lab/text'
 
 type Appointment = Schemas['AppointmentView']
@@ -49,10 +49,10 @@ export function PatientHistory({ appointment: a, me }: { appointment: Appointmen
   )
 }
 
-/** «5 нояб» — без года, если он текущий; иначе «5 нояб 2025». */
-function dayOf(instant: string): string {
+/** «5 нояб» — без года, если он текущий (по Бишкеку); иначе «5 нояб 2025». */
+function dayOf(instant: string, now = new Date()): string {
   const full = shortDate(instant)
-  const year = String(new Date().getFullYear())
+  const year = todayIn(now).slice(0, 4)
   return full.endsWith(` ${year}`) ? full.slice(0, -year.length - 1) : full
 }
 

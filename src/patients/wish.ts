@@ -24,9 +24,9 @@ export function dayPartOf(wish?: Wish | null): string {
   return DAY_PARTS.find((p) => p.from === from && p.to === to)?.key ?? 'custom'
 }
 
-/** 2026-11-27 → «27 нояб». */
+/** 2026-11-27 → «27 нояб». Дата — без времени: читаем и пишем в UTC, зона компьютера ни при чём. */
 function day(date: string): string {
-  return new Date(`${date}T12:00:00`).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }).replace('.', '')
+  return new Date(`${date}T00:00:00Z`).toLocaleDateString('ru-RU', { timeZone: 'UTC', day: 'numeric', month: 'short' }).replace('.', '')
 }
 
 /** Подпись «Когда удобно» в списке и в карточке: «утро · пн, пт · с 25 нояб по 5 дек»; пусто — «когда угодно». */
