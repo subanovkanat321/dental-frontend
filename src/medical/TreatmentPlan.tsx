@@ -5,6 +5,7 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { ask } from '../lib/confirm'
 import { stagesOf } from '../lib/planStages'
 import { somText } from '../lib/time'
+import { ActionMenu, type ActionItem } from '../layout/ActionMenu'
 import { EmptyState } from '../layout/EmptyState'
 import { Select } from '../layout/Select'
 import { PlanDocs } from '../print/PlanDocs'
@@ -35,15 +36,15 @@ type Step = Schemas['TreatmentStepView']
 /**
  * План лечения пациента — сверху зубная формула (PlanTeethPicker): врач нажимает зубы → «Что сделать» (PlanStepSheet:
  * услуга из прайса или своё описание, цена за зуб) или «＋ Без зуба» (чистка, консультация — «В конце плана»). Ниже этапы:
- * отметка «сделано», «↑ ↓» — порядок, правка и удаление, врач и срок у этапа (V241, «👤»; у заголовка «Этап N» — всей
- * группе), «📄 Из шаблона», «💲 Обновить цены», печать и отправка пациенту. Несколько вариантов плана (V254, PlanVariantBar):
+ * отметка «сделано», у этапа «⋯» (StepMenu): правка, врач и срок (V241; у заголовка «Этап N» — «👤» всей группе),
+ * «Выше / Ниже», в лабораторию, удаление, «📄 Из шаблона», «💲 Обновить цены», печать и отправка пациенту. Несколько вариантов плана (V254, PlanVariantBar):
  * вкладки с итогами, «⧉ Ещё вариант», «Пациент выбрал». Один редактор на медкарту (вкладка «План лечения») и карточку
  * приёма (строка «План лечения ›»). Права — на сервере (ChartService.requireEdit): readOnly — ассистент, он план только смотрит.
  * Скидки (V257): у этапа «~~4 500~~ 4 050 сом (−10 %)», итог «…, скидка −…, к оплате …», «🏷 Скидка на выбранные» (зубы на формуле)
  * и «🏷 Скидка на весь план» — по правилам «Настройки → Пациенты и скидки → Скидки».
  * Срочность (V267): есть этап не «🟡 Желательно» — несделанные группами «🔴 Срочно · 12 000 сом», «🟡 Желательно · …»,
- * «🟢 Можно позже · …» (порядок — с сервера: срочность, этап, ↑↓), внутри — «Этап N», ниже «✓ Сделано»; пустых групп нет,
- * «↑ ↓» — внутри группы. Все «Желательно» — как раньше, без групп.
+ * «🟢 Можно позже · …» (порядок — с сервера: срочность, этап, «Выше / Ниже»), внутри — «Этап N», ниже «✓ Сделано»; пустых групп нет,
+ * «Выше / Ниже» — внутри группы. Все «Желательно» — как раньше, без групп.
  *
  * @param prefill зуб из карты зубов («В план лечения») — сразу открыть «Что сделать» с этим зубом
  * @param heading заголовок «План лечения» — в медкарте; в строке карточки приёма заголовок уже есть
@@ -76,10 +77,10 @@ export function TreatmentPlan({ patient, prefill = null, readOnly, heading = tru
   const [picked, setPicked] = useState<number[]>(() => (prefill ? [prefill.tooth] : []))
   const [sheet, setSheet] = useState<'teeth' | 'general' | null>(() => (prefill && !readOnly ? 'teeth' : null))
   const [editing, setEditing] = useState<number | null>(null)
-  // Этап «коронка», «винир», «протез»… — «🦷 В лабораторию»: заказ технику с этим зубом
+  // Этап «коронка», «винир», «протез»… — «⋯ → В лабораторию»: заказ технику с этим зубом
   const me = useMe().data
   const [toLab, setToLab] = useState<Step | null>(null)
-  // «👤 Врач и срок»: один этап (key — id) или вся группа «Этап N» (key — 'stage-N')
+  // «Врач и срок»: один этап (из «⋯») (key — id) или вся группа «Этап N» (key — 'stage-N')
   const [assigning, setAssigning] = useState<string | null>(null)
   const [tool, setTool] = useState<'template' | 'prices' | null>(null)
   // «🏷 Скидка»: на этапы выбранных зубов или на весь план (несделанные этапы открытого варианта)
@@ -162,7 +163,7 @@ export function TreatmentPlan({ patient, prefill = null, readOnly, heading = tru
       {steps.length > 0 && (
         <ul className="plan" aria-label="Этапы лечения">
           {steps.map((s, i) => {
-            // «↑ ↓» — внутри группы срочности (сервер двигает этап среди этапов той же срочности)
+            // «Выше / Ниже» — внутри группы срочности (сервер двигает этап среди этапов той же срочности)
             const mine = grouped ? groupOf(priorityOf(s)) : open
             const at = mine.indexOf(s)
             const prev = steps[i - 1]
@@ -214,27 +215,21 @@ export function TreatmentPlan({ patient, prefill = null, readOnly, heading = tru
                     </span>
                   </label>
                   <span className="nowrap num"><StepPriceText step={s} /></span>
-                  {!readOnly && !s.doneAt && (
-                    <span className="plan-move">
-                      <button type="button" className="btn ghost small" aria-label={`Выше: ${s.title}`} title="Выше" disabled={at <= 0 || move.isPending}
-                        onClick={() => move.mutate({ stepId: s.id, up: true })}>↑</button>
-                      <button type="button" className="btn ghost small" aria-label={`Ниже: ${s.title}`} title="Ниже" disabled={at >= mine.length - 1 || move.isPending}
-                        onClick={() => move.mutate({ stepId: s.id, up: false })}>↓</button>
-                    </span>
+                  {!readOnly && (
+                    <StepMenu step={s} items={[
+                      { label: 'Изменить', hint: 'зуб, услуга, цена, этап, срочность', icon: 'edit', onSelect: () => setEditing(s.id) },
+                      ...(!s.doneAt ? [{ label: s.doctorName ? `Врач: ${s.doctorName}` : 'Врач и срок', hint: s.doctorName ? 'сменить врача или срок' : 'кто делает и до какого числа',
+                        icon: 'user', onSelect: () => setAssigning(String(s.id)) }] : []),
+                      ...(me && !s.doneAt && isCurrent && labKindOf(s.title) ? [{ label: 'В лабораторию', hint: 'заказ технику с этим зубом', icon: 'lab', onSelect: () => setToLab(s) }] : []),
+                      // «Выше / Ниже» — внутри группы срочности; у края — пункт неактивен, в группе один этап — пунктов нет
+                      ...(!s.doneAt && mine.length > 1 ? [
+                        { label: 'Выше', icon: '↑', disabled: at <= 0 || move.isPending, onSelect: () => move.mutate({ stepId: s.id, up: true }) },
+                        { label: 'Ниже', icon: '↓', disabled: at >= mine.length - 1 || move.isPending, onSelect: () => move.mutate({ stepId: s.id, up: false }) },
+                      ] : []),
+                      { label: 'Удалить этап', icon: 'trash', danger: true, onSelect: () => void ask(`Удалить этап «${s.title}»?`).then((ok) => ok && remove.mutate(s.id)) },
+                    ]} />
                   )}
-                  {!readOnly && me && !s.doneAt && isCurrent && labKindOf(s.title) && (
-                    <button type="button" className="btn ghost small" aria-label={`В лабораторию: ${s.title}`} title="Заказ в лабораторию" onClick={() => setToLab(s)}>🦷</button>
-                  )}
-                  {!readOnly && !s.doneAt && (
-                    <button type="button" className="btn ghost small" aria-label={`Врач и срок: ${s.title}`} title="Врач и срок"
-                      onClick={() => setAssigning(String(s.id))}>👤</button>
-                  )}
-                  {!readOnly && <button type="button" className="btn ghost small" aria-label={`Изменить этап: ${s.title}`} onClick={() => setEditing(s.id)}>✏️</button>}
                 </>
-              )}
-              {!readOnly && (
-                <button type="button" className="btn ghost small" aria-label={`Удалить этап: ${s.title}`}
-                  onClick={() => void ask(`Удалить этап «${s.title}»?`).then((ok) => ok && remove.mutate(s.id))}>✕</button>
               )}
             </li>
             </Fragment>
@@ -285,6 +280,19 @@ export function TreatmentPlan({ patient, prefill = null, readOnly, heading = tru
       )}
       {error && <p className="error" role="alert">{Object.values(error.fieldErrors)[0] ?? error.message}</p>}
     </section>
+  )
+}
+
+/**
+ * «⋯» у этапа (2026-11-27): строка спокойная — галочка, зуб и услуга, цена; правка, врач, лаборатория, порядок и удаление —
+ * в одном меню (на телефоне — нижний лист). Раньше было шесть значков ↑ ↓ 🦷 👤 ✏️ ✕, и на телефоне «✏️ ✕» уезжали на
+ * вторую строку. На компьютере то же «⋯»: одинаково везде, ряд этапов ровный, и случайно не нажать ✕ рядом с ✏️.
+ */
+function StepMenu({ step, items }: { step: Step; items: ActionItem[] }) {
+  const name = `${step.tooth ? `${step.tooth} · ` : ''}${step.title}`
+  return (
+    <ActionMenu label={`Действия с этапом: ${name}`} buttonLabel={`Действия с этапом: ${name}`} title={name} items={items}
+      className="btn ghost small plan-step-more" content="⋯" caret={false} align="right" />
   )
 }
 

@@ -3,8 +3,10 @@
  * Отдельным файлом рядом с компонентами — общие tokens.css и crm.css не трогаем.
  */
 
-/* Строка этапа: кнопок стало больше (цена, 🦷, 👤, ✏️, ✕) — колонки по числу детей, а не четыре */
+/* Строка этапа: галочка с услугой, цена и «⋯» (StepMenu) — колонки по числу детей */
 .plan li { grid-template-columns: 1fr; grid-auto-flow: column; grid-auto-columns: auto; }
+.plan-step-more { min-width: 36px; padding: 0 8px; font-size: 1.1rem; line-height: 1; color: var(--hint); }
+.plan-step-more:hover, .plan-step-more[aria-expanded=true] { color: var(--text); }
 .plan li.plan-stage { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .plan li.plan-assign-row { display: block; border-bottom: 0; }
 
@@ -55,12 +57,13 @@
 .reprice-total { margin: 0; font-weight: 600; }
 
 @media (max-width: 640px) {
-  /* Телефон: этап — во всю ширину, ниже строкой цена слева и кнопки справа (иначе ✕ уезжал за край) */
-  .plan li:not(.plan-stage):not(.plan-assign-row) { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 4px; }
-  .plan li > label.check { flex: 1 1 100%; }
-  .plan li > label.check + .nowrap { margin-right: auto; padding-left: 28px; }
-  .plan li > .btn.small { padding: 0 10px; }
-  .plan li > form { flex: 1 1 0; min-width: 0; }
+  /* Телефон: слева услуга и под ней цена, справа «⋯» на обе строки — ничего не переносится */
+  .plan li:not(.plan-stage):not(.plan-assign-row):not(.plan-prio) { display: grid; grid-template-columns: minmax(0, 1fr) auto;
+    grid-auto-flow: row; align-items: center; column-gap: 4px; }
+  .plan li > label.check, .plan li > label.check + .nowrap { grid-column: 1; }
+  .plan li > label.check + .nowrap { padding-left: 28px; }
+  .plan li > .action-menu-wrap { grid-column: 2; grid-row: 1 / span 2; }
+  .plan li > form { grid-column: 1 / -1; min-width: 0; }
   .plan-tools .btn, .plan-assign-form .actions .btn { flex: 1 1 auto; min-height: 44px; }
   .reprice-list li { flex-wrap: wrap; }
 }
@@ -95,8 +98,6 @@
 .plan-teeth-bar.active { position: sticky; bottom: 8px; z-index: 2; background: var(--accent-soft); box-shadow: 0 2px 10px rgba(15, 42, 48, .12); }
 .plan-teeth-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .plan li.picked-row { background: var(--accent-soft); }
-.plan-move { display: inline-flex; gap: 0; }
-.plan-move .btn:disabled { opacity: .3; }
 
 /* «Что сделать: 16, 17» */
 .plan-step-sheet { display: grid; gap: 12px; }
@@ -120,10 +121,7 @@
   .plan-step-fields { grid-template-columns: 1fr 1fr; }
   .plan-step-title { grid-column: 1 / -1; }
   .plan-teeth-actions, .plan-teeth-actions .btn { flex: 1 1 auto; min-height: 44px; }
-  /* Строка этапа: цена слева, ↑ ↓ 🦷 👤 ✏️ ✕ — в одну строку на 390 px */
-  .plan li > .btn.small, .plan-move .btn { padding: 0 4px; min-width: 36px; min-height: 40px; }
-  /* Кнопок стало больше (↑ ↓ и 🦷) — цена без отступа под галочкой, иначе ✕ уходил на новую строку */
-  .plan li > label.check + .nowrap { padding-left: 4px; }
+  .plan-step-more { min-width: 44px; }
 }
 
 /* Варианты плана (V254): вкладки с итогом, на компьютере — сравнение столбцами */

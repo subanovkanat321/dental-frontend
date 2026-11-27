@@ -7,6 +7,7 @@ import { priorityGroups, priorityGrouped, suggestPriority } from '../lib/planPri
 import { findSub, me, renderApp, medTab, openMedicalTab } from '../test/fixtures'
 import { server } from '../test/server'
 import { PlanPage } from '../site/PlanPage'
+import { stepMenuItem } from '../test/planStep'
 
 type Step = Schemas['TreatmentStepView']
 type Plan = Schemas['PlanOffersPatientPlan']
@@ -99,10 +100,14 @@ test('группы по срочности: заголовки с суммой (
   // В заголовке этапа — сумма этапа внутри группы
   expect(within(list).getAllByText(/^Этап \d/).map((x) => x.textContent)).toEqual([
     expect.stringMatching(/^Этап 1 · 2\s000 сом$/), expect.stringMatching(/^Этап 2 · 9\s000 сом$/), expect.stringMatching(/^Этап 3 · 9\s000 сом$/)])
-  // «↑ ↓» — внутри группы: срочный второй — «↑» можно, «↓» нельзя (дальше — другая группа)
-  expect(within(list).getByRole('button', { name: 'Ниже: Лечение пульпита' })).toBeDisabled()
-  expect(within(list).getByRole('button', { name: 'Выше: Лечение пульпита' })).toBeEnabled()
-  expect(within(list).getByRole('button', { name: 'Выше: Отбеливание' })).toBeDisabled()
+  // «Выше / Ниже» (в «⋯») — внутри группы: срочный второй — «Выше» можно, «Ниже» нельзя (дальше — другая группа)
+  expect(await stepMenuItem(list, 'Лечение пульпита', 'Ниже')).toBeDisabled()
+  expect(screen.getByRole('menuitem', { name: 'Выше' })).toBeEnabled()
+  await userEvent.keyboard('{Escape}')
+  // Один в своей группе — двигать некуда: «Выше / Ниже» в меню нет совсем
+  await stepMenuItem(list, 'Отбеливание', 'Изменить')
+  expect(screen.queryByRole('menuitem', { name: 'Выше' })).not.toBeInTheDocument()
+  await userEvent.keyboard('{Escape}')
 })
 
 test('все этапы «Желательно» — план как раньше, без групп', async () => {
@@ -135,7 +140,7 @@ test('«Что сделать»: срочность одним нажатием,
 test('правка этапа: срочность меняется кнопкой и уходит на сервер', async () => {
   const sent = backend([MIXED[0]!, MIXED[1]!])
   const list = await openPlan()
-  await userEvent.click(within(list).getByRole('button', { name: 'Изменить этап: Пломба композит' }))
+  await userEvent.click(await stepMenuItem(list, 'Пломба композит', 'Изменить'))
   const edit = screen.getByRole('form', { name: 'Этап: Пломба композит' })
   await userEvent.click(within(edit).getByRole('button', { name: 'Можно позже' }))
   await userEvent.click(within(edit).getByRole('button', { name: 'Сохранить' }))
