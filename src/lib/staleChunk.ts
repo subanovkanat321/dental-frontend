@@ -3,7 +3,7 @@ const RELOADED = 'crm.reloadedForUpdate'
 /** Куска кода старой версии больше нет на сервере (обновили, пока вкладка была открыта). */
 export function isStaleChunk(error: unknown): boolean {
   const text = error instanceof Error ? `${error.name} ${error.message}` : String(error)
-  return /dynamically imported module|Importing a module script failed|ChunkLoadError|Loading chunk/i.test(text)
+  return /dynamically imported module|Importing a module script failed|ChunkLoadError|Loading chunk|Unable to preload CSS/i.test(text)
 }
 
 /**

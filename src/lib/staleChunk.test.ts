@@ -11,6 +11,8 @@ test('старый кусок кода — перезагрузка один р�
   vi.stubGlobal('location', { ...window.location, reload })
   const stale = new TypeError('Failed to fetch dynamically imported module: /assets/engine-old.js')
   expect(isStaleChunk(stale)).toBe(true)
+  // Safari: стили старой сборки (vite preload) — тот же случай (2026-11-27, PWA iOS)
+  expect(isStaleChunk(new Error('Unable to preload CSS for /assets/PatientsPage-old.css'))).toBe(true)
   expect(reloadForStaleChunk(new Error('WebGL сломался'))).toBe(false)
   expect(reloadForStaleChunk(stale)).toBe(true)
   expect(reloadForStaleChunk(stale)).toBe(false)
