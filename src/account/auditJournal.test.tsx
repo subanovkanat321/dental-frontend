@@ -126,3 +126,14 @@ test('сервер отклонил настройку — текст ошибк
   await user.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Выключить' }))
   expect(await within(region).findByRole('alert')).toHaveTextContent('записывается всегда — выключить нельзя')
 })
+
+test('журнал больше 10 000 записей: «больше 10 000», без «осталось N»', async () => {
+  server.use(http.get('*/api/clinic/audit', () => HttpResponse.json({
+    items: [entry(1, 'Жылдыз', 'отменил(а) запись на 04.11.2026 09:00, врач Айгерим Садыкова', '2026-11-04T03:30:00Z')],
+    next: 'c1', total: 10000, totalCapped: true,
+  } satisfies Schemas['AuditLogPage'])))
+  renderApp()
+  expect(await screen.findByText(/отменил\(а\) запись на 04\.11\.2026/)).toBeInTheDocument()
+  expect(screen.getByText('Всего: больше 10 000, показано 1')).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Показать ещё' })).toBeInTheDocument()
+})

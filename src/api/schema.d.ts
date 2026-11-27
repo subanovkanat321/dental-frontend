@@ -15019,6 +15019,7 @@ export interface components {
             next?: string;
             /** Format: int64 */
             total?: number;
+            totalCapped?: boolean;
         };
         AuditLogPerson: {
             /** Format: int64 */

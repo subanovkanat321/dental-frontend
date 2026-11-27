@@ -35843,6 +35843,9 @@
           "total" : {
             "type" : "integer",
             "format" : "int64"
+          },
+          "totalCapped" : {
+            "type" : "boolean"
           }
         }
       },

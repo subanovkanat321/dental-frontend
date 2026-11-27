@@ -70,6 +70,8 @@ export function AuditJournal() {
   })
   const items = audit.data?.pages.flatMap((p) => p.items ?? []) ?? []
   const total = audit.data?.pages[0]?.total ?? 0
+  // Сервер считает не дальше 10 000 (count(*) по журналу дорогой): больше — «больше 10 000», без «осталось N»
+  const capped = audit.data?.pages[0]?.totalCapped === true
   const days = new Map<string, Entry[]>()
   for (const x of items) {
     const day = x.at ? dateOf(x.at) : ''
@@ -115,7 +117,7 @@ export function AuditJournal() {
       {audit.isPending ? <Loading /> : items.length ? (
         <>
           <p className="hint small audit-count" role="status">
-            {filtered ? 'Найдено' : 'Всего'}: {total.toLocaleString('ru-RU')}{items.length < total ? `, показано ${items.length}` : ''}
+            {filtered ? 'Найдено' : 'Всего'}: {capped ? 'больше ' : ''}{total.toLocaleString('ru-RU')}{capped || items.length < total ? `, показано ${items.length}` : ''}
           </p>
           <div className="table-scroll">
             <table className="table audit-table" aria-label="Журнал действий">
@@ -137,7 +139,7 @@ export function AuditJournal() {
           </div>
           {audit.hasNextPage && (
             <button type="button" className="btn audit-more" disabled={audit.isFetchingNextPage} onClick={() => void audit.fetchNextPage()}>
-              {audit.isFetchingNextPage ? <><Spinner />Загружаем…</> : `Показать ещё${total - items.length > 0 ? ` (осталось ${total - items.length})` : ''}`}
+              {audit.isFetchingNextPage ? <><Spinner />Загружаем…</> : `Показать ещё${!capped && total - items.length > 0 ? ` (осталось ${total - items.length})` : ''}`}
             </button>
           )}
         </>
