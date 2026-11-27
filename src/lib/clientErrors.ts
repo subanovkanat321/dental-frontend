@@ -60,7 +60,7 @@ export function startErrorReports(): void {
   window.addEventListener('unhandledrejection', (event) => reportError(event.reason))
 }
 
-const NOISE = /ResizeObserver loop|event listener .* was terminated|^Script error\.?$|dynamically imported module|Importing a module script failed|ChunkLoadError|Loading chunk/i
+const NOISE = /ResizeObserver loop|event listener .* was terminated|^Script error\.?$|dynamically imported module|Importing a module script failed|ChunkLoadError|Loading chunk|Unable to preload CSS/i
 const NETWORK = /Нет связи с сервером|Failed to fetch|Load failed|NetworkError when attempting|Network request failed|network error/i
 const EXTENSION = /(chrome|moz|safari|safari-web|ms-browser)-extension:\/\//i
 
