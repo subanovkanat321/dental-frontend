@@ -10,7 +10,7 @@ import { formatPhone, shortDate, somText, todayIn } from '../lib/time'
 import { useClose } from '../lib/useClose'
 import { PhoneInput } from '../clinic/PhoneInput'
 import { InviteLink } from '../team/InviteLink'
-import { extendPaid } from './health'
+import { extendPaid, leadWarning } from './health'
 import { DateInput } from '../layout/DateInput'
 import { Loading } from '../layout/Loading'
 import { EmptyState } from '../layout/EmptyState'
@@ -56,6 +56,8 @@ export function ClinicPanel({ clinic: c, me, invite, onClose }: {
           <span className="hint">Врачей {c.doctors} · сотрудников {c.staff} · пациентов {c.patients} · приёмов за 30 дней {c.appointments}</span>
           <p className={c.settingUp ? 'tone-wait' : c.listed === false ? 'hint' : 'tone-ok'} aria-label="Видна пациентам">{listedText(c)}</p>
           {c.selfSignup && <p className="hint">🆕 Сама зарегистрировалась на сайте (tish.kg/start) — без заявки</p>}
+          {c.leadCheck === 'TRUSTED' && <p className="hint">📍 Выбрала себя в списке 2ГИС — номер руководителя совпал с номером клиники</p>}
+          {leadWarning(c.leadCheck) && <p className="tone-wait">⚠️ {leadWarning(c.leadCheck)} — проверьте, что это их клиника</p>}
           {c.referredBy && <p className="hint">🎁 Пришла по приглашению от «{c.referredBy}»</p>}
         </div>
         <button type="button" className="btn ghost" aria-label="Закрыть" onClick={onClose}>✕</button>

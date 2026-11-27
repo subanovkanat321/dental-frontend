@@ -30,3 +30,13 @@ export function extendPaid(paidUntil: string | undefined, months: number, from: 
   target.setUTCDate(Math.min(d!, last))
   return target.toISOString().slice(0, 10)
 }
+
+/**
+ * Клиника выбрала себя в «Найдите свою клинику» (/start), а номер руководителя этого не подтверждает (V269):
+ * MISMATCH — номера нет в 2ГИС, UNCONFIRMED — совпадает, но не подтверждён кодом из SMS. Доверяем или не из списка — null.
+ */
+export function leadWarning(check?: string | null): string | null {
+  if (check === 'MISMATCH') return 'номера нет в 2ГИС'
+  if (check === 'UNCONFIRMED') return 'номер из 2ГИС не подтверждён'
+  return null
+}

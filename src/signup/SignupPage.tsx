@@ -2,8 +2,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 
 import {
-  api, ApiError, forgetSignup, signupAvailability, signupCode, signupEmailCode, signupEmailResume, signupEmailStatus, signupEnterTelegram,
-  signupRegister, signupTelegram, signupTelegramStatus, type SignupCodeSent, type SignupEmailSent, type SignupEmailWaiting, type SignupForm,
+  api, ApiError, forgetSignup, signupAvailability, signupClinics, signupCode, signupEmailCode, signupEmailResume, signupEmailStatus, signupEnterTelegram,
+  signupRegister, signupTelegram, signupTelegramStatus, type SignupClinic, type SignupCodeSent, type SignupEmailSent, type SignupEmailWaiting, type SignupForm,
 } from '../api/client'
 import { PhoneInput } from '../clinic/PhoneInput'
 import { phoneFromInput } from '../clinic/phone'
@@ -29,6 +29,18 @@ export const SPAM_HINT = 'Письмо в «Спаме»? Нажмите «Не 
 
 /** 409 сервера: номер уже у сотрудника клиники или с него уже зарегистрирована клиника — тогда «Войти». */
 const PHONE_TAKEN = 'phone-in-clinic'
+
+/** 409 сервера: клиника из списка уже подключена к Tish или пропала из списка. */
+const LEAD_CODES = ['lead-in-tish', 'lead-gone']
+
+/** Сколько букв нужно для поиска клиники (как на сервере). */
+export const MIN_SEARCH = 3
+
+/**
+ * Шаг 1 «Найдите свою клинику»: ищем в списке 2ГИС; выбрали — форма с подставленными полями; «заполнить вручную» —
+ * пустая форма, как раньше.
+ */
+type Pick = { kind: 'search' } | { kind: 'manual' } | { kind: 'lead'; lead: SignupClinic }
 
 type Step =
   | { kind: 'form' }
@@ -92,6 +104,7 @@ export function SignupPage({ onDone = () => window.location.assign('/'), userAge
   const formRef = useRef<HTMLFormElement>(null)
   const qr = useQrScreen()
   const [qrBusy, setQrBusy] = useState(false)
+  const [pick, setPick] = useState<Pick>({ kind: 'search' })
   /** С этого устройства недавно отправляли код на почту, а шаг не восстановился — подсказка над формой. */
   const [codeHint, setCodeHint] = useState(false)
 
@@ -200,6 +213,8 @@ export function SignupPage({ onDone = () => window.location.assign('/'), userAge
     return {
       clinicName: field('clinicName'), city: field('city'),
       fullName: field('fullName'), phone: phoneFromInput(phone), consent: data.get('consent') === 'on',
+      // Клиника из 2ГИС: сервер сам перенесёт её ссылку и телефон в «О клинике» — отправляем только номер и адрес
+      ...(pick.kind === 'lead' ? { leadId: pick.lead.id, address: field('address') } : {}),
       ...(ref ? { ref } : {}),
       ...(from ? { from } : {}),
     }
@@ -324,7 +339,10 @@ export function SignupPage({ onDone = () => window.location.assign('/'), userAge
     const e = error
     const err = (k: string) => e?.fieldErrors[k] && <p className="error">{e.fieldErrors[k]}</p>
     const taken = e?.status === 409 && e.code === PHONE_TAKEN
+    const leadProblem = e?.status === 409 && LEAD_CODES.includes(e.code ?? '')
     const other = e && !Object.keys(e.fieldErrors).length ? e.message : ''
+    const lead = pick.kind === 'lead' ? pick.lead : null
+    const toSearch = () => { setError(null); setPick({ kind: 'search' }) }
     formBody = (
       <div className="signup-step" hidden={step.kind !== 'form'}>
         <h1>Подключить Tish бесплатно</h1>
@@ -336,22 +354,47 @@ export function SignupPage({ onDone = () => window.location.assign('/'), userAge
           <p className="tone-ok signup-invite" role="note">🎁 Вас пригласила клиника «{invite.data.clinicName}»</p>
         )}
         <p className="hint">Tish бесплатный: всё приложение, без оплаты, пробного срока и ограничений. Клиника — за пару минут, без заявки и звонка.</p>
-        <form ref={formRef} className="form narrow invite-form signup-form" aria-label="Регистрация клиники"
+        {!w.sms && !w.telegram && !w.email && <p className="error" role="alert">Регистрация сейчас недоступна — напишите нам, подключим вручную.</p>}
+        {pick.kind === 'search' && (
+          <ClinicSearch onPick={(found) => { setError(null); setPick({ kind: 'lead', lead: found }) }}
+            onManual={() => { setError(null); setPick({ kind: 'manual' }) }} />
+        )}
+        {lead && (
+          <div className="signup-picked" role="note" aria-label="Ваша клиника">
+            <span className="signup-picked-label">Ваша клиника из 2ГИС</span>
+            <b>{lead.name}</b>
+            {(lead.address || lead.city) && <span className="hint small">{[lead.address, lead.city].filter(Boolean).join(' · ')}</span>}
+            <p className="hint small">Адрес, телефон и ссылку 2ГИС перенесём в «О клинике» — проверьте поля ниже.</p>
+            <button type="button" className="link" onClick={toSearch}>Не моя клиника</button>
+          </div>
+        )}
+        {pick.kind === 'manual' && (
+          <button type="button" className="link signup-alt signup-back-search" onClick={toSearch}>← Найти свою клинику в списке</button>
+        )}
+        {pick.kind !== 'search' && <form key={lead ? `lead-${lead.id}` : 'manual'} ref={formRef} className="form narrow invite-form signup-form" aria-label="Регистрация клиники"
           onSubmit={(ev: FormEvent) => {
             ev.preventDefault()
             void start(emailMode ? 'EMAIL' : w.telegram ? 'TELEGRAM' : w.sms && !smsDown ? 'SMS' : 'EMAIL')
           }}>
           <label className="field"><span>Название клиники</span>
-            <input name="clinicName" maxLength={100} autoComplete="off" placeholder="Стоматология «Улыбка»" aria-describedby="signup-clinic-hint" /></label>
-          <p id="signup-clinic-hint" className="hint small field-note">или ваше имя, если работаете один</p>
+            <input name="clinicName" maxLength={100} autoComplete="off" placeholder="Стоматология «Улыбка»" aria-describedby="signup-clinic-hint"
+              defaultValue={lead?.name ?? ''} /></label>
+          {!lead && <p id="signup-clinic-hint" className="hint small field-note">или ваше имя, если работаете один</p>}
           {err('clinicName')}
           <label className="field"><span>Город</span>
-            <Select name="city" defaultValue="">
+            <Select name="city" defaultValue={cityOption(lead?.city)}>
               <option value="">Выберите город</option>
               {CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
               <option value="Другой">Другой город</option>
             </Select></label>
           {err('city')}
+          {lead && (
+            <>
+              <label className="field"><span>Адрес</span>
+                <input name="address" maxLength={200} autoComplete="off" placeholder="ул. Токтогула, 100" defaultValue={lead.address ?? ''} /></label>
+              {err('address')}
+            </>
+          )}
           <label className="field"><span>Ваше имя</span>
             <input name="fullName" maxLength={100} autoComplete="off" placeholder="Айгерим Садыкова" /></label>
           {err('fullName')}
@@ -361,8 +404,8 @@ export function SignupPage({ onDone = () => window.location.assign('/'), userAge
             используются для работы аккаунта клиники</label>
           {err('consent')}
           {taken && <p className="error" role="alert">{e.message}. <a href="/login">Войти в Tish</a></p>}
-          {!taken && other && <p className="error" role="alert">{other}</p>}
-          {!w.sms && !w.telegram && !w.email && <p className="error" role="alert">Регистрация сейчас недоступна — напишите нам, подключим вручную.</p>}
+          {!taken && other && <p className="error" role="alert">{other}{leadProblem && <>{' '}
+            <button type="button" className="link" onClick={toSearch}>Выбрать другую</button></>}</p>}
           {w.telegram && (
             <button type={emailMode ? 'button' : 'submit'} className="btn tg-login" disabled={busy}
               onClick={emailMode ? () => void start('TELEGRAM') : undefined}>
@@ -391,7 +434,7 @@ export function SignupPage({ onDone = () => window.location.assign('/'), userAge
               onClick={w.telegram || emailMode ? () => void start('SMS') : undefined}>
               {busy && !w.telegram && !emailMode ? <><Spinner />Проверяем…</> : 'Получить код по SMS'}</button>
           ))}
-        </form>
+        </form>}
         {w.email && <button type="button" className="link signup-alt" onClick={openResume}>Уже есть код из письма?</button>}
         <p className="hint small">Уже в Tish? <a href="/login">Войти</a> · Нужна помощь с подключением? <a href="/join#form">Оставьте заявку</a></p>
       </div>
@@ -543,5 +586,72 @@ function ResumedPassword({ waiting, busy, error, onBack, onSubmit }: {
         <button type="submit" className="btn primary" disabled={busy}>{busy ? <><Spinner />Создаём…</> : 'Создать клинику'}</button>
       </form>
     </div>
+  )
+}
+
+/** Город клиники из 2ГИС — пункт списка городов; не из списка — «Другой город»; нет — «Выберите город». */
+function cityOption(city?: string | null): string {
+  if (!city) return ''
+  const known = CITIES.find((c) => c.toLowerCase() === city.trim().toLowerCase())
+  return known ?? 'Другой'
+}
+
+/**
+ * Шаг 1 «Найдите свою клинику»: от 3 букв названия или адреса (латиницей тоже) — до 8 клиник из списка 2ГИС, через
+ * 300 мс после последней буквы. Уже подключённая — без кнопки, с «Уже в Tish — попросите доступ у руководителя клиники».
+ * Поле — без value (как форма ниже: во встроенном браузере Instagram клавиатура не любит перерисовок поля).
+ */
+function ClinicSearch({ onPick, onManual }: { onPick: (clinic: SignupClinic) => void; onManual: () => void }) {
+  const [text, setText] = useState('')
+  const [query, setQuery] = useState('')
+  useEffect(() => {
+    const timer = setTimeout(() => setQuery(text.trim().replace(/\s+/g, ' ')), 300)
+    return () => clearTimeout(timer)
+  }, [text])
+  const enough = query.replace(/ /g, '').length >= MIN_SEARCH
+  const found = useQuery({
+    queryKey: ['signup-clinics', query], enabled: enough, retry: false, staleTime: 60_000,
+    queryFn: () => signupClinics(query),
+  })
+  const list = enough ? found.data ?? [] : []
+  return (
+    <section className="signup-search" aria-label="Найдите свою клинику">
+      <h2>Найдите свою клинику</h2>
+      <label className="field"><span>Название или адрес</span>
+        <input type="search" name="clinicSearch" maxLength={100} autoComplete="off" enterKeyHint="search"
+          placeholder="Например, «Улыбка» или «Токтогула»" onChange={(ev) => setText(ev.target.value)} /></label>
+      {!enough && <p className="hint small">Введите хотя бы {MIN_SEARCH} буквы — покажем клиники из 2ГИС</p>}
+      {enough && found.isFetching && !found.data && <p className="hint small" role="status"><Spinner />Ищем…</p>}
+      {enough && found.error && (
+        <p className="error" role="alert">{found.error instanceof ApiError ? found.error.message : 'Нет связи с сервером'}</p>
+      )}
+      {enough && found.isSuccess && list.length === 0 && (
+        <p className="hint" role="status">Не нашли «{query}». Попробуйте другое слово или заполните вручную.</p>
+      )}
+      {list.length > 0 && (
+        <ul className="signup-clinics" aria-label="Найденные клиники">
+          {list.map((c) => {
+            const where = [c.address, c.city].filter(Boolean).join(' · ')
+            return (
+              <li key={c.id}>
+                {c.alreadyInTish ? (
+                  <div className="signup-clinic in-tish" aria-label={c.name}>
+                    <b>{c.name}</b>
+                    {where && <span className="signup-clinic-where">{where}</span>}
+                    <span className="tone-ok signup-clinic-note">Уже в Tish — попросите доступ у руководителя клиники</span>
+                  </div>
+                ) : (
+                  <button type="button" className="signup-clinic" onClick={() => onPick(c)}>
+                    <b>{c.name}</b>
+                    {where && <span className="signup-clinic-where">{where}</span>}
+                  </button>
+                )}
+              </li>
+            )
+          })}
+        </ul>
+      )}
+      <button type="button" className="btn signup-manual" onClick={onManual}>Моей клиники нет — заполнить вручную</button>
+    </section>
   )
 }

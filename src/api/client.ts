@@ -399,7 +399,19 @@ Promise<Schemas['InviteControllerRegistered']> {
 export type SignupAvailability = Schemas['SignupControllerAvailability']
 
 /** Форма регистрации клиники (номер — как набран; проверяет и нормализует сервер). */
-export type SignupForm = Pick<Schemas['SignupControllerSignupRequest'], 'clinicName' | 'city' | 'fullName' | 'phone' | 'consent' | 'ref' | 'from'>
+export type SignupForm = Pick<Schemas['SignupControllerSignupRequest'],
+  'clinicName' | 'city' | 'fullName' | 'phone' | 'consent' | 'ref' | 'from' | 'leadId' | 'address'>
+
+/** Клиника из списка 2ГИС в «Найдите свою клинику» (/start): название, город, короткий адрес — без телефонов. */
+export type SignupClinic = Schemas['ClinicLeadsMatch']
+
+/**
+ * «Найдите свою клинику»: до 8 клиник по названию или адресу (от 3 букв, латиница и кириллица). 422 — меньше 3 букв,
+ * 429 — слишком часто с этого адреса. Запрос — в адресе (это название клиники, не личные данные).
+ */
+export async function signupClinics(q: string): Promise<SignupClinic[]> {
+  return await webRequest<SignupClinic[]>('GET', '/web/signup/clinics?q=' + encodeURIComponent(q)) ?? []
+}
 
 export type SignupCodeSent = Schemas['SignupControllerCodeSent']
 

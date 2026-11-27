@@ -3090,6 +3090,26 @@ p.expense-owner { display: block; }
 /* /start во встроенном браузере Instagram и т. п.: SMS и почта — мелкой ссылкой под Telegram */
 .signup-page .signup-form .link.signup-alt { width: auto; justify-self: center; font-size: .9rem; }
 .signup-page .signup-tg-hint { margin: -4px 0 0; text-align: center; }
+/* Шаг 1 «Найдите свою клинику»: поле поиска, список клиник из 2ГИС карточками-кнопками, «заполнить вручную» */
+.signup-page .signup-search { display: grid; gap: 10px; width: 100%; text-align: left; }
+.signup-page .signup-search h2 { margin: 4px 0 0; font-size: 1.1rem; }
+.signup-page .signup-search > .hint, .signup-page .signup-search > .error { margin: 0; }
+.signup-page .signup-clinics { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.signup-page .signup-clinic { display: grid; gap: 2px; width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid var(--separator);
+  border-radius: var(--r-md); background: var(--card); color: var(--text); font: inherit; text-align: left; }
+.signup-page button.signup-clinic { cursor: pointer; }
+.signup-page button.signup-clinic:hover, .signup-page button.signup-clinic:focus-visible { border-color: var(--accent); background: var(--accent-soft); }
+.signup-page .signup-clinic b { overflow-wrap: anywhere; }
+.signup-page .signup-clinic-where { color: var(--hint); font-size: .875rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.signup-page .signup-clinic.in-tish { opacity: .85; }
+.signup-page .signup-clinic-note { font-size: .875rem; }
+.signup-page .signup-manual { width: 100%; }
+/* Выбранная клиника над формой: название, адрес и «Не моя клиника» */
+.signup-page .signup-picked { display: grid; gap: 4px; width: 100%; padding: 12px; border-radius: var(--r-md); background: var(--accent-soft); text-align: left; }
+.signup-page .signup-picked .hint { margin: 0; }
+.signup-page .signup-picked-label { color: var(--hint); font-size: .8rem; }
+.signup-page .signup-picked .link { justify-self: start; }
+.signup-page .link.signup-back-search { justify-self: start; font-size: .9rem; }
 
 /*
  * «Рассылка клиникам» — вид «Таблица» (как в Excel, сотни клиник из 2ГИС): своя прокрутка в обе стороны,
