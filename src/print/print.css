@@ -67,13 +67,13 @@
 
 .print-sheet .doc-head b {
   display: block;
-  font-family: Geologica, 'Golos Text', sans-serif;
+  font-family: 'Tish Display', 'Golos Text', sans-serif;
   font-size: 1.2em;
 }
 
 .print-sheet h1 {
   margin: 4px 0 10px;
-  font-family: Geologica, 'Golos Text', sans-serif;
+  font-family: 'Tish Display', 'Golos Text', sans-serif;
   font-size: 1.45em;
   font-weight: 600;
 }
@@ -125,7 +125,7 @@
 .print-sheet .total {
   /* Общий .total CRM (крупный заголовок 2rem) на бумагу не переносим: итог — чуть крупнее текста */
   margin: 4px 0;
-  font: 600 1.15em/1.35 Geologica, 'Golos Text', sans-serif;
+  font: 600 1.15em/1.35 'Tish Display', 'Golos Text', sans-serif;
   letter-spacing: 0;
   text-align: right;
 }
@@ -145,7 +145,7 @@
 .print-sheet .plan-table .stage-row th {
   padding-top: 10px;
   border-bottom: 1px solid #111;
-  font-family: Geologica, 'Golos Text', sans-serif;
+  font-family: 'Tish Display', 'Golos Text', sans-serif;
 }
 
 .print-sheet .plan-table .subtotal td {
@@ -181,7 +181,7 @@
 
 .print-sheet .receipt-pay h2 {
   margin: 0 0 4px;
-  font: 600 1em/1.3 Geologica, 'Golos Text', sans-serif;
+  font: 600 1em/1.3 'Tish Display', 'Golos Text', sans-serif;
 }
 
 .print-sheet .receipt-pay p {

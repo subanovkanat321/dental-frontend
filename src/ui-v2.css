@@ -167,6 +167,14 @@
     color: var(--v2-ink); font: 700 var(--v2-title) / 1.1 var(--display); letter-spacing: -.02em; }
   .ui-v2 .sub-tabs:not(.sub-bar) .sub-tabs-scroll { height: 46px; }
   .ui-v2 .sub-tabs:not(.sub-bar) .sub-tabs-helps, .ui-v2 .sub-tabs:not(.sub-bar) .sub-tabs-more { height: 46px; }
+  /* «?» — рядом с заголовком раздела, а не в конце вкладок (владелец 2026-11-27: в узком окне «?» уезжал на свою строку,
+     а его окно обрезалось слева). Порядок: заголовок, «?», перенос строки (::after), вкладки, «⌄» */
+  .ui-v2 .sub-tabs:not(.sub-bar)::before { order: 0; flex: 0 1 auto; max-width: calc(100% - 56px); }
+  .ui-v2 .sub-tabs:not(.sub-bar) .sub-tabs-helps { order: 1; height: 72px; padding-top: 14px; box-sizing: border-box; align-items: center; margin-left: 4px; }
+  .ui-v2 .sub-tabs:not(.sub-bar)::after { content: ''; order: 2; flex: 0 0 100%; height: 0; }
+  .ui-v2 .sub-tabs:not(.sub-bar) .sub-tabs-scroll { order: 3; }
+  .ui-v2 .sub-tabs:not(.sub-bar) .sub-tabs-more-box { order: 4; }
+  .ui-v2 .sub-tabs:not(.sub-bar) .sub-tabs-help .help-hint-pop { left: 0; right: auto; }
   .ui-v2 .sub-tabs[data-stuck] { box-shadow: 0 1px 0 var(--separator); }
   .ui-v2 .sub-tabs-list { align-items: center; gap: 4px; padding: 0; }
   .ui-v2 .sub-tab { align-self: center; height: 36px; padding: 0 16px; border-radius: var(--v2-r-pill); color: var(--hint); font-weight: 500; }

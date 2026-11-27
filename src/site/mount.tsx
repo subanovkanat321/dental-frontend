@@ -3,8 +3,7 @@ import { createRoot } from 'react-dom/client'
 
 // Мало начертаний: страница сайта открывается с телефона по мобильному интернету. Латиница — для
 // «Tish», «Telegram», «WhatsApp» и цифр телефонов (без неё они рисовались системным шрифтом)
-import '@fontsource/geologica/cyrillic-600.css'
-import '@fontsource/geologica/latin-600.css'
+import '../fonts.css'
 import '@fontsource/golos-text/cyrillic-400.css'
 import '@fontsource/golos-text/latin-400.css'
 import '@fontsource/golos-text/cyrillic-500.css'

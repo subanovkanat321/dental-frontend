@@ -130,7 +130,7 @@ export function inside(b: Box, x: number, y: number): boolean {
 }
 
 const INK = { light: { bg: '#FFFFFF', text: '#0F2A30', muted: '#4C6268', faint: '#75898E' }, dark: { bg: '#0F2A30', text: '#FFFFFF', muted: '#C8D3D5', faint: '#9AAEB2' } }
-const DISPLAY = 'Geologica, "Golos Text", system-ui, sans-serif'
+const DISPLAY = '"Tish Display", "Golos Text", system-ui, sans-serif'
 const BODY = '"Golos Text", system-ui, sans-serif'
 const PRIMARY = '#0E8A80'
 
