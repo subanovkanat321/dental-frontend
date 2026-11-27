@@ -11862,6 +11862,7 @@ export interface components {
             clinic?: components["schemas"]["PlatformServiceClinicRow"];
             invite?: components["schemas"]["DoctorInvitesInvite"];
             adminPhone?: string;
+            tempPassword?: string;
         };
         BillingControllerPaymentRequest: {
             /** Format: date */

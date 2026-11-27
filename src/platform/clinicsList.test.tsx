@@ -115,7 +115,7 @@ test('создать клинику: руководитель по номеру 
   const sent: unknown[] = []
   server.use(http.post('*/api/platform/clinics', async ({ request }) => {
     sent.push(await request.json())
-    return HttpResponse.json({ id: 9, clinic: clinic(9, 'Стоматология Тест', { admins: 'Айбек Осмонов' }), adminPhone: '+996700770001' } satisfies Schemas['PlatformServiceCreated'], { status: 201 })
+    return HttpResponse.json({ id: 9, clinic: clinic(9, 'Стоматология Тест', { admins: 'Айбек Осмонов' }), adminPhone: '+996700770001', tempPassword: 'k7mpq2xa9d' } satisfies Schemas['PlatformServiceCreated'], { status: 201 })
   }))
   const user = userEvent.setup()
   renderApp()
@@ -137,7 +137,10 @@ test('создать клинику: руководитель по номеру 
   // Пилот — без срока оплаты
   expect(sent[0]).not.toHaveProperty('paidUntil')
   const done = await screen.findByRole('complementary', { name: 'Клиника создана' })
-  expect(within(done).getByRole('status')).toHaveTextContent('входит на сайте по номеру')
+  // SMS нет: временный пароль показан один раз — логин и пароль руководителю
+  expect(within(done).getByRole('status')).toHaveTextContent('Временный пароль: k7mpq2xa9d')
+  expect(within(done).getByRole('status')).toHaveTextContent('Логин: +996 700 770 001')
+  expect(within(done).getByRole('button', { name: 'Скопировать для руководителя' })).toBeInTheDocument()
 })
 
 test('создать клинику ссылкой: ответ — ссылка руководителю; менеджеру «по номеру» и оплату не показываем', async () => {

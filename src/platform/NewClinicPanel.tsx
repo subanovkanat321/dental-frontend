@@ -17,7 +17,7 @@ type Access = NonNullable<Schemas['PlatformServiceNewClinic']['adminAccess']> | 
 
 const ACCESS: [Access, string, string, boolean][] = [
   ['LINK', 'Ссылка-приглашение', 'Пришлёте ссылку — руководитель откроет её и войдёт через Telegram или по номеру на сайте', false],
-  ['PHONE', 'Вход по номеру', 'Сразу руководитель клиники: входит на сайте по номеру — первый раз код из SMS, потом свой пароль', true],
+  ['PHONE', 'Вход по номеру', 'Сразу руководитель клиники: Tish выдаст временный пароль — передадите его сами, при первом входе руководитель придумает свой', true],
   ['LATER', 'Позже', 'Пригласить руководителя потом — в карточке клиники', false],
 ]
 
@@ -75,9 +75,10 @@ export function NewClinicPanel({ owner, onClose, onOpen }: { owner: boolean; onC
             <InviteLink start={`staff_${c.invite.token}`} name={adminName.trim()} toWhom="руководителю клиники"
               phone={phoneDigits(adminPhone)} sms={owner} />
           </>
+        ) : c.tempPassword ? (
+          <TempPassword name={adminName.trim()} phone={c.adminPhone ? formatPhone(c.adminPhone.replace('+', '')) : ''} password={c.tempPassword} />
         ) : (
-          <p className="tone-ok" role="status">Клиника создана. {adminName.trim()} — руководитель: входит на сайте по номеру{' '}
-            <b className="num">{c.adminPhone ? formatPhone(c.adminPhone.replace('+', '')) : ''}</b> — «Войти по номеру», первый раз код из SMS.</p>
+          <p className="tone-ok" role="status">Клиника создана.</p>
         )}
         <div className="actions">
           <button type="button" className="btn primary" onClick={() => onOpen(c.id)}>Открыть карточку клиники</button>
@@ -145,5 +146,24 @@ export function NewClinicPanel({ owner, onClose, onOpen }: { owner: boolean; onC
         <button type="submit" className="btn primary" disabled={create.isPending || (access === 'PHONE' && !adminPhone.trim()) || (paid && !paidUntil)}>Создать клинику</button>
       </form>
     </aside>
+  )
+}
+
+/**
+ * Временный пароль первого руководителя («Вход по номеру», SMS нет с 2026-11-27): показываем один раз — сервер хранит
+ * только хеш. Передать сами (лично, звонком, в мессенджер); в адрес ссылки пароль не кладём. Войти им можно только
+ * чтобы сразу придумать свой, живёт 3 дня.
+ */
+function TempPassword({ name, phone, password }: { name: string; phone: string; password: string }) {
+  const [copied, setCopied] = useState(false)
+  const text = `Вход в Tish: https://tish.kg/login\nЛогин: ${phone}\nВременный пароль: ${password}\nПосле входа придумайте свой пароль.`
+  return (
+    <div className="tone-ok temp-password" role="status">
+      <p>Клиника создана. {name} — руководитель. Передайте ему вход:</p>
+      <p>Логин: <b className="num">{phone}</b><br />Временный пароль: <b className="num">{password}</b></p>
+      <p className="hint small">Пароль показан один раз. Действует 3 дня: при первом входе руководитель придумает свой.</p>
+      <button type="button" className="btn" onClick={() => void navigator.clipboard?.writeText(text).then(() => setCopied(true), () => undefined)}>
+        {copied ? '✓ Скопировано' : 'Скопировать для руководителя'}</button>
+    </div>
   )
 }

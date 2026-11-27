@@ -27863,6 +27863,9 @@
           },
           "adminPhone" : {
             "type" : "string"
+          },
+          "tempPassword" : {
+            "type" : "string"
           }
         },
         "required" : [ "id" ]
