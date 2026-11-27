@@ -2483,12 +2483,18 @@ button.status-pill:focus-visible { outline: 2px solid var(--accent); outline-off
    Телефон (DayList и его шапка) не трогаем — всё под min-width: 761px */
 .toolbar-summary .icon { width: 16px; height: 16px; }
 /* Действия шапки — одной неразрывной группой справа (SchedulePage). Тесно — schedule/useToolbarFit.ts ставит
-   data-fit: 1 — у «Сводки дня» только значок. Порогов в px нет: при крупном
+   data-fit: 1 — у «Сводки дня» только значок; 2 — заголовок мельче; 3 — плотнее кнопки. Порогов в px нет: при крупном
    тексте и зуме они другие, поэтому меряем, а не угадываем */
 .toolbar-actions { display: flex; flex-wrap: nowrap; align-items: center; gap: 10px; }
 .toolbar-actions > .btn { flex: none; white-space: nowrap; }
-.schedule-toolbar[data-fit="1"] .toolbar-summary { width: 36px; padding: 0; }
-.schedule-toolbar[data-fit="1"] .toolbar-summary-label { display: none; }
+.schedule-toolbar:is([data-fit="1"], [data-fit="2"], [data-fit="3"]) .toolbar-summary { width: 36px; padding: 0; }
+.schedule-toolbar:is([data-fit="1"], [data-fit="2"], [data-fit="3"]) .toolbar-summary-label { display: none; }
+/* Ступень 2 — заголовок дня мельче; ступень 3 — плотнее кнопки вида и «Сегодня», меньше промежутки (владелец, 2026-11-27:
+   «＋ Новая запись» уезжала второй строкой при зуме/узком окне) */
+.schedule-toolbar:is([data-fit="2"], [data-fit="3"]) .day-title h1 { font-size: 1.45rem !important; }
+.schedule-toolbar[data-fit="3"] { column-gap: 8px !important; }
+.schedule-toolbar[data-fit="3"] .view-mode button { padding-inline: 10px; }
+.schedule-toolbar[data-fit="3"] > .btn:not(.primary) { padding-inline: 12px; }
 @media (min-width: 761px) {
   .toolbar-summary { min-height: 36px; color: var(--hint); }
   .toolbar-summary:hover:not(:disabled) { color: var(--text); }
