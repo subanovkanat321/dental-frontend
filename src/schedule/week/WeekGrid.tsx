@@ -284,7 +284,7 @@ function canEditPast(a: Appointment, me: Me): boolean {
 }
 
 /** Тень на месте, куда встанет приём: время словом; нельзя (прошлое) — красная рамка. */
-function GhostBlock({ ghost, y }: { ghost: NonNullable<ReturnType<typeof useDrag>['ghost']>; y: (m: number) => number }) {
+export function GhostBlock({ ghost, y }: { ghost: NonNullable<ReturnType<typeof useDrag>['ghost']>; y: (m: number) => number }) {
   const duration = durationOf(ghost.appointment)
   return (
     <div className={`week-ghost${ghost.allowed ? '' : ' blocked'}`} style={{ top: y(ghost.minutes), height: Math.max(duration * PX - 2, 22) }}

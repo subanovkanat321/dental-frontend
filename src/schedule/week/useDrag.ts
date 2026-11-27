@@ -8,7 +8,10 @@ import { durationOf, SNAP, snapInto } from './weekModel'
 
 type Appointment = Schemas['AppointmentView']
 
-/** Куда встанет приём, если отпустить сейчас: день (номер колонки), минуты; allowed — сервер это примет по смыслу. */
+/**
+ * Куда встанет приём, если отпустить сейчас: колонка (в «Неделе» — день, в «Дне» — врач), минуты; allowed — сервер
+ * это примет по смыслу.
+ */
 export type Ghost = { appointment: Appointment; day: number; minutes: number; allowed: boolean }
 
 type Press = { appointment: Appointment; pointerId: number; x: number; y: number; grab: number; dragging: boolean }
@@ -24,16 +27,22 @@ const EDGE = 40
  * колонка под курсором, шаг 15 минут, тень на новом месте. Нажатие без сдвига остаётся нажатием
  * (карточка приёма), палец (touch) не тащит — им прокручивают. Esc — отменить.
  * <p>
- * Колонки дней — {@code columns} (по порядку), прокрутка — {@code scroller}. Где колонка, узнаём
+ * Колонки — {@code columns} (по порядку), прокрутка — {@code scroller}. Где колонка, узнаём
  * через getBoundingClientRect в момент движения: сетка могла прокрутиться.
+ * <p>
+ * «Неделя»: колонка — день ({@code days[i]}). «День»: колонка — врач, у всех колонок одна дата
+ * ({@code days} — та же дата столько раз, сколько врачей); {@code columnOf} — колонка самого приёма
+ * (то же время у другого врача — уже перенос), {@code accepts} — можно ли туда (расписание коллеги — нельзя).
  */
-export function useDrag({ days, from, to, columns, scroller, onDrop }: {
+export function useDrag({ days, from, to, columns, scroller, onDrop, columnOf, accepts }: {
   days: string[]
   from: number
   to: number
   columns: RefObject<(HTMLElement | null)[]>
   scroller: RefObject<HTMLElement | null>
-  onDrop: (move: { appointment: Appointment; date: string; minutes: number }) => void
+  onDrop: (move: { appointment: Appointment; date: string; minutes: number; column: number }) => void
+  columnOf?: (a: Appointment) => number
+  accepts?: (a: Appointment, column: number) => boolean
 }) {
   const [ghost, setGhost] = useState<Ghost | null>(null)
   const press = useRef<Press | null>(null)
@@ -56,7 +65,11 @@ export function useDrag({ days, from, to, columns, scroller, onDrop }: {
     const minutes = Math.min(snapInto(point.minutes - p.grab, durationOf(p.appointment), from, to), DAY - SNAP)
     const date = days[point.day]!
     const same = slotInstant(date, minutes) === new Date(p.appointment.startAt).toISOString()
-    return { appointment: p.appointment, day: point.day, minutes, allowed: !same && new Date(slotInstant(date, minutes)) > new Date() }
+      && (!columnOf || columnOf(p.appointment) === point.day)
+    return {
+      appointment: p.appointment, day: point.day, minutes,
+      allowed: !same && new Date(slotInstant(date, minutes)) > new Date() && (!accepts || accepts(p.appointment, point.day)),
+    }
   }
 
   const cancel = () => {
@@ -104,7 +117,7 @@ export function useDrag({ days, from, to, columns, scroller, onDrop }: {
       dragged.current = true
       const target = ghostAt(p, e.clientX, e.clientY)
       setGhost(null)
-      if (target?.allowed) onDrop({ appointment: p.appointment, date: days[target.day]!, minutes: target.minutes })
+      if (target?.allowed) onDrop({ appointment: p.appointment, date: days[target.day]!, minutes: target.minutes, column: target.day })
     },
     onPointerCancel: cancel,
   })

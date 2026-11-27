@@ -10,6 +10,7 @@ const ZONES = ['Europe/Moscow', 'America/New_York', 'UTC']
 const FILES = [
   'src/schedule/timezone.test.tsx',
   'src/schedule/week.test.tsx',
+  'src/schedule/dayDrag.test.tsx',
   'src/schedule/midnight.test.tsx',
   'src/schedule/time.test.tsx',
   'src/cash/cashDay.test.tsx',
