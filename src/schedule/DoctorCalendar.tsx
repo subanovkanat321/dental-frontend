@@ -46,7 +46,6 @@ export function DoctorCalendar({ doctor, date, today, anchor, onPick, onOnly, on
   onClose: () => void
 }) {
   const [month, setMonth] = useState(date.slice(0, 7))
-  const days = useDoctorMonth(doctor.id, month)
   const box = useRef<HTMLDivElement>(null)
   const sheet = anchor == null || matches('(max-width: 640px)')
   useBack(onClose)
@@ -72,7 +71,7 @@ export function DoctorCalendar({ doctor, date, today, anchor, onPick, onOnly, on
     onPick(day)
     onClose()
   }
-  const grid = monthGridDays(month)
+  const days = useDoctorMonth(doctor.id, month)
   const working = days ? Object.entries(days).filter(([d, x]) => x.kind === 'work' && d >= today).length : null
 
   const body = (
@@ -82,31 +81,7 @@ export function DoctorCalendar({ doctor, date, today, anchor, onPick, onOnly, on
         <span className="doc-cal-name"><i className="doc-cal-dot" aria-hidden="true" />{doctor.name}</span>
         <button type="button" className="btn ghost small doc-cal-close" aria-label="Закрыть календарь" onClick={onClose}>✕</button>
       </div>
-      <div className="doc-cal-month">
-        <button type="button" className="btn ghost small" aria-label="Предыдущий месяц" onClick={() => setMonth(addMonths(month, -1))}>‹</button>
-        <b>{monthTitle(month)}</b>
-        <button type="button" className="btn ghost small" aria-label="Следующий месяц" onClick={() => setMonth(addMonths(month, 1))}>›</button>
-      </div>
-      <div className="doc-cal-grid" role="group" aria-label={monthTitle(month)}>
-        {WEEK.map((w) => <span key={w} className="doc-cal-wd" aria-hidden="true">{w}</span>)}
-        {grid.map((d) => {
-          const day = days?.[d]
-          const other = !d.startsWith(month)
-          const cls = ['doc-cal-day', day ? `k-${day.kind}` : 'k-loading', other ? 'other' : '', d === today ? 'today' : '', d === date ? 'selected' : ''].filter(Boolean).join(' ')
-          return (
-            <button key={d} type="button" className={cls} aria-label={dayLabel(d, day)} title={dayLabel(d, day)}
-              aria-current={d === date ? 'date' : undefined} onClick={() => pick(d)}>
-              <span className="doc-cal-num">{Number(d.slice(8))}</span>
-              {day?.kind === 'work' && !other && <span className="doc-cal-free">{freeShort(day.freeMinutes)}</span>}
-            </button>
-          )
-        })}
-      </div>
-      <p className="doc-cal-legend hint">
-        <span><i className="sw work" aria-hidden="true" /> работает</span>
-        <span><i className="sw off" aria-hidden="true" /> выходной, отпуск</span>
-        <span>«3 ч» — свободно</span>
-      </p>
+      <DoctorMonth doctorId={doctor.id} month={month} onMonth={setMonth} date={date} today={today} onPick={pick} />
       <div className="doc-cal-foot">
         {working != null && <span className="hint">{working ? `Дней со свободным временем: ${working}` : 'Свободных дней в этом месяце нет'}</span>}
         {onOnly && <button type="button" className="btn small" onClick={() => { onOnly(); onClose() }}>Только {doctor.name.split(/\s+/)[0]}</button>}
@@ -118,5 +93,53 @@ export function DoctorCalendar({ doctor, date, today, anchor, onPick, onOnly, on
       ? <div className="ui-select-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>{body}</div>
       : <div className="doc-cal-layer" onPointerDown={(e) => e.target === e.currentTarget && onClose()}>{body}</div>,
     document.body,
+  )
+}
+
+/**
+ * Месяц врача — сетка дней: рабочие подсвечены (у дня — сколько свободно), выходные и отпуска штриховкой, сегодня — кружок,
+ * открытый день — рамка. Общая часть окна «Календарь врача» и боковой панели «Списка» (ListAside); стрелки — свой месяц.
+ */
+export function DoctorMonth({ doctorId, month, onMonth, date, today, onPick, legend = true }: {
+  doctorId: number
+  month: string
+  onMonth: (month: string) => void
+  date: string
+  today: string
+  onPick: (date: string) => void
+  legend?: boolean
+}) {
+  const days = useDoctorMonth(doctorId, month)
+  const grid = monthGridDays(month)
+  return (
+    <>
+      <div className="doc-cal-month">
+        <button type="button" className="btn ghost small" aria-label="Предыдущий месяц" onClick={() => onMonth(addMonths(month, -1))}>‹</button>
+        <b>{monthTitle(month)}</b>
+        <button type="button" className="btn ghost small" aria-label="Следующий месяц" onClick={() => onMonth(addMonths(month, 1))}>›</button>
+      </div>
+      <div className="doc-cal-grid" role="group" aria-label={monthTitle(month)}>
+        {WEEK.map((w) => <span key={w} className="doc-cal-wd" aria-hidden="true">{w}</span>)}
+        {grid.map((d) => {
+          const day = days?.[d]
+          const other = !d.startsWith(month)
+          const cls = ['doc-cal-day', day ? `k-${day.kind}` : 'k-loading', other ? 'other' : '', d === today ? 'today' : '', d === date ? 'selected' : ''].filter(Boolean).join(' ')
+          return (
+            <button key={d} type="button" className={cls} aria-label={dayLabel(d, day)} title={dayLabel(d, day)}
+              aria-current={d === date ? 'date' : undefined} onClick={() => onPick(d)}>
+              <span className="doc-cal-num">{Number(d.slice(8))}</span>
+              {day?.kind === 'work' && !other && <span className="doc-cal-free">{freeShort(day.freeMinutes)}</span>}
+            </button>
+          )
+        })}
+      </div>
+      {legend && (
+        <p className="doc-cal-legend hint">
+          <span><i className="sw work" aria-hidden="true" /> работает</span>
+          <span><i className="sw off" aria-hidden="true" /> выходной, отпуск</span>
+          <span>«3 ч» — свободно</span>
+        </p>
+      )}
+    </>
   )
 }

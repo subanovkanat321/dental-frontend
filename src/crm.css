@@ -3685,3 +3685,26 @@ button.history-link:hover .history-text { color: var(--link); }
   .settings-item:not([data-host=help]) :is(section, div, form):has(> :is(.card-block, .settings-group) + :is(.card-block, .settings-group)) > *,
   .settings-item:not([data-host=help]) .page-grid > * { grid-column: 1 / -1 !important; }
 }
+
+/* «Список» одного врача на компьютере (владелец 2026-11-27): строки — до 900px у меню, а не во всю ширину (время слева,
+   «＋» и «✓ отправлено» справа — глаз терял связь). От 1280px справа — панель «Сегодня» (schedule/ListAside.tsx), шапка
+   дня — над списком и панелью. Карточка приёма — сразу за списком, а не у правого края экрана */
+.schedule.list-one > .schedule-main { max-width: 900px; }
+.schedule.list-one > .schedule-main:has(> .list-cols.with-aside) { max-width: calc(900px + 24px + 300px); }
+.list-cols { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; align-items: start; }
+.list-cols.with-aside { grid-template-columns: minmax(0, 1fr) 300px; }
+.list-col { min-width: 0; }
+.list-aside { position: sticky; top: 16px; display: grid; gap: 12px; max-height: calc(100dvh - 32px); overflow-y: auto; overscroll-behavior: contain; padding: 1px; }
+.list-aside .empty-state.compact { padding: 4px 0; }
+.list-aside-month.doc-cal { gap: 6px; }
+.list-aside-month .doc-cal-day { min-height: 32px; }
+.schedule.list-one.with-panel { grid-template-columns: minmax(0, 900px) 360px; justify-content: start; }
+.schedule.list-one.with-panel:has(.panel.wide) { grid-template-columns: minmax(0, 900px) 600px; }
+@media (min-width: 1600px) {
+  .list-cols.with-aside { grid-template-columns: minmax(0, 1fr) 320px; }
+  .schedule.list-one > .schedule-main:has(> .list-cols.with-aside) { max-width: calc(900px + 24px + 320px); }
+}
+.list-cols .empty-action { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.list-aside .ds-counts { grid-template-columns: 1fr 1.25fr 1fr; gap: 4px; }
+.list-aside .ds-counts div { padding: 6px; min-width: 0; }
+.list-aside .ds-counts dt { font-size: .75rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

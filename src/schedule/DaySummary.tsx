@@ -64,17 +64,7 @@ export function DaySummary({ date, today, all, doctorName, requests, waiting, to
   const onOpen = (a: Appointment) => { setFull(false); openProp(a) }
   const onBook = (doctorId: number, minutes: number) => { setFull(false); bookProp(doctorId, minutes) }
   const onNavigate = navigateProp && ((page: Page) => { setFull(false); navigateProp(page) })
-  const now = new Date().toISOString()
-  const sorted = [...all].sort((a, b) => a.startAt.localeCompare(b.startAt))
   const isToday = date === today
-  const open = sorted.filter((a) => a.status === 'SCHEDULED' || a.status === 'REQUESTED')
-  const next = isToday ? open.find((a) => a.startAt > now) : open[0]
-  const current = isToday ? sorted.filter((a) => a.status === 'SCHEDULED' && a.startAt <= now && a.endAt > now) : []
-  const done = all.filter((a) => a.status === 'DONE').length
-  const first = (list: Appointment[]) => () => {
-    const a = [...list].sort((x, y) => x.startAt.localeCompare(y.startAt))[0]
-    if (a) onOpen(a)
-  }
   const calm = !requests.length && !waiting.length && !toPay && !low
 
   return (
@@ -86,60 +76,13 @@ export function DaySummary({ date, today, all, doctorName, requests, waiting, to
       {onClose && (
         <button type="button" className="ds-close" aria-label="Скрыть сводку" title="Скрыть сводку — больше места врачам" onClick={onClose}>×</button>
       )}
-      <section className="ds-block">
-        <h2 className="ds-title">{isToday ? 'Следующий пациент' : 'Первый приём'}</h2>
-        {current.map((a) => (
-          <button key={a.id} type="button" className="ds-next now" onClick={() => onOpen(a)}>
-            <span className="ds-next-time num">сейчас · до {timeOf(a.endAt)}</span>
-            <span className="ds-next-name">{a.patient.fullName}</span>
-            <span className="hint small">{doctorName(a.doctorId)}{a.serviceName ? ` · ${serviceLabel(a)}` : ''}</span>
-          </button>
-        ))}
-        {next ? (
-          <button type="button" className={`ds-next s-${statusOf(next).kind}`} onClick={() => onOpen(next)}>
-            <span className="ds-next-time num">{timeOf(next.startAt)}–{timeOf(next.endAt)}</span>
-            <span className="ds-next-name">{next.patient.fullName}</span>
-            <span className="ds-next-meta">{doctorName(next.doctorId)}{next.serviceName ? ` · ${serviceLabel(next)}` : ''}</span>
-            <span className="ds-next-state"><span aria-hidden="true">{statusOf(next).icon}</span> {statusOf(next).label}</span>
-          </button>
-        ) : (
-          <EmptyState compact title={all.length ? (isToday ? 'Больше записей на сегодня нет' : 'Все приёмы прошли') : emptyDayText(date, today)} />
-        )}
-        <dl className="ds-counts">
-          <div><dt>Записей</dt><dd className="num">{all.length}</dd></div>
-          <div><dt>Состоялось</dt><dd className="num">{done}</dd></div>
-          <div><dt>Впереди</dt><dd className="num">{isToday ? open.filter((a) => a.startAt > now).length : open.length}</dd></div>
-        </dl>
-      </section>
+      <NextPatient date={date} today={today} all={all} doctorName={doctorName} onOpen={onOpen} />
       <OnDuty date={date} />
 
       <section className="ds-block">
         <h2 className="ds-title">Требует внимания</h2>
-        <div className="ds-stats" role="group" aria-label="Требует внимания">
-          {requests.length > 0 && (
-            <button type="button" className="stat s-request" onClick={first(requests)}>
-              <b>{requests.length}</b> {requests.length === 1 ? 'заявка из бота' : 'заявки из бота'} — подтвердить
-            </button>
-          )}
-          {waiting.length > 0 && (
-            <button type="button" className="stat s-wait" onClick={first(waiting)}>
-              <b>{waiting.length}</b> ждём ответа на напоминание
-            </button>
-          )}
-          {toPay > 0 && (
-            <button type="button" className="stat s-cashier" onClick={() => onNavigate?.('cash')}>
-              <b>{toPay}</b> ждут оплаты на кассе
-            </button>
-          )}
-          {low > 0 && (
-            <button type="button" className="stat s-wait" onClick={() => onNavigate?.('stock')}>
-              <b>{low}</b> на складе заканчивается
-            </button>
-          )}
-          {onReviewAsks && <ReviewAsksChip count={reviewAsks} onOpen={onReviewAsks} />}
-          {extra}
-          {calm && <span className="stat s-quiet calm">Всё под контролем: заявок и срочных дел нет</span>}
-        </div>
+        <AttentionStats requests={requests} waiting={waiting} toPay={toPay} low={low} onOpen={onOpen} onNavigate={onNavigate}
+          reviewAsks={reviewAsks} onReviewAsks={onReviewAsks} extra={extra} calm={calm} />
       </section>
       {windowsHint}
 
@@ -178,5 +121,108 @@ export function DaySummary({ date, today, all, doctorName, requests, waiting, to
       )}
     </aside>
     </>
+  )
+}
+
+/**
+ * «Следующий пациент» (сегодня) или «Первый приём» (другой день): кто сейчас в кресле, кто следующий — нажать, откроется
+ * карточка приёма; под ним — «Записей · Состоялось · Впереди». Общий блок «Сводки дня» и боковой панели «Списка» (ListAside).
+ */
+export function NextPatient({ date, today, all, doctorName, onOpen, empty }: {
+  date: string
+  today: string
+  /** Приёмы дня без отменённых */
+  all: Appointment[]
+  /** Имя врача у записи; один врач на экране — не нужно, undefined */
+  doctorName?: (id?: number) => string
+  onOpen: (a: Appointment) => void
+  /** Под «Записей нет» / «Больше записей нет» — быстрые действия («Открыть завтра») */
+  empty?: ReactNode
+}) {
+  const now = new Date().toISOString()
+  const sorted = [...all].sort((a, b) => a.startAt.localeCompare(b.startAt))
+  const isToday = date === today
+  const open = sorted.filter((a) => a.status === 'SCHEDULED' || a.status === 'REQUESTED')
+  const next = isToday ? open.find((a) => a.startAt > now) : open[0]
+  const current = isToday ? sorted.filter((a) => a.status === 'SCHEDULED' && a.startAt <= now && a.endAt > now) : []
+  const done = all.filter((a) => a.status === 'DONE').length
+  const meta = (a: Appointment) => [doctorName?.(a.doctorId), a.serviceName ? serviceLabel(a) : ''].filter(Boolean).join(' · ')
+  return (
+    <section className="ds-block">
+      <h2 className="ds-title">{isToday ? 'Следующий пациент' : 'Первый приём'}</h2>
+      {current.map((a) => (
+        <button key={a.id} type="button" className="ds-next now" onClick={() => onOpen(a)}>
+          <span className="ds-next-time num">сейчас · до {timeOf(a.endAt)}</span>
+          <span className="ds-next-name">{a.patient.fullName}</span>
+          {meta(a) && <span className="hint small">{meta(a)}</span>}
+        </button>
+      ))}
+      {next ? (
+        <button type="button" className={`ds-next s-${statusOf(next).kind}`} onClick={() => onOpen(next)}>
+          <span className="ds-next-time num">{timeOf(next.startAt)}–{timeOf(next.endAt)}</span>
+          <span className="ds-next-name">{next.patient.fullName}</span>
+          {meta(next) && <span className="ds-next-meta">{meta(next)}</span>}
+          <span className="ds-next-state"><span aria-hidden="true">{statusOf(next).icon}</span> {statusOf(next).label}</span>
+        </button>
+      ) : (
+        <EmptyState compact title={all.length ? (isToday ? 'Больше записей на сегодня нет' : 'Все приёмы прошли') : emptyDayText(date, today)}
+          action={empty} />
+      )}
+      {/* Пустой день — «0 · 0 · 0» ничего не говорит */}
+      {all.length > 0 && <dl className="ds-counts">
+        <div><dt>Записей</dt><dd className="num">{all.length}</dd></div>
+        <div><dt>Состоялось</dt><dd className="num">{done}</dd></div>
+        <div><dt>Впереди</dt><dd className="num">{isToday ? open.filter((a) => a.startAt > now).length : open.length}</dd></div>
+      </dl>}
+    </section>
+  )
+}
+
+/**
+ * Плашки «Требует внимания» столбиком: заявки, ждём ответа, к оплате, склад — нажатие ведёт туда же, что плашки над
+ * расписанием (первая такая запись, «Касса», «Склад»). Нечего делать — «Всё под контролем».
+ */
+export function AttentionStats({ requests, waiting, toPay, low, onOpen, onNavigate, reviewAsks = 0, onReviewAsks, extra, calm }: {
+  requests: Appointment[]
+  waiting: Appointment[]
+  toPay: number
+  low: number
+  onOpen: (a: Appointment) => void
+  onNavigate?: (page: Page) => void
+  reviewAsks?: number
+  onReviewAsks?: () => void
+  extra?: ReactNode
+  calm: boolean
+}) {
+  const first = (list: Appointment[]) => () => {
+    const a = [...list].sort((x, y) => x.startAt.localeCompare(y.startAt))[0]
+    if (a) onOpen(a)
+  }
+  return (
+    <div className="ds-stats" role="group" aria-label="Требует внимания">
+      {requests.length > 0 && (
+        <button type="button" className="stat s-request" onClick={first(requests)}>
+          <b>{requests.length}</b> {requests.length === 1 ? 'заявка из бота' : 'заявки из бота'} — подтвердить
+        </button>
+      )}
+      {waiting.length > 0 && (
+        <button type="button" className="stat s-wait" onClick={first(waiting)}>
+          <b>{waiting.length}</b> ждём ответа на напоминание
+        </button>
+      )}
+      {toPay > 0 && (
+        <button type="button" className="stat s-cashier" onClick={() => onNavigate?.('cash')}>
+          <b>{toPay}</b> ждут оплаты на кассе
+        </button>
+      )}
+      {low > 0 && (
+        <button type="button" className="stat s-wait" onClick={() => onNavigate?.('stock')}>
+          <b>{low}</b> на складе заканчивается
+        </button>
+      )}
+      {onReviewAsks && <ReviewAsksChip count={reviewAsks} onOpen={onReviewAsks} />}
+      {extra}
+      {calm && <span className="stat s-quiet calm">Всё под контролем: заявок и срочных дел нет</span>}
+    </div>
   )
 }

@@ -1,5 +1,5 @@
 import { useQueries, useQuery } from '@tanstack/react-query'
-import { useCallback, useEffect, useRef, useState, type CSSProperties, type MouseEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type MouseEvent, type ReactNode } from 'react'
 import { useTaskSummary } from '../tasks/api'
 import { openSub } from '../lib/sub'
 
@@ -17,6 +17,7 @@ import { DayList } from './DayList'
 import { CancelledList } from './CancelledList'
 import { ChairTimeBands } from './ChairTimeBands'
 import { DaySummary } from './DaySummary'
+import { ListAside } from './ListAside'
 import { freeMinutes } from './free'
 import { DateInput } from '../layout/DateInput'
 import { useFreeDays } from '../lib/freeDays'
@@ -426,6 +427,10 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
   }
   const canSummary = wide && !dayList && !weekMode && !monthMode && doctors.length > 0
   const summary = canSummary && !side && summaryOpen
+  // «Список» одного врача на компьютере (владелец 2026-11-27): строки не во всю ширину (время слева, «✓ отправлено» справа —
+  // глаз терял связь), а до ~900px у меню; справа на широком экране — панель «Сегодня» (ListAside). «Все врачи» — как были
+  const listOne = listMode && dayList?.length === 1
+  const aside = listOne && wide && !side
   // Шапка перемеряется, когда меняется её содержимое (ширину окна, зум и размер текста ловит сам хук)
   useToolbarFit(toolbar, [date, all.length, doctors.length, partial, summary, canSummary, Boolean(side), weekMode, monthMode, bookable.length, Boolean(dayList), Boolean(medical)].join('|'))
   const nowOrNull = date === today ? nowMinutes : null
@@ -489,7 +494,7 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
   }
 
   return (
-    <div className={side ? 'schedule with-panel' : summary ? 'schedule with-summary' : 'schedule'}>
+    <div className={[side ? 'schedule with-panel' : summary ? 'schedule with-summary' : 'schedule', listOne ? 'list-one' : ''].filter(Boolean).join(' ')}>
       <section className="schedule-main">
         {/* Телефон: без заголовка дня — день выбирают в ленте (там же месяц и «📅 другой день») */}
         {(!dayList || listMode) && (
@@ -555,6 +560,21 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
           </header>
         )}
 
+        <ListCols on={listOne} aside={aside && dayList && (
+          <ListAside date={date} today={today} all={all.filter((x) => x.doctorId === dayList[0]!.id)} doctor={{ id: dayList[0]!.id, name: dayList[0]!.fullName ?? '' }}
+            requests={requests} waiting={waiting} toPay={toPay.data?.length ?? 0} low={low}
+            onOpen={(a) => setSide({ kind: 'appointment', id: a.id, fallback: a })} onNavigate={onNavigate} onDate={setDate}
+            extra={<>
+              {tasksChip(false)}
+              <BirthdaysChip rows={shownBirthdays} onOpen={() => setBirthdaysOpen(true)} />
+              {(revenue.data?.totalSom ?? 0) > 0 && (
+                <button type="button" className="stat s-quiet" onClick={() => onNavigate?.('cash')}>
+                  <b>{somText(revenue.data!.totalSom).replace(' сом', '')}</b> сом {date === today ? 'сегодня' : 'за день'}
+                </button>
+              )}
+              {earnings.data && <EarningsChip e={earnings.data} onOpen={openEarnings} />}
+            </>} />
+        )}>
         <SetupHint me={me} />
         {dayList && !listMode ? (
           <>
@@ -586,7 +606,7 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
           <div className="schedule-bar">
             {doctorSwitch}
             {offHint}
-            {!summary && !weekMode && !monthMode && (
+            {!summary && !aside && !weekMode && !monthMode && (
               <div className="today-strip" role="group" aria-label="Требует внимания">
                 {tasksChip(false)}
                 {/* «🔔 Окна» плашкой больше нет (владелец 2026-11-25): окна — в «Пациенты → Лист ожидания» и «Сводке дня» */}
@@ -650,7 +670,11 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
             onNewHere={bookable.length > 0 && !listMode ? newHere : undefined}
             onOpen={(a) => setSide({ kind: 'appointment', id: a.id, fallback: a })} onQuick={openQuick}
             onNew={(doctorId, minutes) => setSide({ kind: 'new', slot: { doctorId, date, minutes } })}
-            windows={inlineWindows} onWindows={() => setWindowsOpen(true)} />
+            windows={inlineWindows} onWindows={() => setWindowsOpen(true)}
+            emptyActions={listMode ? <>
+              {bookable.length > 0 && date >= today && <button type="button" className="btn" onClick={newHere}>＋ Новая запись</button>}
+              <button type="button" className="btn" onClick={() => setDate(addDays(date, 1))}>{date === today ? 'Открыть завтра' : 'Следующий день'} ›</button>
+            </> : undefined} />
         ) : monthMode ? (
           <MonthGrid month={month} today={today} selected={date} data={monthData} compact={narrow}
             doctors={(view === 'all' ? doctors : []).map((d) => ({ id: d.id, name: d.fullName ?? '', color: colorOf(d) }))}
@@ -796,6 +820,7 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
             <PaintSwitch compact />
           </div>
         )}
+        </ListCols>
       </section>
       {summary && (
         <DaySummary date={date} today={today} all={all} requests={requests} waiting={waiting} toPay={toPay.data?.length ?? 0}
@@ -842,6 +867,20 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
       {windowsOpen && <FreeWindowsDialog doctorName={doctorName} onClose={() => setWindowsOpen(false)}
         onBook={(doctorId, day, minutes) => setSide({ kind: 'new', slot: { doctorId, date: day, minutes } })} />}
       {birthdaysOpen && <BirthdaysDialog onClose={() => setBirthdaysOpen(false)} onOpen={onOpenPatient} />}
+    </div>
+  )
+}
+
+/**
+ * «Список» одного врача: список дня слева (до ~900px), панель «Сегодня» справа (aside; нет — список один). Обёртка — только
+ * в этом виде: в сетке «Дня», «Неделе» и «Месяце» разметка прежняя (на детей .schedule-main завязаны стили).
+ */
+function ListCols({ on, aside, children }: { on: boolean; aside: ReactNode; children: ReactNode }) {
+  if (!on) return <>{children}</>
+  return (
+    <div className={aside ? 'list-cols with-aside' : 'list-cols'}>
+      <div className="list-col">{children}</div>
+      {aside}
     </div>
   )
 }

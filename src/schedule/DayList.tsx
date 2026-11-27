@@ -65,7 +65,7 @@ function shortName(name: string): string {
  * Один врач — его день; «Все врачи» — все приёмы вместе, у строки имя врача, свободные окна
  * каждого врача отдельно. У приёма — быстрое напоминание (Telegram или WhatsApp). Завтра — «Готово X из Y».
  */
-export function DayList({ me, doctors, date, onDate, onOpen, onQuick, onNew, onNewHere, selectedId, all, doctorsNote, paintOf, onCalendar, inToolbar, windows = [], onWindows }: {
+export function DayList({ me, doctors, date, onDate, onOpen, onQuick, onNew, onNewHere, selectedId, all, doctorsNote, paintOf, onCalendar, inToolbar, windows = [], onWindows, emptyActions }: {
   me: Me
   doctors: Doctor[]
   date: string
@@ -93,6 +93,8 @@ export function DayList({ me, doctors, date, onDate, onOpen, onQuick, onNew, onN
    */
   windows?: FreeWindow[]
   onWindows?: () => void
+  /** «Список» на компьютере: в пустом дне — «＋ Новая запись» и «Открыть завтра» (владелец 2026-11-27) */
+  emptyActions?: ReactNode
 }) {
   const today = todayIn()
   const many = all ?? doctors.length > 1
@@ -194,7 +196,7 @@ export function DayList({ me, doctors, date, onDate, onOpen, onQuick, onNew, onN
         : failed ? <p className="error">{failed.message}</p>
           : items.length === 0 ? (
             <>
-              <EmptyState title={emptyDayText(date, today)}>{offText}</EmptyState>
+              <EmptyState title={emptyDayText(date, today)} action={emptyActions}>{offText}</EmptyState>
               <CancelledList items={cancelled} others={loaded} onOpen={onOpen} selectedId={selectedId} doctorName={many ? (id) => nameOf.get(id) ?? '' : undefined} />
             </>
           ) : (() => {
@@ -246,7 +248,7 @@ export function DayList({ me, doctors, date, onDate, onOpen, onQuick, onNew, onN
             // Приёмов нет, но есть свободные окна: врачи и окна — сверху (сразу видно, куда записать),
             // Тишка «На сегодня записей нет» — под ними
             const empty = list.length === 0 && (
-              <EmptyState title={emptyDayText(date, today)}>{offText ?? (date >= today ? 'Нажмите на свободное окно выше, чтобы записать.' : null)}</EmptyState>
+              <EmptyState title={emptyDayText(date, today)} action={emptyActions}>{offText ?? (date >= today ? 'Нажмите на свободное окно выше, чтобы записать.' : null)}</EmptyState>
             )
             // «Все врачи» — списки врачей рядом, колонками; две — по половине экрана, больше двух — третья
             // выглядывает краем (peek: видно, что можно листать) и колонки листаются вбок

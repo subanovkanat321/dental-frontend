@@ -201,6 +201,9 @@
   .ui-v2 .month-legend-load span { height: 6px; background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 55%, transparent), var(--accent)); }
   .ui-v2 .month-legend-off span { border: 0; border-radius: 5px; }
 
+  /* Панель «Сегодня» у «Списка» одного врача: блоки — белые карточки без рамки, как строки дня */
+  .ui-v2 .list-aside .ds-block { border: 0; border-radius: var(--v2-r-card); box-shadow: var(--v2-shadow); }
+
   /* Карточки справа и «на весь экран»: тонированный фон, скругление 24, заметная тень */
   .ui-v2 .panel:is(.appt-card, .patient-card) { padding: 18px 18px 20px; border-radius: 24px; box-shadow: var(--v2-shadow-float); }
   .ui-v2 .panel.panel-full:is(.appt-card, .patient-card) { padding: 22px 28px 28px; border-radius: 28px; }
