@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 
 import {
-  api, ApiError, forgetSignup, signupAvailability, signupClinics, signupCode, signupEmailCode, signupEmailResume, signupEmailStatus, signupEnterTelegram,
+  api, ApiError, forgetSignup, signupAvailability, signupClinics, signupCode, signupEmailCode, signupEmailStatus, signupEnterTelegram,
   signupInvitedClinic, signupRegister, signupTelegram, signupTelegramStatus, type SignupClinic, type SignupCodeSent, type SignupEmailSent, type SignupEmailWaiting, type SignupForm,
 } from '../api/client'
 import { PhoneInput } from '../clinic/PhoneInput'
@@ -14,6 +14,7 @@ import { NewPasswordFields } from '../layout/PasswordFields'
 import { Select } from '../layout/Select'
 import { CITIES } from '../lib/clinicSearch'
 import { inAppBrowser } from '../lib/inAppBrowser'
+import { InAppHint } from './InAppHint'
 import { useQrScreen } from '../lib/qrScreen'
 import { useCountdown } from '../lib/otp'
 import { passwordProblem } from '../lib/password'
@@ -48,10 +49,6 @@ type Step =
   | { kind: 'email'; sent: SignupEmailSent }
   /** страницу перезагрузили, cookie шага жива — снова «Код из письма» (формы в памяти уже нет) */
   | { kind: 'emailAgain'; waiting: SignupEmailWaiting }
-  /** «Уже есть код из письма?» — почта и код без cookie шага */
-  | { kind: 'resume' }
-  /** код подошёл — «Придумайте пароль» */
-  | { kind: 'resumed'; waiting: SignupEmailWaiting; code: string }
   | { kind: 'telegram'; link: string }
   | { kind: 'creating'; text: string }
   | { kind: 'next'; clinicName: string }
@@ -83,9 +80,8 @@ type Step =
  * <p>
  * Шаг кода из письма держит HttpOnly-cookie: перезагрузили страницу — сервер говорит, что форма ждёт, и страница снова
  * на шаге кода (спрашиваем, только если с этого устройства недавно отправляли код — метка codeMark, без ПДн). Встроенный
- * браузер Instagram, закрывшись, теряет и cookie: тогда под формой «Уже есть код из письма?» — почта и код → пароль
- * (сервер находит регистрацию по почте и коду и ставит cookie шага заново), а над формой — подсказка, если код недавно
- * отправляли.
+ * браузер Instagram, закрывшись, теряет и cookie — поэтому там над формой InAppHint: «откройте в Chrome / Safari»
+ * (владелец 2026-11-27 отказался от «Уже есть код из письма?»).
  *
  * @param onDone куда после регистрации (по умолчанию — в CRM; тест подставляет свою)
  * @param userAgent только тесты: подставить userAgent встроенного браузера
@@ -106,7 +102,6 @@ export function SignupPage({ onDone = () => window.location.assign('/'), userAge
   const [qrBusy, setQrBusy] = useState(false)
   const [pick, setPick] = useState<Pick>({ kind: 'search' })
   /** С этого устройства недавно отправляли код на почту, а шаг не восстановился — подсказка над формой. */
-  const [codeHint, setCodeHint] = useState(false)
 
   useEffect(() => { document.title = 'Подключить Tish бесплатно' }, [])
 
@@ -174,17 +169,15 @@ export function SignupPage({ onDone = () => window.location.assign('/'), userAge
     return () => { alive = false }
   }, [enter])
 
-  // Недавно отправляли код на почту: может, шаг кода ещё жив (cookie) — тогда снова он, иначе подсказка над формой
+  // Недавно отправляли код на почту: может, шаг кода ещё жив (cookie) — тогда снова он
   useEffect(() => {
     if (!recentCodeSent()) return
     let alive = true
     signupEmailStatus()
       .then((s) => {
-        if (!alive) return
-        if (s.state === 'waiting') setStep((prev) => prev.kind === 'form' ? { kind: 'emailAgain', waiting: s } : prev)
-        else setCodeHint(true)
+        if (alive && s.state === 'waiting') setStep((prev) => prev.kind === 'form' ? { kind: 'emailAgain', waiting: s } : prev)
       })
-      .catch(() => { if (alive) setCodeHint(true) })
+      .catch(() => undefined)
     return () => { alive = false }
   }, [])
 
@@ -292,15 +285,6 @@ export function SignupPage({ onDone = () => window.location.assign('/'), userAge
     setStep({ kind: 'form' })
   }
 
-  /** «Уже есть код из письма?» и назад к форме — без запроса: шаг на сервере не трогаем. */
-  const openResume = () => {
-    setError(null)
-    setStep({ kind: 'resume' })
-  }
-  const toForm = () => {
-    setError(null)
-    setStep({ kind: 'form' })
-  }
   const emailIntro = (masked?: string) => (
     <>Письмо отправлено на <b>{masked}</b>. Откройте почту и нажмите «Подтвердить» — Tish откроется в браузере. Или введите код
       из письма:</>
@@ -325,14 +309,6 @@ export function SignupPage({ onDone = () => window.location.assign('/'), userAge
     body = <CodeStepForm form={noForm} sent={{ secondsLeft: step.waiting.secondsLeft, resendSeconds: 0 }} busy={busy} error={error}
       onBack={back} title="Код из письма" intro={emailIntro(step.waiting.emailMasked)} note={SPAM_HINT}
       onSubmit={(code, password) => void finish(noForm, { method: 'EMAIL', code, password })} />
-  }
-  else if (step.kind === 'resume') {
-    body = <ResumeStep onBack={toForm} onResumed={(waiting, code) => { setError(null); setStep({ kind: 'resumed', waiting, code }) }} />
-  }
-  else if (step.kind === 'resumed') {
-    const resumed = step
-    body = <ResumedPassword waiting={resumed.waiting} busy={busy} error={error} onBack={toForm}
-      onSubmit={(password) => void finish(noForm, { method: 'EMAIL', code: resumed.code, password })} />
   }
   else if (step.kind === 'code' && form) {
     body = <CodeStepForm form={form} sent={step.sent} busy={busy} error={error} onBack={back}
@@ -364,10 +340,7 @@ export function SignupPage({ onDone = () => window.location.assign('/'), userAge
     formBody = (
       <div className="signup-step" hidden={step.kind !== 'form'}>
         <h1>Подключить Tish бесплатно</h1>
-        {w.email && codeHint && (
-          <p className="hint signup-resume-hint" role="note">Отправляли код на почту? — <button type="button" className="link"
-            onClick={openResume}>«Уже есть код из письма»</button></p>
-        )}
+        {inApp && <InAppHint app={inApp.app} os={inApp.os} />}
         {invite.data && (
           <p className="tone-ok signup-invite" role="note">🎁 Вас пригласила клиника «{invite.data.clinicName}»</p>
         )}
@@ -457,7 +430,6 @@ export function SignupPage({ onDone = () => window.location.assign('/'), userAge
               {busy && !w.telegram && !emailMode ? <><Spinner />Проверяем…</> : 'Получить код по SMS'}</button>
           ))}
         </form>}
-        {w.email && <button type="button" className="link signup-alt" onClick={openResume}>Уже есть код из письма?</button>}
         <p className="hint small">Уже в Tish? <a href="/login">Войти</a> · Нужна помощь с подключением? <a href="/join#form">Оставьте заявку</a></p>
       </div>
     )
@@ -524,90 +496,6 @@ function CodeStepForm({ form, sent, busy, error, onBack, onResend, onSubmit, tit
         </div>
       </form>
     </>
-  )
-}
-
-/**
- * «Уже есть код из письма?»: почта и код → «Дальше». Сервер находит регистрацию по ним без cookie шага (её теряет
- * встроенный браузер Instagram). Неверный код и неизвестная почта — один ответ «Код не подошёл или устарел»; верный, но
- * истёкший — «Код устарел — заполните форму ещё раз»; по письму уже создали — «Войти». Почта — без React-состояния
- * (клавиатура во встроенном браузере), обе — только в теле запроса.
- */
-function ResumeStep({ onBack, onResumed }: { onBack: () => void; onResumed: (waiting: SignupEmailWaiting, code: string) => void }) {
-  const formRef = useRef<HTMLFormElement>(null)
-  const [code, setCode] = useState('')
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<ApiError | null>(null)
-  const submit = async () => {
-    const email = String(new FormData(formRef.current!).get('email') ?? '').trim()
-    setError(null)
-    setBusy(true)
-    try {
-      onResumed(await signupEmailResume(email, code), code)
-    } catch (e) {
-      setError(e instanceof ApiError ? e : new ApiError(0, 'Нет связи с сервером'))
-    } finally {
-      setBusy(false)
-    }
-  }
-  const gone = error?.status === 410
-  const other = error && !gone && !Object.keys(error.fieldErrors).length ? error.message : ''
-  return (
-    <div className="signup-step">
-      <h1>Код из письма</h1>
-      <form ref={formRef} className="form narrow invite-form" aria-label="Уже есть код из письма"
-        onSubmit={(ev) => { ev.preventDefault(); void submit() }}>
-        <p className="hint">Окно закрылось, а код остался в почте? Впишите почту, на которую пришло письмо, и код из него.</p>
-        <label className="field"><span>Почта</span>
-          <input name="email" type="email" inputMode="email" maxLength={254} autoComplete="email" placeholder="name@gmail.com" /></label>
-        {error?.fieldErrors.email && <p className="error">{error.fieldErrors.email}</p>}
-        <CodeInput value={code} onChange={setCode} />
-        {error?.fieldErrors.code && <p className="error" role="alert">{error.fieldErrors.code}</p>}
-        {gone && (
-          <p className="error" role="alert">{error.message}{' '}
-            {error.code === 'already-registered' ? <a href="/login">Войти в Tish</a>
-              : <button type="button" className="link" onClick={onBack}>Заполнить форму</button>}</p>
-        )}
-        {other && <p className="error" role="alert">{other}</p>}
-        <button type="submit" className="btn primary" disabled={busy || code.length !== 6}>
-          {busy ? <><Spinner />Проверяем…</> : 'Дальше'}</button>
-        <p className="hint small">{SPAM_HINT}</p>
-        <button type="button" className="link" onClick={onBack}>Заполнить форму</button>
-      </form>
-    </div>
-  )
-}
-
-/** Код подошёл: что создадим (название, номер маской) и «Придумайте пароль» → «Создать клинику». */
-function ResumedPassword({ waiting, busy, error, onBack, onSubmit }: {
-  waiting: SignupEmailWaiting; busy: boolean; error: ApiError | null; onBack: () => void; onSubmit: (password: string) => void
-}) {
-  const [password, setPassword] = useState('')
-  const [repeat, setRepeat] = useState('')
-  const [check, setCheck] = useState('')
-  const passwordError = check || error?.fieldErrors.password
-  const codeError = error?.fieldErrors.code
-  const other = error && !codeError && !error.fieldErrors.password ? error.message : ''
-  return (
-    <div className="signup-step">
-      <h1>Придумайте пароль</h1>
-      <form className="form narrow invite-form" aria-label="Пароль для входа" onSubmit={(ev) => {
-        ev.preventDefault()
-        const problem = passwordProblem(password, repeat, '')
-        setCheck(problem)
-        if (!problem) onSubmit(password)
-      }}>
-        <p className="hint">Код подошёл. {waiting.clinicName}, телефон {waiting.phoneMasked}. С этим номером и паролем входите в Tish
-          на любом устройстве.</p>
-        <NewPasswordFields password={password} repeat={repeat} phone="" label="Придумайте пароль для входа"
-          onPassword={(v) => { setPassword(v); setCheck('') }} onRepeat={(v) => { setRepeat(v); setCheck('') }} />
-        {passwordError && <p className="error">{passwordError}</p>}
-        {codeError && <p className="error" role="alert">{codeError}{' '}
-          <button type="button" className="link" onClick={onBack}>Заполнить форму</button></p>}
-        {other && <p className="error" role="alert">{other}</p>}
-        <button type="submit" className="btn primary" disabled={busy}>{busy ? <><Spinner />Создаём…</> : 'Создать клинику'}</button>
-      </form>
-    </div>
   )
 }
 

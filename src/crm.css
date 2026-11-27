@@ -3112,6 +3112,9 @@ p.expense-owner { display: block; }
 /* /start во встроенном браузере Instagram и т. п.: SMS и почта — мелкой ссылкой под Telegram */
 .signup-page .signup-form .link.signup-alt { width: auto; justify-self: center; font-size: .9rem; }
 .signup-page .signup-tg-hint { margin: -4px 0 0; text-align: center; }
+.signup-page .signup-inapp { display: grid; gap: 10px; margin: 0 0 14px; padding: 14px 16px; border-radius: 14px; }
+.signup-page .signup-inapp p { margin: 0; }
+.signup-page .signup-inapp .btn { justify-self: stretch; }
 /* Шаг 1 «Найдите свою клинику»: поле поиска, список клиник из 2ГИС карточками-кнопками, «заполнить вручную» */
 .signup-page .signup-search { display: grid; gap: 10px; width: 100%; text-align: left; }
 .signup-page .signup-search h2 { margin: 4px 0 0; font-size: 1.1rem; }
