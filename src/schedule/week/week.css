@@ -20,8 +20,8 @@
 
 /* Перетаскивание: рука у приёма, который можно перенести; исходный блок полупрозрачный, тень — на новом месте */
 .appt.can-drag { cursor: grab; touch-action: none; }
-.week-grid.dragging, .week-grid.dragging .grid-col, .week-grid.dragging .appt { cursor: grabbing; }
-.week-grid.dragging .grid-free { pointer-events: none; }
+.grid.dragging, .grid.dragging .grid-col, .grid.dragging .appt { cursor: grabbing; }
+.grid.dragging .grid-free, .grid.dragging .appt-more { pointer-events: none; }
 .appt.moving { opacity: .45; }
 .week-ghost {
   position: absolute; left: 3px; right: 3px; z-index: 5; display: flex; align-items: flex-start; padding: 3px 6px;
@@ -45,3 +45,10 @@
 
 .week-undo { margin-left: 10px; font-weight: 600; white-space: nowrap; }
 .week-grid .appt { padding-left: 9px; }
+
+/* «День»: ответ после перетаскивания — поверх низа сетки, чтобы сетка не прыгала вниз (её высота — до низа окна) */
+.day-drag-notice {
+  position: absolute; left: 50%; bottom: 12px; z-index: 30; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 4px; max-width: min(720px, calc(100% - 24px)); box-shadow: var(--shadow-md, 0 4px 16px rgb(15 42 48 / .14));
+}
+.day-drag-close { margin-left: 8px; color: inherit; opacity: .7; }

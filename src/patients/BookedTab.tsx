@@ -18,6 +18,8 @@ import { Loading } from '../layout/Loading'
 import { HeadTools } from '../layout/PageHead'
 import { CalmRow } from './CalmList'
 import { serviceLabel } from '../schedule/lineLabel'
+import { ask } from '../lib/confirm'
+import { BUCKETS, bucketCounts, bucketOf, runLimited, type Bucket } from './reminderBuckets'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
@@ -75,8 +77,14 @@ export function BookedTab({ me, initial, onOpenAppointment }: {
     ? a.status === 'SCHEDULED' && Boolean(a.endAt) && Date.parse(a.endAt!) < now
     : (a.status === 'SCHEDULED' || a.status === 'REQUESTED') && (!a.endAt || Date.parse(a.endAt) >= now))
     && (onlyUnmarked || !onlyUnconfirmed || (a.status === 'REQUESTED' || a.reply !== 'CONFIRMED'))
-  const all = lists.flatMap((q) => q.data ?? []).filter(keep)
+  const kept = lists.flatMap((q) => q.data ?? []).filter(keep)
     .sort((x, y) => Date.parse(x.startAt) - Date.parse(y.startAt))
+  // Обзвон (только «Сегодня» и «Завтра»): счётчики «Напомнили · Не напомнили · Нет контакта · Подтвердили» — они же фильтры
+  const [bucket, setBucket] = useState<Bucket | null>(null)
+  const calling = (period === 'today' || period === 'tomorrow') && !onlyUnmarked
+  const shownBucket = calling ? bucket : null
+  const counts = bucketCounts(kept)
+  const all = shownBucket ? kept.filter((a) => bucketOf(a) === shownBucket) : kept
   // Сколько записей у врача — под именем в выборе врача: только из уже загруженного (при «Все врачи» — у всех), без новых запросов
   const pending = lists.some((q) => q.isPending)
   const client = useQueryClient()
@@ -100,7 +108,7 @@ export function BookedTab({ me, initial, onOpenAppointment }: {
         {doctors.length > 1 && (
           <DoctorFilter label="Врач" value={doctorId} onChange={setDoctorId}
             options={doctorOptions(doctors, { me, sub: (d) => countOf(d.id) })}
-            all={{ sub: doctorId == null && !pending ? countText(all.length) : undefined }} />
+            all={{ sub: doctorId == null && !pending ? countText(kept.length) : undefined }} />
         )}
         {!onlyUnmarked && (
           <label className="check">
@@ -114,8 +122,12 @@ export function BookedTab({ me, initial, onOpenAppointment }: {
         </label>
       </HeadTools>
       {failed && <p className="error">{failed.message}</p>}
+      {calling && !pending && (counts.confirmed + counts.reminded + counts.todo + counts.nowhere) > 0 && (
+        <RemindSummary counts={counts} value={shownBucket} onChange={setBucket}
+          todo={kept.filter((a) => bucketOf(a) === 'todo' && canEditDoctor(me, a.doctorId))} />
+      )}
       {pending ? <Loading /> : !all.length ? (
-        <EmptyState fill title={onlyUnmarked ? 'Все прошедшие приёмы отмечены' : onlyUnconfirmed ? 'Все записанные подтвердили приход' : 'Записей на этот период нет'} />
+        <EmptyState fill title={shownBucket ? 'Таких записей нет' : onlyUnmarked ? 'Все прошедшие приёмы отмечены' : onlyUnconfirmed ? 'Все записанные подтвердили приход' : 'Записей на этот период нет'} />
       ) : (
         <div className="calm-stack">
           {[...byDay].map(([day, list]) => (
@@ -174,6 +186,54 @@ function BookedRow({ a, doctor, canEdit, past, onOpen }: {
       )}>
       {opened.error && <p className="error" role="alert">{opened.error.message}</p>}
     </CalmRow>
+  )
+}
+
+/**
+ * Строка обзвона над списком: «Напомнили 5 · Не напомнили 3 · Нет контакта 1 · Подтвердили 4». Каждый счётчик —
+ * фильтр (нажали — только эти, ещё раз — все). «Отметить напомненными (N)» — у «Не напомнили»: регистратура
+ * обзвонила с личного телефона, мимо Tish, — та же отметка, что ставит кнопка WhatsApp (reminder-opened), разом
+ * всем, по 3 запроса одновременно. Снять с одного — «Не отправилось» в карточке приёма.
+ */
+function RemindSummary({ counts, value, onChange, todo }: {
+  counts: Record<Bucket, number>
+  value: Bucket | null
+  onChange: (b: Bucket | null) => void
+  /** «Не напомнили», чьё расписание мне можно менять: их и отмечаем */
+  todo: Appointment[]
+}) {
+  const client = useQueryClient()
+  const [result, setResult] = useState<string | null>(null)
+  const mark = useMutation<number, ApiError, Appointment[]>({
+    mutationFn: (list) => runLimited(list, 3, (a) => unwrap(api.POST('/api/appointments/{id}/reminder-opened', { params: { path: { id: a.id } } }))),
+    onSuccess: (failedCount, list) => {
+      setResult(failedCount ? `Отмечено: ${list.length - failedCount} из ${list.length}. Остальные не отметились — попробуйте ещё раз` : `Отмечено напомненными: ${list.length}`)
+      void client.invalidateQueries({ queryKey: ['appointments'] })
+    },
+  })
+  const run = () => {
+    const n = todo.length
+    void ask(`Отметить ${n} ${plural(n, 'запись', 'записи', 'записей')} как «напомнили»? Сообщения Tish не отправит — только отметка, что вы уже напомнили сами (позвонили или написали с телефона).`,
+      { ok: `Отметить (${n})` }).then((ok) => { if (ok) { setResult(null); mark.mutate(todo) } })
+  }
+  return (
+    <div className="remind-summary" role="group" aria-label="Обзвон">
+      <div className="remind-chips">
+        {BUCKETS.filter(([b]) => counts[b] > 0 || value === b).map(([b, title]) => (
+          <button key={b} type="button" className={`chip remind-chip r-${b}`} aria-pressed={value === b}
+            onClick={() => { setResult(null); onChange(value === b ? null : b) }}>
+            {title} <b className="num">{counts[b]}</b>
+          </button>
+        ))}
+      </div>
+      {value === 'todo' && todo.length > 0 && (
+        <button type="button" className="btn" disabled={mark.isPending} onClick={run}>
+          {mark.isPending ? 'Отмечаем…' : `Отметить напомненными (${todo.length})`}
+        </button>
+      )}
+      {result && <p className="hint remind-result" role="status">{result}</p>}
+      {mark.error && <p className="error" role="alert">{mark.error.message}</p>}
+    </div>
   )
 }
 

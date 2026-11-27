@@ -10,6 +10,7 @@ import { blockHeight, PAD, PX, SHORT } from './gridScale'
 import { isShaky } from './paint'
 import { statusOf } from './status'
 import type { useApptHover } from './useApptHover'
+import type { DragBind } from './useDayDrag'
 import { apptSpan, fromYesterday, untilTomorrow } from './workSpans'
 import { serviceLabel } from './lineLabel'
 
@@ -21,7 +22,7 @@ type Appointment = Schemas['AppointmentView']
  * сохраняет тот же объект, если приём не изменился), выбор или раскладка. Все props — значения или
  * стабильные функции (onOpen — useCallback, hover — из хранилища наведения).
  */
-export const DayAppt = memo(function DayAppt({ a, date, from, limit, room = 0, active, money, chairTime, hover, onOpen, onQuick, paint }: {
+export const DayAppt = memo(function DayAppt({ a, date, from, limit, room = 0, active, money, chairTime, hover, onOpen, onQuick, paint, drag, moving = false }: {
   a: Appointment
   date: string
   /** Минута, с которой начинается сетка. */
@@ -40,8 +41,14 @@ export const DayAppt = memo(function DayAppt({ a, date, from, limit, room = 0, a
   onQuick?: (a: Appointment, at: { x: number; y: number }) => void
   /** «Красить по врачу / услуге» (schedule/paint.ts): цвет заливки вместо цвета статуса; статус остаётся словом */
   paint?: string
+  /** Можно перетащить мышью (useDayDrag.bind — стабильная функция); нет — приём не тащится */
+  drag?: (a: Appointment) => DragBind
+  /** Его сейчас тащат или сервер ещё решает — блок полупрозрачный */
+  moving?: boolean
 }) {
   const s = statusOf(a)
+  const h0 = hover(a)
+  const d = drag?.(a)
   // Через полночь: в своём дне — целиком (сетка продлена после 24:00) или, если сетка и так на сутки
   // (ночная смена), до 24:00 с подписью «→ до 00:45»; на следующий день — с 00:00 и пометкой «со вчера»
   const [startMin, endMin] = apptSpan(a, date, limit)
@@ -54,8 +61,10 @@ export const DayAppt = memo(function DayAppt({ a, date, from, limit, room = 0, a
   const short = h < SHORT
   return (
     <>
-    <button type="button" className={`appt s-${s.kind}${short ? ' short' : ''}${active ? ' active' : ''}${carried ? ' carried' : ''}${continues ? ' continues' : ''}${isShaky(a) ? ' shaky' : ''}${paint ? ' painted' : ''}`}
-      style={paint ? { top, height: h, '--paint': paint } as CSSProperties : { top, height: h }} {...hover(a)}
+    <button type="button" className={`appt s-${s.kind}${short ? ' short' : ''}${active ? ' active' : ''}${carried ? ' carried' : ''}${continues ? ' continues' : ''}${isShaky(a) ? ' shaky' : ''}${paint ? ' painted' : ''}${d ? ' can-drag' : ''}${moving ? ' moving' : ''}`}
+      style={paint ? { top, height: h, '--paint': paint } as CSSProperties : { top, height: h }} {...d} {...h0}
+      onPointerDown={(e) => { h0.onPointerDown(); d?.onPointerDown(e) }}
+      title={d ? 'Перетащите мышью на другое время или к другому врачу' : undefined}
       onClick={() => onOpen(a.id)}
       onContextMenu={onQuick ? (e) => { e.preventDefault(); e.stopPropagation(); onQuick(a, { x: e.clientX, y: e.clientY }) } : undefined}
       aria-label={`${carried ? 'со вчера ' : ''}${timeOf(a.startAt)}–${timeOf(a.endAt)}, ${a.patient.fullName}: ${s.label}`}>

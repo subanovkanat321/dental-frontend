@@ -41,7 +41,9 @@ import { PAD, PX, roomOf, useFitToWindow, useNowMinutes } from './gridScale'
 import { readMode, saveMode, type Mode } from './viewMode'
 import { useToolbarFit } from './useToolbarFit'
 import { useWeekAppointments } from './week/useWeek'
-import { WeekGrid } from './week/WeekGrid'
+import { GhostBlock, WeekGrid } from './week/WeekGrid'
+import { canDrag } from './week/weekModel'
+import { useDayDrag } from './useDayDrag'
 import { useEarnings } from '../earnings/earnings'
 import { EarningsChip } from '../earnings/EarningsWidgets'
 import { canEditDoctor, isAssistant, myDoctorDefault, seesMoneyOf, seesToPay, seesAllMoney } from '../lib/roles'
@@ -330,6 +332,9 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
     const target = nowTop ?? firstTop
     if (target != null) grid.current.scrollTop = Math.max(0, target - 80)
   }, [gridShown, ready, date, nowTop, firstTop])
+  // Перетаскивание приёма в сетке «Дня» мышью: другое время у того же врача или (в «Все врачи») к коллеге
+  const gridColumns = useRef<(HTMLElement | null)[]>([])
+  const dayDrag = useDayDrag({ me, date, doctors: shown, from, to, columns: gridColumns, scroller: grid })
 
   // Полоса «Сегодня»: что требует действия — одним рядом (DESIGN.md → Components)
   const seesMoney = seesAllMoney(me) || me.doctorId != null
@@ -449,7 +454,9 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
   const hover = useApptHover(me, (id) => doctors.find((d) => d.id === id)?.fullName ?? '')
   const hide = hover.hide
   // Нажали на блок приёма — карточка справа; стабильная функция, чтобы DayAppt (memo) не перерисовывался
-  const openAppt = useCallback((id: number) => setSide({ kind: 'appointment', id }), [])
+  // Конец перетаскивания — тоже click по блоку: карточку тогда не открываем
+  const consumeDrag = dayDrag.consume
+  const openAppt = useCallback((id: number) => { if (!consumeDrag()) setSide({ kind: 'appointment', id }) }, [consumeDrag])
   // Меню быстрых действий на записи: «⋯» или правая кнопка в сетке (у точки), долгое нажатие в списке дня (лист снизу)
   const [quick, setQuick] = useState<{ a: Appointment; at: { x: number; y: number } | null } | null>(null)
   const openQuick = useCallback((a: Appointment, at: { x: number; y: number } | null) => { hide(); setQuick({ a, at }) }, [hide])
@@ -691,7 +698,8 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
         ) : (
           <div className="grid-wrap">
             {/* multi — несколько врачей колонками: полоска слева у записи — цвет врача (статус — заливкой и словом) */}
-            <div ref={grid} className={shown.length > 1 ? 'grid multi' : 'grid'} style={{ gridTemplateColumns: `56px repeat(${shown.length}, minmax(140px, 1fr))`, '--cols': shown.length } as CSSProperties}>
+            {dayDrag.notice}
+            <div ref={grid} className={`${shown.length > 1 ? 'grid multi' : 'grid'}${dayDrag.ghost ? ' dragging' : ''}`} style={{ gridTemplateColumns: `56px repeat(${shown.length}, minmax(140px, 1fr))`, '--cols': shown.length } as CSSProperties}>
               <div className="grid-corner" />
               {shown.map((d) => {
                 // Свой цвет врача — полоса над колонкой и слева на карточках; часы работы и кресло — под именем
@@ -727,7 +735,7 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
                 ))}
                 {nowTop != null && <span className="now-label num" style={{ top: nowTop }}>{timeOf(new Date().toISOString())}</span>}
               </div>
-              {shown.map((d) => {
+              {shown.map((d, column) => {
                 const q = days[doctors.indexOf(d)]
                 const sl = slots[doctors.indexOf(d)]?.data
                 const y = (minutes: number) => PAD + (Math.min(Math.max(minutes, from), to) - from) * PX
@@ -736,7 +744,7 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
                 // До следующего приёма: короткий приём — карточкой на 30 минут, но не поверх следующего
                 const room = roomOf(live.map((a) => ({ id: a.id, start: apptSpan(a, date, limit)[0] })), to)
                 return (
-                  <div key={d.id} className="grid-col" style={{ height, '--doc': colorOf(d) } as CSSProperties} role="group" aria-label={d.fullName}
+                  <div key={d.id} ref={(el) => { gridColumns.current[column] = el }} className="grid-col" style={{ height, '--doc': colorOf(d) } as CSSProperties} role="group" aria-label={d.fullName}
                     title={canEditDoctor(me, d.id) ? 'Нажмите на свободное время — новая запись' : 'Расписание коллеги — только просмотр'} onClick={pick(d.id)}>
                     {hours.map((m) => <div key={m} className="grid-hour" style={{ top: PAD + (m - from) * PX }} />)}
                     {/* Сетка продлена после полуночи: черта «полночь» с датой следующего дня (подпись — справа в последней колонке: слева обычно приёмы) */}
@@ -796,13 +804,15 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
                     {q?.error && <div className="error grid-loading">{q.error.message}</div>}
                     {live.map((a) => (
                       <DayAppt key={a.id} a={a} date={date} from={from} limit={limit} room={room.get(a.id)} active={selected?.id === a.id} money={seesMoneyOf(me, a.doctorId)}
-                        chairTime={sl?.chairTime} hover={hover.bind} onOpen={openAppt} onQuick={openQuick} paint={paintOf(a)} />
+                        chairTime={sl?.chairTime} hover={hover.bind} onOpen={openAppt} onQuick={openQuick} paint={paintOf(a)}
+                        drag={canDrag(a, me) && !fromYesterday(a, date) ? dayDrag.bind : undefined} moving={dayDrag.movingId === a.id} />
                     ))}
+                    {dayDrag.ghost?.day === column && <GhostBlock ghost={dayDrag.ghost} y={y} />}
                   </div>
                 )
               })}
             </div>
-            {hover.card}
+            {!dayDrag.ghost && hover.card}
             {/* Ни одного приёма в дне — Тишка «водяным знаком» поверх видимой части сетки (вне прокрутки); нажатия проходят к свободным окнам */}
             {/* Одна колонка: при нескольких врачах надпись ложилась поверх чужих колонок и полос «время коллеги» */}
             {shown.length === 1 && shown.every((d) => days[doctors.indexOf(d)]?.isSuccess)

@@ -158,3 +158,73 @@ test('«WhatsApp» в строке неподтверждённого: гото�
   await waitForSlow(() => expect(calls).toEqual(['opened:1']))
   vi.restoreAllMocks()
 })
+
+test('«Завтра»: обзвон — счётчики «Напомнили · Не напомнили · Нет контакта · Подтвердили», каждый — фильтр', async () => {
+  const tomorrow = addDays(todayIn(), 1)
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/appointments/range', ({ request }) => HttpResponse.json(new URL(request.url).searchParams.get('doctorId') === '1' ? [
+      later(1, 1, 1, '09:00', 'Подтвердил А.', { reply: 'CONFIRMED', reminderOpenedAt: `${tomorrow}T00:00:00Z` }),
+      later(2, 1, 1, '10:00', 'Напомнили Б.', { reminderOpenedAt: `${tomorrow}T00:00:00Z` }),
+      later(3, 1, 1, '11:00', 'Перенести В.', { reply: 'RESCHEDULE' }),
+      later(4, 1, 1, '12:00', 'Ботом Г.', { soonRemindedAt: `${tomorrow}T00:00:00Z` }),
+      later(5, 1, 1, '13:00', 'Ждём Д.'),
+      later(6, 1, 1, '14:00', 'Без номера Е.', { patient: { id: 6, fullName: 'Без номера Е.', telegram: false } }),
+      later(7, 1, 1, '15:00', 'Заявка Ж.', { status: 'REQUESTED' }),
+    ] : [])),
+  )
+  window.location.hash = '/patients'
+  renderApp()
+  await userEvent.click(await findSub('Записаны'))
+  const list = await screen.findByRole('region', { name: 'Записанные пациенты' })
+  // «Неделя» — счётчиков нет: они для обзвона на сегодня и завтра
+  expect(await within(list).findByText('Ждём Д.')).toBeInTheDocument()
+  expect(within(list).queryByRole('group', { name: 'Обзвон' })).toBeNull()
+  await userEvent.click(screen.getByRole('button', { name: 'Завтра' }))
+  const summary = await within(list).findByRole('group', { name: 'Обзвон' })
+  expect(within(summary).getAllByRole('button').map((b) => b.textContent))
+    .toEqual(['Напомнили 3', 'Не напомнили 1', 'Нет контакта 1', 'Подтвердили 1'])
+
+  await userEvent.click(within(summary).getByRole('button', { name: 'Напомнили 3' }))
+  const names = () => within(list).getAllByRole('listitem').map((li) => within(li).getAllByRole('button')[0]!.textContent)
+  expect(names()).toEqual(['Напомнили Б.', 'Перенести В.', 'Ботом Г.'])
+  expect(within(summary).getByRole('button', { name: 'Напомнили 3' })).toHaveAttribute('aria-pressed', 'true')
+  await userEvent.click(within(summary).getByRole('button', { name: 'Нет контакта 1' }))
+  expect(names()).toEqual(['Без номера Е.'])
+  // Ещё раз — все, и заявка тоже
+  await userEvent.click(within(summary).getByRole('button', { name: 'Нет контакта 1' }))
+  expect(names()).toHaveLength(7)
+})
+
+test('«Не напомнили» → «Отметить напомненными (N)»: вопрос, отметка reminder-opened каждому, без отправки сообщений', async () => {
+  const marked: string[] = []
+  let sent = false
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/appointments/range', ({ request }) => HttpResponse.json(new URL(request.url).searchParams.get('doctorId') === '1' ? [
+      later(2, 1, 1, '10:00', 'Ждём Б.', { reminderOpenedAt: marked.includes('2') ? new Date().toISOString() : undefined }),
+      later(3, 1, 1, '11:00', 'Ждём В.', { reminderOpenedAt: marked.includes('3') ? new Date().toISOString() : undefined }),
+      later(4, 1, 1, '12:00', 'Пришёл Г.', { reply: 'CONFIRMED' }),
+    ] : [])),
+    http.post('*/api/appointments/:id/reminder-opened', ({ params }) => { marked.push(String(params.id)); return new HttpResponse(null, { status: 204 }) }),
+    http.post('*/api/appointments/:id/remind-telegram', () => { sent = true; return HttpResponse.json({}) }),
+    http.post('*/api/appointments/:id/remind-whatsapp', () => { sent = true; return HttpResponse.json({}) }),
+  )
+  window.location.hash = '/patients'
+  renderApp()
+  await userEvent.click(await findSub('Записаны'))
+  await userEvent.click(await screen.findByRole('button', { name: 'Завтра' }))
+  const summary = await screen.findByRole('group', { name: 'Обзвон' })
+  // Кнопка — только в фильтре «Не напомнили»
+  expect(within(summary).queryByRole('button', { name: /Отметить напомненными/ })).toBeNull()
+  await userEvent.click(within(summary).getByRole('button', { name: 'Не напомнили 2' }))
+  await userEvent.click(within(summary).getByRole('button', { name: 'Отметить напомненными (2)' }))
+  const question = await screen.findByRole('alertdialog')
+  expect(question).toHaveTextContent('Отметить 2 записи как «напомнили»? Сообщения Tish не отправит')
+  await userEvent.click(within(question).getByRole('button', { name: 'Отметить (2)' }))
+  expect(await within(summary).findByRole('status')).toHaveTextContent('Отмечено напомненными: 2')
+  expect(marked.sort()).toEqual(['2', '3'])
+  expect(sent).toBe(false)
+  // Перечитали: оба — в «Напомнили»
+  await waitForSlow(() => expect(within(summary).getByRole('button', { name: 'Напомнили 2' })).toBeInTheDocument())
+})
