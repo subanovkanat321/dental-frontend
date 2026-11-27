@@ -25,9 +25,9 @@ function serve(b: Schemas['ComebacksBoard']) {
 
 const board: Schemas['ComebacksBoard'] = {
   patients: [
-    { patientId: 2, fullName: 'Айгуль Т.', phone: '996700333444', telegram: true, reason: 'PLAN', planSom: 18000, invites: 0, urgent: 0,
+    { patientId: 2, fullName: 'Айгуль Т.', phone: '996700333444', telegram: true, reason: 'PLAN', planSom: 18000, invites: 0, urgent: 0, invitedAuto: false,
       plan: ['зуб 36 — Коронка', 'Чистка'], lastVisit: '2026-10-10T04:00:00Z' },
-    { patientId: 3, fullName: 'Бакыт М.', phone: '996555111222', telegram: false, reason: 'NO_SHOW', planSom: 0, plan: [], invites: 0, urgent: 0 },
+    { patientId: 3, fullName: 'Бакыт М.', phone: '996555111222', telegram: false, reason: 'NO_SHOW', planSom: 0, plan: [], invites: 0, urgent: 0, invitedAuto: false },
   ],
   planSom: 18000, planPatients: 1, noShows: 1, recalls: 0, total: 0, sent: 0, agreed: 0, cancelled: 0
 }
@@ -94,7 +94,7 @@ test('«Позвать снова»: деньги на столе, «Tish вер
 
 test('«Позвать снова»: «пора на осмотр» — последний визит, услуга, с какого дня пора; нет сроков у услуг — подсказка', async () => {
   const recallBoard: Schemas['ComebacksBoard'] = {
-    patients: [{ patientId: 4, fullName: 'Нурлан К.', phone: '996555000283', telegram: false, reason: 'RECALL', planSom: 0, plan: [], invites: 0, urgent: 0,
+    patients: [{ patientId: 4, fullName: 'Нурлан К.', phone: '996555000283', telegram: false, reason: 'RECALL', planSom: 0, plan: [], invites: 0, urgent: 0, invitedAuto: false,
       lastVisit: '2026-04-03T04:00:00Z', recallMonths: 6, recallService: 'Профессиональная чистка', recallDueOn: '2026-10-03' }],
     planSom: 0, planPatients: 0, noShows: 0, recalls: 1, total: 0, sent: 0, agreed: 0, cancelled: 0
   }
@@ -155,7 +155,7 @@ test('«Позвать снова»: по 50 за раз — «Показать 
   // 60 вымышленных пациентов «пора на осмотр»
   const many: Schemas['ComebacksBoard'] = {
     patients: Array.from({ length: 60 }, (_, i) => ({ patientId: 100 + i, fullName: `Пациент ${i + 1}`, phone: '996555000000',
-      telegram: false, reason: 'RECALL' as const, planSom: 0, plan: [], invites: 0, urgent: 0 })),
+      telegram: false, reason: 'RECALL' as const, planSom: 0, plan: [], invites: 0, urgent: 0, invitedAuto: false })),
     planSom: 0, planPatients: 0, noShows: 0, recalls: 60, total: 0, sent: 0, agreed: 0, cancelled: 0
   }
   server.use(
@@ -177,7 +177,7 @@ test('«Позвать снова»: по 50 за раз — «Показать 
 function cancelledBoard(): Schemas['ComebacksBoard'] {
   const day = 86_400_000
   return {
-    patients: [{ patientId: 5, fullName: 'Динара Ж.', phone: '996555000295', telegram: false, reason: 'CANCELLED', planSom: 0, plan: [], invites: 0, urgent: 0,
+    patients: [{ patientId: 5, fullName: 'Динара Ж.', phone: '996555000295', telegram: false, reason: 'CANCELLED', planSom: 0, plan: [], invites: 0, urgent: 0, invitedAuto: false,
       doctorId: 2, cancelled: { at: new Date(Date.now() - 3 * day).toISOString(), source: 'PATIENT', serviceId: 9, service: 'Чистка',
         doctorId: 2, doctor: 'Дастан Т.', startAt: '2026-11-08T05:00:00Z', minutes: 60 } }],
     planSom: 0, planPatients: 0, noShows: 0, recalls: 0, cancelled: 1, total: 0, sent: 0, agreed: 0
@@ -269,6 +269,25 @@ test('«Отменили»: «Записать» — «Новая запись»
   expect(form).toHaveTextContent('Динара Ж.')
   expect(chosenDoctor(form)).toBe('Дастан Т.')
   await waitFor(() => expect(servicesChosen(form)).toHaveTextContent('Чистка'))
+})
+
+test('«Позвать снова»: последнее приглашение отправил сам Tish — «позвали автоматически 3 дня назад»', async () => {
+  const day = 86_400_000
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/patients/recent', () => HttpResponse.json([])),
+    http.get('*/api/comebacks', serve({ ...board, patients: [
+      { ...board.patients![0]!, invitedAt: new Date(Date.now() - 3 * day).toISOString(), invites: 1, invitedAuto: true },
+      { ...board.patients![1]!, invitedAt: new Date(Date.now() - 2 * day).toISOString(), invites: 1 },
+    ] })),
+    http.get('*/api/comebacks/result', () => HttpResponse.json({ invited: 0, returned: 0, returnedPlanSom: 0, paidSom: 0 })),
+  )
+  renderApp()
+  await userEvent.click(await findSub('Позвать снова'))
+  const items = within(await screen.findByRole('list', { name: 'Кого вернуть' })).getAllByRole('listitem')
+  expect(items[0]).toHaveTextContent('позвали автоматически 3 дня назад')
+  expect(items[1]).toHaveTextContent('звали 2 дня назад')
+  expect(items[1]).not.toHaveTextContent('автоматически')
 })
 
 test('«Позвать снова»: «звали 3 дня назад · всего 2 раза»; позвать снова в течение недели — сначала вопрос', async () => {

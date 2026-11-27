@@ -1764,6 +1764,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/clinic/comeback-auto": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["view_2"];
+        put: operations["update_25"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/clinic/bot-ai": {
         parameters: {
             query?: never;
@@ -1788,7 +1804,7 @@ export interface paths {
             cookie?: never;
         };
         get: operations["settings_5"];
-        put: operations["update_25"];
+        put: operations["update_26"];
         post?: never;
         delete?: never;
         options?: never;
@@ -1884,7 +1900,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_26"];
+        put: operations["update_27"];
         post?: never;
         delete?: never;
         options?: never;
@@ -1948,7 +1964,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_27"];
+        put: operations["update_28"];
         post?: never;
         delete: operations["remove_3"];
         options?: never;
@@ -2397,7 +2413,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["view_2"];
+        post: operations["view_3"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4123,7 +4139,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["view_3"];
+        get: operations["view_4"];
         put?: never;
         post: operations["deposit"];
         delete?: never;
@@ -6059,7 +6075,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["view_4"];
+        get: operations["view_5"];
         put?: never;
         post: operations["report_1"];
         delete?: never;
@@ -6827,7 +6843,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["view_5"];
+        get: operations["view_6"];
         put?: never;
         post?: never;
         delete?: never;
@@ -8315,7 +8331,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["view_6"];
+        get: operations["view_7"];
         put?: never;
         post?: never;
         delete?: never;
@@ -11368,6 +11384,33 @@ export interface components {
             variables?: string[];
             defaultTitle?: string;
             defaultBody?: string;
+        };
+        AutoComebacksSettings: {
+            enabled: boolean;
+            plan: boolean;
+            recall: boolean;
+            noShow: boolean;
+            cancelled: boolean;
+            /** Format: int32 */
+            sendHour: number;
+            /** Format: int32 */
+            dailyLimit: number;
+        };
+        AutoComebacksRun: {
+            /** Format: date */
+            day: string;
+            /** Format: int32 */
+            sent: number;
+            /** Format: int32 */
+            failed: number;
+            /** Format: int32 */
+            noTelegram: number;
+            /** Format: date-time */
+            finishedAt?: string;
+        };
+        AutoComebacksView: {
+            settings: components["schemas"]["AutoComebacksSettings"];
+            lastRun?: components["schemas"]["AutoComebacksRun"];
         };
         BirthdaysSettings: {
             autoGreet: boolean;
@@ -15385,6 +15428,7 @@ export interface components {
             cancelled?: components["schemas"]["ComebacksCancelled"];
             /** Format: int32 */
             urgent: number;
+            invitedAuto: boolean;
         };
         ComebacksResult: {
             /** Format: int32 */
@@ -15842,6 +15886,16 @@ export interface components {
             /** Format: int32 */
             loadPercent?: number;
         };
+        RecallResultsReturned: {
+            /** Format: int32 */
+            patients: number;
+            /** Format: int64 */
+            revenueSom: number;
+            /** Format: int32 */
+            invited: number;
+            /** Format: int32 */
+            autoInvited: number;
+        };
         TishReportControllerChannelRow: {
             /** @enum {string} */
             channel: "BOT" | "MINI_APP" | "SITE" | "INSTAGRAM" | "TWOGIS" | "WHATSAPP" | "REELS" | "QR" | "REFERRAL" | "RECALL";
@@ -15868,6 +15922,7 @@ export interface components {
             current: components["schemas"]["TishReportControllerTotals"];
             previous: components["schemas"]["TishReportControllerTotals"];
             channels: components["schemas"]["TishReportControllerChannelRow"][];
+            returned: components["schemas"]["RecallResultsReturned"];
         };
         TishReportControllerTotals: {
             /** Format: int32 */
@@ -20078,6 +20133,50 @@ export interface operations {
             };
         };
     };
+    view_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutoComebacksView"];
+                };
+            };
+        };
+    };
+    update_25: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AutoComebacksSettings"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutoComebacksView"];
+                };
+            };
+        };
+    };
     botAi: {
         parameters: {
             query?: never;
@@ -20142,7 +20241,7 @@ export interface operations {
             };
         };
     };
-    update_25: {
+    update_26: {
         parameters: {
             query?: never;
             header?: never;
@@ -20350,7 +20449,7 @@ export interface operations {
             };
         };
     };
-    update_26: {
+    update_27: {
         parameters: {
             query?: never;
             header?: never;
@@ -20476,7 +20575,7 @@ export interface operations {
             };
         };
     };
-    update_27: {
+    update_28: {
         parameters: {
             query?: never;
             header?: never;
@@ -21262,7 +21361,7 @@ export interface operations {
             };
         };
     };
-    view_2: {
+    view_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -24635,7 +24734,7 @@ export interface operations {
             };
         };
     };
-    view_3: {
+    view_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -28274,7 +28373,7 @@ export interface operations {
             };
         };
     };
-    view_4: {
+    view_5: {
         parameters: {
             query: {
                 month: string;
@@ -29386,7 +29485,7 @@ export interface operations {
             };
         };
     };
-    view_5: {
+    view_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -31478,7 +31577,7 @@ export interface operations {
             };
         };
     };
-    view_6: {
+    view_7: {
         parameters: {
             query?: never;
             header?: never;

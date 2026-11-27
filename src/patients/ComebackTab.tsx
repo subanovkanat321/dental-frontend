@@ -59,9 +59,19 @@ function cancelledText(c: Cancelled): string {
   return c.at ? `${who} · ${agoText(c.at)}` : who
 }
 
+/**
+ * «позвали автоматически» — последнее приглашение отправил сам Tish («Настройки → Привлечение пациентов → Позвать снова», V268);
+ * иначе — «звали» (у отменивших — «напоминали»).
+ */
+function invitedVerb(c: Candidate): string {
+  if (c.invitedAuto) return 'позвали автоматически'
+  return c.reason === 'CANCELLED' ? 'напоминали' : 'звали'
+}
+
 /** «звали 3 дня назад · всего 2 раза» / «ещё не звали»: когда последний раз и сколько раз (comeback_invite). */
-function invitedText(c: Candidate, verb: 'звали' | 'напоминали'): string {
-  if (!c.invitedAt) return `ещё не ${verb}`
+function invitedText(c: Candidate, plain: 'звали' | 'напоминали'): string {
+  if (!c.invitedAt) return `ещё не ${plain}`
+  const verb = c.invitedAuto ? 'позвали автоматически' : plain
   const n = c.invites ?? 0
   const times = n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? 'раза' : 'раз'
   return `${verb} ${agoText(c.invitedAt)}${n > 1 ? ` · всего ${n} ${times}` : ''}`
@@ -370,7 +380,7 @@ function BoardRows({ rows, onOpen, onBook, skip }: {
           meta={(c.planSom > 0 || c.invitedAt) && (
             <>
               {c.planSom > 0 && <span className="num calm-meta-strong">{somText(c.planSom)}</span>}
-              {c.invitedAt && <span>{c.reason === 'CANCELLED' ? 'напоминали' : 'звали'} {agoText(c.invitedAt)}</span>}
+              {c.invitedAt && <span>{invitedVerb(c)} {agoText(c.invitedAt)}</span>}
             </>
           )}
           action={inviting !== c.patientId && (

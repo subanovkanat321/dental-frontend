@@ -32,6 +32,7 @@ const ProfilePage = lazy(() => import('./ProfilePage').then((m) => ({ default: m
 const ReviewTimingPage = lazy(() => import('./ReviewTimingPage').then((m) => ({ default: m.ReviewTimingPage })))
 const ReferralPage = lazy(() => import('./ReferralPage').then((m) => ({ default: m.ReferralPage })))
 const WhatsAppPage = lazy(() => import('./WhatsAppPage').then((m) => ({ default: m.WhatsAppPage })))
+const ComebackAutoPage = lazy(() => import('./ComebackAutoPage').then((m) => ({ default: m.ComebackAutoPage })))
 const BirthdaysPage = lazy(() => import('./BirthdaysPage').then((m) => ({ default: m.BirthdaysPage })))
 const DebtTextPage = lazy(() => import('./DebtTextPage').then((m) => ({ default: m.DebtTextPage })))
 const ReminderTextPage = lazy(() => import('./ReminderTextPage').then((m) => ({ default: m.ReminderTextPage })))
@@ -70,6 +71,7 @@ const RENDER: Record<string, (title: string) => Render> = {
   debt: () => (_me, back) => <DebtTextPage onBack={back} />,
   reviews: () => (_me, back) => <ReviewTimingPage onBack={back} />,
   birthdays: () => (_me, back) => <BirthdaysPage onBack={back} />,
+  'comeback-auto': () => (_me, back) => <ComebackAutoPage onBack={back} />,
   referral: () => (_me, back) => <ReferralPage onBack={back} />,
   whatsapp: () => (_me, back) => <WhatsAppPage onBack={back} />,
   questions: (t) => clinic('questions', t),
