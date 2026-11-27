@@ -230,6 +230,8 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
   // «Список» на компьютере (2026-11-23, просьба владельца) — тот же «День» списком, что на телефоне: только записи, между ними
   // «свободно 10:00–11:30», без сетки по часам. Шапка расписания (дата, вид, «＋ Новая запись») — компьютерная
   const listMode = mode === 'list' && !narrow && doctors.length > 0
+  // Выбрали день в «Месяце» или «Неделе» — открываем его «Списком» (владелец 2026-11-27); на телефоне «День» и так список
+  const openDayList = (day: string) => { setDate(day); setMode(narrow ? 'day' : 'list') }
   // День берём без ночных хвостов со вчера — как список дня (DayList) на телефоне: тот же ключ кэша, один запрос на врача
   const listy = narrow || listMode
   const desktop = useMedia('(min-width: 1024px)')
@@ -687,12 +689,12 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
         ) : monthMode ? (
           <MonthGrid month={month} today={today} selected={date} data={monthData} compact={narrow}
             doctors={(view === 'all' ? doctors : []).map((d) => ({ id: d.id, name: d.fullName ?? '', color: colorOf(d) }))}
-            onOpenDay={(day) => { setDate(day); setMode('day') }} />
+            onOpenDay={openDayList} />
         ) : weekMode && weekDoctor != null ? (
           <WeekGrid me={me} doctorId={weekDoctor} monday={monday} today={today} selectedId={selected?.id}
             onOpen={(a) => setSide({ kind: 'appointment', id: a.id, fallback: a })}
             onNew={(day, minutes) => setSide({ kind: 'new', slot: { doctorId: weekDoctor, date: day, minutes } })}
-            onOpenDay={(day) => { setDate(day); setMode('day') }} />
+            onOpenDay={openDayList} />
         ) : doctors.length === 0 ? (
           <EmptyState title="В клинике пока нет врачей" action={<button type="button" className="btn primary" onClick={() => openClinic('staff')}>Добавить врача</button>}>
             Добавьте врачей в «Клиника → Персонал» — появится расписание.
@@ -872,7 +874,7 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
       {calendar && calendarDoctor && (
         <DoctorCalendar doctor={{ id: calendarDoctor.id, name: calendarDoctor.fullName ?? '', color: colorOf(calendarDoctor) }} date={date} today={today}
           anchor={calendar.anchor} onClose={() => setCalendar(null)}
-          onPick={(day) => { setDate(day); if (monthMode) setMode('day') }}
+          onPick={(day) => { if (monthMode) openDayList(day); else setDate(day) }}
           onOnly={view === 'all' && shown.length > 1 ? () => setView(calendarDoctor.id) : undefined} />
       )}
       {reviewAsksOpen && <ReviewAsksDialog doctorName={doctorName} onClose={() => setReviewAsksOpen(false)} />}

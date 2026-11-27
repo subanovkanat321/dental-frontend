@@ -95,7 +95,7 @@ describe('«Месяц»', () => {
     expect(day.querySelector('.month-dot.doc')).toBeNull()
   })
 
-  test('числа записей по дням (все врачи, один запрос на врача за месяц), выходные — штриховкой, клик — «День»', async () => {
+  test('числа записей по дням (все врачи, один запрос на врача за месяц), выходные — штриховкой, клик — тот же день «Списком»', async () => {
     screenOf('desktop')
     const { ranges } = backend()
     renderApp()
@@ -123,7 +123,7 @@ describe('«Месяц»', () => {
 
     await userEvent.click(day)
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(dayTitle(tuesday))
-    expect(screen.getByRole('button', { name: 'День' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'Список' })).toHaveAttribute('aria-pressed', 'true')
   })
 
   test('сегодня выделено; выбранный врач — только его записи', async () => {

@@ -114,8 +114,14 @@
 .pl-head, .pl-cell { display: none; }
 @media (min-width: 1100px) {
   .patients-order { display: none; }
-  .calm-list.patients-table { grid-template-columns: minmax(180px, 2.2fr) 136px minmax(120px, 170px) 116px 130px minmax(90px, 1fr); }
-  .calm-list.patients-table.with-money { grid-template-columns: minmax(180px, 2.2fr) 136px minmax(120px, 170px) 120px 124px 130px minmax(90px, 1fr); }
+  /* Даты — по ширине заголовка со стрелкой (max-content: «Последний визит ↓» жирным не обрезается); метки — с запасом,
+     чтобы «Знакомый знакомого» влезала целиком (2026-11-27, владелец: стрелка обрезана, метки «Знакомы…») */
+  .calm-list.patients-table { grid-template-columns: minmax(160px, 1.5fr) 136px minmax(110px, 150px) max-content max-content minmax(130px, 1fr); }
+  .calm-list.patients-table.with-money { grid-template-columns: minmax(160px, 1.5fr) 136px minmax(110px, 150px) max-content max-content max-content minmax(130px, 1fr); }
+  @media (min-width: 1240px) {
+    .calm-list.patients-table { grid-template-columns: minmax(160px, 1.5fr) 136px minmax(110px, 150px) max-content max-content minmax(190px, 1fr); }
+    .calm-list.patients-table.with-money { grid-template-columns: minmax(160px, 1.5fr) 136px minmax(110px, 150px) max-content max-content max-content minmax(190px, 1fr); }
+  }
   .patients-table > .pl-row .pl-phone-meta { display: none; }
   .patients-table > .pl-row { min-height: 52px; }
   .patients-table .pl-cell { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: .875rem; color: var(--text); }
@@ -130,12 +136,13 @@
   .patients-table .pl-next { white-space: nowrap; }
   .patients-table .pl-none { color: var(--hint); opacity: .8; }
   .patients-table .pl-tags { flex-wrap: wrap; gap: 4px; }
-  .patients-table .pl-tags .tag-chip { max-width: 100%; overflow: hidden; text-overflow: ellipsis; font-size: .78rem; }
+  .patients-table .pl-tags .tag-chip { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .78rem; }
   /* Шапка: те же колонки, мелко и серым; прилипает при прокрутке длинного списка */
   .calm-list.patients-table > .pl-head { grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; column-gap: 16px; align-items: center;
     position: sticky; top: 0; z-index: 2; padding: 8px 16px; border-bottom: 1px solid var(--separator); border-radius: var(--radius) var(--radius) 0 0;
     background: var(--card); color: var(--hint); font-size: .8rem; font-weight: 500; }
   .patients-table .pl-h { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .patients-table .pl-h:has(.pl-sort) { overflow: visible; }
   .patients-table .pl-h-money { text-align: right; }
   .patients-table .pl-sort { display: inline-flex; align-items: center; gap: 4px; padding: 2px 4px; margin: 0 -4px; border: 0; border-radius: var(--r-sm); background: none;
     color: inherit; font: inherit; cursor: pointer; }
@@ -145,7 +152,7 @@
   .patients-table .pl-sort[aria-pressed=true] .pl-arrow { opacity: 1; color: var(--accent); }
   .patients-table > .pl-head + .calm-row { border-top: 0; }
   /* Открыта карточка справа — места меньше: метки убираем (они есть в карточке), колонки уже */
-  .with-panel .calm-list.patients-table { grid-template-columns: minmax(150px, 1.4fr) 140px minmax(110px, 1fr) 108px 140px; }
-  .with-panel .calm-list.patients-table.with-money { grid-template-columns: minmax(150px, 1.4fr) 140px minmax(110px, 1fr) 118px 108px 140px; }
+  .with-panel .calm-list.patients-table { grid-template-columns: minmax(150px, 1.4fr) 136px minmax(110px, 1fr) max-content max-content; }
+  .with-panel .calm-list.patients-table.with-money { grid-template-columns: minmax(150px, 1.4fr) 136px minmax(110px, 1fr) max-content max-content max-content; }
   .with-panel .patients-table :is(.pl-tags, .pl-h-tags) { display: none; }
 }
