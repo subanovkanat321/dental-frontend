@@ -51,7 +51,9 @@ const webHeader: Middleware = {
 export const api = createClient<paths>({
   baseUrl: window.location.origin,
   credentials: 'same-origin',
-  // fetch — в момент запроса: так его подменяет MSW в тестах
+  // fetch — в момент запроса: так его подменяет MSW в тестах. Режим кэша — по умолчанию (не 'no-store'): опросы раз в
+  // минуту (расписание, окна, счётчики) браузер сам переспрашивает с If-None-Match, и сервер отвечает 304 без тела, если
+  // ничего не поменялось (бэкенд: ops.internal.PollingEtagFilter, Cache-Control: private, no-cache)
   fetch: (request) => send(request),
 })
 api.use(webHeader)
