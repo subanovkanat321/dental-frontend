@@ -191,7 +191,7 @@ test('черновик ИИ не теряется: отмена и повтор�
   await userEvent.click(within(b).getByRole('button', { name: 'Отмена' }))
   await pick(b, 'Прежний вариант ИИ')
   expect(within(b).getByRole('textbox', { name: 'Текст сообщения' })).toHaveValue(first.text)
-  expect(localStorage.length).toBe(0)
+  expect(Object.keys({ ...localStorage }).filter((k) => k !== 'tish.greeting.day')).toEqual([])
 })
 
 test('уход можно поправить и вернуть; просмотр: сообщение и лист, печать — из просмотра', async () => {

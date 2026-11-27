@@ -3,12 +3,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 
 // Шрифты — свои, без Google: компьютеры клиники не ходят к сторонним серверам (DESIGN.md)
-import '@fontsource/geologica/cyrillic-500.css'
-import '@fontsource/geologica/latin-500.css'
-import '@fontsource/geologica/cyrillic-600.css'
-import '@fontsource/geologica/latin-600.css'
-import '@fontsource/geologica/cyrillic-700.css'
-import '@fontsource/geologica/latin-700.css'
+import './fonts.css'
 import '@fontsource/golos-text/cyrillic-400.css'
 import '@fontsource/golos-text/latin-400.css'
 import '@fontsource/golos-text/cyrillic-500.css'

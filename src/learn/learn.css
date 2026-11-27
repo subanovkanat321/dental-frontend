@@ -80,7 +80,7 @@
 .lsn-body { min-width: 0; }
 .lsn-topic { margin: 0 0 10px; display: flex; align-items: center; gap: 10px; color: var(--lsn-teal); font-weight: 600; font-size: clamp(14px, 1.4vw, 16px); }
 .lsn-topic::before { content: ''; width: 24px; height: 2px; background: var(--lsn-teal); }
-.lsn-title { font-family: Geologica, 'Golos Text', sans-serif; font-weight: 600; font-size: clamp(24px, 3.3vw, 44px); line-height: 1.15; letter-spacing: -0.01em; margin: 0 0 14px; text-wrap: balance; }
+.lsn-title { font-family: 'Tish Display', 'Golos Text', sans-serif; font-weight: 600; font-size: clamp(24px, 3.3vw, 44px); line-height: 1.15; letter-spacing: -0.01em; margin: 0 0 14px; text-wrap: balance; }
 .lsn-text { font-size: clamp(17px, 1.9vw, 23px); line-height: 1.5; margin: 0; color: var(--lsn-ink); text-wrap: pretty; max-width: 40em; }
 
 /* Пункты: строки через тонкую линию, слева пиктограмма; у шагов — номер на пиктограмме */
@@ -92,7 +92,7 @@
   background: var(--lsn-teal-soft); color: var(--lsn-teal); }
 .lsn-ico { width: 64%; height: 64%; }
 .lsn-step { position: absolute; top: -4px; left: -4px; min-width: 20px; height: 20px; border-radius: 10px; display: grid; place-items: center;
-  background: var(--lsn-teal); color: #fff; font: 600 12px/1 Geologica, sans-serif; box-shadow: 0 0 0 2px #fff; }
+  background: var(--lsn-teal); color: #fff; font: 600 12px/1 'Tish Display', sans-serif; box-shadow: 0 0 0 2px #fff; }
 
 /* Слайд без рисунка — пункты карточками-фактами */
 .lsn-facts { grid-template-columns: 1fr; align-content: center; }
@@ -114,7 +114,7 @@
 .lsn-card-art .art { width: 100%; height: 100%; }
 .lsn-card p { margin: 0; display: flex; gap: 10px; align-items: flex-start; font-size: clamp(15px, 1.55vw, 19px); line-height: 1.35; padding: 0 2px 4px; }
 .lsn-num { flex: none; display: grid; place-items: center; width: 1.6em; height: 1.6em; border-radius: 50%; border: 1.5px solid var(--lsn-teal); color: var(--lsn-teal);
-  font-family: Geologica, sans-serif; font-weight: 600; font-size: 0.85em; margin-top: 0.05em; box-sizing: border-box; }
+  font-family: 'Tish Display', sans-serif; font-weight: 600; font-size: 0.85em; margin-top: 0.05em; box-sizing: border-box; }
 .lsn-note { margin: 0; background: var(--lsn-teal-soft); color: var(--lsn-teal-dark); border-radius: 10px; padding: clamp(10px, 1.4vw, 16px) clamp(14px, 1.8vw, 22px);
   font-weight: 500; font-size: clamp(15px, 1.7vw, 20px); line-height: 1.4; }
 
@@ -166,7 +166,7 @@
 .learn-tile:hover { border-color: #c8d3d5; box-shadow: 0 1px 2px rgb(15 42 48 / 0.05), 0 4px 14px rgb(15 42 48 / 0.08); }
 .learn-tile .learn-art { height: 150px; display: flex; justify-content: center; background: #f4f7f7; border-radius: 8px; padding: 10px; margin-bottom: 4px; }
 .learn-tile .learn-art .art { height: 100%; width: auto; max-width: 100%; }
-.learn-tile strong { font-family: Geologica, sans-serif; font-weight: 600; font-size: 17px; line-height: 1.25; padding: 0 4px; }
+.learn-tile strong { font-family: 'Tish Display', sans-serif; font-weight: 600; font-size: 17px; line-height: 1.25; padding: 0 4px; }
 .learn-tile span { color: #4c6268; font-size: 14px; padding: 0 4px; }
 
 /* Кнопки CRM внутри презентации — всегда светлые, как сама презентация */
@@ -211,7 +211,7 @@
 .pst .lsn-slide { animation: none; max-width: 1680px; flex: none; margin-block: auto; }
 .pst-head .lsn-title { margin-bottom: 6px; font-size: clamp(22px, 2.5vw, 40px); }
 .pst-n { flex: none; display: inline-grid; place-items: center; min-width: 1.55em; height: 1.55em; padding: 0 0.3em; box-sizing: border-box; border-radius: 999px;
-  background: var(--lsn-teal); color: #fff; font: 600 0.82em/1 Geologica, sans-serif; font-variant-numeric: tabular-nums; }
+  background: var(--lsn-teal); color: #fff; font: 600 0.82em/1 'Tish Display', sans-serif; font-variant-numeric: tabular-nums; }
 .pst .pst-full svg { width: 18px; height: 18px; display: block; margin: auto; }
 .pst-disclaimer { padding: 0 16px 10px; }
 .pst .pst-callout { font-size: clamp(12px, 1.05vw, 17px); display: inline-flex; align-items: center; gap: 6px; text-align: left; }
@@ -245,7 +245,7 @@
 .pst-panel .lsn-3d { --mh: calc(var(--ph) - 12px); }
 .pst-panel .pst-callout { max-width: none; white-space: nowrap; font-size: clamp(11px, 0.85vw, 15px); padding: 2px 7px; }
 .pst .pst-cap { display: grid; gap: 6px; text-align: left; border: 0; background: none; padding: 2px 4px 4px; }
-.pst-cap-title { display: flex; align-items: center; gap: 8px; font: 600 clamp(16px, 1.35vw, 24px)/1.2 Geologica, 'Golos Text', sans-serif; color: var(--lsn-ink); }
+.pst-cap-title { display: flex; align-items: center; gap: 8px; font: 600 clamp(16px, 1.35vw, 24px)/1.2 'Tish Display', 'Golos Text', sans-serif; color: var(--lsn-ink); }
 .pst-cap-text { font-size: clamp(14px, 1.05vw, 19px); line-height: 1.4; color: var(--lsn-muted); text-wrap: pretty; }
 
 @media (max-width: 760px), (orientation: portrait) and (max-width: 1000px) {
