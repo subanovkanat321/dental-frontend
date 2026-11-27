@@ -23,8 +23,10 @@ type Message = Pick<Schemas['PatientMessage'], 'text' | 'telegram'> & { telegram
  * @param paper лист печати для вкладки «📄 Лист»; нет — «🖨 Печать» сразу открывает окно печати
  * @param onPrint открыть окно печати (в выбранном в просмотре формате)
  * @param note подсказка под сообщением для канала (квитанция: «следом — картинка QR»)
+ * @param onOpen перед «🔍 Просмотром» и «📤 Отправить» (квитанция и акт: выдать номер документа, V271) — окно откроется,
+ *        когда он закончит, чтобы лист и текст уже были с номером
  */
-export function DocActions({ label, phone, message, send, onPrint, paper, note }: {
+export function DocActions({ label, phone, message, send, onPrint, paper, note, onOpen }: {
   label: string
   phone?: string | null
   message?: Message
@@ -32,8 +34,26 @@ export function DocActions({ label, phone, message, send, onPrint, paper, note }
   onPrint: (format: PaperFormat) => void
   paper?: Paper
   note?: (channel: Channel) => ReactNode
+  onOpen?: () => Promise<unknown>
 }) {
   const [open, setOpen] = useState(false)
+  const [opening, setOpening] = useState(false)
+  // Сначала onOpen (номер документа), потом окно; не вышло — окно всё равно открываем: документ без номера лучше, чем никакого
+  const ready = async (then: () => void) => {
+    if (onOpen) {
+      setOpening(true)
+      try {
+        await onOpen()
+      }
+      catch {
+        // номер не выдан — откроем без него
+      }
+      finally {
+        setOpening(false)
+      }
+    }
+    then()
+  }
   // Квитанция (лист с форматами) — «🔍 Просмотр» сразу на листе-чеке 80 мм (2026-11-23, владелец), текст — вкладкой «💬 Сообщение»
   // «📤 Отправить»: окно выбора — как (текст / чек / A4) и куда; картинкой — просмотр сразу с «Отправить листом»
   const [choosing, setChoosing] = useState(false)
@@ -59,10 +79,10 @@ export function DocActions({ label, phone, message, send, onPrint, paper, note }
     <div className="doc-actions">
       {!open && (
         <div className="actions">
-          <button type="button" className="btn" disabled={message == null} aria-label={`Просмотр: ${label}`}
-            onClick={() => { setSent(''); bot.reset(); setPreset(null); setOpen(true) }}>🔍 Просмотр</button>
-          <button type="button" className="btn" disabled={message == null} aria-label={`Отправить: ${label}`}
-            onClick={() => { setSent(''); bot.reset(); setChoosing(true) }}>📤 Отправить</button>
+          <button type="button" className="btn" disabled={message == null || opening} aria-label={`Просмотр: ${label}`}
+            onClick={() => { setSent(''); bot.reset(); setPreset(null); void ready(() => setOpen(true)) }}>🔍 Просмотр</button>
+          <button type="button" className="btn" disabled={message == null || opening} aria-label={`Отправить: ${label}`}
+            onClick={() => { setSent(''); bot.reset(); void ready(() => setChoosing(true)) }}>📤 Отправить</button>
         </div>
       )}
       {sent && !open && <p className="tone-ok small" role="status">{sent}</p>}

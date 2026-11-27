@@ -5924,6 +5924,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/appointments/{id}/receipt/number": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["number"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/appointments/{id}/plan-done": {
         parameters: {
             query?: never;
@@ -13465,6 +13481,67 @@ export interface components {
             /** @enum {string} */
             reply: "NONE" | "CONFIRMED" | "RESCHEDULE" | "NO_ANSWER";
         };
+        ReceiptsLine: {
+            name?: string;
+            /** Format: int32 */
+            qty: number;
+            teeth?: number[];
+            /** Format: int32 */
+            amountSom?: number;
+            /** Format: int32 */
+            discountSom?: number;
+        };
+        ReceiptsPay: {
+            details?: string;
+            qrToken?: string;
+            payUrl?: string;
+            doctor: boolean;
+        };
+        ReceiptsPayment: {
+            /** Format: date-time */
+            paidAt?: string;
+            /** Format: int32 */
+            amountSom: number;
+            /** @enum {string} */
+            method?: "CASH" | "TRANSFER" | "CARD" | "ADVANCE";
+            takenBy?: string;
+        };
+        ReceiptsReceiptView: {
+            /** Format: int64 */
+            appointmentId: number;
+            /** Format: date-time */
+            startAt?: string;
+            doctor?: string;
+            patient?: string;
+            service?: string;
+            /** Format: int32 */
+            chargeSom?: number;
+            /** Format: int32 */
+            paidSom: number;
+            /** Format: int32 */
+            debtSom: number;
+            payments?: components["schemas"]["ReceiptsPayment"][];
+            text?: string;
+            telegram: boolean;
+            discount?: components["schemas"]["PaymentDiscount"];
+            /** Format: int32 */
+            advanceSom?: number;
+            /** Format: int32 */
+            advanceLeftSom?: number;
+            lines?: components["schemas"]["ReceiptsLine"][];
+            pay?: components["schemas"]["ReceiptsPay"];
+            telegramText?: string;
+            /** Format: int32 */
+            linesDiscountSom?: number;
+            /** Format: int32 */
+            fullSom?: number;
+            /** @enum {string} */
+            kind?: "RECEIPT" | "ACT";
+            /** Format: int32 */
+            number?: number;
+            /** Format: date-time */
+            numberedAt?: string;
+        };
         ChartControllerPlanDone: {
             stepIds?: number[];
         };
@@ -15709,61 +15786,6 @@ export interface components {
             count: number;
             usedHere: boolean;
         };
-        ReceiptsLine: {
-            name?: string;
-            /** Format: int32 */
-            qty: number;
-            teeth?: number[];
-            /** Format: int32 */
-            amountSom?: number;
-            /** Format: int32 */
-            discountSom?: number;
-        };
-        ReceiptsPay: {
-            details?: string;
-            qrToken?: string;
-            payUrl?: string;
-            doctor: boolean;
-        };
-        ReceiptsPayment: {
-            /** Format: date-time */
-            paidAt?: string;
-            /** Format: int32 */
-            amountSom: number;
-            /** @enum {string} */
-            method?: "CASH" | "TRANSFER" | "CARD" | "ADVANCE";
-            takenBy?: string;
-        };
-        ReceiptsReceiptView: {
-            /** Format: int64 */
-            appointmentId: number;
-            /** Format: date-time */
-            startAt?: string;
-            doctor?: string;
-            patient?: string;
-            service?: string;
-            /** Format: int32 */
-            chargeSom?: number;
-            /** Format: int32 */
-            paidSom: number;
-            /** Format: int32 */
-            debtSom: number;
-            payments?: components["schemas"]["ReceiptsPayment"][];
-            text?: string;
-            telegram: boolean;
-            discount?: components["schemas"]["PaymentDiscount"];
-            /** Format: int32 */
-            advanceSom?: number;
-            /** Format: int32 */
-            advanceLeftSom?: number;
-            lines?: components["schemas"]["ReceiptsLine"][];
-            pay?: components["schemas"]["ReceiptsPay"];
-            telegramText?: string;
-            /** Format: int32 */
-            linesDiscountSom?: number;
-            /** Format: int32 */
-            fullSom?: number;
-        };
         PaymentQueryEntry: {
             /** Format: int64 */
             id: number;
@@ -16184,10 +16206,21 @@ export interface components {
             /** Format: int64 */
             paidSom?: number;
             access: components["schemas"]["PatientCardAccess"];
+            money?: components["schemas"]["PatientCardMoney"];
         };
         PatientCardAccess: {
             medical: boolean;
             money: boolean;
+        };
+        PatientCardMoney: {
+            /** Format: int64 */
+            chargedSom: number;
+            /** Format: int64 */
+            paidSom: number;
+            /** Format: int64 */
+            advanceSom: number;
+            /** Format: int64 */
+            balanceSom: number;
         };
         ServiceTypeControllerDeleted: {
             deleted: boolean;
@@ -28262,7 +28295,9 @@ export interface operations {
     };
     send_8: {
         parameters: {
-            query?: never;
+            query?: {
+                kind?: "RECEIPT" | "ACT";
+            };
             header?: never;
             path: {
                 id: number;
@@ -28277,6 +28312,30 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    number: {
+        parameters: {
+            query?: {
+                kind?: "RECEIPT" | "ACT";
+            };
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReceiptsReceiptView"];
+                };
             };
         };
     };
@@ -32266,7 +32325,9 @@ export interface operations {
     };
     receipt: {
         parameters: {
-            query?: never;
+            query?: {
+                kind?: "RECEIPT" | "ACT";
+            };
             header?: never;
             path: {
                 id: number;

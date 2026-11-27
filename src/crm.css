@@ -3746,3 +3746,15 @@ button.history-link:hover .history-text { color: var(--link); }
 .list-aside .ds-counts { grid-template-columns: 1fr 1.25fr 1fr; gap: 4px; }
 .list-aside .ds-counts div { padding: 6px; min-width: 0; }
 .list-aside .ds-counts dt { font-size: .75rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* «Начислено · Оплачено · Баланс» сверху вкладки «Деньги» карточки пациента: три числа в ряд, баланс — тоном */
+.money-summary { display: grid; gap: 4px; }
+.money-summary dl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0; }
+.money-summary dl > div { display: grid; align-content: start; gap: 2px; padding: 8px 10px; border-radius: var(--r-md); background: var(--sunken); min-width: 0; }
+.money-summary dt { font-size: .8rem; color: var(--hint); }
+.money-summary .money-balance dt { color: inherit; }
+.money-summary dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.money-summary .money-balance.tone-bad { background: var(--bad-bg); color: var(--bad-ink); }
+.money-summary .money-balance.tone-ok { background: var(--ok-bg); color: var(--ok-ink); }
+.money-summary .money-closed, .money-summary .money-word { font-size: .8rem; font-weight: 400; }
+.money-summary .hint { margin: 0; }

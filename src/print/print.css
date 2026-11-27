@@ -468,3 +468,23 @@
 .sheet-send .actions {
   flex-wrap: wrap;
 }
+
+/* Номер документа (V271): «№ 000123 от 27.11.2026» под заголовком квитанции и акта */
+.print-sheet .doc-number {
+  margin: -6px 0 10px;
+  font-weight: 600;
+}
+
+.print-sheet.narrow .doc-number {
+  text-align: center;
+}
+
+/* Подписи врача и пациента — внизу A4, с местом для подписи */
+.print-sheet .doc-signs {
+  flex-wrap: wrap;
+  margin-top: 36px;
+}
+
+.print-sheet .act-note {
+  margin: 12px 0 0;
+}

@@ -146,7 +146,7 @@ test('история визитов: «📋 Памятка и квитанция
   const card = await screen.findByRole('complementary', { name: 'Карточка пациента' })
   await userEvent.click(within(card).getByRole('button', { name: 'Памятка и квитанция' }))
   expect(await within(card).findByText('После чистки')).toBeInTheDocument()
-  expect(await within(card).findByText('🧾 Квитанция об оплате')).toBeInTheDocument()
+  expect(await within(card).findByRole('button', { name: '🧾 Квитанция' })).toBeInTheDocument()
   await userEvent.click(within(card).getByRole('button', { name: 'Просмотр: памятка «После чистки»' }))
   expect(within(card).getByRole('button', { name: 'Отправить пациенту в WhatsApp: памятка «После чистки»' })).toBeEnabled()
 })
