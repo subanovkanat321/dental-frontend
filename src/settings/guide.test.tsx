@@ -37,9 +37,9 @@ test('у каждого раздела свой адрес: якоря не по
   expect(CHAPTERS.map((c) => c.title)).toEqual(expect.arrayContaining(['Начало работы', 'Расписание', 'Пациенты', 'Для пациента', 'Касса', 'Склад', 'Клиника', 'Настройки']))
 })
 
-test('видео про установку приложения убрано — одна строка «Я → Установить приложение»', () => {
+test('установка приложения — одна строка «Я → Установить приложение»; видео-инструкций нет', () => {
   const all = CHAPTERS.flatMap((c) => c.sections)
-  expect(all.some((s) => s.video === 'prilozhenie')).toBe(false)
+  expect(JSON.stringify(CHAPTERS)).not.toMatch(/"video"|materials\/howto/)
   const install = all.find((s) => s.id === 'ustanovit-prilozhenie')!
   expect(install.text).toMatch(/«Я» → «Установить приложение»/)
   expect(install.steps).toHaveLength(0)
@@ -118,7 +118,7 @@ test('глубокая ссылка и старая ссылка подсказ�
   expect(within(reader()).getByRole('heading', { name: 'Новая запись' })).toBeInTheDocument()
   // Адрес — в полном виде: глава/раздел
   expect(window.location.hash).toBe('#/help/guide/raspisanie/novaya-zapis')
-  expect(within(reader()).getByRole('button', { name: /Видео: как это сделать/ })).toBeInTheDocument()
+  expect(within(reader()).queryByRole('button', { name: /Видео/ })).not.toBeInTheDocument()
   unmount()
   // Открыли «Руководство» без адреса — там, где остановились
   window.history.replaceState(null, '', '/#/help/guide')

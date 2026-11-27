@@ -115,11 +115,6 @@
 .about-card span:last-child { color: var(--hint); }
 .about-statement .about-lead { margin-top: 32px !important; }
 
-/* Ролик v6 4:5 на первом экране: телефон — во всю ширину, компьютер — колонка ~450 px рядом с текстом */
-.hero-video { margin: 0; width: 100%; text-align: center; }
-.video-frame { width: 100%; padding: 8px; border-radius: 20px; background: var(--frame); box-shadow: 0 24px 60px -12px rgba(15, 42, 48, .3); }
-.video-frame video { display: block; width: 100%; height: auto; aspect-ratio: 4 / 5; border-radius: 13px; background: #0d2a2e; object-fit: cover; }
-
 /* Финал и контакты */
 .about-final { background: var(--accent-soft); }
 .about-final .about-ctas { margin-top: 32px; }
@@ -161,7 +156,6 @@
 }
 @media (min-width: 760px) {
   .about-sticky { display: none; }
-  .hero-video { max-width: 480px; justify-self: center; }
   .about-cards { grid-template-columns: 1fr 1fr; }
   .about-contacts { grid-template-columns: 1fr 1fr; }
 }

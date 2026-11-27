@@ -85,5 +85,3 @@
 }
 
 /* Ссылка на видео-инструкцию под шагами раздела */
-.manual .manual-video { margin: 0; font-weight: 600; }
-.manual .manual-video a { color: var(--link); text-underline-offset: 3px; }

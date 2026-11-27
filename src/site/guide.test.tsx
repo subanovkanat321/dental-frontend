@@ -157,21 +157,9 @@ test('раздел «Ссылка на запись» — руководител
   expect(find('reception')).toBeUndefined()
 })
 
-/** Ролики из белого списка бэкенда (Materials.HOWTO): ссылка на другой id вела бы на 404. */
-const HOWTO_IDS = ['vhod-telegram', 'prilozhenie', 'zapis', 'perenos', 'seychas', 'whatsapp', 'ozhidanie', 'kreslo', 'nochnaya', 'kassa', 'sklad', 'kalendar']
-
-test('у разделов с видео-инструкцией — ссылка на ролик; в печатной версии ссылок нет', () => {
-  const videos = CHAPTERS.flatMap((c) => c.sections).filter((s) => s.video)
-  expect(videos.length).toBeGreaterThanOrEqual(10)
-  videos.forEach((s) => expect(HOWTO_IDS, s.title).toContain(s.video))
+test('видео-инструкций нет (удалены 2026-11-27): ни ссылок на ролики, ни поля video', () => {
+  expect(CHAPTERS.flatMap((c) => c.sections).some((s) => 'video' in s)).toBe(false)
   window.history.replaceState(null, '', '/guide')
-  const { unmount } = render(<Guide />)
-  const section = screen.getByRole('article', { name: 'Новая запись' })
-  expect(within(section).getByRole('link', { name: /Видео: как это сделать/ })).toHaveAttribute('href', '/web/materials/howto/zapis.mp4')
-  expect(within(screen.getByRole('article', { name: 'Оплата после приёма' })).getByRole('link', { name: /Видео/ }))
-    .toHaveAttribute('href', '/web/materials/howto/kassa.mp4')
-  unmount()
-  window.history.replaceState(null, '', '/guide?print=1')
   render(<Guide />)
-  expect(screen.queryByRole('link', { name: /Видео: как это сделать/ })).not.toBeInTheDocument()
+  expect(screen.queryByRole('link', { name: /Видео/ })).not.toBeInTheDocument()
 })

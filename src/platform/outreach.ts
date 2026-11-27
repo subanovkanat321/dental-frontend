@@ -1,6 +1,5 @@
-import { fetchBlob, type Schemas } from '../api/client'
+import type { Schemas } from '../api/client'
 import { MOVE_TEMPLATE_PATH } from '../lib/texts'
-import { openLink, telegram } from '../lib/telegram'
 import { dateOf, todayIn } from '../lib/time'
 
 export type OutreachLead = Schemas['SalesFunnelLead']
@@ -109,84 +108,8 @@ export function templateUrl(origin: string = window.location.origin): string {
   return `${origin}${MOVE_TEMPLATE_PATH}`
 }
 
-/** Третье сообщение клинике — после текста №2 и ролика: шаблон, который мы перенесём за неё. */
+/** Третье сообщение клинике — после текста №2: шаблон, который мы перенесём за неё. */
 export function templateMessage(origin?: string): string {
   return `Вот шаблон — заполните, и мы всё перенесём: ${templateUrl(origin)}\n`
     + 'Пациенты, прайс, врачи, склад, будущие записи и долги — каждое на своём листе. Пустые листы можно не трогать.'
-}
-
-/** Публичный промо-ролик (бэкенд, /web/materials/public — без входа) — под этим именем уходит клинике. */
-export const PROMO_VIDEO = '/web/materials/public/promo.mp4'
-
-const VIDEO_NAME = 'Tish-rolik.mp4'
-
-export type VideoResult = 'shared' | 'downloaded' | 'opened' | 'cancelled' | 'retry'
-
-// Ролик в памяти — один на вкладку, а не на каждую клинику: скачиваем заранее (карточка открыта, текст
-// ушёл), чтобы по нажатию «Поделиться» вызвать сразу, без ожидания сети
-let video: File | null = null
-let loading: Promise<File> | null = null
-
-/** Скачать ролик в память заранее (повторный вызов — тот же файл). В Telegram не нужен: там ссылка. */
-export function prepareVideo(): Promise<File> {
-  if (video) return Promise.resolve(video)
-  loading ??= fetchBlob(PROMO_VIDEO).then((blob) => (video = new File([blob], VIDEO_NAME, { type: 'video/mp4' })))
-    .catch((e: unknown) => {
-      loading = null
-      throw e
-    })
-  return loading
-}
-
-/** Тесты: начать с пустой памяти. */
-export function forgetVideo(): void {
-  video = null
-  loading = null
-}
-
-/** Умеет ли браузер «Поделиться» файлом (телефон); компьютер — обычно нет, тогда файл скачивается. */
-export function canShareFiles(file = new File([''], VIDEO_NAME, { type: 'video/mp4' })): boolean {
-  return typeof navigator.canShare === 'function' && typeof navigator.share === 'function' && navigator.canShare({ files: [file] })
-}
-
-/** Ролик клинике: где «Поделиться» сработает, где скачается, где откроется ссылка — для подсказки шага 2. */
-export function videoWay(): 'share' | 'download' | 'telegram' {
-  return telegram() ? 'telegram' : canShareFiles() ? 'share' : 'download'
-}
-
-/**
- * «Отправить ролик» отдельным файлом: у незнакомого номера WhatsApp не делает ссылки кликабельными,
- * поэтому видео — вложением. Телефон: системное «Поделиться» с файлом — WhatsApp покажет чаты, тот, куда
- * только что ушёл текст, — первый в «Недавних» (выбрать контакт заранее «Поделиться» не умеет). Компьютер:
- * файл скачивается — прикрепить в WhatsApp Web. В Telegram (Mini App) «Поделиться» файлом нет — ролик
- * открывается в браузере телефона, оттуда «Поделиться».
- *
- * Не async нарочно: Safari на iPhone разрешает navigator.share только сразу по нажатию — долгий await перед
- * ним (скачивание ролика) «протухает» жест и share падает с NotAllowedError. Поэтому ролик готовят заранее
- * ({@link prepareVideo}), а здесь share зовётся синхронно из готового файла. Не успел скачаться — ждём и
- * пробуем; Safari откажет — 'retry': «Ролик готов — нажмите ещё раз».
- */
-export function sendVideo(): Promise<VideoResult> {
-  if (telegram()) {
-    openLink(new URL(PROMO_VIDEO, window.location.origin).href)
-    return Promise.resolve('opened')
-  }
-  return video ? shareOrDownload(video, false) : prepareVideo().then((file) => shareOrDownload(file, true))
-}
-
-function shareOrDownload(file: File, late: boolean): Promise<VideoResult> {
-  if (canShareFiles(file)) {
-    return navigator.share({ files: [file] }).then(() => 'shared' as const, (e: unknown) => {
-      if (e instanceof DOMException && e.name === 'AbortError') return 'cancelled' as const
-      if (late && e instanceof DOMException && e.name === 'NotAllowedError') return 'retry' as const
-      throw e
-    })
-  }
-  const href = URL.createObjectURL(file)
-  const a = document.createElement('a')
-  a.href = href
-  a.download = file.name
-  a.click()
-  setTimeout(() => URL.revokeObjectURL(href), 10_000)
-  return Promise.resolve('downloaded')
 }

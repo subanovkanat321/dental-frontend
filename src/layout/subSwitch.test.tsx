@@ -248,7 +248,7 @@ test('подсказка про подразделы — один раз: зак
   expect(sheetOf('Склад')).toBeInTheDocument()
 })
 
-test('компьютер: Касса — все 9 вкладок; Платформа — 9 вкладок владельца, старый адрес «Контента» — «Маркетинг»', async () => {
+test('компьютер: Касса — все 9 вкладок; Платформа — 8 вкладок владельца, старый адрес «Рассылки» — новая вкладка', async () => {
   vi.unstubAllGlobals()
   window.location.hash = '/cash'
   const first = renderApp()
@@ -263,13 +263,13 @@ test('компьютер: Касса — все 9 вкладок; Платфор
   first.unmount()
 
   server.use(http.get('*/api/patient/me', () => HttpResponse.json({ ...me, doctor: false, admin: false, platform: true, owner: true })))
-  window.location.hash = '/platform/content'
+  window.location.hash = '/platform/outreach'
   renderApp()
   const platform = await tabs('Платформа')
   expect(within(platform).getAllByRole('link').map((a) => a.textContent)).toEqual(['Клиники', 'Аналитика', 'Финансы', 'Обратная связь',
-    'Рассылка клиникам', 'Маркетинг', 'Здоровье', 'Расход ИИ', 'Настройки'])
-  expect(within(platform).getByRole('link', { name: 'Маркетинг' })).toHaveAttribute('aria-current', 'page')
-  expect(window.location.hash).toBe('#/platform/marketing/content')
+    'Рассылка клиникам', 'Здоровье', 'Расход ИИ', 'Настройки'])
+  expect(within(platform).getByRole('link', { name: 'Рассылка клиникам' })).toHaveAttribute('aria-current', 'page')
+  expect(window.location.hash).toBe('#/platform/mailing/one')
 })
 
 test('компьютер: «⌄» — только когда вкладки не влезают; новое в скрытых справа — точкой на ней', async () => {

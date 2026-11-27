@@ -1183,34 +1183,6 @@
         }
       }
     },
-    "/api/platform/materials/link" : {
-      "put" : {
-        "tags" : [ "materials-controller" ],
-        "operationId" : "saveLink",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/MaterialsControllerLinkRequest"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/MaterialsListing"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/platform/info" : {
       "put" : {
         "tags" : [ "platform-info-controller" ],
@@ -1483,105 +1455,6 @@
         }
       }
     },
-    "/api/platform/content/{id}" : {
-      "put" : {
-        "tags" : [ "content-controller" ],
-        "operationId" : "update_10",
-        "parameters" : [ {
-          "name" : "id",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int64"
-          }
-        } ],
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/ContentPostsDraft"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ContentPostsPost"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete" : {
-        "tags" : [ "content-controller" ],
-        "operationId" : "delete_9",
-        "parameters" : [ {
-          "name" : "id",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int64"
-          }
-        } ],
-        "responses" : {
-          "204" : {
-            "description" : "No Content"
-          }
-        }
-      }
-    },
-    "/api/platform/content/settings" : {
-      "get" : {
-        "tags" : [ "content-controller" ],
-        "operationId" : "contentSettings",
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ContentSettingsSettings"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put" : {
-        "tags" : [ "content-controller" ],
-        "operationId" : "updateContentSettings",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/ContentSettingsUpdate"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ContentSettingsSettings"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/platform/clinics/{id}/paid-until" : {
       "put" : {
         "tags" : [ "billing-controller" ],
@@ -1798,7 +1671,7 @@
     "/api/platform/agreements/{id}" : {
       "put" : {
         "tags" : [ "agreement-controller" ],
-        "operationId" : "update_11",
+        "operationId" : "update_10",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1833,7 +1706,7 @@
       },
       "delete" : {
         "tags" : [ "agreement-controller" ],
-        "operationId" : "delete_10",
+        "operationId" : "delete_9",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1890,7 +1763,7 @@
     "/api/plan-templates/{id}" : {
       "put" : {
         "tags" : [ "plan-template-controller" ],
-        "operationId" : "update_12",
+        "operationId" : "update_11",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1925,7 +1798,7 @@
       },
       "delete" : {
         "tags" : [ "plan-template-controller" ],
-        "operationId" : "delete_11",
+        "operationId" : "delete_10",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1945,7 +1818,7 @@
     "/api/patients/{patientId}/teeth/{number}" : {
       "put" : {
         "tags" : [ "chart-controller" ],
-        "operationId" : "update_13",
+        "operationId" : "update_12",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "path",
@@ -2200,7 +2073,7 @@
       },
       "delete" : {
         "tags" : [ "plan-variant-controller" ],
-        "operationId" : "delete_12",
+        "operationId" : "delete_11",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "path",
@@ -2561,7 +2434,7 @@
     "/api/patients/{id}" : {
       "put" : {
         "tags" : [ "patient-controller" ],
-        "operationId" : "update_14",
+        "operationId" : "update_13",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -2899,7 +2772,7 @@
     "/api/patient-tags/{id}" : {
       "put" : {
         "tags" : [ "patient-tags-controller" ],
-        "operationId" : "update_15",
+        "operationId" : "update_14",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -2937,7 +2810,7 @@
       },
       "delete" : {
         "tags" : [ "patient-tags-controller" ],
-        "operationId" : "delete_13",
+        "operationId" : "delete_12",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -2967,7 +2840,7 @@
     "/api/patient-sources/{id}" : {
       "put" : {
         "tags" : [ "patient-sources-controller" ],
-        "operationId" : "update_16",
+        "operationId" : "update_15",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -3007,7 +2880,7 @@
     "/api/patient-groups/{id}" : {
       "put" : {
         "tags" : [ "segment-controller" ],
-        "operationId" : "update_17",
+        "operationId" : "update_16",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -3042,7 +2915,7 @@
       },
       "delete" : {
         "tags" : [ "segment-controller" ],
-        "operationId" : "delete_14",
+        "operationId" : "delete_13",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -3501,7 +3374,7 @@
       },
       "put" : {
         "tags" : [ "lead-controller" ],
-        "operationId" : "update_18",
+        "operationId" : "update_17",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -3536,7 +3409,7 @@
       },
       "delete" : {
         "tags" : [ "lead-controller" ],
-        "operationId" : "delete_15",
+        "operationId" : "delete_14",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -3636,7 +3509,7 @@
       },
       "put" : {
         "tags" : [ "lab-controller" ],
-        "operationId" : "update_19",
+        "operationId" : "update_18",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -3671,7 +3544,7 @@
       },
       "delete" : {
         "tags" : [ "lab-controller" ],
-        "operationId" : "delete_16",
+        "operationId" : "delete_15",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -3728,7 +3601,7 @@
     "/api/expenses/{id}" : {
       "put" : {
         "tags" : [ "expense-controller" ],
-        "operationId" : "update_20",
+        "operationId" : "update_19",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -3763,7 +3636,7 @@
       },
       "delete" : {
         "tags" : [ "expense-controller" ],
-        "operationId" : "delete_17",
+        "operationId" : "delete_16",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -4006,7 +3879,7 @@
       },
       "put" : {
         "tags" : [ "doctor-hours-controller" ],
-        "operationId" : "update_21",
+        "operationId" : "update_20",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -4166,7 +4039,7 @@
       },
       "put" : {
         "tags" : [ "clinic-controller" ],
-        "operationId" : "update_22",
+        "operationId" : "update_21",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -4386,7 +4259,7 @@
       },
       "put" : {
         "tags" : [ "review-settings-controller" ],
-        "operationId" : "update_23",
+        "operationId" : "update_22",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -4486,7 +4359,7 @@
       },
       "put" : {
         "tags" : [ "patient-referral-controller" ],
-        "operationId" : "update_24",
+        "operationId" : "update_23",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -4878,7 +4751,7 @@
       },
       "put" : {
         "tags" : [ "auto-comeback-controller" ],
-        "operationId" : "update_25",
+        "operationId" : "update_24",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -4966,7 +4839,7 @@
       },
       "put" : {
         "tags" : [ "birthday-controller" ],
-        "operationId" : "update_26",
+        "operationId" : "update_25",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -5117,7 +4990,7 @@
       },
       "delete" : {
         "tags" : [ "chair-controller" ],
-        "operationId" : "delete_18",
+        "operationId" : "delete_17",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -5202,7 +5075,7 @@
     "/api/care-memos/{id}" : {
       "put" : {
         "tags" : [ "care-memo-controller" ],
-        "operationId" : "update_27",
+        "operationId" : "update_26",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -5388,7 +5261,7 @@
     "/api/appointments/{id}/services/{lineId}" : {
       "put" : {
         "tags" : [ "appointment-lines-controller" ],
-        "operationId" : "update_28",
+        "operationId" : "update_27",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -8777,301 +8650,6 @@
         }
       }
     },
-    "/api/platform/content" : {
-      "get" : {
-        "tags" : [ "content-controller" ],
-        "operationId" : "list_7",
-        "parameters" : [ {
-          "name" : "from",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "string",
-            "format" : "date"
-          }
-        }, {
-          "name" : "to",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "string",
-            "format" : "date"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "$ref" : "#/components/schemas/ContentPostsPost"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "post" : {
-        "tags" : [ "content-controller" ],
-        "operationId" : "create_9",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/ContentPostsDraft"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "201" : {
-            "description" : "Created",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ContentPostsPost"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/platform/content/{id}/to-telegram" : {
-      "post" : {
-        "tags" : [ "content-controller" ],
-        "operationId" : "toTelegram",
-        "parameters" : [ {
-          "name" : "id",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int64"
-          }
-        } ],
-        "responses" : {
-          "204" : {
-            "description" : "No Content"
-          }
-        }
-      }
-    },
-    "/api/platform/content/{id}/story" : {
-      "post" : {
-        "tags" : [ "content-controller" ],
-        "operationId" : "story",
-        "parameters" : [ {
-          "name" : "id",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int64"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ContentPostsPost"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/platform/content/{id}/skip" : {
-      "post" : {
-        "tags" : [ "content-controller" ],
-        "operationId" : "skip",
-        "parameters" : [ {
-          "name" : "id",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int64"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ContentPostsPost"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/platform/content/{id}/publish" : {
-      "post" : {
-        "tags" : [ "content-controller" ],
-        "operationId" : "publish",
-        "parameters" : [ {
-          "name" : "id",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int64"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ContentPostsPost"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/platform/content/{id}/postpone" : {
-      "post" : {
-        "tags" : [ "content-controller" ],
-        "operationId" : "postpone",
-        "parameters" : [ {
-          "name" : "id",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int64"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ContentPostsPost"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/platform/content/{id}/plan" : {
-      "post" : {
-        "tags" : [ "content-controller" ],
-        "operationId" : "plan",
-        "parameters" : [ {
-          "name" : "id",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int64"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ContentPostsPost"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/platform/content/{id}/done" : {
-      "post" : {
-        "tags" : [ "content-controller" ],
-        "operationId" : "done_1",
-        "parameters" : [ {
-          "name" : "id",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int64"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ContentPostsPost"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/platform/content/reels" : {
-      "post" : {
-        "tags" : [ "content-controller" ],
-        "operationId" : "addReels",
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ContentPostsReelsAdded"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/platform/content/import" : {
-      "post" : {
-        "tags" : [ "content-controller" ],
-        "operationId" : "importPlan",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "type" : "array",
-                "items" : {
-                  "$ref" : "#/components/schemas/ContentPostsDraft"
-                }
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ContentPostsImported"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/platform/clinics" : {
       "get" : {
         "tags" : [ "platform-controller" ],
@@ -9094,7 +8672,7 @@
       },
       "post" : {
         "tags" : [ "platform-controller" ],
-        "operationId" : "create_10",
+        "operationId" : "create_9",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -9450,7 +9028,7 @@
       },
       "post" : {
         "tags" : [ "agreement-controller" ],
-        "operationId" : "create_11",
+        "operationId" : "create_10",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -9478,7 +9056,7 @@
     "/api/platform/agreements/{id}/publish" : {
       "post" : {
         "tags" : [ "agreement-controller" ],
-        "operationId" : "publish_1",
+        "operationId" : "publish",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -9552,7 +9130,7 @@
     "/api/plan-templates" : {
       "get" : {
         "tags" : [ "plan-template-controller" ],
-        "operationId" : "list_8",
+        "operationId" : "list_7",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -9571,7 +9149,7 @@
       },
       "post" : {
         "tags" : [ "plan-template-controller" ],
-        "operationId" : "create_12",
+        "operationId" : "create_11",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -9620,7 +9198,7 @@
     "/api/patients" : {
       "post" : {
         "tags" : [ "patient-controller" ],
-        "operationId" : "create_13",
+        "operationId" : "create_12",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -9688,7 +9266,7 @@
     "/api/patients/{patientId}/plan" : {
       "get" : {
         "tags" : [ "chart-controller" ],
-        "operationId" : "plan_1",
+        "operationId" : "plan",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "path",
@@ -9812,7 +9390,7 @@
     "/api/patients/{patientId}/plan/variants" : {
       "get" : {
         "tags" : [ "plan-variant-controller" ],
-        "operationId" : "list_9",
+        "operationId" : "list_8",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "path",
@@ -9837,7 +9415,7 @@
       },
       "post" : {
         "tags" : [ "plan-variant-controller" ],
-        "operationId" : "create_14",
+        "operationId" : "create_13",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "path",
@@ -11566,7 +11144,7 @@
       },
       "post" : {
         "tags" : [ "segment-controller" ],
-        "operationId" : "create_15",
+        "operationId" : "create_14",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -11770,7 +11348,7 @@
     "/api/news" : {
       "get" : {
         "tags" : [ "news-controller" ],
-        "operationId" : "list_10",
+        "operationId" : "list_9",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -11786,7 +11364,7 @@
       },
       "post" : {
         "tags" : [ "news-controller" ],
-        "operationId" : "publish_2",
+        "operationId" : "publish_1",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -12083,7 +11661,7 @@
     "/api/leads" : {
       "get" : {
         "tags" : [ "lead-controller" ],
-        "operationId" : "list_11",
+        "operationId" : "list_10",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -12102,7 +11680,7 @@
       },
       "post" : {
         "tags" : [ "lead-controller" ],
-        "operationId" : "create_16",
+        "operationId" : "create_15",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -12223,7 +11801,7 @@
     "/api/lab-orders" : {
       "get" : {
         "tags" : [ "lab-controller" ],
-        "operationId" : "list_12",
+        "operationId" : "list_11",
         "parameters" : [ {
           "name" : "fitted",
           "in" : "query",
@@ -12282,7 +11860,7 @@
       },
       "post" : {
         "tags" : [ "lab-controller" ],
-        "operationId" : "create_17",
+        "operationId" : "create_16",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -12445,7 +12023,7 @@
     "/api/expenses" : {
       "get" : {
         "tags" : [ "expense-controller" ],
-        "operationId" : "list_13",
+        "operationId" : "list_12",
         "parameters" : [ {
           "name" : "from",
           "in" : "query",
@@ -12576,7 +12154,7 @@
       },
       "post" : {
         "tags" : [ "doctor-controller" ],
-        "operationId" : "create_18",
+        "operationId" : "create_17",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -12878,7 +12456,7 @@
     "/api/comebacks/{patientId}/skip" : {
       "post" : {
         "tags" : [ "comeback-controller" ],
-        "operationId" : "skip_1",
+        "operationId" : "skip",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "path",
@@ -13095,7 +12673,7 @@
     "/api/clinic/pay/requests" : {
       "post" : {
         "tags" : [ "pay-controller" ],
-        "operationId" : "create_19",
+        "operationId" : "create_18",
         "parameters" : [ {
           "name" : "months",
           "in" : "query",
@@ -13663,7 +13241,7 @@
     "/api/chairs" : {
       "get" : {
         "tags" : [ "chair-assignment-controller" ],
-        "operationId" : "list_14",
+        "operationId" : "list_13",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -13682,7 +13260,7 @@
       },
       "post" : {
         "tags" : [ "chair-controller" ],
-        "operationId" : "create_20",
+        "operationId" : "create_19",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -13794,7 +13372,7 @@
     "/api/care-memos" : {
       "get" : {
         "tags" : [ "care-memo-controller" ],
-        "operationId" : "list_15",
+        "operationId" : "list_14",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -13813,7 +13391,7 @@
       },
       "post" : {
         "tags" : [ "care-memo-controller" ],
-        "operationId" : "create_21",
+        "operationId" : "create_20",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -13938,7 +13516,7 @@
       },
       "delete" : {
         "tags" : [ "calendar-feed-controller" ],
-        "operationId" : "delete_19",
+        "operationId" : "delete_18",
         "responses" : {
           "204" : {
             "description" : "No Content"
@@ -14058,7 +13636,7 @@
       },
       "post" : {
         "tags" : [ "appointment-controller" ],
-        "operationId" : "create_22",
+        "operationId" : "create_21",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -15627,7 +15205,7 @@
     "/web/plan/{token}" : {
       "get" : {
         "tags" : [ "plan-page-controller" ],
-        "operationId" : "plan_2",
+        "operationId" : "plan_1",
         "parameters" : [ {
           "name" : "token",
           "in" : "path",
@@ -15696,205 +15274,6 @@
                 "schema" : {
                   "type" : "string",
                   "format" : "byte"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/web/materials/reel/{dir}/{file}" : {
-      "get" : {
-        "tags" : [ "reel-files-controller" ],
-        "operationId" : "file",
-        "parameters" : [ {
-          "name" : "dir",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "name" : "file",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "name" : "exp",
-          "in" : "query",
-          "required" : true,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int64"
-          }
-        }, {
-          "name" : "sig",
-          "in" : "query",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "name" : "download",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "boolean",
-            "default" : false
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "object"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/web/materials/public" : {
-      "get" : {
-        "tags" : [ "materials-controller" ],
-        "operationId" : "publicMaterials",
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/MaterialsPublicMaterials"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/web/materials/public/{name}" : {
-      "get" : {
-        "tags" : [ "materials-controller" ],
-        "operationId" : "publicFile",
-        "parameters" : [ {
-          "name" : "name",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "string",
-                  "format" : "binary"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/web/materials/howto" : {
-      "get" : {
-        "tags" : [ "materials-controller" ],
-        "operationId" : "howTo",
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "$ref" : "#/components/schemas/MaterialsHowToVideo"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/web/materials/howto/{name}" : {
-      "get" : {
-        "tags" : [ "materials-controller" ],
-        "operationId" : "howToFile",
-        "parameters" : [ {
-          "name" : "name",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "string",
-                  "format" : "binary"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/web/materials/file" : {
-      "get" : {
-        "tags" : [ "materials-controller" ],
-        "operationId" : "signed",
-        "parameters" : [ {
-          "name" : "path",
-          "in" : "query",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "name" : "exp",
-          "in" : "query",
-          "required" : true,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int64"
-          }
-        }, {
-          "name" : "sig",
-          "in" : "query",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "name" : "download",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "boolean",
-            "default" : false
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "string",
-                  "format" : "binary"
                 }
               }
             }
@@ -16002,33 +15381,6 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/DemoControllerInfo"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/web/content-jpeg/{file}" : {
-      "get" : {
-        "tags" : [ "content-jpeg" ],
-        "operationId" : "file_1",
-        "parameters" : [ {
-          "name" : "file",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "string",
-                  "format" : "byte"
                 }
               }
             }
@@ -16611,7 +15963,7 @@
     "/api/salaries" : {
       "get" : {
         "tags" : [ "salary-controller" ],
-        "operationId" : "list_16",
+        "operationId" : "list_15",
         "parameters" : [ {
           "name" : "month",
           "in" : "query",
@@ -17057,7 +16409,7 @@
     "/api/platform/outreach" : {
       "get" : {
         "tags" : [ "outreach-controller" ],
-        "operationId" : "list_17",
+        "operationId" : "list_16",
         "parameters" : [ {
           "name" : "group",
           "in" : "query",
@@ -17137,59 +16489,6 @@
                 "schema" : {
                   "type" : "string",
                   "format" : "byte"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/platform/materials" : {
-      "get" : {
-        "tags" : [ "materials-controller" ],
-        "operationId" : "list_18",
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/MaterialsListing"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/platform/materials/file" : {
-      "get" : {
-        "tags" : [ "materials-controller" ],
-        "operationId" : "file_2",
-        "parameters" : [ {
-          "name" : "path",
-          "in" : "query",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "name" : "download",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "boolean",
-            "default" : false
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "string",
-                  "format" : "binary"
                 }
               }
             }
@@ -17320,24 +16619,6 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/DemoControllerEntries"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/platform/content/instagram" : {
-      "get" : {
-        "tags" : [ "content-controller" ],
-        "operationId" : "instagram",
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/InstagramTokensState"
                 }
               }
             }
@@ -17859,7 +17140,7 @@
       },
       "delete" : {
         "tags" : [ "medical-record-controller" ],
-        "operationId" : "delete_20",
+        "operationId" : "delete_19",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "path",
@@ -18463,7 +17744,7 @@
     "/api/patient-questions" : {
       "get" : {
         "tags" : [ "question-controller" ],
-        "operationId" : "list_19",
+        "operationId" : "list_17",
         "parameters" : [ {
           "name" : "done",
           "in" : "query",
@@ -18659,7 +17940,7 @@
     "/api/opening-debts" : {
       "get" : {
         "tags" : [ "opening-debt-controller" ],
-        "operationId" : "list_20",
+        "operationId" : "list_18",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "query",
@@ -18689,7 +17970,7 @@
     "/api/members" : {
       "get" : {
         "tags" : [ "staff-members-controller" ],
-        "operationId" : "list_21",
+        "operationId" : "list_19",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -19322,7 +18603,7 @@
     "/api/clinic/plan" : {
       "get" : {
         "tags" : [ "billing-controller" ],
-        "operationId" : "plan_3",
+        "operationId" : "plan_2",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -19693,7 +18974,7 @@
       },
       "delete" : {
         "tags" : [ "appointment-controller" ],
-        "operationId" : "delete_21",
+        "operationId" : "delete_20",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -19748,7 +19029,7 @@
     "/api/appointments/{id}/teeth" : {
       "get" : {
         "tags" : [ "visit-teeth-controller" ],
-        "operationId" : "list_22",
+        "operationId" : "list_20",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -20833,7 +20114,7 @@
     "/api/time-off/{id}" : {
       "delete" : {
         "tags" : [ "time-off-controller" ],
-        "operationId" : "delete_22",
+        "operationId" : "delete_21",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -20873,7 +20154,7 @@
     "/api/platform/clinics/{id}" : {
       "delete" : {
         "tags" : [ "platform-controller" ],
-        "operationId" : "delete_23",
+        "operationId" : "delete_22",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -20930,7 +20211,7 @@
     "/api/news/{id}" : {
       "delete" : {
         "tags" : [ "news-controller" ],
-        "operationId" : "delete_24",
+        "operationId" : "delete_23",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -20989,7 +20270,7 @@
     "/api/doctors/{id}" : {
       "delete" : {
         "tags" : [ "doctor-controller" ],
-        "operationId" : "delete_25",
+        "operationId" : "delete_24",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -21049,7 +20330,7 @@
     "/api/cash-day/movements/{id}" : {
       "delete" : {
         "tags" : [ "cash-day-controller" ],
-        "operationId" : "delete_26",
+        "operationId" : "delete_25",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -22943,80 +22224,6 @@
         },
         "required" : [ "custom", "remindAfterDays", "signupUrl" ]
       },
-      "MaterialsControllerLinkRequest" : {
-        "properties" : {
-          "path" : {
-            "type" : "string"
-          },
-          "url" : {
-            "type" : "string"
-          }
-        }
-      },
-      "MaterialsListing" : {
-        "properties" : {
-          "configured" : {
-            "type" : "boolean"
-          },
-          "files" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/MaterialsMaterial"
-            }
-          }
-        },
-        "required" : [ "configured" ]
-      },
-      "MaterialsMaterial" : {
-        "properties" : {
-          "path" : {
-            "type" : "string"
-          },
-          "name" : {
-            "type" : "string"
-          },
-          "section" : {
-            "type" : "string"
-          },
-          "folder" : {
-            "type" : "string"
-          },
-          "kind" : {
-            "type" : "string"
-          },
-          "size" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "modified" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "url" : {
-            "type" : "string"
-          },
-          "downloadUrl" : {
-            "type" : "string"
-          },
-          "seconds" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "stale" : {
-            "type" : "string"
-          },
-          "shareUrl" : {
-            "type" : "string"
-          },
-          "postUrl" : {
-            "type" : "string"
-          },
-          "groupUrl" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "folder", "kind", "name", "path", "section", "size" ]
-      },
       "PlatformInfoControllerRequest" : {
         "properties" : {
           "legalName" : {
@@ -23303,160 +22510,6 @@
           }
         },
         "required" : [ "expenseId" ]
-      },
-      "ContentPostsDraft" : {
-        "properties" : {
-          "date" : {
-            "type" : "string",
-            "format" : "date"
-          },
-          "kind" : {
-            "type" : "string"
-          },
-          "title" : {
-            "type" : "string"
-          },
-          "caption" : {
-            "type" : "string"
-          },
-          "images" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            }
-          },
-          "note" : {
-            "type" : "string"
-          },
-          "time" : {
-            "type" : "string",
-            "format" : "time-local"
-          },
-          "story" : {
-            "type" : "boolean"
-          }
-        }
-      },
-      "ContentPostsPost" : {
-        "properties" : {
-          "id" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "publishOn" : {
-            "type" : "string",
-            "format" : "date"
-          },
-          "kind" : {
-            "type" : "string",
-            "enum" : [ "POST", "CAROUSEL", "REELS", "STORIES" ]
-          },
-          "title" : {
-            "type" : "string"
-          },
-          "caption" : {
-            "type" : "string"
-          },
-          "images" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            }
-          },
-          "note" : {
-            "type" : "string"
-          },
-          "status" : {
-            "type" : "string",
-            "enum" : [ "PLANNED", "DONE", "SKIPPED" ]
-          },
-          "doneAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "createdAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "instagramMediaId" : {
-            "type" : "string"
-          },
-          "instagramUrl" : {
-            "type" : "string"
-          },
-          "publishTime" : {
-            "type" : "string",
-            "format" : "time-local"
-          },
-          "video" : {
-            "type" : "string"
-          },
-          "cover" : {
-            "type" : "string"
-          },
-          "videoUrl" : {
-            "type" : "string"
-          },
-          "coverUrl" : {
-            "type" : "string"
-          },
-          "instagramPublishing" : {
-            "type" : "boolean"
-          },
-          "instagramError" : {
-            "type" : "string"
-          },
-          "instagramErrorAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "story" : {
-            "type" : "boolean"
-          },
-          "storyMediaId" : {
-            "type" : "string"
-          },
-          "storyAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "storyPublishing" : {
-            "type" : "boolean"
-          },
-          "storyError" : {
-            "type" : "string"
-          },
-          "storyErrorAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "mediaRemovedAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          }
-        },
-        "required" : [ "id", "instagramPublishing", "story", "storyPublishing" ]
-      },
-      "ContentSettingsUpdate" : {
-        "properties" : {
-          "reelsAuto" : {
-            "type" : "boolean"
-          },
-          "storiesAuto" : {
-            "type" : "boolean"
-          }
-        }
-      },
-      "ContentSettingsSettings" : {
-        "properties" : {
-          "reelsAuto" : {
-            "type" : "boolean"
-          },
-          "storiesAuto" : {
-            "type" : "boolean"
-          }
-        },
-        "required" : [ "reelsAuto", "storiesAuto" ]
       },
       "BillingControllerPaidUntil" : {
         "properties" : {
@@ -28766,75 +27819,6 @@
           }
         }
       },
-      "ContentPostsPlannedReel" : {
-        "properties" : {
-          "title" : {
-            "type" : "string"
-          },
-          "day" : {
-            "type" : "string",
-            "format" : "date"
-          }
-        }
-      },
-      "ContentPostsReelsAdded" : {
-        "properties" : {
-          "added" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "already" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "moved" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "missing" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            }
-          },
-          "from" : {
-            "type" : "string",
-            "format" : "date"
-          },
-          "time" : {
-            "type" : "string",
-            "format" : "time-local"
-          },
-          "reels" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/ContentPostsPlannedReel"
-            }
-          }
-        },
-        "required" : [ "added", "already", "moved" ]
-      },
-      "ContentPostsImported" : {
-        "properties" : {
-          "added" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "updated" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "unchanged" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "removed" : {
-            "type" : "integer",
-            "format" : "int32"
-          }
-        },
-        "required" : [ "added", "removed", "unchanged", "updated" ]
-      },
       "PlatformServiceNewClinic" : {
         "properties" : {
           "name" : {
@@ -31771,46 +30755,6 @@
           }
         }
       },
-      "MaterialsPublicMaterials" : {
-        "properties" : {
-          "video" : {
-            "type" : "string"
-          },
-          "poster" : {
-            "type" : "string"
-          },
-          "presentation" : {
-            "type" : "string"
-          }
-        }
-      },
-      "MaterialsHowToVideo" : {
-        "properties" : {
-          "id" : {
-            "type" : "string"
-          },
-          "title" : {
-            "type" : "string"
-          },
-          "video" : {
-            "type" : "string"
-          },
-          "poster" : {
-            "type" : "string"
-          },
-          "section" : {
-            "type" : "string"
-          },
-          "lead" : {
-            "type" : "string"
-          },
-          "seconds" : {
-            "type" : "integer",
-            "format" : "int32"
-          }
-        },
-        "required" : [ "id", "lead", "section", "title", "video" ]
-      },
       "TelegramLoginControllerStatus" : {
         "properties" : {
           "state" : {
@@ -34242,22 +33186,6 @@
           }
         },
         "required" : [ "day", "entries" ]
-      },
-      "InstagramTokensState" : {
-        "properties" : {
-          "enabled" : {
-            "type" : "boolean"
-          },
-          "expiresAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "refreshedAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          }
-        },
-        "required" : [ "enabled" ]
       },
       "StockCleanupCounts" : {
         "properties" : {

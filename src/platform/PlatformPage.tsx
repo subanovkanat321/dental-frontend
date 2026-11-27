@@ -2,13 +2,11 @@ import { useState, type ReactNode } from 'react'
 
 import type { Schemas } from '../api/client'
 import { ClinicsTab } from './ClinicsTab'
-import { ContentTab } from './ContentTab'
 import { AiUsageTab } from './AiUsageTab'
 import { BroadcastTab, TicketsTab } from './OwnerTabs'
 import { AnalyticsTab } from './AnalyticsTab'
 import { FinanceTab } from './FinanceTab'
 import { HealthTab } from './HealthTab'
-import { MaterialsTab } from './MaterialsTab'
 import { OutreachTab } from './OutreachTab'
 import { SettingsTab } from './SettingsTab'
 import { SurveysTab } from './surveys/SurveysTab'
@@ -20,16 +18,15 @@ import { SectionTitle } from '../layout/section'
 import { useSection } from '../layout/useSection'
 
 type Me = Schemas['BookingViewsMe']
-type Tab = 'clinics' | 'analytics' | 'finance' | 'feedback' | 'mailing' | 'marketing' | 'health' | 'ai' | 'settings'
+type Tab = 'clinics' | 'analytics' | 'finance' | 'feedback' | 'mailing' | 'health' | 'ai' | 'settings'
 
 const FEEDBACK = [{ value: 'tickets', label: 'Обращения' }, { value: 'surveys', label: 'Опросы' }] as const
 const MAILING = [{ value: 'one', label: 'По одной (WhatsApp и Instagram)' }, { value: 'all', label: 'Всем сразу (руководителям)' }] as const
-const MARKETING = [{ value: 'content', label: 'Контент-план' }, { value: 'materials', label: 'Материалы' }] as const
 
 /**
- * «Платформа» — команда Tish (2026-11-14 — 9 вкладок вместо 14): «Клиники» и опросы — менеджеры и владелец; остальное —
- * только владелец: аналитика, финансы, «Обратная связь» (обращения клиник | опросы сотрудников), «Рассылка клиникам»
- * (по одной в WhatsApp | всем сразу руководителям в бот), «Маркетинг» (контент-план Instagram | материалы), здоровье сервера,
+ * «Платформа» — команда Tish (2026-11-14 — 9 вкладок вместо 14; «Маркетинг» убран 2026-11-27): «Клиники» и опросы —
+ * менеджеры и владелец; остальное — только владелец: аналитика, финансы, «Обратная связь» (обращения клиник | опросы
+ * сотрудников), «Рассылка клиникам» (по одной в WhatsApp | всем сразу руководителям в бот), здоровье сервера,
  * расход ИИ и «Настройки» (тарифы, договор с клиниками, оплата, менеджеры, кейс /join…). Права проверяет сервер (/api/platform/*).
  */
 export function PlatformPage({ me }: { me: Me }) {
@@ -41,8 +38,7 @@ export function PlatformPage({ me }: { me: Me }) {
   const feedbackModes = me.owner ? FEEDBACK : FEEDBACK.filter((m) => m.value === 'surveys')
   const [feedback, setFeedback] = usePlatformMode('feedback', feedbackModes)
   const [mailing, setMailing] = usePlatformMode('mailing', MAILING)
-  const [marketing, setMarketing] = usePlatformMode('marketing', MARKETING)
-  const mode = tab === 'feedback' ? feedback : tab === 'mailing' ? mailing : tab === 'marketing' ? marketing : ''
+  const mode = tab === 'feedback' ? feedback : tab === 'mailing' ? mailing : ''
   // Сменили подраздел или режим — карточка справа прежнего закрыта (её закроет и сам подраздел, но отступ под неё — здесь)
   const view = `${tab}/${mode}`
   const [panelView, setPanelView] = useState(view)
@@ -52,8 +48,7 @@ export function PlatformPage({ me }: { me: Me }) {
   }
   const modes = tab === 'feedback' ? <ModeSwitch label="Обратная связь" options={feedbackModes} value={feedback} onChange={setFeedback} />
     : tab === 'mailing' ? <ModeSwitch label="Как отправить" options={MAILING} value={mailing} onChange={setMailing} />
-      : tab === 'marketing' ? <ModeSwitch label="Маркетинг" options={MARKETING} value={marketing} onChange={setMarketing} />
-        : null
+      : null
   const header = (
     <>
       <PageHead slotRef={setSlot} title={<>
@@ -72,7 +67,6 @@ export function PlatformPage({ me }: { me: Me }) {
       {tab === 'analytics' && inMain(<AnalyticsTab />)}
       {tab === 'finance' && inMain(<FinanceTab />)}
       {tab === 'mailing' && (mailing === 'all' ? inMain(<BroadcastTab />) : <OutreachTab header={header} onPanel={setPanel} />)}
-      {tab === 'marketing' && inMain(marketing === 'materials' ? <MaterialsTab /> : <ContentTab />)}
       {tab === 'health' && inMain(<HealthTab />)}
       {tab === 'ai' && inMain(<AiUsageTab />)}
     </div>

@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { TISH_INSTAGRAM, TISH_INSTAGRAM_NAME } from '../lib/brand'
 import { DEMO_PATH } from '../lib/demo'
 import { ContactLinks } from '../lib/ContactLinks'
-import { getJson, useDemoEnabled, type Links, type PublicMaterials } from './web'
+import { getJson, useDemoEnabled, type Links } from './web'
 
 /** Строка-ссылка /go: значок, заголовок, подпись. main — главное действие раздела (залито цветом). */
 function GoLink({ icon, title, sub, href, main, badge }: {
@@ -25,16 +25,14 @@ function GoLink({ icon, title, sub, href, main, badge }: {
 
 /**
  * Одна ссылка для профиля Instagram (/go), как Taplink. Покупатель — владелец клиники или частный врач (аудит
- * Instagram 2026-11-20): сначала клиникам — подключиться (сразу к форме /start), «Тур по Tish» (/tour), ролик «Как это работает», спросить
+ * Instagram 2026-11-20): сначала клиникам — подключиться (сразу к форме /start), «Тур по Tish» (/tour), «Как это работает» (/about), спросить
  * в WhatsApp или Telegram, войти; пациентам — своим блоком ниже (выбрать клинику и записаться). Оффер — одна фраза
  * «Начать» (OFFER) везде. Контакты — из «Сведений о платформе»: WhatsApp и Telegram — только если заданы.
  */
 export function Go() {
   const [c, setC] = useState<Links>({})
-  const [m, setM] = useState<PublicMaterials>({})
   useEffect(() => {
     void getJson<Links>('/web/links').then(({ data }) => setC(data ?? {}))
-    void getJson<PublicMaterials>('/web/materials/public').then(({ data }) => setM(data ?? {}))
   }, [])
   const wa = c.supportWhatsapp ? `https://wa.me/${c.supportWhatsapp}` : null
   const demo = useDemoEnabled()
@@ -56,9 +54,8 @@ export function Go() {
           <GoLink icon="▶" title="Тур по Tish — 2 минуты" sub="10 шагов со скриншотами: запись, медкарта, касса" href="/tour" />
           {/* Демо-клиника без регистрации — только если включена на сервере (GET /web/demo) */}
           {demo && <GoLink icon="👀" title="Посмотреть демо" sub="Вымышленная клиника изнутри — без регистрации, за секунды" href={DEMO_PATH} />}
-          {/* Ролик на минуту — на /join (плеер там же, без предзагрузки); ролика нет — коротко о главном на /about */}
-          <GoLink icon={m.video ? '🎬' : '📄'} title="Как это работает" sub={m.video ? 'Ролик на минуту' : 'Запись, ИИ-диктовка, карта зубов, касса — с картинками'}
-            href={m.video ? '/join#materials' : '/about'} />
+          {/* Коротко о главном с картинками — /about */}
+          <GoLink icon="📄" title="Как это работает" sub="Запись, ИИ-диктовка, карта зубов, касса — с картинками" href="/about" />
           <GoLink icon="💬" title="Спросить в WhatsApp" sub="Ответим на вопросы и поможем подключиться" href={wa} />
           <GoLink icon="✈️" title="Спросить в Telegram" sub={wa ? null : 'Ответим на вопросы и поможем подключиться'} href={c.supportUrl} />
           <GoLink icon="🔐" title="Вход для клиники" href="/login" />

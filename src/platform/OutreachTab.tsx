@@ -1,7 +1,7 @@
 import { EmptyState } from '../layout/EmptyState'
 import { RowMenu } from '../patients/CalmList'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useLayoutEffect, useMemo, useState, type ReactNode } from 'react'
 
 import { api, ApiError, unwrap, upload, type Schemas } from '../api/client'
 import { PhoneInput } from '../clinic/PhoneInput'
@@ -19,7 +19,7 @@ import { formatPhone, shortDate, todayIn } from '../lib/time'
 import { useClose } from '../lib/useClose'
 import { useMedia } from '../lib/useMedia'
 import { LeadStatus, OutreachTable } from './OutreachTable'
-import { GROUPS, groupOf, instagramProfile, instagramUrl, inviteLink, inviteState, LINK_PLACEHOLDER, messageFor, nextLead, PLACEHOLDER, prepareVideo, REACHES, reaches, remindDue, sendVideo, templateMessage, videoWay, type Channel, type Group, type OutreachLead, type Reach, type VideoResult } from './outreach'
+import { GROUPS, groupOf, instagramProfile, instagramUrl, inviteLink, inviteState, LINK_PLACEHOLDER, messageFor, nextLead, PLACEHOLDER, REACHES, reaches, remindDue, templateMessage, type Channel, type Group, type OutreachLead, type Reach } from './outreach'
 import { SubHelp } from '../layout/PageHead'
 import { rowOpen } from '../lib/rowClick'
 
@@ -70,8 +70,8 @@ function matches(l: OutreachLead, q: string, digits: string): boolean {
 
 /**
  * «Написать клиникам» (владелец платформы): список стоматологий из 2ГИС и карт — загрузить, написать
- * каждой в WhatsApp своим нажатием (короткий текст с названием клиники, без ролика) и отметить «отправили»;
- * ответившим — текст №2 и ролик, молчащим 3+ дня — одно напоминание. Массовой отправки нет нарочно: WhatsApp блокирует номер за рассылки, а первое
+ * каждой в WhatsApp своим нажатием (короткий текст с названием клиники) и отметить «отправили»;
+ * ответившим — текст №2, молчащим 3+ дня — одно напоминание. Массовой отправки нет нарочно: WhatsApp блокирует номер за рассылки, а первое
  * сообщение должно быть личным. Клиники — те же лиды, что в «Воронке продаж» (Клиники).
  */
 export function OutreachTab({ header, onPanel }: { header?: ReactNode; onPanel?: (open: boolean) => void }) {
@@ -144,11 +144,10 @@ export function OutreachTab({ header, onPanel }: { header?: ReactNode; onPanel?:
       {/* Как писать — в «?» у заголовка: два абзаца над списком отодвигали его на полэкрана */}
       <SubHelp title="По одной (WhatsApp и Instagram)">Пишите по одной — своим нажатием: WhatsApp блокирует номер за массовые рассылки, а личное сообщение
           читают охотнее.<br /><br />
-          <b>Не писали → «📨 Отправить сообщение»</b>: откроется WhatsApp с коротким текстом, без ролика и ссылок. Отправьте, вернитесь
+          <b>Не писали → «📨 Отправить сообщение»</b>: откроется WhatsApp с коротким текстом. Отправьте, вернитесь
           и отметьте «Да» — клиника перейдёт в «Написали».<br /><br />
-          <b>Ответили → «🎬 Ответили — отправить ролик»</b>: ① текст со списком возможностей; ② вернитесь сюда — кнопка ролика:
-          «Поделиться» → WhatsApp → этот чат (на компьютере ролик скачается — прикрепите в WhatsApp Web); ③ если нужно — шаблон Excel.
-          «Да» — клиника в «Ответили/дальше».<br /><br />
+          <b>Ответили → «💬 Ответили — второе сообщение»</b>: откроется WhatsApp с текстом про регистрацию и переезд; если нужно —
+          ещё и шаблон Excel. «Да» — клиника в «Ответили/дальше».<br /><br />
           <b>Молчат 3 дня → «🔁 Напомнить»</b>: одно короткое напоминание. Больше не пишем — отказ отмечайте «Не беспокоить».<br /><br />
           <b>Instagram → «📸 Написать в Instagram»</b>: текст скопируется, откроется чат клиники в Instagram — вставьте текст
           (удерживайте поле → Вставить) и отправьте. Instagram — тоже по одной: 10–20 сообщений в день с нового аккаунта, иначе
@@ -242,15 +241,12 @@ function LeadPanel({ lead, template, onClose, onActive, onNext }: {
   )
 }
 
-/**
- * Где клиника в отправке: message — открыли WhatsApp с текстом №2 и ждём возврата в приложение; video —
- * вернулись, крупно шаг ② (ролик); ask — «Отправили?»; done — отметили, «Следующая».
- */
-type Step = 'message' | 'video' | 'ask' | 'done' | null
+/** Где клиника в отправке: ask — «Отправили?»; done — отметили, «Следующая». */
+type Step = 'ask' | 'done' | null
 
 /**
- * Что отправляем: first — первое сообщение (без ролика), video — ответившим: текст №2, ролик и шаблон Excel,
- * remind — одно напоминание молчащим.
+ * Что отправляем: first — первое сообщение, video — ответившим: текст №2 и шаблон Excel (ролика нет с 2026-11-27,
+ * имя режима осталось), remind — одно напоминание молчащим.
  */
 type Mode = 'first' | 'video' | 'remind'
 
@@ -271,8 +267,6 @@ function LeadRow({ lead: l, template, selected, onSelect, onActive, onNext, onCl
   const [declining, setDeclining] = useState(false)
   const [editing, setEditing] = useState(false)
   const [reason, setReason] = useState('')
-  const [video, setVideo] = useState<VideoResult | 'pending' | null>(null)
-  const [videoError, setVideoError] = useState<string | null>(null)
   const refresh = () => {
     void client.invalidateQueries({ queryKey: ['platform-outreach'] })
     void client.invalidateQueries({ queryKey: ['platform-funnel'] })
@@ -320,46 +314,12 @@ function LeadRow({ lead: l, template, selected, onSelect, onActive, onNext, onCl
   const name = l.clinicName ?? ''
   const first = messageFor(template.text ?? '', name, link)
   const videoText = messageFor(template.videoText ?? '', name, link)
-  // В Instagram ролик ссылкой не прикрепить — в тексте №2 без строки «👇»
   const igVideoText = messageFor(template.instagramVideoText ?? template.videoText ?? '', name, link)
   const reminderText = messageFor(template.reminderText ?? '', name, link)
   const invited = inviteState(l)
-  // В карточке — то, что сейчас уйдёт: неписаным — первое сообщение, остальным — текст к ролику
+  // В карточке — то, что сейчас уйдёт: неписаным — первое сообщение, остальным — текст №2
   const text = fresh ? first : videoText
   const remind = remindDue(l, template.remindAfterDays ?? 3)
-  const way = videoWay()
-
-  // Карточка написавшей клиники открыта — ролик заранее в память (один раз на вкладку): «Поделиться» потом сразу
-  const reachable = Boolean(l.phone || l.instagram)
-  useEffect(() => {
-    if (selected && !lost && !fresh && reachable && way !== 'telegram') prepareVideo().catch(() => {})
-  }, [selected, lost, fresh, reachable, way])
-
-  // Шаг 1 → 2: WhatsApp открыли — ждём, когда владелец вернётся в приложение (вкладка снова видна или окно
-  // в фокусе), и только после того, как ушёл (иначе шаг 2 выскочил бы сразу)
-  useEffect(() => {
-    if (step !== 'message') return
-    let left = document.visibilityState === 'hidden'
-    const away = () => { left = true }
-    const back = () => {
-      if (left && document.visibilityState !== 'hidden') setStep('video')
-    }
-    const visibility = () => (document.visibilityState === 'hidden' ? away() : back())
-    document.addEventListener('visibilitychange', visibility)
-    window.addEventListener('blur', away)
-    window.addEventListener('focus', back)
-    return () => {
-      document.removeEventListener('visibilitychange', visibility)
-      window.removeEventListener('blur', away)
-      window.removeEventListener('focus', back)
-    }
-  }, [step])
-
-  // Вернулись из WhatsApp — шаг 2 сразу на виду (на телефоне карточка длинная)
-  const stepTwo = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    if (step === 'video') stepTwo.current?.scrollIntoView?.({ block: 'center', behavior: 'smooth' })
-  }, [step])
 
   const ask = (m: Mode, via: Channel = 'WHATSAPP') => {
     onActive()
@@ -397,54 +357,29 @@ function LeadRow({ lead: l, template, selected, onSelect, onActive, onNext, onCl
     openLink(instagramUrl(l.instagram!))
     setMode(m)
     setChannel('INSTAGRAM')
-    if (m === 'video') {
-      setVideo(null)
-      setStep('message')
-      if (way !== 'telegram') prepareVideo().catch(() => {})
-    }
-    else setStep('ask')
+    setStep('ask')
   }
   // Текст — сразу в поле чата и на телефоне, и на компьютере (whatsappUrl на Windows сам убирает эмодзи: из ссылки
   // они приходят «�»). Копировать-вставлять не нужно
   const open = (message: string) => openLink(whatsappUrl(l.phone!, message))
-  // Первое сообщение — холодное, только текст: ролик и ссылки незнакомому номеру похожи на рассылку
+  // Первое сообщение — холодное, только текст
   const sendFirst = () => {
     open(first)
     ask('first')
   }
-  // Ответили — текст №2, потом ролик файлом; ролик тем временем качается в память
+  // Ответили — текст №2 (регистрация по личной ссылке, помощь с переездом)
   const sendVideoText = () => {
-    onActive()
     open(videoText)
-    setMode('video')
-    setChannel('WHATSAPP')
-    setVideo(null)
-    setStep('message')
-    if (way !== 'telegram') prepareVideo().catch(() => {})
+    ask('video')
   }
   const sendReminder = () => {
     open(reminderText)
     ask('remind')
   }
-  // Напоминание и ролик — сначала тем каналом, которым написали (Instagram — и когда телефона нет)
+  // Напоминание и текст №2 — сначала тем каналом, которым написали (Instagram — и когда телефона нет)
   const igFirst = l.contactedVia === 'INSTAGRAM' || !l.phone
-  // Третьим (после текста №2 и ролика) — шаблон переезда: «заполните, и мы всё перенесём»
+  // Третьим (после текста №2) — шаблон переезда: «заполните, и мы всё перенесём»
   const openTemplate = () => open(templateMessage())
-  // Ролик: sendVideo зовёт «Поделиться» синхронно, в этом же нажатии (iPhone иначе откажет)
-  const shareVideo = (afterMessage: boolean) => {
-    onActive()
-    setMode('video')
-    setVideoError(null)
-    setVideo('pending')
-    sendVideo().then((r) => {
-      setVideo(r)
-      if (r !== 'cancelled' && r !== 'retry') setStep('ask')
-      else if (afterMessage) setStep('video')
-    }, (e: unknown) => {
-      setVideo(null)
-      setVideoError(e instanceof Error ? e.message : String(e))
-    })
-  }
   const yes = () => {
     if (mode === 'first') sent.mutate()
     else if (mode === 'remind') reminded.mutate()
@@ -492,12 +427,12 @@ function LeadRow({ lead: l, template, selected, onSelect, onActive, onNext, onCl
           {l.instagram && fresh && igButton('📸 Написать в Instagram', 'first', first, !l.phone)}
           {!fresh && (l.phone && !igFirst
             ? <>
-                <button type="button" className={g === 'SENT' ? 'btn primary' : 'btn'} onClick={sendVideoText}>🎬 Ответили — отправить ролик</button>
-                {l.instagram && igButton('📸 Ролик в Instagram', 'video', igVideoText, false)}
+                <button type="button" className={g === 'SENT' ? 'btn primary' : 'btn'} onClick={sendVideoText}>💬 Ответили — второе сообщение</button>
+                {l.instagram && igButton('📸 Второе сообщение в Instagram', 'video', igVideoText, false)}
               </>
             : <>
-                {l.instagram && igButton('🎬 Ответили — ролик в Instagram', 'video', igVideoText, g === 'SENT')}
-                {l.phone && <button type="button" className="btn" onClick={sendVideoText}>🎬 Ролик в WhatsApp</button>}
+                {l.instagram && igButton('💬 Ответили — в Instagram', 'video', igVideoText, g === 'SENT')}
+                {l.phone && <button type="button" className="btn" onClick={sendVideoText}>💬 Второе сообщение в WhatsApp</button>}
               </>)}
           {remind && (l.instagram && igFirst
             ? igButton('🔁 Напомнить в Instagram', 'remind', reminderText, false)
@@ -505,47 +440,14 @@ function LeadRow({ lead: l, template, selected, onSelect, onActive, onNext, onCl
           {!l.phone && !l.instagram && l.link && <button type="button" className="btn" onClick={() => { openLink(l.link!); ask(fresh ? 'first' : 'video') }}>Открыть ссылку</button>}
           {/* Остальное — в «⋯» (как в списках «Пациентов»): четыре тихие кнопки под главной шли столбиком по одной */}
           <RowMenu label={`Ещё: ${l.clinicName}`} items={[
-            ...(!fresh ? [{ label: video === 'pending' ? 'Готовлю ролик…' : 'Только ролик', disabled: video === 'pending', onSelect: () => shareVideo(false) }] : []),
             { label: 'Скопировать текст', onSelect: () => void copy() },
             ...(l.phone && !fresh ? [{ label: 'Шаблон Excel', onSelect: () => { openTemplate(); ask('video') } }] : []),
             ...(!declining ? [{ label: 'Не беспокоить', tone: 'bad' as const, onSelect: () => setDeclining(true) }] : []),
           ]} />
         </div>
       )}
-      {step === 'message' && (
-        <div className="outreach-step" role="status">
-          <span>{instagram
-            ? '① Текст скопирован — вставьте его в чат Instagram (удерживайте поле → Вставить), отправьте и вернитесь сюда: будет шаг ② — ролик.'
-            : '① Текст открыт в WhatsApp — отправьте его и вернитесь сюда: будет шаг ② — ролик.'}</span>
-          <span className="actions">
-            <button type="button" className="btn small" onClick={() => setStep('video')}>Текст отправлен → к ролику</button>
-            <button type="button" className="btn small ghost" onClick={() => setStep(null)}>Отмена</button>
-          </span>
-        </div>
-      )}
-      {step === 'video' && (
-        <div ref={stepTwo} className="outreach-step big" role="group" aria-label="Шаг 2: ролик">
-          <strong>🎬 Теперь ролик</strong>
-          <span>{instagram
-            ? <>Ролик: скачайте и отправьте в чат из галереи{way === 'share' ? ' (кнопка → «Сохранить видео»)' : ''}. Ссылка tish.kg/about уже в тексте —
-              можно и без файла.</>
-            : way === 'share' ? 'Нажмите кнопку → WhatsApp → выберите этот чат (он первый в списке).'
-              : way === 'telegram' ? 'Ролик откроется в браузере → «Поделиться» → WhatsApp → этот чат (он первый в списке).'
-                : 'Файл скачается — прикрепите его в этот чат WhatsApp Web (📎 → «Фото и видео»).'}</span>
-          {video === 'retry' && <span className="tone-wait">Ролик загрузился — нажмите ещё раз.</span>}
-          <span className="actions">
-            <button type="button" className="btn primary" disabled={video === 'pending'} onClick={() => shareVideo(true)}>
-              {video === 'pending' ? 'Готовлю ролик…' : way === 'download' || instagram ? '🎬 Скачать ролик' : '🎬 Отправить ролик'}</button>
-            <button type="button" className="btn ghost" onClick={() => setStep('ask')}>Без ролика</button>
-          </span>
-        </div>
-      )}
-      {copied && step !== 'ask' && step !== 'message' && <span className="tone-ok" role="status">Текст скопирован</span>}
+      {copied && step !== 'ask' && <span className="tone-ok" role="status">Текст скопирован</span>}
       {copyFailed && <p className="tone-wait" role="alert">Текст не скопировался — скопируйте его из карточки выше и вставьте в чат.</p>}
-      {video && video !== 'pending' && video !== 'cancelled' && video !== 'retry' && step !== 'done' && (
-        <span className="tone-ok" role="status">{VIDEO_DONE[video]}</span>
-      )}
-      {videoError && <p className="error" role="alert">Ролик не открылся: {videoError}</p>}
       {step === 'ask' && (
         <div className="outreach-ask" role="group" aria-label="Отправили?">
           <span>{instagram && copied ? 'Текст скопирован — вставьте его в чат (удерживайте поле → Вставить) и отправьте. Instagram не умеет подставлять текст по ссылке. '
@@ -597,7 +499,7 @@ function LeadRow({ lead: l, template, selected, onSelect, onActive, onNext, onCl
 
 const ASK: Record<Mode, (name: string) => string> = {
   first: (name) => `Отправили «${name}»?`,
-  video: (name) => `Отправили «${name}» ролик? Клиника перейдёт в «Ответили».`,
+  video: (name) => `Отправили «${name}» второе сообщение? Клиника перейдёт в «Ответили».`,
   remind: (name) => `Напомнили «${name}»?`,
 }
 
@@ -605,12 +507,6 @@ const DONE: Record<Mode, (name: string) => string> = {
   first: (name) => `✓ «${name}» — в «Написали».`,
   video: (name) => `✓ «${name}» — в «Ответили/дальше».`,
   remind: (name) => `✓ «${name}» — напомнили. Больше не напоминаем.`,
-}
-
-const VIDEO_DONE: Record<'shared' | 'downloaded' | 'opened', string> = {
-  shared: 'Ролик отправлен через «Поделиться».',
-  downloaded: 'Ролик скачан — прикрепите его в чат клиники в WhatsApp.',
-  opened: 'Ролик открыт в браузере — нажмите «Поделиться» → WhatsApp → чат клиники.',
 }
 
 /** Город клиники: из списка городов, а свой (из загруженного файла) — тоже вариантом. */
@@ -815,7 +711,7 @@ function ListUpload({ onClose }: { onClose: () => void }) {
 }
 
 /**
- * Текст первого сообщения: {клиника} подставится названием; пусто или «Вернуть» — текст по умолчанию. Текст к ролику
+ * Текст первого сообщения: {клиника} подставится названием; пусто или «Вернуть» — текст по умолчанию. Второе сообщение
  * и напоминание — только посмотреть: они приходят с сервера и обновляются вместе с приложением.
  */
 function TemplateEditor({ template }: { template: Template }) {
@@ -837,8 +733,7 @@ function TemplateEditor({ template }: { template: Template }) {
           {firstLine && <span className="outreach-template-line">{firstLine}</span>}</summary>
         <form className="form" onSubmit={(e) => { e.preventDefault(); save.mutate(text) }}>
           <p className="hint">Первое сообщение клинике. {PLACEHOLDER} — подставится название, {LINK_PLACEHOLDER} — личная ссылка
-            на регистрацию: форма откроется сразу с этой клиникой. Ролик сюда не ставьте: незнакомому номеру он похож на
-            рассылку — ролик уходит ответившим.</p>
+            на регистрацию: форма откроется сразу с этой клиникой.</p>
           <label className="field"><span>Текст</span>
             <textarea value={text} rows={8} maxLength={1500} onChange={(e) => setText(e.target.value)} /></label>
           {!text.includes(PLACEHOLDER) && <p className="tone-wait">В тексте нет {PLACEHOLDER} — название клиники не подставится.</p>}
@@ -850,8 +745,8 @@ function TemplateEditor({ template }: { template: Template }) {
             {template.custom && <button type="button" className="btn ghost" disabled={save.isPending} onClick={() => save.mutate('')}>Вернуть текст по умолчанию</button>}
           </div>
         </form>
-        <p className="hint">Ответившим — с роликом:</p>
-        <p className="outreach-text" aria-label="Текст к ролику">{template.videoText}</p>
+        <p className="hint">Ответившим — второе сообщение:</p>
+        <p className="outreach-text" aria-label="Второе сообщение">{template.videoText}</p>
         <p className="hint">Напоминание молчащим (через {template.remindAfterDays} дня, один раз):</p>
         <p className="outreach-text" aria-label="Текст напоминания">{template.reminderText}</p>
       </details>

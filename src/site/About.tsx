@@ -7,9 +7,8 @@ import { getJson, useDemoEnabled, type JoinCase } from './web'
 import './about.css'
 
 /*
- * Сайт-визитка для клиник (/about): одна длинная страница. Первый экран — текст рекламного ролика v6
- * (docs/marketing/video/promo-v6/README.md бэкенда) и сам ролик 4:5; ниже — подробно по частям, как
- * в ролике v4. С ней идём в клиники и даём ссылку в Instagram и в первом сообщении клинике. Каждая
+ * Сайт-визитка для клиник (/about): одна длинная страница. Первый экран — текст бывшего рекламного ролика v6
+ * и кадры приложения (сам ролик убран 2026-11-27); ниже — подробно по частям. С ней идём в клиники и даём ссылку в Instagram и в первом сообщении клинике. Каждая
  * часть — «слайд» на весь экран компьютера; на телефоне — своей высоты. Картинки — кадры записи ролика
  * на вымышленной клинике (public/about). Контакты владелец дал для публикации. Главная кнопка — «Начать
  * бесплатно»: клиника регистрируется сама на /start (с 2026-11-16, без заявки). С 2026-11-25 Tish бесплатный для всех.
@@ -18,12 +17,6 @@ import './about.css'
 const IMG = `${import.meta.env.BASE_URL}about/`
 /** Регистрация клиники — сама, за пару минут (src/signup). Заявка «помогите подключить» — вторичный путь на /join. */
 const START = '/start'
-/*
- * Ролик v6 4:5 и его обложку отдаёт бэкенд без входа (Materials.PUBLIC → каталог MARKETING_DIR):
- * mp4 не лежит во фронте, новый ролик — поменять путь только в бэкенде.
- */
-const PROMO_VIDEO = '/web/materials/public/promo.mp4'
-const PROMO_POSTER = '/web/materials/public/promo.png'
 const ABOUT_CONTACTS = {
   instagram: TISH_INSTAGRAM,
   telegram: TISH_TELEGRAM,
@@ -196,7 +189,7 @@ const FAQ: [string, ReactNode][] = [
     загрузите таблицу сами в приложении.</>],
 ]
 
-/** Номера-«слайды» для точек справа: герой с роликом, идея, части, для кого, контакты. */
+/** Номера-«слайды» для точек справа: герой, идея, части, для кого, контакты. */
 const NAV: [string, string][] = [['start', 'Tish'], ['idea', 'Главное'], ...PARTS.map((p): [string, string] => [p.id, p.nav]),
   ['scale', 'Для кого'], ['how', 'Как начать'], ['faq', 'Вопросы'], ['contacts', 'Контакты']]
 
@@ -220,38 +213,13 @@ function VisualView({ v }: { v: Visual }) {
   }
 }
 
-/**
- * Ролик 4:5 на первом экране. preload=none: мегабайты качаются, только когда нажали «смотреть»;
- * субтитры вшиты — можно без звука. Каталог материалов не подключён (обложка не открылась) — вместо
- * пустой рамки показываем кадры приложения, как раньше.
- */
-function HeroVideo() {
-  const [missing, setMissing] = useState(false)
-  useEffect(() => {
-    if (typeof Image === 'undefined') return
-    const probe = new Image()
-    probe.onerror = () => setMissing(true)
-    probe.src = PROMO_POSTER
-    return () => { probe.onerror = null }
-  }, [])
-  if (missing) {
-    return (
-      <div className="vis vis-duo hero-vis" data-reveal>
-        <Desktop shot={desk('day', 'Расписание клиники на компьютере: день всех врачей, следующий пациент и «Требует внимания»')} eager />
-        <Phone shot={phone('phone-day', 'Свой день врача в телефоне')} eager />
-      </div>
-    )
-  }
+/** Первый экран — кадры приложения: расписание на компьютере и день врача в телефоне (ролик убран 2026-11-27). */
+function HeroShots() {
   return (
-    <figure id="video" className="hero-video" data-reveal>
-      <div className="video-frame">
-        <video controls preload="none" playsInline poster={PROMO_POSTER} width={1080} height={1350}
-          aria-label="Ролик о Tish на минуту">
-          <source src={PROMO_VIDEO} type="video/mp4" />
-        </video>
-      </div>
-      <figcaption className="about-note">Ролик на минуту. Клиника, врачи и пациенты в ролике и на картинках — вымышленные.</figcaption>
-    </figure>
+    <div className="vis vis-duo hero-vis" data-reveal>
+      <Desktop shot={desk('day', 'Расписание клиники на компьютере: день всех врачей, следующий пациент и «Требует внимания»')} eager />
+      <Phone shot={phone('phone-day', 'Свой день врача в телефоне')} eager />
+    </div>
   )
 }
 
@@ -328,7 +296,7 @@ export function About() {
               <p className="about-note">Tish бесплатный — без оплаты и пробного срока, клиника готова за 5 минут, с телефона или компьютера</p>
               <a className="about-btn about-tour-btn" href="/tour"><span className="tour-ico" aria-hidden="true">▶</span><span className="tour-txt">Тур по Tish — 2 минуты<small>10 шагов со скриншотами</small></span></a>
             </div>
-            <HeroVideo />
+            <HeroShots />
           </div>
           <a className="about-scroll" href="#idea" aria-label="Листайте вниз"><span aria-hidden="true">↓</span></a>
         </section>

@@ -8,7 +8,7 @@ import { CaseBlock } from './CaseBlock'
 import { SiteHeader } from './SiteHeader'
 import { FREE_LINE, OFFER } from '../lib/brand'
 import { refFromUrl } from '../lib/referral'
-import { getJson, inAppBrowser, type JoinCase, type Links, type PublicMaterials, type ReferralInvite } from './web'
+import { getJson, inAppBrowser, type JoinCase, type Links, type ReferralInvite } from './web'
 
 /** Что входит в бесплатный Tish — всё; WhatsApp честно: за сообщения платит клиника Meta, не Tish. */
 const FREE_INCLUDED = [
@@ -44,7 +44,6 @@ export function Join() {
   const [phone, setPhone] = useState('')
   const [links, setLinks] = useState<Links>({})
   const [story, setStory] = useState<JoinCase | null>(null)
-  const [materials, setMaterials] = useState<PublicMaterials>({})
   const [consent, setConsent] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [sending, setSending] = useState(false)
@@ -59,8 +58,6 @@ export function Join() {
     document.title = 'Tish — запись пациентов для стоматологии'
     if (inAppBrowser()) void getJson<Links>('/web/links').then(({ data }) => setLinks(data ?? {}))
     // Кейс владелец заполняет в «Платформа → Настройки»; не заполнен или клиника не дала согласия — блока нет
-    // Ролик и PDF-презентация — на них ведёт ссылка из сообщения клиникам («Рассылка клиникам → По одной»)
-    void getJson<PublicMaterials>('/web/materials/public').then(({ data }) => setMaterials(data ?? {}))
     void getJson<JoinCase>('/web/case').then(({ data }) => setStory(data?.shown ? data : null))
     // Пришли по ссылке /join#form (со страницы /go) — к форме, когда страница дорисовалась
     if (window.location.hash) setTimeout(() => document.getElementById(window.location.hash.slice(1))?.scrollIntoView(), 0)
@@ -122,21 +119,6 @@ export function Join() {
       </div>
       <div className="site-cols join-cols">
         <div className="site-col">
-          {(materials.video || materials.presentation) && (
-            <section id="materials" className="site-case site-materials" aria-label="Посмотрите за минуту">
-              <h2>Посмотрите за минуту</h2>
-              {materials.video && (
-                // preload="none": ролик ~9 МБ не грузится, пока не нажали «Play» (страницу часто открывают с мобильного)
-                <video className="site-video" controls preload="none" playsInline poster={materials.poster ?? undefined} width={1080} height={1350}
-                  aria-label="Ролик о Tish на минуту">
-                  <source src={materials.video} type="video/mp4" />
-                </video>
-              )}
-              {materials.presentation && (
-                <a className="btn" href={materials.presentation} target="_blank" rel="noopener noreferrer">📄 Презентация (PDF)</a>
-              )}
-            </section>
-          )}
           <h2>Что умеет</h2>
           <ul className="site-features">
             {FEATURES.map(([icon, title, text]) => <li key={title}><span className="ico" aria-hidden="true">{icon}</span><span><strong>{title}</strong><span>{text}</span></span></li>)}

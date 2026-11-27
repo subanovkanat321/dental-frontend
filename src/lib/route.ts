@@ -32,7 +32,6 @@ const MOVED: Record<string, string> = {
 export const PLATFORM_MOVED: Record<string, string> = {
   outreach: 'mailing/one', broadcast: 'mailing/all',
   tickets: 'feedback/tickets', support: 'feedback/tickets', surveys: 'feedback/surveys',
-  content: 'marketing/content', materials: 'marketing/materials',
   agreements: 'settings/contract', contract: 'settings/contract', tariffs: 'settings/tariffs',
 }
 

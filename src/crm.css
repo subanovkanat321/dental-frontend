@@ -1159,53 +1159,8 @@ button.timesheet-day:hover { border-color: var(--accent); }
 .money-cell + .money-cell { border-left: 1px solid var(--separator); padding-left: 16px; }
 @media (max-width: 760px) { .money-cell + .money-cell { border-left: 0; padding-left: 0; border-top: 1px solid var(--separator); padding-top: 12px; } }
 
-/* «Платформа → Контент»: контент-план по неделям; пост — карточка без вложенных карточек */
-.content-month { margin-bottom: 0; }
-.content-month h2 { margin: 0; min-width: 9em; text-align: center; font-family: var(--display); }
-.content-week { display: grid; gap: 10px; }
-.content-reels-auto { display: grid; gap: 4px; margin: 8px 0 12px; }
-.content-reels-auto .hint, .content-reels-auto .notice { margin: 0; }
-.content-auto-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0 8px; }
-.content-auto-row > .hint { font-size: .85rem; }
-.content-week + .content-week { padding-top: 12px; border-top: 1px solid var(--separator); }
-/* Прошедшие дни месяца — внизу, свёрнуты: план начинается с сегодня */
-.content-past { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--separator); }
-.content-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 12px; }
-.content-filter .segments { flex: 1 1 320px; max-width: 560px; }
-.content-past > summary { min-height: 44px; display: flex; align-items: center; color: var(--hint); font-weight: 600; cursor: pointer; }
-.content-past[open] > summary { margin-bottom: 10px; }
-.content-week h3 { margin: 0; font-size: .95rem; }
-.content-post { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--separator); border-radius: var(--r-md); }
-.content-post.today { border-color: var(--now); }
-.content-post h4 { margin: 0; font-size: 1rem; }
-.content-post p { margin: 0; }
-.content-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.content-thumbs { display: flex; flex-wrap: wrap; gap: 6px; }
-.content-thumbs img, .content-video { width: 72px; height: 72px; object-fit: cover; border-radius: var(--r-sm); background: var(--sunken); display: grid; place-items: center; font-size: .8rem; color: var(--hint); }
-.content-reel { margin: 0; display: grid; gap: 6px; justify-items: start; }
-.content-reel video { width: 180px; max-width: 100%; aspect-ratio: 9 / 16; border-radius: var(--r-sm); background: #000; object-fit: cover; }
-.content-caption { display: grid; gap: 6px; padding: 10px; border-radius: var(--r-sm); background: var(--sunken); }
-.content-caption p { white-space: pre-wrap; overflow-wrap: anywhere; }
-.content-caption .btn { justify-self: start; }
-@media (max-width: 760px) { .content-post .actions .btn { flex: 1 1 auto; } }
 
-/* «Платформа → Материалы» (src/platform/MaterialsTab): ролики с плеером, презентация, картинки Instagram */
-.materials-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 12px; margin: 8px 0 0; padding: 0; list-style: none; }
-.materials-card { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 12px; align-items: start; padding: 10px; border: 1px solid var(--separator); border-radius: var(--r-md); }
-.materials-card-body { display: grid; gap: 4px; min-width: 0; overflow-wrap: anywhere; }
-.materials-card-body .actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
-.materials-thumb { position: relative; display: grid; place-items: center; width: 96px; aspect-ratio: 4 / 5; padding: 0; overflow: hidden; border: 0; border-radius: var(--r-sm); background: var(--sunken); color: var(--hint); font: inherit; font-weight: 600; cursor: pointer; }
-.materials-thumb img, .materials-thumb video { width: 100%; height: 100%; object-fit: cover; background: #000; }
-.materials-card:has(video:not([poster])) .materials-thumb { cursor: default; }
-.materials-thumb-empty { cursor: default; }
-.materials-play { position: absolute; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: rgb(0 0 0 / .55); color: #fff; font-size: .9rem; }
-/* Играющий ролик — во всю ширину карточки */
-.materials-card:has(video) { grid-template-columns: 1fr; }
-.materials-card:has(video) .materials-thumb { width: 100%; aspect-ratio: auto; max-height: 420px; }
-.materials-card:has(video) .materials-thumb video { height: auto; max-height: 420px; object-fit: contain; }
-.materials-stale { padding: 10px 14px; border-radius: var(--r-md); background: var(--wait-bg); color: var(--wait-ink); }
-.materials-stale ul { margin: 6px 0 0; padding-left: 20px; }
-.badge-stale { padding: 1px 8px; border-radius: 999px; background: var(--wait-bg); color: var(--wait-ink); font-size: .78rem; font-weight: 600; white-space: nowrap; }
+/* Кейс /join в «Платформа → Настройки» и список менеджеров */
 .join-case-preview { display: grid; gap: 8px; padding: 14px; border: 1px dashed var(--line-strong); border-radius: var(--r-md); background: var(--card); }
 .join-case-preview h3, .join-case-preview h4, .join-case-preview p { margin: 0; }
 .join-case-preview .site-case-metrics { list-style: none; margin: 4px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
@@ -1215,7 +1170,6 @@ button.timesheet-day:hover { border-color: var(--accent); }
 .materials-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .materials-list li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 0; border-top: 1px solid var(--separator); }
 .materials-list li:first-child { border-top: 0; }
-.materials-name { display: grid; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
 
 /* Документы приёма и плана: памятка, квитанция — «🖨 Печать» и «📤 Отправить пациенту» (src/print) */
 .visit-docs {
@@ -2379,11 +2333,6 @@ button.status-pill:focus-visible { outline: 2px solid var(--accent); outline-off
 .outreach-ask { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 12px; border-radius: var(--r-md); background: var(--card); }
 .outreach-search { flex: 1 1 200px; min-width: 0; height: 40px; padding: 0 12px; font: inherit; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
 .outreach-search:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
-/* «📨 Отправить сообщение и ролик»: шаг ① — тихая строка, шаг ② — крупный блок с главной кнопкой */
-.outreach-step { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 12px; border-radius: var(--r-md); background: var(--card); }
-.outreach-step.big { flex-direction: column; align-items: stretch; gap: 6px; padding: 12px; box-shadow: inset 0 0 0 2px var(--accent); background: var(--accent-soft); }
-.outreach-step.big strong { font-size: 1.15em; }
-.outreach-step.big .btn.primary { min-height: 48px; flex: 1 1 auto; }
 /* Сверху — «Текст сообщения» свёрнутым: заголовок и первая строка текста в одну строку, длинная — с «…» */
 .outreach-template { padding-top: 0; padding-bottom: 0; }
 .outreach-template > details > summary { display: flex; align-items: center; gap: 10px; min-height: 48px; cursor: pointer; min-width: 0; }
@@ -2951,11 +2900,9 @@ p.expense-owner { display: block; }
 /* «Откуда приходят пациенты»: «＋ Свой вариант» над таблицей (на телефоне шапка таблицы скрыта) */
 .sources-add { margin: 0 0 12px; }
 
-/* «Материалы» на телефоне: превью уже — кнопкам карточки шире строка, не по одной в ряд */
+/* Список менеджеров на телефоне: кнопки крупнее */
 @media (max-width: 640px) {
-  .materials-card { grid-template-columns: 72px minmax(0, 1fr); }
-  .materials-thumb { width: 72px; }
-  .materials-card-body .actions .btn, .materials-list .actions .btn { min-height: 40px; }
+  .materials-list .actions .btn { min-height: 40px; }
 }
 .outreach-lead > strong .hint { font-weight: 400; }
 

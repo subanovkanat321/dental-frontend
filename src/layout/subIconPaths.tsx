@@ -66,7 +66,7 @@ export const SUB_ICONS: Partial<Record<Page, Record<string, ReactNode>>> = {
   cash: { money: P.banknote, day: P.coins, earnings: P.wallet, analytics: P.trend, expenses: P.receipt, debtors: P.debtor, salary: P.envelope, stats: P.bars, report: P.doc },
   stock: { materials: P.box, spending: P.cart, purchase: P.receipt, lab: P.tooth },
   platform: {
-    clinics: P.buildings, analytics: P.trend, finance: P.coins, feedback: P.chat, mailing: P.send, marketing: P.megaphone,
+    clinics: P.buildings, analytics: P.trend, finance: P.coins, feedback: P.chat, mailing: P.send,
     ai: P.sparkles, health: P.pulse, settings: P.sliders,
   },
   clinic: { about: P.clinic, staff: P.people, services: P.tag, hours: P.clock, chairs: P.chair },
@@ -84,7 +84,7 @@ export const SUB_TONES: Partial<Record<Page, Record<string, string>>> = {
   settings: { messages: 'stock', attract: 'instagram', documents: 'memo', visits: 'schedule', patients: 'patients', account: 'settings' },
   clinic: { about: 'clinic', staff: 'patients', services: 'stock', hours: 'schedule', chairs: 'learn' },
   platform: {
-    clinics: 'platform', analytics: 'patients', finance: 'finance', feedback: 'support', mailing: 'schedule', marketing: 'instagram',
+    clinics: 'platform', analytics: 'patients', finance: 'finance', feedback: 'support', mailing: 'schedule',
     ai: 'ai', health: 'logout', settings: 'settings',
   },
 }

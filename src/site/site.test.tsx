@@ -167,24 +167,23 @@ test('заявка клиники: ошибки полей с сервера, п
   expect(bodies[1]).toMatchObject({ clinicName: 'Стоматолог Айгерим', phone: '+996555000111', telegram: '@aigerim_dent', city: 'Ош', solo: true, consent: true, website: '', doctors: null })
 })
 
-test('/go: сначала клиникам (оффер → /start, ролик, WhatsApp, Telegram, вход), пациентам — мелкой ссылкой внизу', async () => {
+test('/go: сначала клиникам (оффер → /start, тур, как это работает, WhatsApp, Telegram, вход), пациентам — мелкой ссылкой внизу', async () => {
   server.use(
     http.get('*/web/links', () => HttpResponse.json({
       supportUrl: 'https://t.me/tish_support', supportTelegram: 'tish_support', supportPhones: ['996555000111', '996700222333'],
       supportWhatsapp: '996770444555', botUrl: 'https://t.me/tish_bot',
     } satisfies Links)),
-    http.get('*/web/materials/public', () => HttpResponse.json({ video: '/web/materials/public/promo.mp4', poster: null, presentation: null })),
   )
   const { container } = render(<Go />)
   expect(screen.getByRole('heading', { level: 1, name: 'Tish — программа для стоматологий Кыргызстана' })).toBeInTheDocument()
   expect(screen.getByText('Telegram-запись, ИИ-медкарта голосом, касса — в одном приложении')).toBeInTheDocument()
   const clinics = screen.getByRole('region', { name: 'Для клиник и частных врачей' })
   await within(clinics).findByRole('link', { name: /Спросить в WhatsApp/ })
-  expect(await within(clinics).findByRole('link', { name: /Как это работает/ })).toHaveAttribute('href', '/join#materials')
+  expect(await within(clinics).findByRole('link', { name: /Как это работает/ })).toHaveAttribute('href', '/about')
   // Порядок: подключить (с оффером) → тур по Tish → как это работает → WhatsApp → Telegram → вход
   expect(within(clinics).getByRole('link', { name: /Тур по Tish — 2 минуты/ })).toHaveAttribute('href', '/tour')
   const links = within(clinics).getAllByRole('link')
-  expect(links.map((a) => a.getAttribute('href'))).toEqual(['/start', '/tour', '/join#materials', 'https://wa.me/996770444555', 'https://t.me/tish_support', '/login'])
+  expect(links.map((a) => a.getAttribute('href'))).toEqual(['/start', '/tour', '/about', 'https://wa.me/996770444555', 'https://t.me/tish_support', '/login'])
   expect(links[0]).toHaveAccessibleName(expect.stringContaining('Подключить клинику — бесплатно'))
   expect(links[0]).toHaveAccessibleName(expect.stringContaining('Tish бесплатный'))
   expect(container.textContent).not.toMatch(/дней|месяц/)
@@ -203,7 +202,7 @@ test('/go: сначала клиникам (оффер → /start, ролик, W
   expect(within(contacts).getByRole('link', { name: 'Instagram @tish.app.kg' })).toHaveAttribute('href', 'https://www.instagram.com/tish.app.kg/')
 })
 
-test('/go без ролика: «Как это работает» ведёт на /about', async () => {
+test('/go без контактов: «Как это работает» ведёт на /about', async () => {
   server.use(http.get('*/web/links', () => HttpResponse.json({} satisfies Links)))
   render(<Go />)
   expect(await screen.findByRole('link', { name: /Как это работает/ })).toHaveAttribute('href', '/about')
@@ -321,22 +320,10 @@ test('обычный браузер — без подсказки про Instagr
   expect(screen.queryByText(/Открыть в браузере/)).not.toBeInTheDocument()
 })
 
-test('/join: «Посмотрите за минуту» — ролик без предзагрузки и PDF-презентация; нет файлов — нет блока', async () => {
-  server.use(http.get('*/web/materials/public', () => HttpResponse.json({
-    video: '/web/materials/public/promo.mp4', poster: '/web/materials/public/promo.png', presentation: '/web/materials/public/presentation.pdf',
-  })))
-  const { unmount } = render(<Join />)
-  const block = await screen.findByRole('region', { name: 'Посмотрите за минуту' })
-  const video = within(block).getByLabelText('Ролик о Tish на минуту')
-  expect(video).toHaveAttribute('preload', 'none')
-  expect(video).toHaveAttribute('poster', '/web/materials/public/promo.png')
-  expect(video.querySelector('source')).toHaveAttribute('src', '/web/materials/public/promo.mp4')
-  expect(within(block).getByRole('link', { name: '📄 Презентация (PDF)' })).toHaveAttribute('href', '/web/materials/public/presentation.pdf')
-  unmount()
-
-  server.use(http.get('*/web/materials/public', () => HttpResponse.json({ video: null, poster: null, presentation: null })))
+test('/join: ролика и презентации нет (удалены 2026-11-27) — блока «Посмотрите за минуту» нет', async () => {
   render(<Join />)
   // Оффер — одна фраза, как на /go, /start и /about
   expect(await screen.findByText(FREE_LINE, { exact: false })).toBeInTheDocument()
   expect(screen.queryByRole('region', { name: 'Посмотрите за минуту' })).not.toBeInTheDocument()
+  expect(document.querySelector('video')).toBeNull()
 })

@@ -127,7 +127,7 @@ export function GuidePage({ me, onBack }: { me: Me; onBack: () => void }) {
               </>
             ) : <Cover chapters={chapters} last={last} role={role} onGo={go} />}
         </div>
-        {wide && !phone && <Aside chapter={hits ? null : page?.chapter ?? null} />}
+        {wide && !phone && <Aside />}
       </div>
       {sheet && <TocSheet onClose={() => setSheet(false)}>{toc}</TocSheet>}
     </div>
@@ -237,8 +237,6 @@ function Reader({ page, number, onGo }: { page: BookPage; number: number; onGo: 
       <h2 id="book-title">{s.title}</h2>
       {s.text && <p>{s.text}</p>}
       {s.steps.length > 0 && <ol className="manual-steps">{s.steps.map((step) => <li key={step}>{step}</li>)}</ol>}
-      {/* Ролик к разделу — в «Видео: как сделать» (свой просмотрщик, «следующее видео»); «назад» вернёт сюда */}
-      {s.video && <p className="manual-video"><button type="button" className="link" onClick={() => openMine('help', `videos/${s.video}`)}>🎬 Видео: как это сделать</button></p>}
       {s.image && <Figure image={s.image} />}
       {s.tip && <p className="manual-tip"><strong>Совет.</strong> {s.tip}</p>}
     </article>
@@ -319,25 +317,10 @@ function Cover({ chapters, last, role, onGo }: { chapters: GuideChapter[]; last?
   )
 }
 
-/**
- * Широкий экран — колонка справа, чтобы не было пустой половины: ролики к разделам открытой главы (в «Видео: как
- * сделать») и «Не нашли ответ?» — помощник и «Написать в Tish». На главной и в поиске — ссылка на все ролики.
- */
-function Aside({ chapter }: { chapter: GuideChapter | null }) {
-  const videos = chapter ? chapter.sections.filter((s) => s.video) : []
+/** Широкий экран — колонка справа, чтобы не было пустой половины: «Не нашли ответ?» — помощник и «Написать в Tish». */
+function Aside() {
   return (
     <aside className="book-aside" aria-label="Ещё по теме">
-      <section className="book-aside-block">
-        <h3>{chapter ? 'Видео по главе' : 'Видео: как сделать'}</h3>
-        {videos.length > 0 ? (
-          <ul>
-            {videos.map((s) => (
-              <li key={sectionId(s)}><button type="button" className="link" onClick={() => openMine('help', `videos/${s.video}`)}>{s.title}</button></li>
-            ))}
-          </ul>
-        ) : <p className="hint">Ролики по 20–40 секунд: запись, перенос, касса, склад.</p>}
-        <button type="button" className="btn small" onClick={() => openMine('help', 'videos')}>Все видео</button>
-      </section>
       <section className="book-aside-block">
         <h3>Не нашли ответ?</h3>
         <p className="hint">Помощник ответит сразу; не знает — передаст команде Tish.</p>

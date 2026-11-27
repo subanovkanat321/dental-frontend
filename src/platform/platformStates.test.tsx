@@ -79,15 +79,3 @@ test('«Расход ИИ»: месяц без расхода — пустое �
   expect(within(row).queryByRole('button', { name: 'Изменить лимит' })).not.toBeInTheDocument()
 })
 
-test('«Контент» с ошибкой плана: ошибка, а не «В этом месяце постов нет»', async () => {
-  server.use(
-    http.get('*/api/platform/content', fail),
-    http.get('*/api/platform/content/settings', () => HttpResponse.json({ reelsAuto: false, storiesAuto: false })),
-    http.get('*/api/platform/content/instagram', () => HttpResponse.json({ enabled: false })),
-  )
-  const user = userEvent.setup()
-  renderApp()
-  await openPlatform('Маркетинг', 'Контент-план', user)
-  expect(await screen.findByText(/План не загрузился/)).toBeInTheDocument()
-  expect(screen.queryByText('В этом месяце постов нет')).not.toBeInTheDocument()
-})

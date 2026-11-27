@@ -23,7 +23,6 @@ function backend(who: Schemas['BookingViewsMe'] = owner) {
     http.get('*/web/config', () => HttpResponse.json({ botUsername: 'tish_test_bot' })),
     http.get('*/api/platform/clinics', () => HttpResponse.json([clinic(1, 'Улыбка'), clinic(2, 'Жемчуг')])),
     http.get('*/api/platform/agreements/statuses', () => HttpResponse.json({})),
-    http.get('*/api/platform/content/instagram', () => HttpResponse.json({ enabled: false })),
     http.get('*/api/platform/broadcasts', () => HttpResponse.json([
       { id: 1, text: 'В субботу плановые работы', sentAt: '2026-11-10T06:00:00Z', clinics: 12, recipients: 11, delivered: 8 },
     ])),
@@ -43,8 +42,6 @@ test.each([
   ['/platform/tickets', 'Обратная связь', 'Обращения', '#/platform/feedback/tickets'],
   ['/platform/support', 'Обратная связь', 'Обращения', '#/platform/feedback/tickets'],
   ['/platform/surveys', 'Обратная связь', 'Опросы', '#/platform/feedback/surveys'],
-  ['/platform/content', 'Маркетинг', 'Контент-план', '#/platform/marketing/content'],
-  ['/platform/materials', 'Маркетинг', 'Материалы', '#/platform/marketing/materials'],
 ])('старый адрес %s — вкладка «%s», режим «%s»', async (old, tab, mode, now) => {
   backend()
   window.location.hash = old

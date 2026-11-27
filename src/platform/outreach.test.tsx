@@ -6,7 +6,7 @@ import type { Schemas } from '../api/client'
 import { me, renderApp, openPlatform } from '../test/fixtures'
 import { choose, chosen } from '../test/select'
 import { server } from '../test/server'
-import { forgetVideo, inviteLink, messageFor, nextLead, remindDue } from './outreach'
+import { inviteLink, messageFor, nextLead, remindDue } from './outreach'
 
 type Lead = Schemas['SalesFunnelLead']
 
@@ -19,7 +19,7 @@ function lead(id: number, clinicName: string, extra: Partial<Lead> = {}): Lead {
 }
 
 const TEMPLATE = 'Здравствуйте, {клиника}! 😊\nМы — Tish. Подробнее: tish.kg/about'
-const VIDEO_TEXT = 'Спасибо! Вот минута 👇\n👨‍⚕️ зарплата врачам'
+const VIDEO_TEXT = 'Спасибо! 👇\n👨‍⚕️ зарплата врачам'
 const REMINDER = 'Добрый день! Канат, по программе. 10 минут?'
 const TEXTS = { videoText: VIDEO_TEXT, reminderText: REMINDER, remindAfterDays: 3, signupUrl: 'https://tish.test/start' }
 const owner = { ...me, owner: true, platform: true }
@@ -33,28 +33,8 @@ function outreach(leads: Lead[]): Schemas['ClinicOutreachOutreach'] {
 }
 
 let leads: Lead[]
-/** Сколько раз качали ролик — должен один раз на вкладку, а не на каждую клинику. */
-let videoFetches = 0
-
-/** Владелец ушёл в WhatsApp и вернулся: вкладка скрылась и снова видна. */
-function leaveAndReturn() {
-  for (const state of ['hidden', 'visible']) {
-    Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => state })
-    document.dispatchEvent(new Event('visibilitychange'))
-  }
-}
-
-/** Телефон: «Поделиться» файлом есть; что поделились — в shared. */
-function phoneShare(shared: File[][]) {
-  Object.assign(navigator, {
-    canShare: (d: { files?: File[] }) => !!d.files?.length,
-    share: (d: { files: File[] }) => { shared.push(d.files); return Promise.resolve() },
-  })
-}
 
 beforeEach(() => {
-  forgetVideo()
-  videoFetches = 0
   window.location.hash = '/platform'
   leads = [
     lead(1, 'Тест-Улыбка', { stage: 'CONTACTED', contactedAt: '2026-11-07T08:00:00Z' }),
@@ -72,16 +52,9 @@ beforeEach(() => {
     http.get('*/api/platform/pay-requests', () => HttpResponse.json([])),
     http.get('*/api/platform/funnel', () => HttpResponse.json({ total: 0, stages: [], leads: [] })),
     http.get('*/api/platform/outreach', () => HttpResponse.json(outreach(leads))),
-    http.get('*/web/materials/public/promo.mp4', () => {
-      videoFetches++
-      return new HttpResponse('mp4', { headers: { 'Content-Type': 'video/mp4' } })
-    }),
   )
 })
 afterEach(() => {
-  Reflect.deleteProperty(navigator, 'canShare')
-  Reflect.deleteProperty(navigator, 'share')
-  Reflect.deleteProperty(document, 'visibilityState')
   window.location.hash = ''
   vi.restoreAllMocks()
 })
@@ -113,7 +86,7 @@ test('текст с названием клиники и «Следующая к
   expect(nextLead([lead(1, 'А', { stage: 'CONTACTED' })], null)).toBeNull()
 })
 
-test('«📨 Отправить сообщение» — только текст в wa.me (без ролика), «Отправили? — Да» ставит отметку', async () => {
+test('«📨 Отправить сообщение» — только текст в wa.me, «Отправили? — Да» ставит отметку', async () => {
   const open = vi.spyOn(window, 'open').mockImplementation(() => null)
   let marked: string | null = null
   server.use(http.post('*/api/platform/outreach/:id/sent', ({ params }) => {
@@ -124,9 +97,9 @@ test('«📨 Отправить сообщение» — только текст
   const user = await openTab()
 
   const card = screen.getByRole('listitem', { name: 'Клиника: Тест-Дент' })
-  // Неписаным ролик не предлагаем — ни шагом, ни отдельной кнопкой
+  // Ролика нет совсем (удалён 2026-11-27)
   await user.click(within(card).getByRole('button', { name: 'Ещё: Тест-Дент' }))
-  expect(within(card).queryByRole('menuitem', { name: 'Только ролик' })).not.toBeInTheDocument()
+  expect(within(card).queryByRole('menuitem', { name: /ролик/i })).not.toBeInTheDocument()
   await user.keyboard('{Escape}')
   expect(within(card).queryByRole('button', { name: /Ответили/ })).not.toBeInTheDocument()
   await user.click(within(card).getByRole('button', { name: '📨 Отправить сообщение' }))
@@ -254,27 +227,6 @@ test('«Не беспокоить» — отказ с причиной', async (
   await waitFor(() => expect(body).toEqual({ reason: 'Дорого' }))
 })
 
-test('«Только ролик»: телефон — «Поделиться» файлом mp4; компьютер — файл скачивается', async () => {
-  const shared: File[][] = []
-  phoneShare(shared)
-  const user = await openTab()
-  const card = screen.getByRole('listitem', { name: 'Клиника: Тест-Улыбка' })
-  await pick(user, card, 'Только ролик')
-  expect(await within(card).findByText('Ролик отправлен через «Поделиться».')).toBeInTheDocument()
-  expect(shared[0]?.[0]?.name).toBe('Tish-rolik.mp4')
-  expect(shared[0]?.[0]?.type).toBe('video/mp4')
-
-  // Нет «Поделиться» файлом (компьютер) — скачивание
-  Object.assign(navigator, { canShare: () => false })
-  const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
-  if (!('createObjectURL' in URL)) Object.assign(URL, { createObjectURL: () => 'blob:x', revokeObjectURL: () => {} })
-  await user.click(within(card).getByRole('button', { name: 'Нет' }))
-  await pick(user, card, 'Только ролик')
-  expect(await within(card).findByText(/Ролик скачан/)).toBeInTheDocument()
-  expect(click).toHaveBeenCalled()
-  expect(videoFetches).toBe(1)
-})
-
 test('«＋ Добавить клинику» по одной: отправляет одну строку с заголовками; дубль — понятный текст', async () => {
   const sent: string[] = []
   server.use(http.post('*/api/platform/outreach/import', async ({ request }) => {
@@ -339,16 +291,14 @@ test('«Шаблон Excel» (ответившим) — третьим сооб�
   const text = `Вот шаблон — заполните, и мы всё перенесём: ${window.location.origin}/web/import/tish-perenos.xlsx\n`
     + 'Пациенты, прайс, врачи, склад, будущие записи и долги — каждое на своём листе. Пустые листы можно не трогать.'
   expect(open).toHaveBeenCalledWith(`https://api.whatsapp.com/send/?phone=996555000401&text=${encodeURIComponent(text)}`, '_blank', 'noopener')
-  // И после ролика, в «Отправили?» — та же кнопка
+  // И в «Отправили?» — та же кнопка
   const ask = within(card).getByRole('group', { name: 'Отправили?' })
   await user.click(within(ask).getByRole('button', { name: '📥 Ещё и шаблон Excel' }))
   expect(open).toHaveBeenCalledTimes(2)
 })
 
-test('«🎬 Ответили — отправить ролик»: ① текст №2 в wa.me → возврат → ② «Поделиться» роликом → «Да» — этап «Демо» → «Следующая»', async () => {
+test('«💬 Ответили — второе сообщение»: текст №2 в wa.me → «Отправили?» → «Да» — этап «Демо» → «Следующая»', async () => {
   const open = vi.spyOn(window, 'open').mockImplementation(() => null)
-  const shared: File[][] = []
-  phoneShare(shared)
   leads = leads.map((l) => l.id === 1 ? { ...l, note: 'Звонить после обеда', nextStep: 'Показать', nextStepOn: '2026-11-20' } : l)
   const bodies: unknown[] = []
   server.use(http.put('*/api/platform/funnel/:id', async ({ request, params }) => {
@@ -358,24 +308,13 @@ test('«🎬 Ответили — отправить ролик»: ① текс�
   }))
   const user = await openTab()
   const card = screen.getByRole('listitem', { name: 'Клиника: Тест-Улыбка' })
-  await user.click(within(card).getByRole('button', { name: '🎬 Ответили — отправить ролик' }))
+  await user.click(within(card).getByRole('button', { name: '💬 Ответили — второе сообщение' }))
   expect(open).toHaveBeenCalledWith(`https://api.whatsapp.com/send/?phone=996555000401&text=${encodeURIComponent(VIDEO_TEXT)}`, '_blank', 'noopener')
-  expect(within(card).getByText(/Текст открыт в WhatsApp/)).toBeInTheDocument()
-  expect(within(card).queryByRole('group', { name: 'Шаг 2: ролик' })).not.toBeInTheDocument()
-  // Пока владелец в WhatsApp, ролик уже качается в память
-  await waitFor(() => expect(videoFetches).toBe(1))
-
-  leaveAndReturn()
-  const step2 = await within(card).findByRole('group', { name: 'Шаг 2: ролик' })
-  expect(step2).toHaveTextContent('выберите этот чат (он первый в списке)')
-  await user.click(within(step2).getByRole('button', { name: '🎬 Отправить ролик' }))
-  // «Поделиться» — сразу по нажатию, из готового файла (без повторного скачивания)
-  expect(shared).toHaveLength(1)
-  expect(shared[0]?.[0]?.name).toBe('Tish-rolik.mp4')
-  expect(shared[0]?.[0]?.type).toBe('video/mp4')
+  // Шага с роликом нет — сразу «Отправили?»
+  expect(within(card).queryByRole('group', { name: /ролик/ })).not.toBeInTheDocument()
 
   const ask = await within(card).findByRole('group', { name: 'Отправили?' })
-  expect(ask).toHaveTextContent('перейдёт в «Ответили»')
+  expect(ask).toHaveTextContent('второе сообщение? Клиника перейдёт в «Ответили»')
   // Третьим — шаблон Excel
   await user.click(within(ask).getByRole('button', { name: '📥 Ещё и шаблон Excel' }))
   expect(open).toHaveBeenCalledTimes(2)
@@ -387,12 +326,9 @@ test('«🎬 Ответили — отправить ролик»: ① текс�
   await user.click(within(done).getByRole('button', { name: 'Следующая клиника →' }))
   expect(screen.getByRole('listitem', { name: 'Клиника: Тест-Дент' })).toHaveAttribute('aria-current', 'true')
 
-  // Другая клиника — ролик тот же, из памяти: второй раз не качаем
-  const further = screen.getByRole('listitem', { name: 'Клиника: Тест-Демо' })
-  await pick(user, further, 'Только ролик')
-  expect(shared).toHaveLength(2)
-  expect(videoFetches).toBe(1)
   // Уже дальше «Демо» — «Да» этап не трогает
+  const further = screen.getByRole('listitem', { name: 'Клиника: Тест-Демо' })
+  await user.click(within(further).getByRole('button', { name: '💬 Ответили — второе сообщение' }))
   await user.click(within(within(further).getByRole('group', { name: 'Отправили?' })).getByRole('button', { name: 'Да' }))
   expect(await within(further).findByRole('group', { name: 'Отмечено' })).toBeInTheDocument()
   expect(bodies).toHaveLength(1)
@@ -433,21 +369,6 @@ test('«🔁 Напомнить» — написали 3+ дня назад и �
   // Напомнили — кнопки больше нет, в карточке дата напоминания
   await waitFor(() => expect(within(card).queryByRole('button', { name: '🔁 Напомнить' })).not.toBeInTheDocument())
   expect(within(card).getByText(/напомнили/)).toBeInTheDocument()
-})
-
-test('шаг ② на компьютере: «Поделиться» файлом нет — ролик скачивается, подсказка про WhatsApp Web', async () => {
-  vi.spyOn(window, 'open').mockImplementation(() => null)
-  const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
-  if (!('createObjectURL' in URL)) Object.assign(URL, { createObjectURL: () => 'blob:x', revokeObjectURL: () => {} })
-  const user = await openTab()
-  const card = screen.getByRole('listitem', { name: 'Клиника: Тест-Улыбка' })
-  await user.click(within(card).getByRole('button', { name: '🎬 Ответили — отправить ролик' }))
-  leaveAndReturn()
-  const step2 = await within(card).findByRole('group', { name: 'Шаг 2: ролик' })
-  expect(step2).toHaveTextContent('прикрепите его в этот чат WhatsApp Web')
-  await user.click(within(step2).getByRole('button', { name: '🎬 Скачать ролик' }))
-  expect(await within(card).findByRole('group', { name: 'Отправили?' })).toBeInTheDocument()
-  expect(click).toHaveBeenCalled()
 })
 
 test('«Изменить» клинику: страна и номер, 409 — номер у другой клиники, потом сохраняется', async () => {
@@ -515,9 +436,9 @@ test('Windows: текст сразу в поле чата, без эмодзи (
   const card = screen.getByRole('listitem', { name: 'Клиника: Тест-Дент' })
   await user.click(within(card).getByRole('button', { name: '📨 Отправить сообщение' }))
   expect(open).toHaveBeenCalledWith(`https://api.whatsapp.com/send/?phone=996555000402&text=${encodeURIComponent('Здравствуйте, Тест-Дент!\nМы — Tish. Подробнее: https://tish.kg/about')}`, '_blank', 'noopener')
-  // Текст к ролику — тоже без эмодзи (👇, 👨‍⚕️)
-  await user.click(within(screen.getByRole('listitem', { name: 'Клиника: Тест-Улыбка' })).getByRole('button', { name: '🎬 Ответили — отправить ролик' }))
-  expect(open).toHaveBeenLastCalledWith(`https://api.whatsapp.com/send/?phone=996555000401&text=${encodeURIComponent('Спасибо! Вот минута\nзарплата врачам')}`, '_blank', 'noopener')
+  // Второе сообщение — тоже без эмодзи (👇, 👨‍⚕️)
+  await user.click(within(screen.getByRole('listitem', { name: 'Клиника: Тест-Улыбка' })).getByRole('button', { name: '💬 Ответили — второе сообщение' }))
+  expect(open).toHaveBeenLastCalledWith(`https://api.whatsapp.com/send/?phone=996555000401&text=${encodeURIComponent('Спасибо!\nзарплата врачам')}`, '_blank', 'noopener')
 })
 
 test('{ссылка} — личная ссылка клиники; свой текст без неё и простой tish.kg/start не трогаем', () => {
@@ -530,7 +451,7 @@ test('{ссылка} — личная ссылка клиники; свой те
   expect(messageFor('Привет, {клиника}! tish.kg/start', 'Тест-Дент', link)).toBe('Привет, Тест-Дент! https://tish.kg/start')
 })
 
-test('сообщения с {ссылка}: первое, ролик и напоминание — с личной ссылкой; «зарегистрировались по ссылке из сообщения»', async () => {
+test('сообщения с {ссылка}: первое, второе и напоминание — с личной ссылкой; «зарегистрировались по ссылке из сообщения»', async () => {
   const open = vi.spyOn(window, 'open').mockReturnValue(null)
   const texts = { videoText: 'Спасибо! Регистрация: {ссылка}', reminderText: 'Напоминаю: {ссылка}', remindAfterDays: 3, signupUrl: 'https://tish.test/start' }
   leads = [
@@ -571,8 +492,8 @@ test('шаблон: свой текст → «Вернуть текст по у�
   const block = screen.getByRole('region', { name: 'Текст сообщения' })
   await user.click(within(block).getByText('Текст сообщения (свой)'))
   expect(within(block).getByRole('textbox', { name: 'Текст' })).toHaveValue('Свой, {клиника}!')
-  // Текст к ролику и напоминание — видно, но не правится
-  expect(within(block).getByLabelText('Текст к ролику')).toHaveTextContent('Спасибо! Вот минута')
+  // Второе сообщение и напоминание — видно, но не правится
+  expect(within(block).getByLabelText('Второе сообщение')).toHaveTextContent('Спасибо!')
   expect(within(block).getByLabelText('Текст напоминания')).toHaveTextContent(REMINDER)
 
   await user.click(within(block).getByRole('button', { name: 'Вернуть текст по умолчанию' }))
@@ -629,31 +550,29 @@ test('WhatsApp-отметка шлёт канал WHATSAPP', async () => {
   await waitFor(() => expect(body).toEqual({ channel: 'WHATSAPP' }))
 })
 
-test('ролик в Instagram: текст №2 со ссылкой — в буфер и ig.me; шаг ② — «скачайте и отправьте из галереи»; напоминание — в Instagram', async () => {
+test('Instagram: текст №2 со ссылкой — в буфер и ig.me, сразу «Отправили?»; напоминание — в Instagram', async () => {
   const open = vi.spyOn(window, 'open').mockImplementation(() => null)
   leads = leads.map((l) => l.id === 1 ? { ...l, phone: undefined, instagram: 'smile_test', contactedVia: 'INSTAGRAM' } : l)
   server.use(http.get('*/api/platform/outreach', () => {
     const o = outreach(leads)
-    return HttpResponse.json({ ...o, template: { ...o.template!, instagramVideoText: 'Спасибо! Вот минута, как это выглядит: tish.kg/about' } })
+    return HttpResponse.json({ ...o, template: { ...o.template!, instagramVideoText: 'Спасибо! Регистрация: tish.kg/start' } })
   }))
   vi.useFakeTimers({ toFake: ['Date'], now: new Date('2026-11-12T06:00:00Z') })
   try {
     const user = await openTab()
     const card = screen.getByRole('listitem', { name: 'Клиника: Тест-Улыбка' })
-    expect(within(card).queryByRole('button', { name: /Ответили — отправить ролик/ })).not.toBeInTheDocument()
+    expect(within(card).queryByRole('button', { name: /Ответили — второе сообщение/ })).not.toBeInTheDocument()
     await user.click(within(card).getByRole('button', { name: '🔁 Напомнить в Instagram' }))
     expect(open).toHaveBeenLastCalledWith('https://ig.me/m/smile_test', '_blank', 'noopener')
     expect(await navigator.clipboard.readText()).toBe(REMINDER)
     await user.click(within(within(card).getByRole('group', { name: 'Отправили?' })).getByRole('button', { name: 'Нет' }))
 
-    await user.click(within(card).getByRole('button', { name: '🎬 Ответили — ролик в Instagram' }))
+    await user.click(within(card).getByRole('button', { name: '💬 Ответили — в Instagram' }))
     expect(open).toHaveBeenLastCalledWith('https://ig.me/m/smile_test', '_blank', 'noopener')
-    expect(await navigator.clipboard.readText()).toBe('Спасибо! Вот минута, как это выглядит: https://tish.kg/about')
-    expect(within(card).getByRole('status')).toHaveTextContent('Текст скопирован — вставьте его в чат Instagram')
-    leaveAndReturn()
-    const two = await within(card).findByRole('group', { name: 'Шаг 2: ролик' })
-    expect(two).toHaveTextContent('Ролик: скачайте и отправьте в чат из галереи')
-    expect(within(two).getByRole('button', { name: '🎬 Скачать ролик' })).toBeInTheDocument()
+    expect(await navigator.clipboard.readText()).toBe('Спасибо! Регистрация: https://tish.kg/start')
+    const ask = within(card).getByRole('group', { name: 'Отправили?' })
+    expect(ask).toHaveTextContent('Текст скопирован — вставьте его в чат')
+    expect(within(card).queryByRole('group', { name: /ролик/ })).not.toBeInTheDocument()
   }
   finally {
     vi.useRealTimers()

@@ -9,9 +9,7 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
-    # Полный прогон Vitest вырос до ~8 мин на раннере (2026-11-27 прогон 10 мин отменён по таймауту) — с запасом.
-    # Репозиторий публичный: минуты Actions бесплатные
-    timeout-minutes: 20
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5

@@ -80,15 +80,9 @@ export const server = setupServer(
   http.get('*/web/demo', () => HttpResponse.json({ enabled: false } satisfies Schemas['DemoControllerInfo'])),
   http.get('*/web/case', () => HttpResponse.json({ metrics: [], consent: false, shown: false } satisfies Schemas['JoinCaseCase'])),
   http.get('*/api/platform/case', () => HttpResponse.json({ metrics: [], consent: false, shown: false } satisfies Schemas['JoinCaseCase'])),
-  // Ролик и презентация на /join: по умолчанию каталога материалов нет — блока нет
-  http.get('*/web/materials/public', () => HttpResponse.json({ video: null, poster: null, presentation: null })),
-  // «Помощь → Видео: как сделать»: по умолчанию роликов нет
-  http.get('*/web/materials/howto', () => HttpResponse.json([])),
   // «Клиники»: воронка пустая — тесты своих экранов задают своё
   http.get('*/api/platform/funnel', () => HttpResponse.json({ total: 0, stages: [], leads: [] } satisfies Schemas['SalesFunnelFunnel'])),
   // «Контент»: Instagram на сервере не подключён — кнопок публикации нет
-  http.get('*/api/platform/content/instagram', () => HttpResponse.json({ enabled: false } satisfies Schemas['InstagramTokensState'])),
-  http.get('*/api/platform/content/settings', () => HttpResponse.json({ reelsAuto: false, storiesAuto: false } satisfies Schemas['ContentSettingsSettings'])),
   // Уведомления в приложение: по умолчанию на сервере не включены — блок в «Настройках» скрыт
   http.get('*/api/push', () => HttpResponse.json({ enabled: false, channel: 'TELEGRAM', devices: [] })),
   // «Логин и пароль»: по умолчанию вошли через Telegram — блока нет

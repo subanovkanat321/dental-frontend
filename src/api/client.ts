@@ -198,18 +198,6 @@ export function loginConfig(config: WebConfig | null | undefined): WebConfig | n
 }
 
 /**
- * Видео-инструкции «Как сделать в Tish» (GET /web/materials/howto): ролик и обложка — открытые адреса
- * /web/materials/howto/<id>.mp4|.webp (белый список бэкенда).
- */
-export type HowToVideo = Schemas['MaterialsHowToVideo']
-
-export async function howToVideos(): Promise<HowToVideo[]> {
-  const response = await globalThis.fetch(new Request(new URL('/web/materials/howto', window.location.origin), { credentials: 'same-origin' }))
-  if (!response.ok) throw new ApiError(response.status, 'Не удалось загрузить список видео')
-  return (await response.json()) as HowToVideo[]
-}
-
-/**
  * POST на адрес входа /web/…: с заголовком сайта; ошибка — {@link ApiError}.
  * Ответ 204 — null, с телом — его JSON.
  */
@@ -540,21 +528,6 @@ async function forgetPushSubscription(): Promise<void> {
 export async function webTariffs(): Promise<Schemas['Tariffs'] | null> {
   const response = await globalThis.fetch(new Request(new URL('/web/tariffs', window.location.origin), { credentials: 'same-origin' }))
   return response.ok ? (await response.json()) as Schemas['Tariffs'] : null
-}
-
-/**
- * Статичный JSON сайта (например, /content/plan.json — готовый контент-план из сборки фронта): не
- * API, без заголовков входа. Нет файла (404) — null; не JSON — ApiError.
- */
-export async function staticJson(path: string): Promise<unknown> {
-  const response = await globalThis.fetch(new Request(new URL(path, window.location.origin), { credentials: 'same-origin', cache: 'no-cache' }))
-  if (response.status === 404) return null
-  if (!response.ok) throw new ApiError(response.status, `Файл ${path} не открылся (${response.status})`)
-  try {
-    return await response.json() as unknown
-  } catch {
-    throw new ApiError(response.status, `Файл ${path} — не JSON`)
-  }
 }
 
 /** Отчёт об ошибке в приложении — без данных пациентов: текст, стек, раздел, где открыто. */

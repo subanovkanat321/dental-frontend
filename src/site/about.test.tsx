@@ -64,18 +64,14 @@ test('сайт-визитка /about: герой, части ролика, за�
   expect(wa).toHaveAttribute('rel', 'noopener noreferrer')
 })
 
-test('сайт-визитка: ролик v6 с бэкенда — только по нажатию, картинки грузятся лениво', () => {
+test('сайт-визитка: ролика нет — первый экран из кадров приложения, остальные картинки грузятся лениво', () => {
   const { container } = render(<About />)
+  expect(container.querySelector('video')).toBeNull()
   const imgs = [...container.querySelectorAll('img')].filter((i) => i.getAttribute('src')?.includes('/about/'))
   expect(imgs.length).toBeGreaterThan(10)
   for (const img of imgs) expect(img.getAttribute('alt')).not.toBe('')
-  for (const img of imgs) expect(img).toHaveAttribute('loading', 'lazy')
-  const video = container.querySelector('video')!
-  expect(video).toHaveAttribute('preload', 'none')
-  expect(video).toHaveAttribute('playsinline')
-  expect(video).toHaveAttribute('controls')
-  expect(video).toHaveAttribute('poster', '/web/materials/public/promo.png')
-  expect(video.querySelector('source')).toHaveAttribute('src', '/web/materials/public/promo.mp4')
+  expect(container.querySelectorAll('.hero-vis img')).toHaveLength(2)
+  for (const img of imgs.filter((i) => !i.closest('.hero-vis'))) expect(img).toHaveAttribute('loading', 'lazy')
 })
 
 test('сайт-визитка: кейс клиники — только если опубликован', async () => {
