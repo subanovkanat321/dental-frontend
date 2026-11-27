@@ -413,6 +413,19 @@ export async function signupClinics(q: string): Promise<SignupClinic[]> {
   return await webRequest<SignupClinic[]>('GET', '/web/signup/clinics?q=' + encodeURIComponent(q)) ?? []
 }
 
+/**
+ * Личная ссылка из сообщения клинике (/start?k=<код>): какая клиника — те же поля, что в поиске. Код — в теле, не в
+ * адресе запроса. 404 (код не найден) — null: страница покажет обычный поиск; 429 и прочее — ошибка.
+ */
+export async function signupInvitedClinic(token: string): Promise<SignupClinic | null> {
+  try {
+    return await webRequest<SignupClinic>('POST', '/web/signup/lead', { token })
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) return null
+    throw e
+  }
+}
+
 export type SignupCodeSent = Schemas['SignupControllerCodeSent']
 
 export type SignupTelegramStatus = Schemas['SignupControllerTelegramStatus']

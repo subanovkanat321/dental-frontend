@@ -4,17 +4,17 @@ import { SortTh } from '../layout/SortTh'
 import { rowOpen } from '../lib/rowClick'
 import { useSort } from '../lib/useSort'
 import { formatPhone, shortDate } from '../lib/time'
-import { groupOf, instagramProfile, reachText, type Group, type OutreachLead } from './outreach'
+import { groupOf, instagramProfile, inviteState, reachText, type Group, type OutreachLead } from './outreach'
 
 const STAGE_TEXT: Record<string, string> = { DEMO: 'Ответили', TRIAL: 'Пробный период', PAYING: 'Платит' }
 
-/** Статус клиники — тот же chip в списке и в таблице: Не писали / Написали (в Instagram) дата / этап / Отказ. */
+/** Статус клиники — тот же chip в списке и в таблице: Не писали / Написали (в Instagram) дата / этап (· по ссылке — зарегистрировались по личной ссылке) / Отказ. */
 export function LeadStatus({ lead: l }: { lead: OutreachLead }) {
   const g = groupOf(l)
   return g === 'FRESH' ? <span className="chip small s-quiet">Не писали</span>
     : g === 'SENT' ? <span className="chip small s-ok">Написали{l.contactedVia === 'INSTAGRAM' ? ' в Instagram' : ''}{l.contactedAt ? ` ${shortDate(l.contactedAt)}` : ''}</span>
       : g === 'DECLINED' ? <span className="chip small s-bad">Отказ</span>
-        : <span className="chip small s-request">{STAGE_TEXT[l.stage ?? ''] ?? 'Дальше'}</span>
+        : <span className="chip small s-request">{STAGE_TEXT[l.stage ?? ''] ?? 'Дальше'}{inviteState(l) === 'registered' ? ' · по ссылке' : ''}</span>
 }
 
 /** Сколько строк таблицы показываем сразу; дальше — «Показать ещё» (сотни клиник из 2ГИС не тормозят). */

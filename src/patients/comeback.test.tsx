@@ -67,7 +67,7 @@ test('«Позвать снова»: деньги на столе, «Tish вер
   expect(screen.queryByRole('button', { name: /Позвать всех/ })).toBeNull()
   // Пустые группы не показываем
   expect(within(summary).queryByRole('button', { name: /Отменили/ })).toBeNull()
-  expect(screen.getByLabelText('Tish вернул')).toHaveTextContent(/вернулись 2 из 5 приглашённых · в их планах 40\s000 сом · уже оплачено 12\s000 сом/)
+  expect(screen.getByLabelText('Tish вернул')).toHaveTextContent(/Tish вернул за 30 дней: 2 пациентов — записались не позже 30 дней после приглашения · позвали 5 · в их планах 40\s000 сом · уже оплачено 12\s000 сом/)
   const list = screen.getByRole('list', { name: 'Кого вернуть' })
   const first = within(list).getAllByRole('listitem')[0]!
   expect(first).toHaveTextContent('Лечение не закончено · зуб 36 — Коронка · Чистка')

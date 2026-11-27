@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 
 import {
   api, ApiError, forgetSignup, signupAvailability, signupClinics, signupCode, signupEmailCode, signupEmailResume, signupEmailStatus, signupEnterTelegram,
-  signupRegister, signupTelegram, signupTelegramStatus, type SignupClinic, type SignupCodeSent, type SignupEmailSent, type SignupEmailWaiting, type SignupForm,
+  signupInvitedClinic, signupRegister, signupTelegram, signupTelegramStatus, type SignupClinic, type SignupCodeSent, type SignupEmailSent, type SignupEmailWaiting, type SignupForm,
 } from '../api/client'
 import { PhoneInput } from '../clinic/PhoneInput'
 import { phoneFromInput } from '../clinic/phone'
@@ -19,7 +19,7 @@ import { useCountdown } from '../lib/otp'
 import { passwordProblem } from '../lib/password'
 import { clearCodeSent, markCodeSent, recentCodeSent } from './codeMark'
 import { NextSteps } from './NextSteps'
-import { refFromUrl, signupFromUrl } from '../lib/referral'
+import { dropInviteFromUrl, inviteFromUrl, refFromUrl, signupFromUrl } from '../lib/referral'
 
 /** Как часто спрашиваем сервер, пока ждём «✅ Да, это я» в боте. */
 export const POLL_MS = 2000
@@ -38,7 +38,7 @@ export const MIN_SEARCH = 3
 
 /**
  * Шаг 1 «Найдите свою клинику»: ищем в списке 2ГИС; выбрали — форма с подставленными полями; «заполнить вручную» —
- * пустая форма, как раньше.
+ * пустая форма, как раньше. Личная ссылка из сообщения клинике (/start?k=…) выбирает клинику сама.
  */
 type Pick = { kind: 'search' } | { kind: 'manual' } | { kind: 'lead'; lead: SignupClinic }
 
@@ -114,6 +114,24 @@ export function SignupPage({ onDone = () => window.location.assign('/'), userAge
   const [ref] = useState(() => refFromUrl())
   // Откуда пришли (tish.kg/ig → /start?from=instagram): метка уходит с формой — регистрация посчитается по каналу
   const [from] = useState(() => signupFromUrl())
+  // Личная ссылка из нашего сообщения клинике (/start?k=…): клиника сразу выбрана и форма заполнена. Код — из адреса в
+  // память страницы, адрес — сразу без него (история браузера, Referer); серверу — в теле запроса
+  const [inviteToken] = useState(() => inviteFromUrl())
+  const [invitedPending, setInvitedPending] = useState(() => Boolean(inviteToken))
+  /** Клиника по ссылке уже в Tish — подсказка над поиском. */
+  const [invitedInTish, setInvitedInTish] = useState<SignupClinic | null>(null)
+  useEffect(() => {
+    dropInviteFromUrl()
+    if (!inviteToken) return
+    let live = true
+    // Нашли и клиника ещё не в Tish — сразу «Ваша клиника» (можно нажать «Не моя клиника»); 404, ошибка — обычный поиск
+    signupInvitedClinic(inviteToken).then((found) => {
+      if (!live || !found) return
+      if (found.alreadyInTish) setInvitedInTish(found)
+      else setPick((p) => (p.kind === 'search' ? { kind: 'lead', lead: found } : p))
+    }, () => {}).finally(() => { if (live) setInvitedPending(false) })
+    return () => { live = false }
+  }, [inviteToken])
   const invite = useQuery({
     queryKey: ['referral-invite', ref], enabled: Boolean(ref), retry: false, staleTime: Infinity,
     queryFn: async () => (await api.GET('/web/referral', { params: { query: { code: ref ?? '' } } })).data ?? null,
@@ -355,7 +373,11 @@ export function SignupPage({ onDone = () => window.location.assign('/'), userAge
         )}
         <p className="hint">Tish бесплатный: всё приложение, без оплаты, пробного срока и ограничений. Клиника — за пару минут, без заявки и звонка.</p>
         {!w.sms && !w.telegram && !w.email && <p className="error" role="alert">Регистрация сейчас недоступна — напишите нам, подключим вручную.</p>}
-        {pick.kind === 'search' && (
+        {pick.kind === 'search' && invitedPending && <p className="hint" role="status"><Spinner />Открываем вашу клинику…</p>}
+        {pick.kind === 'search' && invitedInTish && (
+          <p className="tone-ok" role="note">«{invitedInTish.name}» уже в Tish — попросите доступ у руководителя клиники или <a href="/login">войдите</a>.</p>
+        )}
+        {pick.kind === 'search' && !invitedPending && (
           <ClinicSearch onPick={(found) => { setError(null); setPick({ kind: 'lead', lead: found }) }}
             onManual={() => { setError(null); setPick({ kind: 'manual' }) }} />
         )}

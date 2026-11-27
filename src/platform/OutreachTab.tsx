@@ -19,14 +19,14 @@ import { formatPhone, shortDate, todayIn } from '../lib/time'
 import { useClose } from '../lib/useClose'
 import { useMedia } from '../lib/useMedia'
 import { LeadStatus, OutreachTable } from './OutreachTable'
-import { GROUPS, groupOf, instagramProfile, instagramUrl, messageFor, nextLead, PLACEHOLDER, prepareVideo, REACHES, reaches, remindDue, sendVideo, templateMessage, videoWay, type Channel, type Group, type OutreachLead, type Reach, type VideoResult } from './outreach'
+import { GROUPS, groupOf, instagramProfile, instagramUrl, inviteLink, inviteState, LINK_PLACEHOLDER, messageFor, nextLead, PLACEHOLDER, prepareVideo, REACHES, reaches, remindDue, sendVideo, templateMessage, videoWay, type Channel, type Group, type OutreachLead, type Reach, type VideoResult } from './outreach'
 import { SubHelp } from '../layout/PageHead'
 import { rowOpen } from '../lib/rowClick'
 
 type Template = Schemas['ClinicOutreachTemplate']
 type Report = Schemas['ClinicOutreachImportReport']
 
-const EMPTY_TEMPLATE: Template = { text: '', custom: false, remindAfterDays: 3 }
+const EMPTY_TEMPLATE: Template = { text: '', custom: false, remindAfterDays: 3, signupUrl: `${window.location.origin}/start` }
 
 type View = 'list' | 'table'
 
@@ -315,11 +315,15 @@ function LeadRow({ lead: l, template, selected, onSelect, onActive, onNext, onCl
   const g = groupOf(l)
   const fresh = g === 'FRESH'
   const lost = l.stage === 'LOST'
-  const first = messageFor(template.text ?? '', l.clinicName ?? '')
-  const videoText = template.videoText ?? ''
-  // В Instagram ролик ссылкой не прикрепить — в тексте №2 вместо «👇» ссылка на страницу с роликом
-  const igVideoText = messageFor(template.instagramVideoText ?? videoText, l.clinicName ?? '')
-  const reminderText = template.reminderText ?? ''
+  // {ссылка} — личная ссылка этой клиники: регистрация откроется сразу с ней (код выдаёт сервер при загрузке списка)
+  const link = inviteLink(l, template.signupUrl)
+  const name = l.clinicName ?? ''
+  const first = messageFor(template.text ?? '', name, link)
+  const videoText = messageFor(template.videoText ?? '', name, link)
+  // В Instagram ролик ссылкой не прикрепить — в тексте №2 без строки «👇»
+  const igVideoText = messageFor(template.instagramVideoText ?? template.videoText ?? '', name, link)
+  const reminderText = messageFor(template.reminderText ?? '', name, link)
+  const invited = inviteState(l)
   // В карточке — то, что сейчас уйдёт: неписаным — первое сообщение, остальным — текст к ролику
   const text = fresh ? first : videoText
   const remind = remindDue(l, template.remindAfterDays ?? 3)
@@ -477,7 +481,9 @@ function LeadRow({ lead: l, template, selected, onSelect, onActive, onNext, onCl
         {l.instagram && <>{l.city || l.address || l.phone ? ' · ' : ''}<a href={instagramProfile(l.instagram)} target="_blank" rel="noopener noreferrer">@{l.instagram}</a></>}
         {l.link && <> · <a href={l.link} target="_blank" rel="noopener noreferrer">ссылка</a></>}
         {g !== 'SENT' && l.contactedAt && <> · написали {shortDate(l.contactedAt)}</>}
-        {l.remindedAt && <> · напомнили {shortDate(l.remindedAt)}</>}</span>
+        {l.remindedAt && <> · напомнили {shortDate(l.remindedAt)}</>}
+        {invited === 'registered' && <> · <span className="tone-ok">зарегистрировались по ссылке из сообщения</span></>}
+        {invited === 'opened' && <> · открыли ссылку {shortDate(l.inviteOpenedAt!)}</>}</span>
       {lost && <span className="tone-bad">Просили не беспокоить{l.lostReason ? `: ${l.lostReason}` : ''} — не пишем.</span>}
       {selected && !lost && <p className="outreach-text" aria-label="Текст сообщения">{text}</p>}
       {!lost && step == null && (
@@ -830,11 +836,13 @@ function TemplateEditor({ template }: { template: Template }) {
         <summary><b>Текст сообщения{template.custom ? ' (свой)' : ''}</b>
           {firstLine && <span className="outreach-template-line">{firstLine}</span>}</summary>
         <form className="form" onSubmit={(e) => { e.preventDefault(); save.mutate(text) }}>
-          <p className="hint">Первое сообщение клинике. {PLACEHOLDER} — подставится название. Ролик и ссылки сюда не ставьте:
-            незнакомому номеру они похожи на рассылку — ролик уходит ответившим.</p>
+          <p className="hint">Первое сообщение клинике. {PLACEHOLDER} — подставится название, {LINK_PLACEHOLDER} — личная ссылка
+            на регистрацию: форма откроется сразу с этой клиникой. Ролик сюда не ставьте: незнакомому номеру он похож на
+            рассылку — ролик уходит ответившим.</p>
           <label className="field"><span>Текст</span>
             <textarea value={text} rows={8} maxLength={1500} onChange={(e) => setText(e.target.value)} /></label>
           {!text.includes(PLACEHOLDER) && <p className="tone-wait">В тексте нет {PLACEHOLDER} — название клиники не подставится.</p>}
+          {!text.includes(LINK_PLACEHOLDER) && <p className="tone-wait">В тексте нет {LINK_PLACEHOLDER} — личная ссылка не подставится.</p>}
           {save.error && <p className="error" role="alert">{save.error.fieldErrors.text ?? save.error.message}</p>}
           {save.isSuccess && <p className="tone-ok" role="status">Сохранено</p>}
           <div className="actions">

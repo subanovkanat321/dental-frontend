@@ -6,7 +6,7 @@ import type { Schemas } from '../api/client'
 import { me, renderApp, openPlatform } from '../test/fixtures'
 import { choose, chosen } from '../test/select'
 import { server } from '../test/server'
-import { forgetVideo, messageFor, nextLead, remindDue } from './outreach'
+import { forgetVideo, inviteLink, messageFor, nextLead, remindDue } from './outreach'
 
 type Lead = Schemas['SalesFunnelLead']
 
@@ -21,7 +21,7 @@ function lead(id: number, clinicName: string, extra: Partial<Lead> = {}): Lead {
 const TEMPLATE = 'Здравствуйте, {клиника}! 😊\nМы — Tish. Подробнее: tish.kg/about'
 const VIDEO_TEXT = 'Спасибо! Вот минута 👇\n👨‍⚕️ зарплата врачам'
 const REMINDER = 'Добрый день! Канат, по программе. 10 минут?'
-const TEXTS = { videoText: VIDEO_TEXT, reminderText: REMINDER, remindAfterDays: 3 }
+const TEXTS = { videoText: VIDEO_TEXT, reminderText: REMINDER, remindAfterDays: 3, signupUrl: 'https://tish.test/start' }
 const owner = { ...me, owner: true, platform: true }
 
 function outreach(leads: Lead[]): Schemas['ClinicOutreachOutreach'] {
@@ -518,6 +518,40 @@ test('Windows: текст сразу в поле чата, без эмодзи (
   // Текст к ролику — тоже без эмодзи (👇, 👨‍⚕️)
   await user.click(within(screen.getByRole('listitem', { name: 'Клиника: Тест-Улыбка' })).getByRole('button', { name: '🎬 Ответили — отправить ролик' }))
   expect(open).toHaveBeenLastCalledWith(`https://api.whatsapp.com/send/?phone=996555000401&text=${encodeURIComponent('Спасибо! Вот минута\nзарплата врачам')}`, '_blank', 'noopener')
+})
+
+test('{ссылка} — личная ссылка клиники; свой текст без неё и простой tish.kg/start не трогаем', () => {
+  const link = inviteLink({ inviteToken: 'FakeInviteToken_abc123' }, 'https://tish.test/start')
+  expect(link).toBe('https://tish.test/start?k=FakeInviteToken_abc123')
+  // Кода нет — просто страница регистрации
+  expect(inviteLink({}, 'https://tish.test/start')).toBe('https://tish.test/start')
+  expect(messageFor('Здравствуйте, {клиника}! Регистрация: {ссылка}', 'Тест-Дент', link))
+    .toBe('Здравствуйте, Тест-Дент! Регистрация: https://tish.test/start?k=FakeInviteToken_abc123')
+  expect(messageFor('Привет, {клиника}! tish.kg/start', 'Тест-Дент', link)).toBe('Привет, Тест-Дент! https://tish.kg/start')
+})
+
+test('сообщения с {ссылка}: первое, ролик и напоминание — с личной ссылкой; «зарегистрировались по ссылке из сообщения»', async () => {
+  const open = vi.spyOn(window, 'open').mockReturnValue(null)
+  const texts = { videoText: 'Спасибо! Регистрация: {ссылка}', reminderText: 'Напоминаю: {ссылка}', remindAfterDays: 3, signupUrl: 'https://tish.test/start' }
+  leads = [
+    lead(1, 'Тест-Улыбка', { stage: 'CONTACTED', contactedAt: '2026-11-07T08:00:00Z', inviteToken: 'FakeInviteToken_00001' }),
+    lead(2, 'Тест-Дент', { inviteToken: 'FakeInviteToken_00002' }),
+    lead(5, 'Тест-Пробный', { stage: 'TRIAL', clinicId: 7, inviteOpenedAt: '2026-11-10T08:00:00Z' }),
+    lead(6, 'Тест-Открыли', { stage: 'CONTACTED', contactedAt: '2026-11-11T08:00:00Z', inviteOpenedAt: '2026-11-11T09:00:00Z' }),
+  ]
+  server.use(http.get('*/api/platform/outreach', () => HttpResponse.json({
+    ...outreach(leads), template: { text: 'Здравствуйте, {клиника}! {ссылка}', custom: false, ...texts },
+  })))
+  const user = await openTab()
+  await user.click(within(screen.getByRole('listitem', { name: 'Клиника: Тест-Дент' })).getByRole('button', { name: '📨 Отправить сообщение' }))
+  expect(open).toHaveBeenLastCalledWith(`https://api.whatsapp.com/send/?phone=996555000402&text=${encodeURIComponent('Здравствуйте, Тест-Дент! https://tish.test/start?k=FakeInviteToken_00002')}`, '_blank', 'noopener')
+  // Написали 7-го — пора напомнить (сегодня позже): в напоминании та же личная ссылка
+  const smile = screen.getByRole('listitem', { name: 'Клиника: Тест-Улыбка' })
+  await user.click(within(smile).getByRole('button', { name: '🔁 Напомнить' }))
+  expect(open).toHaveBeenLastCalledWith(`https://api.whatsapp.com/send/?phone=996555000401&text=${encodeURIComponent('Напоминаю: https://tish.test/start?k=FakeInviteToken_00001')}`, '_blank', 'noopener')
+  expect(screen.getByRole('listitem', { name: 'Клиника: Тест-Пробный' })).toHaveTextContent('зарегистрировались по ссылке из сообщения')
+  expect(screen.getByRole('listitem', { name: 'Клиника: Тест-Открыли' })).toHaveTextContent('открыли ссылку')
+  expect(screen.getByRole('listitem', { name: 'Клиника: Тест-Открыли' })).not.toHaveTextContent('зарегистрировались')
 })
 
 test('шаблон: свой текст → «Вернуть текст по умолчанию» шлёт пустое значение, сервер отдаёт текст по умолчанию', async () => {

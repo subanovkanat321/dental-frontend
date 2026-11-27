@@ -11,6 +11,7 @@ import { DoctorFilter } from '../layout/DoctorFilter'
 import { doctorOptions } from '../layout/doctorOptions'
 import { Sheet } from '../layout/Sheet'
 import { ask } from '../lib/confirm'
+import { plural } from '../lib/plural'
 import { haptic, openLink } from '../lib/telegram'
 import { agoText, recentlyInvited, whatsappUrl } from '../lib/texts'
 import { comebackCardInHash, setComebackCardInHash } from '../lib/route'
@@ -300,12 +301,15 @@ export function ComebackTab({ me, onOpen, onBook, canEditServices = false }: {
       )}
 
       {/* Внизу, свёрнуто: итог приглашений за 30 дней и что уже делали с этой карточкой */}
-      {((r && r.invited > 0) || history.length > 0) && (
+      {((r && (r.invited > 0 || r.returned > 0)) || history.length > 0) && (
         <details className="cb-more">
           <summary>{history.length > 0 ? 'Что уже делали и кто вернулся' : 'Кто вернулся после приглашения'}</summary>
-          {r && r.invited > 0 && (
+          {/* То же правило, что «Пациенты от Tish → Вернули»: записались за эти 30 дней не позже 30 дней после приглашения
+              (позвать могли и раньше) — поэтому не «X из Y», а два числа рядом */}
+          {r && (r.invited > 0 || r.returned > 0) && (
             <p className="calm-note" aria-label="Tish вернул">
-              За 30 дней вернулись <b>{r.returned} из {r.invited}</b> приглашённых
+              Tish вернул за 30 дней: <b>{r.returned} {plural(r.returned, 'пациента', 'пациентов', 'пациентов')}</b>
+              {' '}— записались не позже 30 дней после приглашения · позвали <b>{r.invited}</b>
               {r.returnedPlanSom > 0 && <> · в их планах <b className="num">{somText(r.returnedPlanSom)}</b></>}
               {r.paidSom > 0 && <> · уже оплачено <b className="num">{somText(r.paidSom)}</b></>}
             </p>

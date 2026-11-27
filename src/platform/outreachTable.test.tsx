@@ -22,7 +22,7 @@ function outreach(leads: Lead[]): Schemas['ClinicOutreachOutreach'] {
   const n = (stages: string[]) => leads.filter((l) => stages.includes(l.stage!)).length
   return {
     counts: { fresh: n(['LEAD']), sent: n(['CONTACTED']), further: n(['DEMO', 'TRIAL', 'PAYING']), declined: n(['LOST']) },
-    leads, template: { text: 'Здравствуйте, {клиника}!', custom: false, defaultText: 'Здравствуйте, {клиника}!', videoText: 'Ролик', reminderText: 'Напоминаю', remindAfterDays: 3 },
+    leads, template: { text: 'Здравствуйте, {клиника}!', custom: false, defaultText: 'Здравствуйте, {клиника}!', videoText: 'Ролик', reminderText: 'Напоминаю', remindAfterDays: 3, signupUrl: 'https://tish.test/start' },
   }
 }
 
