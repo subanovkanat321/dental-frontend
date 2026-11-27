@@ -11389,6 +11389,33 @@
         }
       }
     },
+    "/api/members/{telegramId}/telegram-change" : {
+      "post" : {
+        "tags" : [ "telegram-change-controller" ],
+        "operationId" : "startFor",
+        "parameters" : [ {
+          "name" : "telegramId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TelegramChangeControllerChangeStarted"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/members/invites/{id}/renew" : {
       "post" : {
         "tags" : [ "staff-members-controller" ],
@@ -11564,6 +11591,24 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/TelegramConnectControllerConnectStarted"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/me/telegram-change" : {
+      "post" : {
+        "tags" : [ "telegram-change-controller" ],
+        "operationId" : "start_3",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TelegramChangeControllerChangeStarted"
                 }
               }
             }
@@ -15093,6 +15138,24 @@
         }
       }
     },
+    "/web/telegram-change/status" : {
+      "get" : {
+        "tags" : [ "telegram-change-controller" ],
+        "operationId" : "status_4",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TelegramConnectControllerConnectStatus"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/web/tariffs" : {
       "get" : {
         "tags" : [ "billing-controller" ],
@@ -15284,7 +15347,7 @@
     "/web/login/telegram/status" : {
       "get" : {
         "tags" : [ "telegram-login-controller" ],
-        "operationId" : "status_4",
+        "operationId" : "status_5",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -18027,6 +18090,24 @@
         }
       }
     },
+    "/api/me/telegram" : {
+      "get" : {
+        "tags" : [ "telegram-change-controller" ],
+        "operationId" : "mine",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TelegramChangeControllerMyTelegram"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/me/phone" : {
       "get" : {
         "tags" : [ "my-phone-controller" ],
@@ -18057,7 +18138,7 @@
     "/api/me/net-month" : {
       "get" : {
         "tags" : [ "net-month-controller" ],
-        "operationId" : "mine",
+        "operationId" : "mine_1",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -29030,6 +29111,18 @@
         },
         "required" : [ "delivered", "id", "recipients" ]
       },
+      "TelegramChangeControllerChangeStarted" : {
+        "properties" : {
+          "link" : {
+            "type" : "string"
+          },
+          "secondsLeft" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "link", "secondsLeft" ]
+      },
       "StaffMembersControllerPhoneInvited" : {
         "properties" : {
           "telegramId" : {
@@ -34921,6 +35014,17 @@
           }
         },
         "required" : [ "expired" ]
+      },
+      "TelegramChangeControllerMyTelegram" : {
+        "properties" : {
+          "telegram" : {
+            "type" : "boolean"
+          },
+          "available" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "available", "telegram" ]
       },
       "MyPhoneControllerMyPhone" : {
         "properties" : {

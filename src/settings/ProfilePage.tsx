@@ -14,6 +14,7 @@ import { useCountdown } from '../lib/otp'
 import { Icon } from '../layout/Icon'
 import { telegram } from '../lib/telegram'
 import { PasswordSection } from './PasswordSection'
+import { TelegramSection } from './TelegramSection'
 import { showsPlatform } from '../platform/platformAccess'
 import { HelpHint } from '../help/HelpHint'
 import { RowMenu } from '../patients/CalmList'
@@ -26,7 +27,8 @@ type Me = Schemas['BookingViewsMe']
  * «Мой профиль» — всё о себе заполняет сам сотрудник (админ только приглашает). Разделы — подпись над
  * карточкой; на компьютере — сеткой в две колонки во всю ширину (с 2026-11-14, crm.css): сверху кто вы — врачу «Для пациентов» (фото, имя, «о себе» —
  * их видят в боте), остальным (админ без кресла, регистратура, ассистент) «Имя» — как видят коллеги; дальше
- * «Телефон» и под ним «Почта» (у всех, и у владельца платформы), врачу — «Работа» и «Вход и права». В самом низу — «Пароль и
+ * «Телефон» и под ним «Почта» (у всех, и у владельца платформы), врачу — «Работа» и «Вход и права»; дальше «Telegram» (сменить
+ * Telegram или подключить его, TelegramSection). В самом низу — «Пароль и
  * вход»: с Telegram он необязателен (только для входа по номеру), и «Выйти».
  */
 export function ProfilePage({ me, onBack, footer }: { me: Me; onBack: () => void; footer?: ReactNode }) {
@@ -58,6 +60,8 @@ export function ProfilePage({ me, onBack, footer }: { me: Me; onBack: () => void
         : admin.error ? <p className="error">{admin.error.message}</p>
           : own ? <DoctorPanel key={own.id} doctor={own} me={me} onClose={onBack} inline afterProfile={<MyPhone />} />
             : <><MyPhone /><p className="hint">Профиль не найден — обновите страницу.</p></>}
+      {/* Как вы входите: Telegram (сменить на другой аккаунт) или «Подключить Telegram» */}
+      <TelegramSection />
       {/* Внизу, не «надо сделать»: логин с паролем — для входа без Telegram */}
       <PasswordSection platform={showsPlatform(me)} />
       {footer}

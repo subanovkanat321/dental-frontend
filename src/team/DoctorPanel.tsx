@@ -15,6 +15,7 @@ import { DoctorServices } from './DoctorServices'
 import { InviteLink } from './InviteLink'
 import { DoctorPhone, StaffPhone, type Doctor } from './PhoneParts'
 import { isPhoneLogin } from './texts'
+import { ChangeTelegram } from './TelegramChange'
 import { RolesEditor } from './RolesEditor'
 import { choiceOf, ROLE_CHOICES } from './staffRoles'
 import { Spinner } from '../layout/Loading'
@@ -111,7 +112,7 @@ export function DoctorPanel({ doctor: d, me, onClose, inline = false, afterProfi
     ? <RolesEditor key={`${d.active}-${d.role}`} me={me} doctorId={d.id} telegramId={d.telegramId} doctor={d.active !== false}
       role={(d.role as 'ADMIN' | 'RECEPTION' | undefined) ?? null} self={self} hasLogin={linked} name={d.fullName ?? ''} />
     : self && <OwnRole me={me} />
-  const access = admin && !self ? <AccessAdmin doctor={d} inline={inline} onDone={refresh} /> : <OwnAccess doctor={d} me={me} inline={inline} />
+  const access = admin && !self ? <AccessAdmin doctor={d} inline={inline} onDone={refresh} /> : <OwnAccess doctor={d} inline={inline} />
 
   if (inline) {
     // «Мой профиль»: каждый раздел — подпись над карточкой, как «Телефон» и «Логин и пароль» на той же странице
@@ -282,7 +283,7 @@ function OwnRole({ me }: { me: Me }) {
 }
 
 /** «Вход» в своей карточке — от первого лица, без ссылки-приглашения самому себе. */
-function OwnAccess({ doctor: d, me, inline }: { doctor: Doctor; me: Me; inline: boolean }) {
+function OwnAccess({ doctor: d, inline }: { doctor: Doctor; inline: boolean }) {
   const byPhone = isPhoneLogin(d.telegramId)
   return (
     <>
@@ -290,7 +291,7 @@ function OwnAccess({ doctor: d, me, inline }: { doctor: Doctor; me: Me; inline: 
       <p className="hint">{inline
         ? 'Номер — в разделе «Телефон», пароль (только для входа без Telegram) — в «Логин и пароль».'
         : 'Телефон и пароль — в «Моём профиле» (нажать на себя внизу меню).'}
-        {me.admin ? '' : ' Сменили аккаунт Telegram — попросите у руководителя новую ссылку-приглашение.'}</p>
+        {byPhone ? '' : ' Завели новый Telegram для работы — «Мой профиль» → «Telegram» → «Сменить Telegram».'}</p>
     </>
   )
 }
@@ -317,13 +318,14 @@ function AccessAdmin({ doctor: d, inline, onDone }: { doctor: Doctor; inline: bo
         <HelpHint title="Вход врача">{byPhone
           ? 'Появился Telegram — пришлите ссылку: после «Начать» в боте врач будет входить через Telegram.'
           : linked
-            ? 'Врач сменил аккаунт Telegram — пришлите новую ссылку.'
+            ? 'Врач завёл новый Telegram для работы — «Сменить Telegram» ниже: вход переедет со всеми пациентами и данными.'
             : 'Уведомления о приёмах пока приходят вам. Пришлите врачу ссылку: он нажмёт «Начать» в боте и дальше сам заполнит фото, имя и «о себе».'}</HelpHint></p>
       {invite
         ? <InviteLink start={`join_${invite}`} name={d.fullName ?? ''} toWhom="врачу" />
         : <button type="button" className="btn" disabled={makeInvite.isPending} onClick={() => makeInvite.mutate()}>
           {linked ? 'Новая ссылка-приглашение' : 'Пригласить по ссылке'}</button>}
       {makeInvite.error && <p className="error">{makeInvite.error.message}</p>}
+      {linked && !byPhone && <ChangeTelegram telegramId={d.telegramId!} name={d.fullName ?? ''} phone={d.phone} />}
       <DoctorPhone doctor={d} onDone={onDone} />
       {linked && !inline && <StaffPhone telegramId={d.telegramId!} phone={d.phone} phoneOnly={d.phoneOnly} name={d.fullName} />}
 

@@ -452,6 +452,19 @@ export async function telegramConnectStart(): Promise<Schemas['TelegramConnectCo
   return unwrap(api.POST('/api/me/telegram-connect'))
 }
 
+/**
+ * «Сменить Telegram» (Мой профиль): ссылка в бота t.me/<бот>?start=tgmove_… — открыть в НОВОМ аккаунте Telegram, бот
+ * спросит «Перенести вход?». Сервер ставит HttpOnly-cookie ожидания; 409 — Telegram ещё нет, 503 — бот не настроен.
+ */
+export async function telegramChangeStart(): Promise<Schemas['TelegramChangeControllerChangeStarted']> {
+  return unwrap(api.POST('/api/me/telegram-change'))
+}
+
+/** Ждём «✅ Да, перенести» в новом Telegram: linked — перенесён, сервер выдал новую cookie-сессию. */
+export async function telegramChangeStatus(): Promise<TelegramConnectStatus> {
+  return await webRequest<TelegramConnectStatus>('GET', '/web/telegram-change/status') ?? { state: 'none', secondsLeft: 0 }
+}
+
 /** Ждём «✅ Да, это я»: linked — подключён, сервер выдал новую cookie-сессию (прежняя больше не действует). */
 export async function telegramConnectStatus(): Promise<TelegramConnectStatus> {
   return await webRequest<TelegramConnectStatus>('GET', '/web/telegram-connect/status') ?? { state: 'none', secondsLeft: 0 }

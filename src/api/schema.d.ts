@@ -4388,6 +4388,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/members/{telegramId}/telegram-change": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["startFor"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/members/invites/{id}/renew": {
         parameters: {
             query?: never;
@@ -4494,6 +4510,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["start_2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/telegram-change": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["start_3"];
         delete?: never;
         options?: never;
         head?: never;
@@ -5924,6 +5956,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/web/telegram-change/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["status_4"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/web/tariffs": {
         parameters: {
             query?: never;
@@ -6059,7 +6107,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["status_4"];
+        get: operations["status_5"];
         put?: never;
         post?: never;
         delete?: never;
@@ -7604,6 +7652,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/telegram": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["mine"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me/phone": {
         parameters: {
             query?: never;
@@ -7627,7 +7691,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["mine"];
+        get: operations["mine_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -12353,6 +12417,11 @@ export interface components {
             /** Format: int32 */
             delivered: number;
         };
+        TelegramChangeControllerChangeStarted: {
+            link: string;
+            /** Format: int64 */
+            secondsLeft: number;
+        };
         StaffMembersControllerPhoneInvited: {
             /** Format: int64 */
             telegramId: number;
@@ -14637,6 +14706,10 @@ export interface components {
             /** Format: date-time */
             expiresAt?: string;
             expired: boolean;
+        };
+        TelegramChangeControllerMyTelegram: {
+            telegram: boolean;
+            available: boolean;
         };
         MyPhoneControllerMyPhone: {
             phone?: string;
@@ -24689,6 +24762,28 @@ export interface operations {
             };
         };
     };
+    startFor: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                telegramId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TelegramChangeControllerChangeStarted"];
+                };
+            };
+        };
+    };
     renewInvite: {
         parameters: {
             query?: never;
@@ -24845,6 +24940,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TelegramConnectControllerConnectStarted"];
+                };
+            };
+        };
+    };
+    start_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TelegramChangeControllerChangeStarted"];
                 };
             };
         };
@@ -27568,6 +27683,26 @@ export interface operations {
             };
         };
     };
+    status_4: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TelegramConnectControllerConnectStatus"];
+                };
+            };
+        };
+    };
     tariffs: {
         parameters: {
             query?: never;
@@ -27738,7 +27873,7 @@ export interface operations {
             };
         };
     };
-    status_4: {
+    status_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -29943,6 +30078,26 @@ export interface operations {
             };
         };
     };
+    mine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TelegramChangeControllerMyTelegram"];
+                };
+            };
+        };
+    };
     get_17: {
         parameters: {
             query?: never;
@@ -29981,7 +30136,7 @@ export interface operations {
             };
         };
     };
-    mine: {
+    mine_1: {
         parameters: {
             query?: never;
             header?: never;

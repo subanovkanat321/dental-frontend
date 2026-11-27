@@ -13,6 +13,7 @@ import { StaffPhone, TemporaryPassword, type Doctor } from './PhoneParts'
 import { RolesEditor } from './RolesEditor'
 import { useRefreshStaff } from './staffRoles'
 import { HoursLink } from './HoursLink'
+import { ChangeTelegram } from './TelegramChange'
 import { phoneText, ROLE_TEXT } from './texts'
 
 type Me = Schemas['BookingViewsMe']
@@ -61,6 +62,8 @@ export function MemberPanel({ me, member: m, hiddenDoctor, onClose }: { me: Me; 
         <h3 className="group-title">Вход</h3>
         <p className="tone-ok">{m.phoneOnly ? '✓ Входит по номеру (без Telegram)' : '✓ Telegram привязан'}</p>
         <StaffPhone telegramId={m.telegramId} phone={m.phone} phoneOnly={m.phoneOnly} name={name} />
+        {/* Новый аккаунт Telegram для работы — ссылка сотруднику (себе — в «Моём профиле») */}
+        {!m.phoneOnly && !m.me && <ChangeTelegram telegramId={m.telegramId} name={name} phone={m.phone} />}
         {/* Вход по номеру без Telegram: временный пароль даёт руководитель (себе — нет: свой меняют в «Моём профиле») */}
         {m.phoneOnly && !m.me && <TemporaryPassword telegramId={m.telegramId} name={name} />}
       </section>

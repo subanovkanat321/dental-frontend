@@ -3,33 +3,10 @@ import { useEffect, useState } from 'react'
 import { ApiError, telegramConnectStart, telegramConnectStatus } from '../api/client'
 import { Spinner } from '../layout/Loading'
 import { chromeIntent, inAppBrowser } from '../lib/inAppBrowser'
+import { copyText } from '../lib/clipboard'
 
 /** Как часто спрашиваем сервер, пока ждём «✅ Да, это я» в боте. */
 export const CONNECT_POLL_MS = 2000
-
-/** Скопировать текст: clipboard API, а во встроенных браузерах, где его нет, — через выделение. */
-async function copyText(text: string): Promise<boolean> {
-  try {
-    await navigator.clipboard.writeText(text)
-    return true
-  } catch {
-    const area = document.createElement('textarea')
-    area.value = text
-    area.setAttribute('readonly', '')
-    area.style.position = 'fixed'
-    area.style.opacity = '0'
-    document.body.appendChild(area)
-    area.select()
-    let ok = false
-    try {
-      ok = document.execCommand('copy')
-    } catch {
-      ok = false
-    }
-    area.remove()
-    return ok
-  }
-}
 
 /**
  * «Что дальше» — после регистрации клиники по почте, вместо мгновенного перехода в CRM. Врачи приходят из
