@@ -153,8 +153,12 @@ export function Join() {
         </div>
         <aside className="site-col join-side" aria-label="Заявка на подключение">
           <h2 id="form">Хочу, чтобы помогли подключить</h2>
-          <p className="hint">Создать клинику самим — 5 минут: <a href={startHref}>{OFFER}</a>. Хотите, чтобы мы настроили всё и перенесли
-            пациентов из тетради или Excel, — оставьте заявку, мы позвоним.</p>
+          {/* Сами — главный путь: крупной карточкой с кнопкой, а не ссылкой в тексте (владелец 2026-11-27: «незаметно») */}
+          <div className="join-self">
+            <p><strong>Быстрее — самим, за минуту.</strong> Найдите свою клинику, адрес и контакты подставятся сами.</p>
+            <a className="btn primary join-self-btn" href={startHref}>{OFFER} →</a>
+          </div>
+          <p className="hint">Хотите, чтобы мы настроили всё и перенесли пациентов из тетради или Excel, — оставьте заявку, мы позвоним.</p>
           {inAppBrowser() && (
             <p className="tone-wait">Открыли из Instagram? Если клавиатура закрывается — нажмите ⋮ вверху → «Открыть в браузере»
               {links.supportWhatsapp && <> или <a href={`https://wa.me/${links.supportWhatsapp}?text=${encodeURIComponent('Здравствуйте! Хотим подключить клинику к Tish.')}`}>напишите нам в WhatsApp</a></>}.</p>

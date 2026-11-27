@@ -32,6 +32,11 @@ body.site {
 .site-page .lang-switch button[aria-pressed=true] { border-color: var(--accent); color: var(--link); font-weight: 600; }
 
 /* Шапка страницы: мягкая бирюзовая плашка, Тишка и заголовок — без градиентов и пятен */
+/* /join: «Быстрее — самим» над заявкой — заметной карточкой с большой кнопкой */
+.join-self { display: grid; gap: 12px; padding: 18px 20px; border-radius: 16px; background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); }
+.join-self p { margin: 0; font-size: 1.05rem; line-height: 1.45; }
+.join-self strong { display: block; margin-bottom: 2px; font: 700 1.2rem var(--display); }
+.join-self .join-self-btn { justify-self: stretch; min-height: 52px; font-size: 1.1rem; }
 .site-hero { display: flex; align-items: center; gap: 16px; padding: 20px; border-radius: 16px; background: var(--accent-soft); }
 .site-hero img { flex: none; width: 72px; height: auto; }
 .site-hero-home { flex: none; display: inline-flex; border-radius: 16px; transition: transform .15s; }
