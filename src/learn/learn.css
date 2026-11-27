@@ -224,13 +224,13 @@
 /* Строение: кадр слева, легенда справа */
 .pst-anat { grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr); align-items: stretch; }
 .pst-anat .pst-plate { max-height: none; }
-.pst-anat .lsn-3d { --mh: calc(100dvh - 230px); }
+.pst-anat .lsn-3d { --mh: calc(100dvh - 280px); }
 .pst-side { display: flex; flex-direction: column; justify-content: center; min-width: 0; }
 .pst-legend { list-style: none; margin: clamp(10px, 1.6vh, 20px) 0 0; padding: 0; display: grid; }
 .pst-legend li { border-top: 1px solid var(--lsn-line); }
 .pst-legend li:last-child { border-bottom: 1px solid var(--lsn-line); }
 .pst .pst-legend button { width: 100%; display: flex; gap: 12px; align-items: flex-start; text-align: left; border: 0; background: none; border-radius: 8px;
-  padding: clamp(6px, 1.05vh, 12px) 8px; font-size: clamp(14px, 1.2vw, 20px); line-height: 1.4; color: var(--lsn-muted); }
+  padding: clamp(5px, 1.05vh, 12px) 8px; font-size: clamp(13px, min(1.2vw, 1.9vh), 20px); line-height: 1.4; color: var(--lsn-muted); }
 .pst-legend button .pst-n { margin-top: 0.1em; }
 .pst-legend strong { color: var(--lsn-ink); font-weight: 600; }
 .pst .pst-legend button.on { background: var(--lsn-teal-soft); color: var(--lsn-ink); }
