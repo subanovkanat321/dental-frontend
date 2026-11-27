@@ -41,16 +41,14 @@ const FRAMES = {
   tall: { w: 800, h: 960, ...cam([0.1, -0.12, 0], 6.4, 42) },
   // Коронка крупно — стадии кариеса в карточках (на целом зубе мелкая точка не видна)
   crown: { w: 800, h: 640, ...cam([0.05, -0.05, 0], 5.04, 30) },
-  // Зуб мудрости: участок челюсти сбоку
-  wisdom: { w: 900, h: 640, target: [0.5, -0.75, 0], pos: [0.5, 0.345, 8.03], fov: 30 },
   // Шейка зуба крупнее: коронка, край десны и гребень кости — камень, воспалённая десна, убыль кости
   neck: { w: 800, h: 800, ...cam([0.1, -0.2, 0], 4.1, 34) },
   // Жевательная поверхность сверху-спереди: фиссуры и герметик
   occlusal: { w: 800, h: 640, ...cam([0.0, 0.55, 0.0], 2.9, 30, norm([0.9, 3.0, 2.2])) },
   // Участок челюсти сбоку в разрезе (зуб мудрости): спереди и чуть сверху
   segment: { w: 900, h: 640, ...cam([0.2, -0.75, 0], 7.2, 30, norm([0.35, 0.55, 2.6])) },
-  // Пустое место: обе челюсти
-  gap: { w: 900, h: 760, ...cam([0.1, 0.72, 0], 9.6, 30, norm([0.3, 0.3, 2.6])) },
+  // Пустое место: обе челюсти — плотно, чтобы на плакате «Если зуба нет» в узкой колонке было крупно
+  gap: { w: 800, h: 760, ...cam([0.1, 0.15, 0], 9.0, 30, norm([0.3, 0.3, 2.6])) },
   // Улыбка спереди: передние зубы в десне
   smile: { w: 900, h: 600, target: [0, 0.62, 0.5], pos: [0, 0.95, 6.4], fov: 26 },
   // Шкала оттенков: образцы на держателе
@@ -73,7 +71,6 @@ const SHOTS = [
   { name: 'crown-fit', frame: 'tall', set: { view: 'tooth', mode: 'crown', extra: { crown: [0.45, 1.25, 0] } }, t: 1.75 },
   { name: 'implant-parts', frame: 'tall', set: { view: 'tooth', mode: 'implant', extra: { crown: [0.4, 1.6, 0] } }, t: 4.3 },
   { name: 'implant', frame: 'tooth', set: { view: 'tooth', mode: 'implant' }, t: 5.6 },
-  { name: 'wisdom', frame: 'wisdom', set: { view: 'wisdom', wisdom: 'mesial' }, t: 1.5, noLabels: true },
   // Сцены презентаций сверх режимов атласа (src/atlas/engine/learnScene.ts): тем же светом и материалами
   ...['pulp-dead', 'abscess', 'socket', 'kid', 'kid-caries', 'kid-deep', 'kid-lost'].map((id) => ({ name: id, frame: 'tooth', set: { learn: id } })),
   ...['plaque', 'tartar', 'gingivitis', 'tartar-below', 'perio', 'perio-severe'].map((id) => ({ name: id, frame: 'neck', set: { learn: id } })),
@@ -86,6 +83,8 @@ const SHOTS = [
   { name: 'sealant', frame: 'occlusal', set: { learn: 'sealant' } },
   ...['wisdom-tilt', 'wisdom-half', 'wisdom-decay'].map((id) => ({ name: id, frame: 'segment', set: { learn: id } })),
   ...['gap-1', 'gap-2', 'gap-3'].map((id) => ({ name: id, frame: 'gap', set: { learn: id } })),
+  // Чем заменить потерянный зуб — то же пустое место (плакат «Если зуба нет»): имплант, мост, съёмный протез
+  ...['fix-implant', 'fix-bridge', 'fix-denture'].map((id) => ({ name: id, frame: 'gap', set: { learn: id } })),
   { name: 'whiten-split', frame: 'smile', set: { learn: 'whiten-split' } },
   { name: 'shades', frame: 'shades', set: { learn: 'shades' } },
 ]
@@ -173,7 +172,8 @@ const webp = (src, dest, width) => ff(['-i', src, '-vf', `scale=${width}:-2:flag
 const round = (x) => Math.round(x * 1000) / 1000
 /** Части, к которым слайды ставят подписи (Part в src/learn/callouts.ts; корень — по цементу, каналы — canal). */
 const LABELLED = new Set(['enamel', 'dentin', 'pulp', 'canal', 'cementum', 'gum', 'bone', 'caries', 'filling', 'crown', 'stump', 'implant', 'abutment',
-  'plaque', 'tartar', 'deadPulp', 'lesion', 'spot', 'crack', 'chip', 'sealant', 'clot', 'baby', 'germ', 'wisdom', 'hood', 'gap', 'before', 'after'])
+  'plaque', 'tartar', 'deadPulp', 'lesion', 'spot', 'crack', 'chip', 'sealant', 'clot', 'baby', 'germ', 'wisdom', 'hood', 'gap', 'before', 'after',
+  'pontic', 'base', 'clasp'])
 
 async function shoot(browser, url, gen) {
   const byFrame = Object.groupBy(pick(SHOTS), (s) => s.frame)

@@ -18,6 +18,10 @@ type Props = {
   brand?: string | null
   /** Во весь экран поверх CRM (по умолчанию) или страницей сайта */
   overlay?: boolean
+  /** Кнопка «Плакат» в шапке: открыть плакат по теме (CRM) */
+  onPoster?: () => void
+  /** Поверх открыт плакат: клавиши листают его, а не слайды */
+  inactive?: boolean
 }
 
 /**
@@ -25,7 +29,7 @@ type Props = {
  * Esc — закрыть). Строгий «атласный» вид: белый фон, крупный текст, на телефоне рисунок сверху,
  * на планшете и компьютере — рядом с текстом.
  */
-export function Presentation({ topic, lang, onLang, onClose, endActions, brand, overlay = true }: Props) {
+export function Presentation({ topic, lang, onLang, onClose, endActions, brand, overlay = true, onPoster, inactive }: Props) {
   const [index, setIndex] = useState(0)
   const slides = topic.slides
   const last = slides.length - 1
@@ -35,6 +39,7 @@ export function Presentation({ topic, lang, onLang, onClose, endActions, brand, 
   useBack(overlay && onClose ? onClose : null)
 
   useEffect(() => {
+    if (inactive) return
     const onKey = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLElement && /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) return
       if (e.key === 'ArrowRight' || e.key === 'PageDown' || (e.key === ' ' && !(e.target instanceof HTMLButtonElement))) { e.preventDefault(); setIndex((i) => Math.min(last, i + 1)) }
@@ -45,7 +50,7 @@ export function Presentation({ topic, lang, onLang, onClose, endActions, brand, 
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [last, onClose])
+  }, [last, onClose, inactive])
 
   // Поверх CRM страница под презентацией не прокручивается; фокус — на презентацию (клавиатура, экранный диктор)
   useEffect(() => {
@@ -76,6 +81,7 @@ export function Presentation({ topic, lang, onLang, onClose, endActions, brand, 
         <div className="lsn-dots" aria-hidden="true">
           {slides.map((s, i) => <button type="button" tabIndex={-1} key={i} className={i <= index ? 'on' : ''} onClick={() => go(i)} aria-label={`${UI.slide[lang]} ${i + 1}`} data-kind={s.kind} />)}
         </div>
+        {onPoster && <button type="button" className="lsn-poster" onClick={onPoster}>{UI.poster[lang]}</button>}
         {onLang && (
           <div className="lsn-lang" role="group" aria-label="Тил / Язык">
             <button type="button" aria-pressed={lang === 'ru'} onClick={() => onLang('ru')}>RU</button>

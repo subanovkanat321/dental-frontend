@@ -7,7 +7,7 @@ import type { L } from './catalog'
 export type LabelKey = 'enamel' | 'dentin' | 'pulp' | 'root' | 'gum' | 'bone' | 'tartar' | 'filling' | 'crown' | 'sealant' | 'caries' | 'canals'
 /** Подпись на 3D-кадре: части из рисунков, части коронки и импланта и состояния из сцен презентаций (learnScene). */
 export type Part = LabelKey | 'stump' | 'implant' | 'abutment' | 'plaque' | 'deadPulp' | 'lesion' | 'spot' | 'crack' | 'chip' | 'clot'
-  | 'baby' | 'germ' | 'wisdom' | 'hood' | 'gap' | 'before' | 'after'
+  | 'baby' | 'germ' | 'wisdom' | 'hood' | 'gap' | 'before' | 'after' | 'pontic' | 'base' | 'clasp'
 
 export const LABEL_TEXT: Record<LabelKey, L> = {
   caries: { ru: 'Кариес', ky: 'Кариес' },
@@ -43,6 +43,9 @@ export const PART_TEXT: Record<Part, L> = {
   gap: { ru: 'Пустое место', ky: 'Бош орун' },
   before: { ru: 'До', ky: 'Мурун' },
   after: { ru: 'После', ky: 'Кийин' },
+  pontic: { ru: 'Искусственный зуб', ky: 'Жасалма тиш' },
+  base: { ru: 'Основа протеза', ky: 'Протездин негизи' },
+  clasp: { ru: 'Кламмер (крючок)', ky: 'Кламмер (илмек)' },
 }
 
 /** Подпись → часть атласа, чья точка записана в shots.gen.ts (корень — по слою цемента на нём). */

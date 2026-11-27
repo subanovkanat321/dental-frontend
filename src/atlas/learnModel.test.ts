@@ -19,6 +19,9 @@ const MUST: Partial<Record<LearnGeoId, string[]>> = {
   'wisdom-half': ['l2tooth', 'lgum'],
   'wisdom-decay': ['l1caries'],
   'gap-3': ['u1tooth', 'ugum', 'lcortical'],
+  'fix-implant': ['fixScrew', 'fixAbutment', 'fixCrown', 'lcortical'],
+  'fix-bridge': ['fixBridge'],
+  'fix-denture': ['fixBase', 'fixTooth', 'fixClasp'],
 }
 
 describe('сцены презентаций (learnModel)', () => {

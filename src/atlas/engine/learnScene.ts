@@ -57,7 +57,8 @@ export function createLearnScene(m: Materials, id: LearnId): CustomScene {
       const v = buildVessels(m, bag as unknown as THREE.BufferGeometry[])
       root.add(v)
     }
-    floorY = isSegment(geo) ? -3.0 : undefined
+    // Участок челюсти: «пол» далеко внизу — тень под блоком кости в кадре видна серым пятном у края
+    floorY = isSegment(geo) ? -50 : undefined
     if (id === 'socket-heal') update = healClip(byName, bag)
     else if (id === 'sealant-apply') update = sealantClip(byName, root, bag)
   }
@@ -144,6 +145,11 @@ function learnMaterials(m: Materials, id: LearnId, bag: { dispose(): void }[]): 
       case 'newBone': { const b = own(cloneSurface(m.spongy)); b.color.set('#fff8ee'); return b }
       case 'kidEnamel': { const e = own(cloneSurface(m.enamel)); e.color.set('#f6f4ef'); return e }
       case 'germPulp': return own(applySurface(phys({ color: '#e7a3a0', roughness: 0.55, sheen: 0.4, sheenColor: new THREE.Color('#ffc0c0') }), { kind: 'pulp', ao: true, sss: 0.5, sssColor: '#ff7060' }))
+      // Замена зуба (плакат «Если зуба нет»): керамика коронок и моста, титан импланта, розовая пластмасса и сталь протеза
+      case 'ceramic': return m.ceramic
+      case 'titanium': return m.titanium
+      case 'clasp': return m.steel
+      case 'acrylic': return own(applySurface(phys({ color: '#c4506b', roughness: 0.26, clearcoat: 0.9, clearcoatRoughness: 0.06, sheen: 0.2, sheenColor: new THREE.Color('#ffc6cc') }), { kind: 'gum', ao: true, sss: 0.35, sssColor: '#ff7a80' }))
       case 'follicle': return own(applySurface(phys({ color: '#d98d88', roughness: 0.6, sheen: 0.4, sheenColor: new THREE.Color('#ffc0c0'), polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }), { kind: 'plain', ao: true }))
     }
     void name

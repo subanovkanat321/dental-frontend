@@ -15,6 +15,7 @@ import { readDeepLink } from '../lib/deepLink'
 import { lessonUrl, topicForService } from './catalog'
 import { placeCallouts } from './callouts'
 import type { Art, Img3D, Video3D } from './media'
+import { POSTERS } from './posters'
 import { Presentation } from './Presentation'
 import { SHOTS } from './shots.gen'
 import { TOPIC_LIST, topicBySlug, type Topic } from './topics'
@@ -159,7 +160,7 @@ function allMedia(): (Img3D | Video3D)[] {
 
 test('3D-кадры и ролики: файлы лежат в public/content/learn, у каждого — запасной SVG, подписи — на точках кадра', () => {
   const media = allMedia()
-  expect(new Set(media.flatMap((m) => ('img' in m ? [m.img] : []))).size).toBeGreaterThanOrEqual(38)
+  expect(new Set(media.flatMap((m) => ('img' in m ? [m.img] : []))).size).toBeGreaterThanOrEqual(37)
   expect(new Set(media.flatMap((m) => ('video' in m ? [m.video] : [])))).toEqual(new Set([
     'filling-clip', 'canals-clip', 'crown-clip', 'implant-clip', 'socket-clip', 'sealant-clip', 'whiten-clip',
   ]))
@@ -381,7 +382,7 @@ test('«Для пациента»: 3D-атлас во весь экран и з�
   await userEvent.click(within(nav).getByRole('button', { name: 'Для пациента' }))
   expect(await screen.findByRole('heading', { name: 'Для пациента' })).toBeInTheDocument()
   expect(window.location.hash).toBe('#/learn')
-  expect(document.querySelectorAll('.learn-tile')).toHaveLength(TOPIC_LIST.length)
+  expect(document.querySelectorAll('.learn-tile')).toHaveLength(TOPIC_LIST.length + POSTERS.length)
 
   await userEvent.click(screen.getByRole('button', { name: /3D-атлас/ }))
   // В тестах WebGL нет — атлас показывает схему; закрыли — снова раздел

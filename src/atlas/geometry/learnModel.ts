@@ -1,6 +1,6 @@
 import { CROWN_H, SHAPES, toothColor, type JawShape } from './jawModel'
 import { makeGrid, sample, surfaceNets, type Grid, type MeshData } from './mesher'
-import { sdEllipsoid, sdRoot, sdRoundBox, smax, smin, smoothstep } from './sdf'
+import { sdCapsule, sdEllipsoid, sdRoot, sdRoundBox, smax, smin, smoothstep } from './sdf'
 import {
   boneBox, canals, cariesBlob, cementThickness, crownOuter, cut, CUT_X, enamelThickness, gumBox, hill, inToothBox, lowerMolarGrooves,
   lowerMolarTop, molarBody, neckCollar, prep, pulp, rootOuter, TOOTH_STEP, toothBoxDistance,
@@ -21,7 +21,9 @@ export type SectionId =
   | 'plaque' | 'tartar' | 'gingivitis' | 'tartar-below' | 'perio' | 'perio-severe'
   | 'pulp-dead' | 'abscess' | 'spot' | 'crack-line' | 'crack-chip' | 'crack-split' | 'sealant'
   | 'socket' | 'kid' | 'kid-caries' | 'kid-deep' | 'kid-lost'
-export type SegmentId = 'wisdom-tilt' | 'wisdom-half' | 'wisdom-decay' | 'gap-1' | 'gap-2' | 'gap-3'
+export type SegmentId = 'wisdom-tilt' | 'wisdom-half' | 'wisdom-decay' | 'gap-1' | 'gap-2' | 'gap-3' | FixId
+/** Чем заменить потерянный зуб — то же пустое место, что gap-1: имплант, мост, съёмный протез (плакат «Если зуба нет»). */
+export type FixId = 'fix-implant' | 'fix-bridge' | 'fix-denture'
 export type LearnGeoId = SectionId | SegmentId
 /** Сцена кадра: состояние зуба или улыбка, шкала оттенков, ролики (заживление лунки, герметик, отбеливание). */
 export type LearnId = LearnGeoId | 'whiten-split' | 'whiten' | 'shades' | 'socket-heal' | 'sealant-apply'
@@ -30,6 +32,7 @@ export type LearnId = LearnGeoId | 'whiten-split' | 'whiten' | 'shades' | 'socke
 export type LearnMat =
   | 'enamel' | 'dentin' | 'pulp' | 'cementum' | 'pdl' | 'cortical' | 'spongy' | 'gum' | 'caries' | 'spot' | 'tartar' | 'tartarDeep'
   | 'plaque' | 'lesion' | 'sealant' | 'filling' | 'gutta' | 'clot' | 'newBone' | 'tooth' | 'kidEnamel' | 'germPulp' | 'follicle'
+  | 'ceramic' | 'titanium' | 'acrylic' | 'clasp'
 
 export interface LearnMesh {
   name: string
@@ -404,6 +407,8 @@ interface SegSpec {
   hood?: [number, number, number, number]
   /** Воспалённая десна (краснее) — у этой точки x. */
   redAt?: number
+  /** Замена потерянного зуба на пустом месте (x = GAP_X). */
+  fix?: 'implant' | 'bridge' | 'denture'
 }
 
 /** Точка мира → координаты формы зуба. */
@@ -422,6 +427,11 @@ function toothField(t: SegTooth, x: number, y: number, z: number): number {
   return SHAPES[t.shape](lx, ly, lz) * t.scale
 }
 
+/** Середина пустого места (где был 36). */
+const GAP_X = 0.07
+/** Уровень, ниже которого у импланта винт, выше — опора и коронка (гребень кости при импланте). */
+const IMPLANT_TOP = BONE_TOP - 0.1
+
 const SEG_TEETH: Record<SegmentId, SegSpec> = (() => {
   const wisdom = (pose: { x: number; y: number; tilt: number }, extra: Partial<SegSpec> = {}, caries?: SegTooth['caries']): SegSpec => ({
     teeth: [
@@ -435,7 +445,7 @@ const SEG_TEETH: Record<SegmentId, SegSpec> = (() => {
     ...extra,
   })
   // Пустое место на месте 36: 35 — премоляр, 37 — моляр; сверху 25, 26, 27
-  const gap = (stage: 1 | 2 | 3): SegSpec => ({
+  const gap = (stage: 1 | 2 | 3, fix?: SegSpec['fix']): SegSpec => ({
     teeth: [
       { shape: 'premolarLower', x: -1.02, y: 0, tilt: stage >= 2 ? -0.24 : 0, scale: 1.19 },
       { shape: 'molarLower', x: 1.2, y: 0, tilt: stage >= 2 ? 0.3 : 0, scale: 1.04 },
@@ -444,9 +454,11 @@ const SEG_TEETH: Record<SegmentId, SegSpec> = (() => {
       { shape: 'molarUpper', x: 1.15, y: 0, tilt: 0, scale: 0.92, upper: true },
     ],
     x0: -1.8, x1: 2.0,
-    // Кость без зуба убывает: в промежутке гребень ниже и вогнут
-    crest: (x) => BONE_TOP - 0.32 * Math.exp(-(((x - 0.07) / 0.5) ** 2)),
-    gumBase: (x) => -0.04 - 0.26 * Math.exp(-(((x - 0.07) / 0.55) ** 2)),
+    // Кость без зуба убывает: в промежутке гребень ниже и вогнут. Имплант нагружает кость — она сохраняется;
+    // под мостом и протезом убыль идёт дальше (нагрузки на кость там нет)
+    crest: (x) => BONE_TOP - (fix === 'implant' ? 0.1 : 0.32) * Math.exp(-(((x - GAP_X) / 0.5) ** 2)),
+    gumBase: (x) => -0.04 - (fix === 'implant' ? 0.1 : 0.26) * Math.exp(-(((x - GAP_X) / 0.55) ** 2)),
+    fix,
   })
   return {
     'wisdom-tilt': wisdom({ x: 1.32, y: -0.62, tilt: 0.8 }),
@@ -455,8 +467,45 @@ const SEG_TEETH: Record<SegmentId, SegSpec> = (() => {
     'gap-1': gap(1),
     'gap-2': gap(2),
     'gap-3': gap(3),
+    'fix-implant': gap(1, 'implant'),
+    'fix-bridge': gap(1, 'bridge'),
+    'fix-denture': gap(1, 'denture'),
   }
 })()
+
+
+/** Коронка формы (без корней) в точке x0 масштаба s; ниже шейки — продолжена вниз до yb (промывная часть моста, низ коронки на импланте). */
+function crownUnit(shape: JawShape, x0: number, s: number, yb: number) {
+  return (x: number, y: number, z: number) => {
+    const lx = (x - x0) / s, ly = y / s, lz = z / s
+    return smax(SHAPES[shape](lx, Math.max(ly, 0.04), lz) * s, yb - y, 0.08)
+  }
+}
+
+/** Винт импланта: цилиндр с винтовой резьбой, к кончику сужается. */
+function implantScrew(x: number, y: number, z: number): number {
+  const dx = x - GAP_X
+  const r = Math.hypot(dx, z)
+  const thread = 0.022 * Math.sin((2 * Math.PI * y) / 0.11 + Math.atan2(z, dx))
+  const rb = 0.19 * (1 - 0.35 * smoothstep(-1.55, -1.95, y)) + thread * (y < IMPLANT_TOP - 0.12 ? 1 : 0)
+  return smax(smax(r - rb, y - IMPLANT_TOP, 0.03), -1.98 - y, 0.08)
+}
+/** Опора (абатмент): усечённый конус над винтом — на него крепится коронка. */
+function implantAbutment(x: number, y: number, z: number): number {
+  const r = Math.hypot(x - GAP_X, z)
+  const k = smoothstep(IMPLANT_TOP, 0.3, y)
+  return smax(smax(r - (0.165 - 0.05 * k), y - 0.3, 0.04), IMPLANT_TOP - 0.02 - y, 0.02)
+}
+
+/** Кламмер — проволочный крючок съёмного протеза вокруг коронки зуба (x0, полуоси rx, rz), открыт с дальней стороны. */
+function clasp(x0: number, rx: number, rz: number, y0: number, open: 1 | -1) {
+  return (x: number, y: number, z: number) => {
+    const dx = x - x0
+    const e = (Math.hypot(dx / rx, z / rz) - 1) * Math.min(rx, rz)
+    const ring = Math.hypot(e, y - y0) - 0.032
+    return smax(ring, open * dx - 0.28 * rx, 0.03)
+  }
+}
 
 export const SEGMENTS = SEG_TEETH
 
@@ -474,7 +523,13 @@ function buildSegment(id: SegmentId, step: number): LearnMesh[] {
     teeth.forEach((t, i) => {
       for (const m of segToothMeshes(t, step * 1.25)) out.push({ name: `${upper ? 'u' : 'l'}${i}${m.name}`, mat: m.mat, mesh: flip(m.mesh) })
     })
-    const all = (x: number, y: number, z: number) => teeth.reduce((d, t) => Math.min(d, toothField(t, x, y, z)), 9)
+    const toothAll = (x: number, y: number, z: number) => teeth.reduce((d, t) => Math.min(d, toothField(t, x, y, z)), 9)
+    // Имплант стоит в кости и десне, как корень: они обходят винт, опору и низ коронки. У винта нет связки, как у
+    // корня (кость прирастает к титану), — кость вплотную: зазор под связку (0,06) снят
+    const implantCrown = crownUnit('molarLower', GAP_X, 1.0, IMPLANT_TOP + 0.04)
+    const all = !upper && spec.fix === 'implant'
+      ? (x: number, y: number, z: number) => Math.min(toothAll(x, y, z), implantScrew(x, y, z) + 0.06, implantAbutment(x, y, z), implantCrown(x, y, z))
+      : toothAll
     const gB = makeGrid([spec.x0 - 0.05, -2.95, -0.8], [spec.x1 + 0.05, 0.05, 0.8], step * 1.35)
     const gG = makeGrid([spec.x0 - 0.05, -0.85, -0.82], [spec.x1 + 0.05, 0.75, 0.82], step * 1.25)
     const crest = upper ? () => BONE_TOP : spec.crest
@@ -506,6 +561,57 @@ function buildSegment(id: SegmentId, step: number): LearnMesh[] {
     const red = upper ? undefined : spec.redAt
     const gum = tintGum(surfaceNets(gG, sample(gG, gumF)), (x) => (red == null ? 0 : Math.exp(-(((x - red) / 0.5) ** 2))))
     out.push({ name: `${upper ? 'u' : 'l'}gum`, mat: 'gum', mesh: flip(gum) })
+    if (!upper && spec.fix) out.push(...fixMeshes(spec, teeth, top, step))
+  }
+  return out
+}
+
+/**
+ * Замена зуба на пустом месте. Имплант: винт в кости, опора и коронка — коронка и десна в разрезе (видно опору).
+ * Мост: коронки на соседних зубах и искусственный зуб между ними — одно целое. Съёмный протез: розовая основа
+ * на десне (в разрезе, как десна), искусственный зуб и кламмеры-крючки на соседних зубах.
+ */
+function fixMeshes(spec: SegSpec, teeth: SegTooth[], gumTopAt: (x: number, z: number) => number, step: number): LearnMesh[] {
+  const out: LearnMesh[] = []
+  const teethF = (x: number, y: number, z: number) => teeth.reduce((d, t) => Math.min(d, toothField(t, x, y, z)), 9)
+  const mesh = (name: string, mat: LearnMat, lo: Vec, hi: Vec, f: (x: number, y: number, z: number) => number, st = step) => {
+    const g = makeGrid(lo, hi, st)
+    const m = surfaceNets(g, sample(g, f))
+    if (m.indices.length) out.push({ name, mat, mesh: m })
+  }
+  if (spec.fix === 'implant') {
+    // Резьба мельче шага сетки зуба — своя мелкая сетка только вокруг винта
+    mesh('fixScrew', 'titanium', [GAP_X - 0.26, -2.05, -0.26], [GAP_X + 0.26, IMPLANT_TOP + 0.05, 0.26], implantScrew, 0.012)
+    mesh('fixAbutment', 'titanium', [GAP_X - 0.22, IMPLANT_TOP - 0.06, -0.22], [GAP_X + 0.22, 0.36, 0.22], implantAbutment, 0.012)
+    const crown = crownUnit('molarLower', GAP_X, 1.0, IMPLANT_TOP + 0.04)
+    mesh('fixCrown', 'ceramic', [GAP_X - 0.7, IMPLANT_TOP - 0.05, -0.7], [GAP_X + 0.7, 0.95, 0.7],
+      (x, y, z) => Math.max(crown(x, y, z), -(implantAbutment(x, y, z) - 0.004), z))
+  }
+  else if (spec.fix === 'bridge') {
+    const [t35, t37] = [teeth[0]!, teeth[1]!]
+    const cap = (t: SegTooth) => (x: number, y: number, z: number) => smax(toothField(t, x, y, z) - 0.03, -0.03 - y, 0.03)
+    const pontic = crownUnit('molarLower', GAP_X, 1.0, gumTopAt(GAP_X, 0) + 0.035)
+    const a = cap(t35), b = cap(t37)
+    mesh('fixBridge', 'ceramic', [-1.75, -0.4, -0.8], [1.95, 1.0, 0.8], (x, y, z) => smin(smin(a(x, y, z), pontic(x, y, z), 0.14), b(x, y, z), 0.14))
+  }
+  else {
+    // Основа протеза: слой ~1,7 мм по десне над пустым местом, в разрезе — как десна
+    const base = (x: number, y: number, z: number) => {
+      const top = gumTopAt(x, z)
+      const shell = Math.abs(y - (top + 0.09)) - 0.085
+      return Math.max(smax(smax(shell, Math.max(-0.52 - x, x - 0.66), 0.06), Math.abs(z) - 0.66, 0.06), -(teethF(x, y, z) - 0.01), z)
+    }
+    mesh('fixBase', 'acrylic', [-0.7, -0.6, -0.8], [0.85, 0.3, 0.05], base)
+    const tooth = crownUnit('molarLower', GAP_X, 0.98, gumTopAt(GAP_X, 0) + 0.13)
+    mesh('fixTooth', 'ceramic', [GAP_X - 0.7, -0.4, -0.7], [GAP_X + 0.7, 0.95, 0.7], (x, y, z) => Math.max(tooth(x, y, z), -(base(x, y, z) - 0.002)))
+    const [t35, t37] = [teeth[0]!, teeth[1]!]
+    const c37 = clasp(t37.x, 0.6 * t37.scale, 0.5 * t37.scale, 0.27, 1)
+    const c35 = clasp(t35.x, 0.36 * t35.scale, 0.42 * t35.scale, 0.3, -1)
+    // Плечо кламмера к основе — у ближней к пустому месту стороны зуба
+    const arm37 = (x: number, y: number, z: number) => sdCapsule(x, y, z, t37.x - 0.6 * t37.scale, 0.27, 0, 0.6, -0.08, 0, 0.034)
+    const arm35 = (x: number, y: number, z: number) => sdCapsule(x, y, z, t35.x + 0.36 * t35.scale, 0.3, 0, -0.48, -0.08, 0, 0.034)
+    mesh('fixClasp', 'clasp', [-1.65, -0.2, -0.75], [1.95, 0.45, 0.75],
+      (x, y, z) => Math.max(Math.min(c37(x, y, z), c35(x, y, z), arm37(x, y, z), arm35(x, y, z)), -(teethF(x, y, z) - 0.004)), step * 0.6)
   }
   return out
 }
@@ -610,6 +716,9 @@ export const LEARN_ANCHORS: Record<LearnId, Partial<Record<string, Vec>>> = {
   'gap-1': { gap: [0.07, -0.45, 0], bone: [-1.4, -1.6, 0] },
   'gap-2': { gap: [0.07, -0.45, 0] },
   'gap-3': { gap: [0.07, -0.45, 0] },
+  'fix-implant': { crown: [0.3, 0.45, 0], abutment: [0.07, -0.08, 0.15], implant: [0.07, -1.05, 0.2], bone: [-1.4, -1.6, 0], gum: [-0.45, -0.1, 0] },
+  'fix-bridge': { pontic: [0.07, 0.35, 0.5], crown: [1.2, 0.45, 0.52], bone: [0.07, -0.9, 0] },
+  'fix-denture': { pontic: [0.07, 0.35, 0.48], base: [0.3, -0.22, 0], clasp: [1.2, 0.27, 0.5], bone: [0.07, -0.9, 0] },
   'whiten-split': { before: [-0.45, 1.0, 0.75], after: [0.45, 1.0, 0.75] },
   whiten: {},
   shades: {},

@@ -1,5 +1,6 @@
 import type { Lang } from './catalog'
 import { ArtView } from './media'
+import { POSTERS, posterCover, type Poster } from './posters'
 import { TOPIC_LIST, type Topic } from './topics'
 
 /**
@@ -26,6 +27,24 @@ export function TopicTiles({ lang, onOpen, href, action }: { lang: Lang; onOpen?
           </li>
         )
       })}
+    </ul>
+  )
+}
+
+/** Обложки плакатов: кадр плаката, название и что на нём. */
+export function PosterTiles({ lang, onOpen }: { lang: Lang; onOpen: (poster: Poster) => void }) {
+  return (
+    <ul className="learn-grid">
+      {POSTERS.map((p) => (
+        <li key={p.slug}>
+          <button type="button" className="learn-tile" onClick={() => onOpen(p)}>
+            <div className="learn-art"><ArtView art={{ img: posterCover(p), alt: p.title, svg: () => null }} lang={lang} place="cover" /></div>
+            <strong>{p.title[lang]}</strong>
+            <span>{p.kind === 'anatomy' ? `${p.legend.length} подписей с пояснениями` : `${p.panels.length} картинки в ряд`}</span>
+            <span className="learn-show" aria-hidden="true">Открыть</span>
+          </button>
+        </li>
+      ))}
     </ul>
   )
 }

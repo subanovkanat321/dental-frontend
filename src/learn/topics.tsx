@@ -60,7 +60,6 @@ const ALT = {
   'crown-fit': { ru: 'Коронка опускается на обточенный зуб', ky: 'Коронка жонулган тишке кийгизилет' },
   'implant-parts': { ru: 'Имплант в кости, на нём опора, сверху — коронка', ky: 'Сөөктөгү имплант, анын үстүндө таяныч, эң үстүндө — коронка' },
   implant: { ru: 'Имплант в кости с опорой и коронкой', ky: 'Таянычы жана коронкасы бар сөөктөгү имплант' },
-  wisdom: { ru: 'Зуб мудрости растёт под углом и упирается в соседний зуб', ky: 'Акыл тиш кыйшык өсүп, коңшу тишке тирелет' },
   'filling-clip': { ru: 'Как ставят пломбу: полость заполняют слоями и отверждают лампой', ky: 'Пломба кантип коюлат: көңдөйдү катмар-катмар толтуруп, лампа менен катырышат' },
   'canals-clip': { ru: 'Как лечат каналы: убирают нерв, чистят каналы инструментом и плотно пломбируют', ky: 'Каналдар кантип дарыланат: нервди алып, каналдарды аспап менен тазалап, бекем пломбалашат' },
   'crown-clip': { ru: 'Как ставят коронку: её надевают на обточенный зуб', ky: 'Коронка кантип коюлат: аны жонулган тишке кийгизишет' },
@@ -438,7 +437,7 @@ const CONTENT: Record<TopicSlug, Slide[]> = {
 const COVERS: Record<TopicSlug, Art> = {
   caries: img('caries-3-close', () => <Tooth caries={3} />),
   canals: img('caries-4', () => <Tooth caries={4} />),
-  extraction: img('wisdom', () => <Wisdom state="tilt" />),
+  extraction: img('wisdom-tilt', () => <Wisdom state="tilt" />),
   hygiene: img('tartar', () => <Tooth tartar="above" />),
   filling: img('filling', () => <Tooth filling="big" />),
   crown: img('crown-fit', () => <Tooth crown="float" pulp="filled" />),
@@ -463,4 +462,5 @@ export const UI = {
   photo: { ru: 'Фото', ky: 'Сүрөт' },
   slide: { ru: 'Слайд', ky: 'Слайд' },
   topics: { ru: 'Все темы', ky: 'Бардык темалар' },
+  poster: { ru: 'Плакат', ky: 'Плакат' },
 } satisfies Record<string, L>
