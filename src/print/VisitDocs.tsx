@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { contactPhone } from '../lib/guardian'
 import { useState } from 'react'
 
@@ -6,16 +6,18 @@ import { api, unwrap, type Schemas } from '../api/client'
 import { discountText } from '../lib/discount'
 import { seesMoneyOf } from '../lib/roles'
 import { somText, timeOf } from '../lib/time'
-import { docDate, type PaperFormat } from './paper'
+import { docDate, docNumber, type PaperFormat } from './paper'
 import { PrintSheet } from './PrintSheet'
 import { DocActions } from './SendToPatient'
 import { Select } from '../layout/Select'
+import { useMe } from '../api/me'
 
 type Appointment = Schemas['AppointmentView']
 type Me = Schemas['BookingViewsMe']
 type Receipt = Schemas['ReceiptsReceiptView']
 type CareMemo = Schemas['CareMemosAppointmentMemo']
 type MemoLang = 'RU' | 'KY'
+type DocKind = NonNullable<Receipt['kind']>
 
 const METHODS: Record<string, string> = { CASH: 'наличные', TRANSFER: 'перевод', CARD: 'карта', ADVANCE: 'с аванса' }
 
@@ -154,35 +156,69 @@ export function MemoPaper({ appointment: a, memo: m }: { appointment: Appointmen
 }
 
 /**
- * Квитанция об оплате. Остался долг — в ней «Как оплатить» (реквизиты и QR клиники или врача, который берёт оплату сам —
- * выбирает сервер, как в напоминании о долге). Долг есть, а реквизитов нигде нет — подсказка, где их добавить.
+ * Квитанция об оплате или «Акт выполненных работ» (V271) — переключатель над кнопками. Остался долг — в квитанции «Как
+ * оплатить» (реквизиты и QR клиники или врача, который берёт оплату сам — выбирает сервер, как в напоминании о долге).
+ * Долг есть, а реквизитов нигде нет — подсказка, где их добавить. Номер документа («№ 000123», свой у клиники) сервер
+ * выдаёт при первом «🔍 Просмотре» или «📤 Отправить» и дальше не меняет.
  */
 function ReceiptDocs({ appointment: a, me }: { appointment: Appointment; me: Me }) {
   const id = a.id
+  const qc = useQueryClient()
+  const [kind, setKind] = useState<DocKind>('RECEIPT')
   const [printing, setPrinting] = useState<PaperFormat | null>(null)
+  // Ключ — по деньгам приёма: доплатили — квитанция перечитается
+  const key = ['receipt', id, kind, a.paidSom, a.chargeSom, a.debtSom, a.discount?.som, a.paymentMethod, a.servicesTotalSom, a.services?.length]
   const receipt = useQuery({
-    // Ключ — по деньгам приёма: доплатили — квитанция перечитается
-    queryKey: ['receipt', id, a.paidSom, a.chargeSom, a.debtSom, a.discount?.som, a.paymentMethod, a.servicesTotalSom, a.services?.length],
-    queryFn: () => unwrap(api.GET('/api/appointments/{id}/receipt', { params: { path: { id } } })),
+    queryKey: key,
+    queryFn: () => unwrap(api.GET('/api/appointments/{id}/receipt', { params: { path: { id }, query: { kind } } })),
     retry: false,
+    placeholderData: (prev) => prev,
   })
   if (receipt.isPending || receipt.error) return null
   const r = receipt.data
+  const act = kind === 'ACT'
+  // Номер — при первом просмотре или отправке; уже есть — ничего не просим
+  const issue = async () => {
+    if (r.number != null && r.kind === kind) return
+    qc.setQueryData(key, await unwrap(api.POST('/api/appointments/{id}/receipt/number', { params: { path: { id }, query: { kind } } })))
+  }
+  const title = act ? 'Акт выполненных работ' : 'Квитанция об оплате'
   return (
     <div className="doc-box">
-      <p>🧾 Квитанция об оплате</p>
-      {r.debtSom > 0 && !r.pay && <NoPayHint admin={Boolean(me.admin)} />}
-      <DocActions label="квитанция" phone={contactPhone(a.patient)} message={r}
-        note={(channel) => channel === 'TELEGRAM' && r.pay?.qrToken
+      <div className="segments doc-kind" role="group" aria-label="Документ">
+        <button type="button" aria-pressed={!act} onClick={() => setKind('RECEIPT')}>🧾 Квитанция</button>
+        <button type="button" aria-pressed={act} onClick={() => setKind('ACT')}>📄 Акт выполненных работ</button>
+      </div>
+      {!act && r.debtSom > 0 && !r.pay && <NoPayHint admin={Boolean(me.admin)} />}
+      <DocActions key={kind} label={act ? 'акт выполненных работ' : 'квитанция'} phone={contactPhone(a.patient)} message={r} onOpen={issue}
+        note={(channel) => !act && channel === 'TELEGRAM' && r.pay?.qrToken
           ? <p className="hint small">📎 Следом бот пришлёт картинку QR для оплаты.</p> : null}
-        send={() => unwrap(api.POST('/api/appointments/{id}/receipt/send', { params: { path: { id } } }))}
-        paper={{ formats: true, render: (format) => <ReceiptSheet r={r} narrow={format === 'receipt'} />, image: { fileName: 'kvitanciya.png' } }}
+        send={() => unwrap(api.POST('/api/appointments/{id}/receipt/send', { params: { path: { id }, query: { kind } } }))}
+        paper={act
+          ? { render: () => <ActSheet r={r} />, image: { fileName: 'akt.png' } }
+          : { formats: true, render: (format) => <ReceiptSheet r={r} narrow={format === 'receipt'} />, image: { fileName: 'kvitanciya.png' } }}
         onPrint={(format) => setPrinting(format)} />
       {printing && (
-        <PrintSheet title="Квитанция об оплате" formats initialFormat={printing} onClose={() => setPrinting(null)}>
-          {(format) => <ReceiptSheet r={r} narrow={format === 'receipt'} />}
+        <PrintSheet title={title} formats={!act} initialFormat={act ? 'a4' : printing} onClose={() => setPrinting(null)}>
+          {(format) => act ? <ActSheet r={r} /> : <ReceiptSheet r={r} narrow={format === 'receipt'} />}
         </PrintSheet>
       )}
+    </div>
+  )
+}
+
+/** «№ 000123 от 27.11.2026» под заголовком документа; номера ещё нет — ничего. На чеке 80 мм — только номер. */
+function DocNumber({ r, narrow = false }: { r: Receipt; narrow?: boolean }) {
+  if (r.number == null) return null
+  return <p className="doc-number">{docNumber(r.number)}{!narrow && r.numberedAt ? ` от ${docDate(r.numberedAt)}` : ''}</p>
+}
+
+/** «Подпись врача ____ / Подпись пациента ____» внизу A4. */
+function SignLines({ left = 'Подпись врача', right = 'Подпись пациента' }: { left?: string; right?: string }) {
+  return (
+    <div className="signatures doc-signs">
+      <span>{left} ____________________</span>
+      <span>{right} ____________________</span>
     </div>
   )
 }
@@ -215,6 +251,7 @@ function ReceiptSheet({ r, narrow }: { r: Receipt; narrow: boolean }) {
   return (
     <>
       <h1>Квитанция об оплате</h1>
+      <DocNumber r={r} narrow={narrow} />
       <dl>
         <dt>Пациент</dt><dd>{r.patient}</dd>
         <dt>Приём</dt><dd>{docDate(r.startAt!)}, {timeOf(r.startAt!)}</dd>
@@ -275,8 +312,54 @@ function ReceiptSheet({ r, narrow }: { r: Receipt; narrow: boolean }) {
       {r.advanceSom != null && r.advanceLeftSom != null && <p className="total">Остаток аванса: {somText(r.advanceLeftSom)}</p>}
       <p className="total">{r.debtSom ? `Осталось оплатить: ${somText(r.debtSom)}` : 'Оплачено полностью'}</p>
       {r.debtSom > 0 && r.pay && <PayBlock pay={r.pay} />}
-      <div className="signatures"><span>Принял ____________________</span></div>
+      {/* A4 — подписи врача и пациента (документ на руки); чек 80 мм — компактно, как раньше */}
+      {narrow ? <div className="signatures"><span>Принял ____________________</span></div> : <SignLines />}
       <p className="fiscal">Не является фискальным чеком</p>
+    </>
+  )
+}
+
+/**
+ * «Акт выполненных работ» (A4): номер и дата, исполнитель — юрлицо или ИП из «О клинике» (не заполнено — название
+ * клиники), заказчик — пациент, таблица работ (услуга, зубы, количество, сумма), стоимость, скидка, итог и подписи.
+ * Оплат и долга в акте нет: он о сделанной работе. Суммы строк — с сервера, до скидок (не сходятся с ценой приёма — «—»);
+ * скидки строк и общая — одной строкой «Скидка».
+ */
+export function ActSheet({ r }: { r: Receipt }) {
+  const me = useMe()
+  const clinic = me.data?.clinic
+  const performer = clinic?.legalName || clinic?.brandName || clinic?.name
+  const lines = r.lines?.length ? r.lines : [{ name: r.service ?? 'Приём', qty: 1, teeth: [], amountSom: r.fullSom ?? r.chargeSom ?? undefined, discountSom: undefined }]
+  const off = (r.linesDiscountSom ?? 0) + (r.discount?.som ?? 0)
+  return (
+    <>
+      <h1>Акт выполненных работ</h1>
+      <DocNumber r={r} />
+      <dl>
+        {performer && <><dt>Исполнитель</dt><dd>{performer}</dd></>}
+        <dt>Заказчик</dt><dd>{r.patient}</dd>
+        <dt>Приём</dt><dd>{docDate(r.startAt!)}, {timeOf(r.startAt!)}</dd>
+        <dt>Врач</dt><dd>{r.doctor}</dd>
+      </dl>
+      <table aria-label="Выполненные работы">
+        <thead><tr><th>№</th><th>Услуга</th><th>Зубы</th><th className="r">Кол-во</th><th className="r">Сумма</th></tr></thead>
+        <tbody>
+          {lines.map((l, i) => (
+            <tr key={i}>
+              <td>{i + 1}</td>
+              <td>{l.name}</td>
+              <td>{l.teeth?.length ? l.teeth.join(', ') : '—'}</td>
+              <td className="r">{l.qty}</td>
+              <td className="r">{l.amountSom != null ? somText(l.amountSom) : '—'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {off > 0 && <p className="total">Стоимость: {somText(r.fullSom ?? (r.chargeSom ?? 0) + off)}</p>}
+      {off > 0 && <p className="total">Скидка: {somText(off)}</p>}
+      <p className="total">Итого: {somText(r.chargeSom ?? 0)}</p>
+      <p className="act-note">Работы выполнены полностью. Заказчик претензий по объёму, качеству и срокам не имеет.</p>
+      <SignLines />
     </>
   )
 }

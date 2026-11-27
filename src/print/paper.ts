@@ -16,3 +16,8 @@ export type PaperFormat = 'a4' | 'receipt'
 export function docDate(instant: string): string {
   return new Intl.DateTimeFormat('ru-RU', { timeZone: ZONE, day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(instant))
 }
+
+/** Номер документа приёма (квитанция, акт — V271): 123 → «№ 000123». */
+export function docNumber(n: number): string {
+  return `№ ${String(n).padStart(6, '0')}`
+}

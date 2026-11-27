@@ -40,6 +40,7 @@ import { PatientTagsLine } from '../tags/TagDots'
 import { serviceLabel } from '../schedule/lineLabel'
 import { PatientHistory } from './PatientHistory'
 import { DuplicatesLine } from './Duplicates'
+import { MoneySummary } from './MoneySummary'
 
 type Me = Schemas['BookingViewsMe']
 type Patient = Schemas['PatientView']
@@ -349,6 +350,8 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
 
       {shown === 'money' && (
         <section className="patient-money">
+          {/* «Начислено · Оплачено · Баланс» — считает сервер по правилам видимости денег; нет сводки (ассистент) — нет блока */}
+          {card.data.money && <MoneySummary money={card.data.money} />}
           {patient?.id != null && seesAdvance(me) && <AdvanceBox patientId={patient.id} me={me} />}
           {debtRows.length === 0 && <EmptyState compact title="Долгов нет" />}
           {/* Напомнить о долге (бот или WhatsApp) и «Обещал оплатить до…» — те же формы, что в «Должниках» */}

@@ -15026,10 +15026,55 @@
             "type" : "integer",
             "format" : "int64"
           }
+        }, {
+          "name" : "kind",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "RECEIPT",
+            "enum" : [ "RECEIPT", "ACT" ]
+          }
         } ],
         "responses" : {
           "204" : {
             "description" : "No Content"
+          }
+        }
+      }
+    },
+    "/api/appointments/{id}/receipt/number" : {
+      "post" : {
+        "tags" : [ "receipt-controller" ],
+        "operationId" : "number",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "kind",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "RECEIPT",
+            "enum" : [ "RECEIPT", "ACT" ]
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ReceiptsReceiptView"
+                }
+              }
+            }
           }
         }
       }
@@ -20046,6 +20091,15 @@
           "schema" : {
             "type" : "integer",
             "format" : "int64"
+          }
+        }, {
+          "name" : "kind",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "RECEIPT",
+            "enum" : [ "RECEIPT", "ACT" ]
           }
         } ],
         "responses" : {
@@ -31567,6 +31621,159 @@
         },
         "required" : [ "reply", "version" ]
       },
+      "ReceiptsLine" : {
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "qty" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "teeth" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int32"
+            }
+          },
+          "amountSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "discountSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "qty" ]
+      },
+      "ReceiptsPay" : {
+        "properties" : {
+          "details" : {
+            "type" : "string"
+          },
+          "qrToken" : {
+            "type" : "string"
+          },
+          "payUrl" : {
+            "type" : "string"
+          },
+          "doctor" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "doctor" ]
+      },
+      "ReceiptsPayment" : {
+        "properties" : {
+          "paidAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "amountSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "method" : {
+            "type" : "string",
+            "enum" : [ "CASH", "TRANSFER", "CARD", "ADVANCE" ]
+          },
+          "takenBy" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "amountSom" ]
+      },
+      "ReceiptsReceiptView" : {
+        "properties" : {
+          "appointmentId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "startAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "doctor" : {
+            "type" : "string"
+          },
+          "patient" : {
+            "type" : "string"
+          },
+          "service" : {
+            "type" : "string"
+          },
+          "chargeSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "paidSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "debtSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "payments" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ReceiptsPayment"
+            }
+          },
+          "text" : {
+            "type" : "string"
+          },
+          "telegram" : {
+            "type" : "boolean"
+          },
+          "discount" : {
+            "$ref" : "#/components/schemas/PaymentDiscount"
+          },
+          "advanceSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "advanceLeftSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "lines" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ReceiptsLine"
+            }
+          },
+          "pay" : {
+            "$ref" : "#/components/schemas/ReceiptsPay"
+          },
+          "telegramText" : {
+            "type" : "string"
+          },
+          "linesDiscountSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "fullSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "kind" : {
+            "type" : "string",
+            "enum" : [ "RECEIPT", "ACT" ]
+          },
+          "number" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "numberedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "appointmentId", "debtSom", "paidSom", "telegram" ]
+      },
       "ChartControllerPlanDone" : {
         "properties" : {
           "stepIds" : {
@@ -37299,147 +37506,6 @@
         },
         "required" : [ "bonus", "count", "kind", "until", "usedHere" ]
       },
-      "ReceiptsLine" : {
-        "properties" : {
-          "name" : {
-            "type" : "string"
-          },
-          "qty" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "teeth" : {
-            "type" : "array",
-            "items" : {
-              "type" : "integer",
-              "format" : "int32"
-            }
-          },
-          "amountSom" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "discountSom" : {
-            "type" : "integer",
-            "format" : "int32"
-          }
-        },
-        "required" : [ "qty" ]
-      },
-      "ReceiptsPay" : {
-        "properties" : {
-          "details" : {
-            "type" : "string"
-          },
-          "qrToken" : {
-            "type" : "string"
-          },
-          "payUrl" : {
-            "type" : "string"
-          },
-          "doctor" : {
-            "type" : "boolean"
-          }
-        },
-        "required" : [ "doctor" ]
-      },
-      "ReceiptsPayment" : {
-        "properties" : {
-          "paidAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "amountSom" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "method" : {
-            "type" : "string",
-            "enum" : [ "CASH", "TRANSFER", "CARD", "ADVANCE" ]
-          },
-          "takenBy" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "amountSom" ]
-      },
-      "ReceiptsReceiptView" : {
-        "properties" : {
-          "appointmentId" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "startAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "doctor" : {
-            "type" : "string"
-          },
-          "patient" : {
-            "type" : "string"
-          },
-          "service" : {
-            "type" : "string"
-          },
-          "chargeSom" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "paidSom" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "debtSom" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "payments" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/ReceiptsPayment"
-            }
-          },
-          "text" : {
-            "type" : "string"
-          },
-          "telegram" : {
-            "type" : "boolean"
-          },
-          "discount" : {
-            "$ref" : "#/components/schemas/PaymentDiscount"
-          },
-          "advanceSom" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "advanceLeftSom" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "lines" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/ReceiptsLine"
-            }
-          },
-          "pay" : {
-            "$ref" : "#/components/schemas/ReceiptsPay"
-          },
-          "telegramText" : {
-            "type" : "string"
-          },
-          "linesDiscountSom" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "fullSom" : {
-            "type" : "integer",
-            "format" : "int32"
-          }
-        },
-        "required" : [ "appointmentId", "debtSom", "paidSom", "telegram" ]
-      },
       "PaymentQueryEntry" : {
         "properties" : {
           "id" : {
@@ -38431,6 +38497,9 @@
           },
           "access" : {
             "$ref" : "#/components/schemas/PatientCardAccess"
+          },
+          "money" : {
+            "$ref" : "#/components/schemas/PatientCardMoney"
           }
         },
         "required" : [ "access", "cancelled", "done", "noShow" ]
@@ -38445,6 +38514,27 @@
           }
         },
         "required" : [ "medical", "money" ]
+      },
+      "PatientCardMoney" : {
+        "properties" : {
+          "chargedSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "paidSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "advanceSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "balanceSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "advanceSom", "balanceSom", "chargedSom", "paidSom" ]
       },
       "ServiceTypeControllerDeleted" : {
         "properties" : {

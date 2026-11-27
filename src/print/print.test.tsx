@@ -184,7 +184,7 @@ test('ассистент: памятка есть, квитанции нет —
   renderApp()
   const panel = await card(/Бакыт М\./)
   expect(await within(panel).findByText('После удаления зуба')).toBeInTheDocument()
-  expect(within(panel).queryByText('🧾 Квитанция об оплате')).not.toBeInTheDocument()
+  expect(within(panel).queryByRole('group', { name: 'Документ' })).not.toBeInTheDocument()
   expect(sent).not.toContain('receipt')
 })
 
@@ -362,4 +362,87 @@ test('оплачено полностью: ни «Как оплатить», н�
   const paper = within(panel).getByRole('document', { name: 'Лист: квитанция' })
   expect(paper).toHaveTextContent('Оплачено полностью')
   expect(within(paper).queryByRole('region', { name: 'Как оплатить' })).not.toBeInTheDocument()
+})
+
+test('номер квитанции: выдаётся при первом «🔍 Просмотре», один раз; на A4 — «№ 000123 от …» и подписи врача и пациента, на чеке — только номер', async () => {
+  const issued: string[] = []
+  backend(done())
+  server.use(http.post('*/api/appointments/:id/receipt/number', ({ request }) => {
+    issued.push(new URL(request.url).searchParams.get('kind') ?? '')
+    return HttpResponse.json({ ...RECEIPT, kind: 'RECEIPT', number: 123, numberedAt: '2026-10-21T05:00:00Z',
+      text: '🧾 Квитанция об оплате\n\nКвитанция № 000123 от 21.10.2026\nОплачено: 3 000 сом' } satisfies Schemas['ReceiptsReceiptView'])
+  }))
+  renderApp()
+  const panel = await card(/Бакыт М\./)
+  // Открыли документы приёма — номера ещё нет и он не выдан
+  expect(await within(panel).findByRole('button', { name: 'Просмотр: квитанция' })).toBeInTheDocument()
+  expect(issued).toEqual([])
+  await userEvent.click(within(panel).getByRole('button', { name: 'Просмотр: квитанция' }))
+  const paper = await within(panel).findByRole('document', { name: 'Лист: квитанция' })
+  expect(issued).toEqual(['RECEIPT'])
+  // Чек 80 мм — компактно: номер без даты, без подписей врача и пациента
+  expect(paper).toHaveTextContent('№ 000123')
+  expect(paper).not.toHaveTextContent('№ 000123 от')
+  expect(paper).not.toHaveTextContent('Подпись пациента')
+  await userEvent.click(within(panel).getByRole('button', { name: 'A4' }))
+  expect(paper).toHaveTextContent('№ 000123 от 21.10.2026')
+  expect(paper).toHaveTextContent(/Подпись врача _+/)
+  expect(paper).toHaveTextContent(/Подпись пациента _+/)
+  // Текст сообщения — уже с номером
+  await userEvent.click(within(panel).getByRole('button', { name: '💬 Сообщение' }))
+  expect(within(panel).getByRole('document', { name: 'Предпросмотр: квитанция' })).toHaveTextContent('Квитанция № 000123 от 21.10.2026')
+  await userEvent.click(within(panel).getByText('Закрыть', { selector: 'button' }))
+  // Второй просмотр — номер уже есть, второй раз не просим
+  await userEvent.click(within(panel).getByRole('button', { name: 'Просмотр: квитанция' }))
+  expect(issued).toEqual(['RECEIPT'])
+})
+
+test('«Акт выполненных работ»: переключатель, свой номер, исполнитель — юрлицо из «О клинике», работы с зубами и количеством, итог и подписи', async () => {
+  const issued: string[] = []
+  const asked: string[] = []
+  const ACT = {
+    ...RECEIPT, kind: 'ACT', chargeSom: 4500, paidSom: 3000, debtSom: 1500, fullSom: 5000,
+    discount: { som: 500, percent: 10, reason: 'REGULAR', priceSom: 5000 },
+    lines: [{ name: 'Лечение кариеса', qty: 2, teeth: [36, 37], amountSom: 5000 }],
+    text: '📄 Акт выполненных работ\n\nВыполненные работы:\n• Лечение кариеса (36, 37) × 2 — 5 000 сом\nИтого: 4 500 сом',
+  } satisfies Schemas['ReceiptsReceiptView']
+  backend(done({ chargeSom: 4500 }), { ...me, clinic: { ...me.clinic!, legalName: 'ИП Вымышленная А. Б.' } })
+  server.use(
+    http.get('*/api/appointments/:id/receipt', ({ request }) => {
+      const kind = new URL(request.url).searchParams.get('kind') ?? 'RECEIPT'
+      asked.push(kind)
+      return HttpResponse.json(kind === 'ACT' ? ACT : RECEIPT)
+    }),
+    http.post('*/api/appointments/:id/receipt/number', ({ request }) => {
+      issued.push(new URL(request.url).searchParams.get('kind') ?? '')
+      return HttpResponse.json({ ...ACT, number: 45, numberedAt: '2026-10-21T05:00:00Z' })
+    }),
+  )
+  renderApp()
+  const panel = await card(/Бакыт М\./)
+  const kinds = await within(panel).findByRole('group', { name: 'Документ' })
+  expect(within(kinds).getByRole('button', { name: '🧾 Квитанция' })).toHaveAttribute('aria-pressed', 'true')
+  await userEvent.click(within(kinds).getByRole('button', { name: '📄 Акт выполненных работ' }))
+  await userEvent.click(await within(panel).findByRole('button', { name: 'Просмотр: акт выполненных работ' }))
+  expect(asked).toContain('ACT')
+  expect(issued).toEqual(['ACT'])
+  expect(within(panel).getByRole('document', { name: 'Предпросмотр: акт выполненных работ' })).toHaveTextContent('Лечение кариеса (36, 37) × 2')
+  await userEvent.click(within(panel).getByRole('button', { name: 'Печать: акт выполненных работ' }))
+  const sheet = await screen.findByRole('dialog', { name: 'Печать: Акт выполненных работ' })
+  // Акт — только A4, без «Чек 80 мм»
+  expect(within(sheet).queryByRole('button', { name: 'Чек 80 мм' })).not.toBeInTheDocument()
+  expect(within(sheet).getByRole('heading', { level: 1, name: 'Акт выполненных работ' })).toBeInTheDocument()
+  expect(sheet).toHaveTextContent('№ 000045 от 21.10.2026')
+  expect(sheet).toHaveTextContent(/ИсполнительИП Вымышленная А\. Б\./)
+  expect(sheet).toHaveTextContent(/ЗаказчикБакыт М\./)
+  const rows = within(within(sheet).getByRole('table', { name: 'Выполненные работы' })).getAllByRole('row')
+  expect(rows[1]).toHaveTextContent(/1Лечение кариеса36, 372\s*5\s000 сом/)
+  expect(sheet).toHaveTextContent(/Стоимость: 5\s000 сом/)
+  expect(sheet).toHaveTextContent(/Скидка: 500 сом/)
+  expect(sheet).toHaveTextContent(/Итого: 4\s500 сом/)
+  expect(sheet).toHaveTextContent(/Подпись врача _+/)
+  expect(sheet).toHaveTextContent(/Подпись пациента _+/)
+  // В акте нет оплат, долга и «Как оплатить»
+  expect(sheet).not.toHaveTextContent('Осталось оплатить')
+  expect(sheet).not.toHaveTextContent('Не является фискальным чеком')
 })
