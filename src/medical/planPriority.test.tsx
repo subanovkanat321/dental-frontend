@@ -177,8 +177,8 @@ test('страница плана пациента: группы по срочн
 
 test('«Позвать снова»: «🔴 есть срочное» у пациента со срочным в плане', async () => {
   const patients: Candidate[] = [
-    { patientId: 7, fullName: 'Динара У.', telegram: false, reason: 'PLAN', planSom: 6000, plan: ['зуб 46 — Удаление'], invites: 0, urgent: 1 },
-    { patientId: 8, fullName: 'Бакыт М.', telegram: false, reason: 'PLAN', planSom: 9000, plan: ['зуб 11 — Отбеливание'], invites: 0, urgent: 0 },
+    { patientId: 7, fullName: 'Динара У.', telegram: false, reason: 'PLAN', planSom: 6000, plan: ['зуб 46 — Удаление'], invites: 0, urgent: 1, invitedAuto: false },
+    { patientId: 8, fullName: 'Бакыт М.', telegram: false, reason: 'PLAN', planSom: 9000, plan: ['зуб 11 — Отбеливание'], invites: 0, urgent: 0, invitedAuto: false },
   ]
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),

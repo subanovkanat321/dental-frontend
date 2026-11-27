@@ -120,6 +120,7 @@ export const server = setupServer(
   http.get('*/api/appointments/from-tish', () => HttpResponse.json({
     month: '2026-11', from: '2026-11-01', to: '2026-11-18', previousFrom: '2026-10-01', previousTo: '2026-10-18', partial: true,
     current: { newPatients: 0, came: 0, revenueSom: 0, allNewPatients: 0 }, previous: { newPatients: 0, came: 0, revenueSom: 0, allNewPatients: 0 }, channels: [],
+    returned: { patients: 0, revenueSom: 0, invited: 0, autoInvited: 0 },
   } satisfies Schemas['TishReportControllerTishReport'])),
   http.get('*/api/appointments/revenue', () => HttpResponse.json({ totalSom: 0, paidCount: 0, unpaidCount: 0, byMethod: {}, days: [] })),
   http.get('*/api/appointments/to-pay', () => HttpResponse.json([])),

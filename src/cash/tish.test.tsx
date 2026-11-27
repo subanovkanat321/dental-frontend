@@ -17,6 +17,7 @@ const REPORT: Schemas['TishReportControllerTishReport'] = {
     { channel: 'QR', newPatients: 1, came: 1, revenueSom: 4000, previousNewPatients: 0 },
     { channel: 'SITE', newPatients: 0, came: 0, revenueSom: 0, previousNewPatients: 1 },
   ],
+  returned: { patients: 3, revenueSom: 27000, invited: 14, autoInvited: 9 },
 }
 
 beforeEach(() => {
@@ -52,6 +53,9 @@ test('«Пациенты от Tish»: крупная цифра, пришли и
   expect(facts).toHaveTextContent('Пришли: 9')
   expect(facts).toHaveTextContent(/Выручка: 84\s000 сом/)
   expect(facts).toHaveTextContent('из всех новых: 12 из 20')
+  // «Вернули» (идея 2): записались не позже 30 дней после «Позвать снова»
+  expect(within(tish).getByLabelText('Вернули пациентов')).toHaveTextContent(/Вернули: 3 пациента · 27\s000 сом/)
+  expect(within(tish).getByLabelText('Вернули пациентов')).toHaveTextContent('позвали 14, из них Tish сам — 9')
   expect(within(tish).getByLabelText('Сравнение с прошлым месяцем')).toHaveTextContent(/▲ 50% к тем же дням прошлого месяца \(1 окт – 18 окт\): было 8, пришли 6, 51\s000 сом/)
   // По каналам — только где есть новые; подписи по-русски
   const bars = within(tish).getByRole('list', { name: 'Новые пациенты по каналам' })
