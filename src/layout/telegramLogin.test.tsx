@@ -24,7 +24,7 @@ function backend(statuses: TelegramLoginStatus['state'][], { telegramLogin = tru
   server.use(
     http.get('*/api/patient/me', () => (session ? HttpResponse.json(me) : HttpResponse.json({ detail: 'Войдите' }, { status: 401 }))),
     http.get('*/web/config', () => HttpResponse.json({
-      botUsername: 'tish_test_bot', smsLogin: false, passwordLogin: true, telegramCode: true, telegramLogin,
+      botUsername: 'tish_test_bot', passwordLogin: true, telegramCode: true, telegramLogin,
     })),
     http.post('*/web/login/telegram/start', ({ request }) => {
       calls.push({ method: 'POST', path: 'start', header: request.headers.get('X-Dental-Web') })
@@ -50,6 +50,28 @@ function backend(statuses: TelegramLoginStatus['state'][], { telegramLogin = tru
 afterEach(() => {
   vi.restoreAllMocks()
   delete window.Telegram
+})
+
+test('вход — только две вещи: «Войти через Telegram» и «Логин или телефон» + «Пароль» (без SMS, Google и «Других способов»)', async () => {
+  backend(['none'])
+  // Старый сервер ещё может прислать прежние поля — страница их не показывает
+  server.use(http.get('*/web/config', () => HttpResponse.json({
+    botUsername: 'tish_test_bot', passwordLogin: true, telegramCode: true, telegramLogin: true, mailCode: true,
+    smsLogin: true, googleClientId: '123-abc.apps.googleusercontent.com',
+  })))
+  renderApp()
+  expect(await screen.findByRole('button', { name: 'Войти через Telegram' })).toBeInTheDocument()
+  expect(await screen.findByRole('textbox', { name: 'Логин или телефон' })).toBeInTheDocument()
+  expect(screen.getByLabelText('Пароль')).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Войти' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Забыли пароль? / Первый вход' })).toBeInTheDocument()
+  // Больше способов нет: ни SMS, ни Google, ни свёрнутых «Других способов входа»
+  expect(screen.queryByRole('button', { name: /Google/ })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Другие способы входа' })).not.toBeInTheDocument()
+  expect(document.body).not.toHaveTextContent(/SMS|Google/)
+  const buttons = screen.getAllByRole('button').map((b) => b.textContent)
+  expect(buttons).toEqual(expect.arrayContaining(['Войти через Telegram', 'Войти', 'Забыли пароль? / Первый вход']))
+  expect(document.querySelector('script[src*="accounts.google.com"]')).toBeNull()
 })
 
 test('«Войти через Telegram» → открывает бота, ждёт «Подтвердить вход», опрос раз в 2 секунды → вход в CRM', async () => {

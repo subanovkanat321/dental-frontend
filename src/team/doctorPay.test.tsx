@@ -12,7 +12,7 @@ type Pay = Schemas['PayRequisitesDoctorPay']
 beforeEach(() => {
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
-    http.get('*/api/me/phone', () => HttpResponse.json({ phoneOnly: false, sms: true, telegram: true } satisfies Schemas['MyPhoneControllerMyPhone'])),
+    http.get('*/api/me/phone', () => HttpResponse.json({ phoneOnly: false, telegram: true } satisfies Schemas['MyPhoneControllerMyPhone'])),
     http.get('*/api/appointments', () => HttpResponse.json([])),
     http.get('*/api/doctors/admin', () => HttpResponse.json([{ id: 1, fullName: 'Айгерим Садыкова', active: true, telegramId: 111, role: 'ADMIN', phoneOnly: false }] satisfies Schemas['DoctorAdminView'][])),
   )

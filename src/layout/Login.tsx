@@ -2,17 +2,12 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useState } from 'react'
 
 import { LOGGED_OUT, loginConfig, WEB_CONFIG_KEY, webConfig } from '../api/client'
-import { externalLoginShown } from '../lib/providers'
 import { isLoginPath } from '../lib/route'
 import { telegram } from '../lib/telegram'
 import { InstallHint } from '../pwa/InstallHint'
 import { PhoneLogin } from './PhoneLogin'
-import { ExternalLogin } from './ExternalLogin'
 import { Loading } from './Loading'
 import { TelegramLogin } from './TelegramLogin'
-
-/** Свёрнутая ссылка: запасные способы входа (Google, если подключён) — главное на странице только Telegram и пароль. */
-export const OTHER_WAYS = 'Другие способы входа'
 
 /** Строка под заголовком — видна на компьютере (на телефоне экран входа короткий, как был). */
 export const LEAD = 'Tish бесплатный: запись пациентов, расписание, карты, касса и склад — для всей клиники, на компьютере и в Telegram.'
@@ -39,14 +34,14 @@ function LoggedOutHint({ onClose }: { onClose: () => void }) {
 }
 
 /**
- * Страница входа на сайт — максимально просто (решение владельца 2026-11-25), всего две вещи:
+ * Страница входа на сайт — максимально просто (решения владельца 2026-11-25 и 2026-11-27), всего две вещи:
  * <ol>
  * <li>большая кнопка «Войти через Telegram» — главный способ (ссылка в бота и «Подтвердить вход» там, на компьютере —
  * ещё и QR-код; TelegramLogin). В Telegram (Mini App) вход сам, по initData, — кнопки там нет;</li>
  * <li>под ней — компактная форма «Логин или телефон» + «Пароль» + «Войти» и ссылка «Забыли пароль?» (PhoneLogin).</li>
  * </ol>
- * Остальное — под свёрнутой ссылкой «Другие способы входа»: «Войти через Google» (только если владелец подключил,
- * ExternalLogin). Регистрация клиники — как раньше через Telegram (/join), здесь её нет.
+ * И всё: входа по SMS-коду, через Google и ссылки «Другие способы входа» больше нет (2026-11-27). «Забыли пароль?» — код
+ * в Telegram или на почту. Регистрация клиники — на /start (Telegram или почта), здесь её нет.
  */
 export function Login() {
   const client = useQueryClient()
@@ -55,7 +50,6 @@ export function Login() {
   /** Ждём «Подтвердить вход» в боте — форму пароля прячем, чтобы не путать. */
   const [tgWaiting, setTgWaiting] = useState(false)
   const onWaiting = useCallback((w: boolean) => setTgWaiting(w), [])
-  const [others, setOthers] = useState(false)
   // Показали один раз: обновили страницу или вошли снова — подсказки уже нет
   useEffect(() => {
     try {
@@ -72,7 +66,6 @@ export function Login() {
   }
   const config = loginConfig(bot.data)
   const viaTelegram = !!config?.telegramLogin && !telegram()
-  const hasOthers = externalLoginShown(config)
   return (
     <div className="center login staff-login">
       <div className="login-card">
@@ -91,16 +84,8 @@ export function Login() {
           {config && !tgWaiting && (
             <>
               {viaTelegram && <p className="login-or"><span>или логин и пароль</span></p>}
-              <PhoneLogin onDone={entered} sms={config.smsLogin} telegram={config.telegramCode} password={config.passwordLogin}
+              <PhoneLogin onDone={entered} telegram={config.telegramCode} password={config.passwordLogin}
                 mail={config.mailCode} secondary={viaTelegram} />
-              {hasOthers && !others && (
-                <button type="button" className="link login-others" aria-expanded={false} onClick={() => setOthers(true)}>{OTHER_WAYS}</button>
-              )}
-              {hasOthers && others && (
-                <div className="login-others-open" role="group" aria-label={OTHER_WAYS}>
-                  <ExternalLogin config={config} onDone={entered} />
-                </div>
-              )}
             </>
           )}
           <InstallHint />

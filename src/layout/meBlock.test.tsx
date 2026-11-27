@@ -97,7 +97,7 @@ function phone() {
 test('телефон: «Ещё» → свой аватар → лист «Я» с теми же пунктами; «Мой профиль» — экран с «‹ Назад»', async () => {
   phone()
   server.use(
-    http.get('*/api/me/password', () => HttpResponse.json({ phoneLogin: false, passwordSet: true, temporary: false, sms: false, telegram: true })),
+    http.get('*/api/me/password', () => HttpResponse.json({ phoneLogin: false, passwordSet: true, temporary: false, telegram: true })),
     http.get('*/api/doctors/admin', () => HttpResponse.json([{ id: 1, fullName: 'Айгерим Садыкова', active: true }])),
   )
   window.location.hash = '/schedule'

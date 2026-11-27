@@ -3297,59 +3297,6 @@
         }
       }
     },
-    "/api/me/phone" : {
-      "get" : {
-        "tags" : [ "my-phone-controller" ],
-        "operationId" : "get_2",
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/MyPhoneControllerMyPhone"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put" : {
-        "tags" : [ "my-phone-controller" ],
-        "operationId" : "set_4",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/MyPhoneControllerPhoneConfirm"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/MyPhoneControllerPhoneConfirmed"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete" : {
-        "tags" : [ "my-phone-controller" ],
-        "operationId" : "remove_1",
-        "responses" : {
-          "204" : {
-            "description" : "No Content"
-          }
-        }
-      }
-    },
     "/api/me/password" : {
       "get" : {
         "tags" : [ "password-controller" ],
@@ -3434,7 +3381,7 @@
     "/api/me/email" : {
       "get" : {
         "tags" : [ "my-email-controller" ],
-        "operationId" : "get_3",
+        "operationId" : "get_2",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -3450,7 +3397,7 @@
       },
       "put" : {
         "tags" : [ "my-email-controller" ],
-        "operationId" : "set_5",
+        "operationId" : "set_4",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -3476,7 +3423,7 @@
       },
       "delete" : {
         "tags" : [ "my-email-controller" ],
-        "operationId" : "remove_2",
+        "operationId" : "remove_1",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -3550,7 +3497,7 @@
     "/api/leads/{id}" : {
       "get" : {
         "tags" : [ "lead-controller" ],
-        "operationId" : "get_4",
+        "operationId" : "get_3",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -3685,7 +3632,7 @@
     "/api/lab-orders/{id}" : {
       "get" : {
         "tags" : [ "lab-controller" ],
-        "operationId" : "get_5",
+        "operationId" : "get_4",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -3857,7 +3804,7 @@
     "/api/doctors/{id}/service-types" : {
       "put" : {
         "tags" : [ "doctor-services-controller" ],
-        "operationId" : "set_6",
+        "operationId" : "set_5",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -3931,7 +3878,7 @@
     "/api/doctors/{id}/pay" : {
       "get" : {
         "tags" : [ "pay-requisites-controller" ],
-        "operationId" : "get_6",
+        "operationId" : "get_5",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -4400,7 +4347,7 @@
     "/api/clinic/visit-edit" : {
       "get" : {
         "tags" : [ "visit-edit-controller" ],
-        "operationId" : "get_7",
+        "operationId" : "get_6",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -4416,7 +4363,7 @@
       },
       "put" : {
         "tags" : [ "visit-edit-controller" ],
-        "operationId" : "set_7",
+        "operationId" : "set_6",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -4732,7 +4679,7 @@
     "/api/clinic/discounts" : {
       "get" : {
         "tags" : [ "discount-controller" ],
-        "operationId" : "get_8",
+        "operationId" : "get_7",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -4748,7 +4695,7 @@
       },
       "put" : {
         "tags" : [ "discount-controller" ],
-        "operationId" : "set_8",
+        "operationId" : "set_7",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -5505,7 +5452,7 @@
       },
       "delete" : {
         "tags" : [ "appointment-lines-controller" ],
-        "operationId" : "remove_3",
+        "operationId" : "remove_2",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -6063,34 +6010,6 @@
         }
       }
     },
-    "/web/signup/code" : {
-      "post" : {
-        "tags" : [ "signup-controller" ],
-        "operationId" : "code",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/SignupControllerSignupRequest"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/SignupControllerCodeSent"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/web/review/{token}" : {
       "get" : {
         "tags" : [ "review-link-controller" ],
@@ -6389,7 +6308,7 @@
     "/web/login/phone/code" : {
       "post" : {
         "tags" : [ "phone-login-controller" ],
-        "operationId" : "code_1",
+        "operationId" : "code",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -6407,59 +6326,6 @@
               "application/json" : {
                 "schema" : {
                   "type" : "object"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/web/login/oauth/{provider}" : {
-      "post" : {
-        "tags" : [ "external-login-controller" ],
-        "operationId" : "login_2",
-        "parameters" : [ {
-          "name" : "provider",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/ExternalLoginControllerTokenRequest"
-              }
-            }
-          }
-        },
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "object"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/web/login/oauth/nonce" : {
-      "post" : {
-        "tags" : [ "external-login-controller" ],
-        "operationId" : "nonce",
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ExternalLoginControllerNonce"
                 }
               }
             }
@@ -6516,34 +6382,6 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/InviteControllerRegistered"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/web/invite/code" : {
-      "post" : {
-        "tags" : [ "invite-controller" ],
-        "operationId" : "code_2",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/InviteControllerCodeRequest"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/InviteControllerCodeStep"
                 }
               }
             }
@@ -12176,27 +12014,6 @@
         }
       }
     },
-    "/api/me/phone/code" : {
-      "post" : {
-        "tags" : [ "my-phone-controller" ],
-        "operationId" : "code_3",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/MyPhoneControllerCodeRequest"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "description" : "OK"
-          }
-        }
-      }
-    },
     "/api/me/password/confirm" : {
       "post" : {
         "tags" : [ "password-controller" ],
@@ -12244,16 +12061,7 @@
       },
       "post" : {
         "tags" : [ "password-controller" ],
-        "operationId" : "code_4",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/PasswordControllerCodeRequest"
-              }
-            }
-          }
-        },
+        "operationId" : "code_1",
         "responses" : {
           "200" : {
             "description" : "OK"
@@ -12272,75 +12080,10 @@
         }
       }
     },
-    "/api/me/identities/{provider}" : {
-      "post" : {
-        "tags" : [ "external-login-controller" ],
-        "operationId" : "link_2",
-        "parameters" : [ {
-          "name" : "provider",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/ExternalLoginControllerTokenRequest"
-              }
-            }
-          }
-        },
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "$ref" : "#/components/schemas/ExternalLoginControllerIdentityView"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete" : {
-        "tags" : [ "external-login-controller" ],
-        "operationId" : "unlink",
-        "parameters" : [ {
-          "name" : "provider",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "$ref" : "#/components/schemas/ExternalLoginControllerIdentityView"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/me/email/code" : {
       "post" : {
         "tags" : [ "my-email-controller" ],
-        "operationId" : "code_5",
+        "operationId" : "code_2",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -14184,7 +13927,7 @@
     "/api/calendar-feed" : {
       "get" : {
         "tags" : [ "calendar-feed-controller" ],
-        "operationId" : "get_9",
+        "operationId" : "get_8",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -16382,7 +16125,7 @@
     "/web/case" : {
       "get" : {
         "tags" : [ "join-case" ],
-        "operationId" : "get_10",
+        "operationId" : "get_9",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -16918,7 +16661,7 @@
     "/api/salaries/timesheet" : {
       "get" : {
         "tags" : [ "timesheet-controller" ],
-        "operationId" : "get_11",
+        "operationId" : "get_10",
         "parameters" : [ {
           "name" : "month",
           "in" : "query",
@@ -17204,7 +16947,7 @@
     "/api/support/tickets/{id}" : {
       "get" : {
         "tags" : [ "support-controller" ],
-        "operationId" : "get_12",
+        "operationId" : "get_11",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -17231,7 +16974,7 @@
     "/api/platform/support/tickets/{id}" : {
       "get" : {
         "tags" : [ "support-controller" ],
-        "operationId" : "get_13",
+        "operationId" : "get_12",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -17499,7 +17242,7 @@
     "/api/platform/health" : {
       "get" : {
         "tags" : [ "health-controller" ],
-        "operationId" : "get_14",
+        "operationId" : "get_13",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -17863,7 +17606,7 @@
     "/api/platform-info" : {
       "get" : {
         "tags" : [ "platform-info-controller" ],
-        "operationId" : "get_15",
+        "operationId" : "get_14",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -18252,7 +17995,7 @@
     "/api/patients/{patientId}/contract" : {
       "get" : {
         "tags" : [ "contract-controller" ],
-        "operationId" : "get_16",
+        "operationId" : "get_15",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "path",
@@ -18333,7 +18076,7 @@
     "/api/patients/{id}/referral/link" : {
       "get" : {
         "tags" : [ "patient-referral-controller" ],
-        "operationId" : "link_3",
+        "operationId" : "link_2",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -18768,7 +18511,7 @@
     "/api/patient-questions/{id}" : {
       "get" : {
         "tags" : [ "question-controller" ],
-        "operationId" : "get_17",
+        "operationId" : "get_16",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -19024,6 +18767,33 @@
         }
       }
     },
+    "/api/me/phone" : {
+      "get" : {
+        "tags" : [ "my-phone-controller" ],
+        "operationId" : "get_17",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MyPhoneControllerMyPhone"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "my-phone-controller" ],
+        "operationId" : "remove_3",
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        }
+      }
+    },
     "/api/me/net-month" : {
       "get" : {
         "tags" : [ "net-month-controller" ],
@@ -19035,27 +18805,6 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/NetMonthMine"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/me/identities" : {
-      "get" : {
-        "tags" : [ "external-login-controller" ],
-        "operationId" : "mine_1",
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "$ref" : "#/components/schemas/ExternalLoginControllerIdentityView"
-                  }
                 }
               }
             }
@@ -21088,24 +20837,6 @@
       "delete" : {
         "tags" : [ "telegram-login-controller" ],
         "operationId" : "forget_2",
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "object"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/web/invite/pending" : {
-      "delete" : {
-        "tags" : [ "invite-controller" ],
-        "operationId" : "forget_3",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -25305,43 +25036,6 @@
         },
         "required" : [ "groupDone", "groupDue", "groupShows", "off", "ready", "shownToday" ]
       },
-      "MyPhoneControllerPhoneConfirm" : {
-        "properties" : {
-          "phone" : {
-            "type" : "string"
-          },
-          "code" : {
-            "type" : "string"
-          }
-        }
-      },
-      "MyPhoneControllerMyPhone" : {
-        "properties" : {
-          "phone" : {
-            "type" : "string"
-          },
-          "phoneOnly" : {
-            "type" : "boolean"
-          },
-          "sms" : {
-            "type" : "boolean"
-          },
-          "telegram" : {
-            "type" : "boolean"
-          }
-        },
-        "required" : [ "phoneOnly", "sms", "telegram" ]
-      },
-      "MyPhoneControllerPhoneConfirmed" : {
-        "properties" : {
-          "state" : {
-            "$ref" : "#/components/schemas/MyPhoneControllerMyPhone"
-          },
-          "setupToken" : {
-            "type" : "string"
-          }
-        }
-      },
       "PasswordControllerPasswordChange" : {
         "properties" : {
           "currentPassword" : {
@@ -27675,22 +27369,6 @@
         },
         "required" : [ "emailMasked", "resendSeconds", "secondsLeft" ]
       },
-      "SignupControllerCodeSent" : {
-        "properties" : {
-          "phoneMasked" : {
-            "type" : "string"
-          },
-          "secondsLeft" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "resendSeconds" : {
-            "type" : "integer",
-            "format" : "int64"
-          }
-        },
-        "required" : [ "phoneMasked", "resendSeconds", "secondsLeft" ]
-      },
       "ReviewLinkControllerRate" : {
         "properties" : {
           "rating" : {
@@ -28067,32 +27745,12 @@
           },
           "channel" : {
             "type" : "string",
-            "enum" : [ "auto", "sms", "mail" ]
+            "enum" : [ "auto", "mail" ]
           },
           "login" : {
             "type" : "string"
           }
         }
-      },
-      "ExternalLoginControllerTokenRequest" : {
-        "properties" : {
-          "idToken" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "idToken" ]
-      },
-      "ExternalLoginControllerNonce" : {
-        "properties" : {
-          "nonce" : {
-            "type" : "string"
-          },
-          "secondsLeft" : {
-            "type" : "integer",
-            "format" : "int64"
-          }
-        },
-        "required" : [ "nonce", "secondsLeft" ]
       },
       "InviteControllerTokenRequest" : {
         "properties" : {
@@ -28100,22 +27758,6 @@
             "type" : "string"
           }
         }
-      },
-      "InviteControllerCodeStep" : {
-        "properties" : {
-          "phoneMasked" : {
-            "type" : "string"
-          },
-          "secondsLeft" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "resendSeconds" : {
-            "type" : "integer",
-            "format" : "int64"
-          }
-        },
-        "required" : [ "phoneMasked", "resendSeconds", "secondsLeft" ]
       },
       "InviteControllerInviteView" : {
         "properties" : {
@@ -28141,15 +27783,9 @@
           },
           "botUsername" : {
             "type" : "string"
-          },
-          "codeRequired" : {
-            "type" : "boolean"
-          },
-          "pending" : {
-            "$ref" : "#/components/schemas/InviteControllerCodeStep"
           }
         },
-        "required" : [ "clinicName", "codeRequired", "expiresAt", "fullName", "kind", "roleText" ]
+        "required" : [ "clinicName", "expiresAt", "fullName", "kind", "roleText" ]
       },
       "InviteControllerRegisterRequest" : {
         "properties" : {
@@ -28160,9 +27796,6 @@
             "type" : "string"
           },
           "password" : {
-            "type" : "string"
-          },
-          "code" : {
             "type" : "string"
           }
         }
@@ -28177,16 +27810,6 @@
           }
         },
         "required" : [ "fullName", "roleText" ]
-      },
-      "InviteControllerCodeRequest" : {
-        "properties" : {
-          "token" : {
-            "type" : "string"
-          },
-          "phone" : {
-            "type" : "string"
-          }
-        }
       },
       "DemoControllerEnter" : {
         "properties" : {
@@ -30532,13 +30155,6 @@
         },
         "required" : [ "link", "secondsLeft" ]
       },
-      "MyPhoneControllerCodeRequest" : {
-        "properties" : {
-          "phone" : {
-            "type" : "string"
-          }
-        }
-      },
       "PasswordControllerCodeConfirm" : {
         "properties" : {
           "code" : {
@@ -30552,39 +30168,6 @@
             "type" : "string"
           }
         }
-      },
-      "PasswordControllerCodeRequest" : {
-        "properties" : {
-          "channel" : {
-            "type" : "string"
-          }
-        }
-      },
-      "ExternalLoginControllerIdentityView" : {
-        "properties" : {
-          "provider" : {
-            "type" : "string",
-            "enum" : [ "google" ]
-          },
-          "available" : {
-            "type" : "boolean"
-          },
-          "linked" : {
-            "type" : "boolean"
-          },
-          "email" : {
-            "type" : "string"
-          },
-          "linkedAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "lastLoginAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          }
-        },
-        "required" : [ "available", "linked", "provider" ]
       },
       "MyEmailControllerEmailCode" : {
         "properties" : {
@@ -32163,9 +31746,6 @@
       },
       "SignupControllerAvailability" : {
         "properties" : {
-          "sms" : {
-            "type" : "boolean"
-          },
           "telegram" : {
             "type" : "boolean"
           },
@@ -32173,7 +31753,7 @@
             "type" : "boolean"
           }
         },
-        "required" : [ "email", "sms", "telegram" ]
+        "required" : [ "email", "telegram" ]
       },
       "SignupControllerTelegramStatus" : {
         "properties" : {
@@ -32343,9 +31923,6 @@
           "botUsername" : {
             "type" : "string"
           },
-          "smsLogin" : {
-            "type" : "boolean"
-          },
           "passwordLogin" : {
             "type" : "boolean"
           },
@@ -32357,12 +31934,9 @@
           },
           "mailCode" : {
             "type" : "boolean"
-          },
-          "googleClientId" : {
-            "type" : "string"
           }
         },
-        "required" : [ "mailCode", "passwordLogin", "smsLogin", "telegramCode", "telegramLogin" ]
+        "required" : [ "mailCode", "passwordLogin", "telegramCode", "telegramLogin" ]
       },
       "DirectoryControllerClinic" : {
         "properties" : {
@@ -36476,6 +36050,20 @@
         },
         "required" : [ "expired" ]
       },
+      "MyPhoneControllerMyPhone" : {
+        "properties" : {
+          "phone" : {
+            "type" : "string"
+          },
+          "phoneOnly" : {
+            "type" : "boolean"
+          },
+          "telegram" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "phoneOnly", "telegram" ]
+      },
       "PasswordControllerPasswordState" : {
         "properties" : {
           "phoneLogin" : {
@@ -36491,9 +36079,6 @@
             "type" : "string",
             "format" : "date-time"
           },
-          "sms" : {
-            "type" : "boolean"
-          },
           "telegram" : {
             "type" : "boolean"
           },
@@ -36504,7 +36089,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "passwordSet", "phoneLogin", "sms", "telegram", "telegramCode", "temporary" ]
+        "required" : [ "passwordSet", "phoneLogin", "telegram", "telegramCode", "temporary" ]
       },
       "PasswordControllerCodePending" : {
         "properties" : {

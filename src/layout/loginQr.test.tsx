@@ -31,7 +31,7 @@ function backend(statuses: TelegramLoginStatus['state'][]) {
   let i = 0
   server.use(
     http.get('*/web/config', () => HttpResponse.json({
-      botUsername: 'tish_test_bot', smsLogin: true, passwordLogin: true, telegramCode: true, telegramLogin: true,
+      botUsername: 'tish_test_bot', passwordLogin: true, telegramCode: true, telegramLogin: true,
     })),
     http.post('*/web/login/telegram/start', () => HttpResponse.json({ link: link(++started), secondsLeft: 300 })),
     http.get('*/web/login/telegram/status', () => {

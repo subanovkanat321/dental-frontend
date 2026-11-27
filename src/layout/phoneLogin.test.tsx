@@ -17,9 +17,9 @@ type Post = { path: string; body: Record<string, unknown>; header: string | null
 
 /**
  * Фальшивый вход по номеру: пароль «Тишина2026» (или временный «Временный-1»), код 123456 (из Telegram
- * или SMS), пропуск «tok-1». Возвращает список запросов — проверить, что ушло на сервер.
+ * или письма; SMS убраны 2026-11-27), пропуск «tok-1». Возвращает список запросов — проверить, что ушло на сервер.
  */
-function backend(config: { sms?: boolean; password?: boolean; telegram?: boolean; mail?: boolean } = {}) {
+function backend(config: { password?: boolean; telegram?: boolean; mail?: boolean } = {}) {
   let session = false
   const posts: Post[] = []
   const record = async (path: string, request: Request) => {
@@ -30,14 +30,13 @@ function backend(config: { sms?: boolean; password?: boolean; telegram?: boolean
   server.use(
     http.get('*/api/patient/me', () => (session ? HttpResponse.json(me) : HttpResponse.json({ detail: 'Войдите' }, { status: 401 }))),
     http.get('*/web/config', () => HttpResponse.json({
-      botUsername: 'tish_test_bot', smsLogin: config.sms ?? true, passwordLogin: config.password ?? true,
-      telegramCode: config.telegram ?? true, mailCode: config.mail ?? false,
+      botUsername: 'tish_test_bot', passwordLogin: config.password ?? true,
+      telegramCode: config.telegram ?? true, telegramLogin: false, mailCode: config.mail ?? false,
     })),
 
     http.post('*/web/login/phone/code', async ({ request }) => {
-      const body = await record('code', request)
-      return config.sms === false && body.channel === 'sms'
-        ? HttpResponse.json({ detail: 'Вход по SMS пока не подключён' }, { status: 503 }) : new HttpResponse(null, { status: 204 })
+      await record('code', request)
+      return new HttpResponse(null, { status: 204 })
     }),
     http.post('*/web/login/phone', async ({ request }) => {
       const body = await record('verify', request)
@@ -128,12 +127,13 @@ test('«Забыли пароль? / Первый вход» → одна кно
   await user.click(screen.getByRole('button', { name: 'Получить код' }))
 
   const step = await screen.findByRole('form', { name: 'Код подтверждения' })
-  expect(step).toHaveTextContent('Отправили код: в Telegram (от бота клиники), если номер привязан к вашему Telegram, иначе — SMS на этот номер.')
+  expect(step).toHaveTextContent('Отправили код в Telegram (от бота клиники), если номер привязан к вашему Telegram.')
+  expect(document.body).not.toHaveTextContent(/SMS/)
   // Пароля на этом шаге нет — только после «Подтвердить»
   expect(screen.queryByLabelText('Новый пароль')).not.toBeInTheDocument()
-  // «Отправить по SMS» — не сразу, а через минуту
-  expect(screen.queryByRole('button', { name: 'Не пришло? Отправить по SMS' })).not.toBeInTheDocument()
-  expect(step).toHaveTextContent(/Через \d+ с можно отправить по SMS/)
+  // «Отправить ещё раз» — не сразу, а через минуту
+  expect(screen.queryByRole('button', { name: 'Отправить код ещё раз' })).not.toBeInTheDocument()
+  expect(step).toHaveTextContent(/Отправить ещё раз — через \d+ с/)
   const code = screen.getByRole('textbox', { name: 'Код подтверждения' })
   expect(code).toHaveAttribute('autocomplete', 'one-time-code')
   await user.type(code, '000000')
@@ -181,7 +181,8 @@ test('почта настроена: после номера — выбор ка
   const choose = await screen.findByRole('group', { name: 'Куда прислать код' })
   expect(choose).toHaveTextContent('Куда прислать код?')
   expect(screen.getByRole('button', { name: 'В Telegram' })).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: 'По SMS' })).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'По SMS' })).not.toBeInTheDocument()
+  expect(document.body).not.toHaveTextContent(/SMS/)
   // Адреса (даже маской) нет: он выдал бы, что у номера есть почта
   expect(choose).not.toHaveTextContent('@')
   await user.click(screen.getByRole('button', { name: 'На почту из «Моего профиля»' }))
@@ -192,7 +193,7 @@ test('почта настроена: после номера — выбор ка
   expect(step).toHaveTextContent(NO_MAIL)
   expect(step).toHaveTextContent('Код действует 10 минут')
   expect(step).not.toHaveTextContent('@')
-  // Про SMS на шаге письма не говорим: повтор — снова письмо
+  // Повтор — снова письмо
   expect(step).toHaveTextContent(/Отправить ещё раз — через \d+ с/)
   expect(screen.getByRole('button', { name: 'Другой способ' })).toBeInTheDocument()
   await user.type(screen.getByRole('textbox', { name: 'Код подтверждения' }), '123456')
@@ -294,7 +295,7 @@ test('перезагрузили после кода на почту — мас�
   expect(step).not.toHaveTextContent('+996')
 })
 
-test('«Не пришло? Отправить по SMS» появляется через 60 секунд и явно просит SMS', async () => {
+test('«Отправить код ещё раз» появляется через 60 секунд и снова просит Telegram — не SMS', async () => {
   vi.useFakeTimers({ shouldAdvanceTime: true })
   try {
     const posts = backend()
@@ -307,18 +308,16 @@ test('«Не пришло? Отправить по SMS» появляется ч
     await screen.findByRole('form', { name: 'Код подтверждения' })
 
     for (let i = 0; i < 59; i++) await act(async () => { vi.advanceTimersByTime(1000) })
-    expect(screen.queryByRole('button', { name: 'Не пришло? Отправить по SMS' })).not.toBeInTheDocument()
-    expect(screen.getByText('Не пришло? Через 1 с можно отправить по SMS.')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Отправить код ещё раз' })).not.toBeInTheDocument()
+    expect(screen.getByText('Отправить ещё раз — через 1 с.')).toBeInTheDocument()
     expect(screen.queryByText(/Не приходит код\? Если вы работаете в Tish через Telegram/)).not.toBeInTheDocument()
     await act(async () => { vi.advanceTimersByTime(1000) })
     // Через минуту — подсказка про частую причину: номер для входа не привязан к Telegram
     expect(screen.getByText(/Не приходит код\? Если вы работаете в Tish через Telegram/)).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: 'Не пришло? Отправить по SMS' }))
-
-    expect(await screen.findByText(/Отправили SMS с кодом на этот номер/)).toBeInTheDocument()
-    expect(posts.at(-1)!.body).toEqual({ login: '+996700000031', channel: 'sms' })
-    // Снова минута до следующей отправки
-    expect(screen.queryByRole('button', { name: 'Не пришло? Отправить по SMS' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Отправить код ещё раз' }))
+    await waitFor(() => expect(posts.filter((p) => p.path === 'code')).toHaveLength(2))
+    expect(posts.at(-1)!.body).toEqual({ login: '+996700000031' })
+    expect(document.body).not.toHaveTextContent(/SMS/)
     await user.click(screen.getByRole('button', { name: 'Другой номер' }))
     expect(screen.getByRole('button', { name: 'Получить код' })).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Назад: вход по паролю' }))
@@ -369,15 +368,14 @@ test('временный пароль от админа → сразу «При�
   expect(screen.getByRole('form', { name: 'Код для входа' })).toBeInTheDocument()
 })
 
-test('SMS не подключены — «Получить код» (Telegram), без SMS в тексте и без «Отправить по SMS»', async () => {
+test('почта не настроена — код только в Telegram, без SMS в тексте; нет Telegram — временный пароль', async () => {
   vi.useFakeTimers({ shouldAdvanceTime: true })
   try {
-    backend({ sms: false })
+    backend()
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
     renderApp()
     await user.click(await screen.findByRole('button', { name: 'Забыли пароль? / Первый вход' }))
-    // Как на сервере по умолчанию (SMS_LOGIN_CODES выключены): код только в Telegram, нет Telegram — временный пароль
-    expect(screen.getByText(/Код приходит только в Telegram/)).toHaveTextContent('попросите руководителя клиники выдать временный пароль')
+    expect(screen.getByText(/Код приходит в Telegram/)).toHaveTextContent('попросите руководителя клиники выдать временный пароль')
     expect(document.body).not.toHaveTextContent(/SMS/)
     await user.type(screen.getByRole('textbox', { name: 'Логин или телефон' }), '700000031')
     await user.click(screen.getByRole('button', { name: 'Получить код' }))
@@ -393,8 +391,8 @@ test('SMS не подключены — «Получить код» (Telegram), 
   }
 })
 
-test('SMS выключены, почта есть — выбор «В Telegram» и «На почту», без «По SMS» и «иначе — SMS»', async () => {
-  backend({ sms: false, mail: true })
+test('почта есть — выбор «В Telegram» и «На почту», без «По SMS» и «иначе — SMS»', async () => {
+  backend({ mail: true })
   const user = userEvent.setup()
   renderApp()
   await user.click(await screen.findByRole('button', { name: 'Забыли пароль? / Первый вход' }))
@@ -412,8 +410,8 @@ test('SMS выключены, почта есть — выбор «В Telegram»
   expect(document.body).not.toHaveTextContent(/SMS/)
 })
 
-test('ни Telegram-кодов, ни SMS — подсказка про временный пароль от админа', async () => {
-  backend({ sms: false, telegram: false })
+test('ни Telegram-кодов, ни почты — подсказка про временный пароль от админа', async () => {
+  backend({ telegram: false })
   renderApp()
   expect(await screen.findByLabelText('Пароль')).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: /Забыли пароль/ })).not.toBeInTheDocument()
@@ -448,7 +446,7 @@ test('перезагрузили на шаге кода — сразу «Код 
   expect(step).toHaveTextContent('Код отправлен на +996 *** **31.')
   expect(step).toHaveTextContent('Код действует ещё 4 мин.')
   // Отсчёт повторной отправки — по словам сервера: уже можно
-  expect(screen.getByRole('button', { name: 'Не пришло? Отправить по SMS' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Отправить код ещё раз' })).toBeInTheDocument()
   await user.type(screen.getByRole('textbox', { name: 'Код подтверждения' }), '123456')
   await user.click(screen.getByRole('button', { name: 'Подтвердить' }))
 
@@ -466,9 +464,8 @@ test('повторная отправка после перезагрузки �
   pendingStep('code')
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('button', { name: 'Не пришло? Отправить по SMS' }))
-  expect(await screen.findByText(/Отправили SMS с кодом на этот номер/)).toBeInTheDocument()
-  expect(posts).toEqual([{ path: 'code', body: { channel: 'sms' }, header: '1' }])
+  await user.click(await screen.findByRole('button', { name: 'Отправить код ещё раз' }))
+  await waitFor(() => expect(posts).toEqual([{ path: 'code', body: {}, header: '1' }]))
 })
 
 test('перезагрузили на шаге пароля — сразу «Придумайте пароль»; пропуск уходит из cookie, не из страницы', async () => {

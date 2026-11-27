@@ -16,7 +16,7 @@ function backend(initial: Email) {
   let removed = 0
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json({ ...me, doctorId: undefined, admin: false, reception: true })),
-    http.get('*/api/me/phone', () => HttpResponse.json({ phone: initial.phoneLogin ? '+996700000051' : undefined, phoneOnly: false, sms: true, telegram: true } satisfies Schemas['MyPhoneControllerMyPhone'])),
+    http.get('*/api/me/phone', () => HttpResponse.json({ phone: initial.phoneLogin ? '+996700000051' : undefined, phoneOnly: false, telegram: true } satisfies Schemas['MyPhoneControllerMyPhone'])),
     http.get('*/api/me/email', () => HttpResponse.json(state)),
     http.post('*/api/me/email/code', async ({ request }) => {
       codes.push(await request.json())

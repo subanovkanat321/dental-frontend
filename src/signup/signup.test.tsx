@@ -17,7 +17,7 @@ import { SignupPage } from './SignupPage'
 /** Регистрация клиники (/start): клиники, имена и номера — вымышленные. */
 type Sent = { path: string; body: Record<string, unknown>; header: string | null }
 
-function backend(ways: Schemas['SignupControllerAvailability'] = { sms: true, telegram: true, email: false },
+function backend(ways: Schemas['SignupControllerAvailability'] = { telegram: true, email: true },
   initial: Schemas['SignupControllerTelegramStatus']['state'] = 'none') {
   const sent: Sent[] = []
   let telegram: Schemas['SignupControllerTelegramStatus']['state'] = initial
@@ -29,15 +29,15 @@ function backend(ways: Schemas['SignupControllerAvailability'] = { sms: true, te
   }
   server.use(
     http.get('*/web/signup', () => HttpResponse.json(ways satisfies Schemas['SignupControllerAvailability'])),
-    http.post('*/web/signup/code', async ({ request }) => {
-      const body = await push('code', request)
+    http.post('*/web/signup/email/code', async ({ request }) => {
+      const body = await push('email-code', request)
       if (!body.clinicName) {
         return HttpResponse.json({ detail: 'Проверьте поля', errors: [{ field: 'clinicName', message: 'Название клиники — до 100 символов' }] }, { status: 422 })
       }
       if (String(body.phone).includes('700000011')) {
         return HttpResponse.json({ detail: 'Этот номер уже в клинике «Стоматология Тест» — войдите', code: 'phone-in-clinic' }, { status: 409 })
       }
-      return HttpResponse.json({ phoneMasked: '+996 *** **56', secondsLeft: 300, resendSeconds: 60 } satisfies Schemas['SignupControllerCodeSent'])
+      return HttpResponse.json({ emailMasked: 'a***@gmail.com', secondsLeft: 600, resendSeconds: 60 } satisfies Schemas['SignupControllerEmailSent'])
     }),
     http.post('*/web/signup/telegram', async ({ request }) => {
       await push('telegram', request)
@@ -53,7 +53,7 @@ function backend(ways: Schemas['SignupControllerAvailability'] = { sms: true, te
           ? HttpResponse.json({ clinicName: 'Стоматолог Айгерим', fullName: 'Айгерим Тестова' } satisfies Schemas['SignupControllerRegistered'])
           : HttpResponse.json({ detail: 'Проверьте поля', errors: [{ field: 'telegram', message: 'Подтверждение устарело' }] }, { status: 422 })
       }
-      if (body.method === 'SMS' && body.code !== '123456') {
+      if (body.method === 'EMAIL' && body.code !== '123456') {
         return HttpResponse.json({ detail: 'Проверьте поля', errors: [{ field: 'code', message: 'Код не подошёл или устарел. Запросите новый' }] }, { status: 422 })
       }
       return HttpResponse.json({ clinicName: String(body.clinicName), fullName: String(body.fullName) } satisfies Schemas['SignupControllerRegistered'])
@@ -102,19 +102,32 @@ test('/start открывается без входа — форма регис�
   window.history.replaceState(null, '', '/')
 })
 
-test('регистрация по SMS: форма → код и пароль → клиника создана, сразу в CRM', async () => {
+test('регистрация предлагает только Telegram и почту — никакого SMS', async () => {
+  backend({ telegram: true, email: true })
+  show()
+  const form = await manualForm()
+  expect(within(form).getByRole('button', { name: 'Подтвердить через Telegram' })).toBeInTheDocument()
+  expect(within(form).getByRole('button', { name: 'или подтвердить по почте' })).toBeInTheDocument()
+  expect(within(form).queryByRole('button', { name: /SMS/ })).not.toBeInTheDocument()
+  expect(screen.queryByText(/SMS/)).not.toBeInTheDocument()
+})
+
+test('регистрация по почте: форма → письмо → код и пароль → клиника создана, «Что дальше»', async () => {
   const { sent } = backend()
   const user = userEvent.setup()
   const onDone = show()
   const form = await fill(user)
-  await user.click(within(form).getByRole('button', { name: 'Получить код по SMS' }))
+  await user.click(within(form).getByRole('button', { name: 'или подтвердить по почте' }))
+  await user.type(within(form).getByRole('textbox', { name: 'Почта' }), 'aigerim.test@gmail.com')
+  await user.click(within(form).getByRole('button', { name: 'Получить письмо' }))
 
-  expect(await screen.findByRole('heading', { name: 'Код из SMS' })).toBeInTheDocument()
-  expect(screen.getByText(/\+996 \*\*\* \*\*56/)).toBeInTheDocument()
-  expect(sent[0]).toEqual({ path: 'code', header: '1', body: {
+  expect(await screen.findByRole('heading', { name: 'Код из письма' })).toBeInTheDocument()
+  expect(screen.getByText(/a\*\*\*@gmail\.com/)).toBeInTheDocument()
+  expect(sent[0]).toEqual({ path: 'email-code', header: '1', body: {
     clinicName: 'Стоматолог Айгерим', city: 'Ош', fullName: 'Айгерим Тестова', phone: '+996555123456', consent: true,
+    email: 'aigerim.test@gmail.com',
   } })
-  const code = screen.getByRole('form', { name: 'Код из SMS' })
+  const code = screen.getByRole('form', { name: 'Код из письма' })
   await user.type(within(code).getByRole('textbox', { name: 'Код подтверждения' }), '000000')
   await user.type(within(code).getByLabelText('Придумайте пароль для входа'), 'Улыбка2026')
   await user.type(within(code).getByLabelText('Повторите пароль'), 'Улыбка2026')
@@ -128,7 +141,7 @@ test('регистрация по SMS: форма → код и пароль →
   await user.click(within(code).getByRole('button', { name: 'Создать клинику' }))
   // Не сразу в CRM — «Что дальше»: как входить потом и «Подключить Telegram»
   expect(await screen.findByRole('heading', { name: '✅ Клиника создана' })).toBeInTheDocument()
-  expect(sent.at(-1)).toMatchObject({ path: 'register', body: { method: 'SMS', code: '123456', password: 'Улыбка2026', clinicName: 'Стоматолог Айгерим' } })
+  expect(sent.at(-1)).toMatchObject({ path: 'register', body: { method: 'EMAIL', code: '123456', password: 'Улыбка2026', clinicName: 'Стоматолог Айгерим' } })
   expect(onDone).not.toHaveBeenCalled()
   await user.click(screen.getByRole('button', { name: 'Перейти в Tish' }))
   expect(onDone).toHaveBeenCalledOnce()
@@ -142,9 +155,10 @@ test('/start?ref=… по приглашению: сверху — кто при
     const user = userEvent.setup()
     show()
     expect(await screen.findByRole('note')).toHaveTextContent('🎁 Вас пригласила клиника «Стоматология Тест»')
+    vi.spyOn(window, 'open').mockReturnValue(null)
     const form = await fill(user)
-    await user.click(within(form).getByRole('button', { name: 'Получить код по SMS' }))
-    expect(await screen.findByRole('heading', { name: 'Код из SMS' })).toBeInTheDocument()
+    await user.click(within(form).getByRole('button', { name: 'Подтвердить через Telegram' }))
+    expect(await screen.findByRole('heading', { name: 'Подтвердите в Telegram' })).toBeInTheDocument()
     expect(sent[0]?.body).toMatchObject({ clinicName: 'Стоматолог Айгерим', ref: 'abc2def' })
   } finally {
     window.history.replaceState(null, '', '/')
@@ -157,9 +171,10 @@ test('tish.kg/ig из шапки Instagram → /start?from=instagram: метка
   try {
     const user = userEvent.setup()
     show()
+    vi.spyOn(window, 'open').mockReturnValue(null)
     const form = await fill(user)
-    await user.click(within(form).getByRole('button', { name: 'Получить код по SMS' }))
-    expect(await screen.findByRole('heading', { name: 'Код из SMS' })).toBeInTheDocument()
+    await user.click(within(form).getByRole('button', { name: 'Подтвердить через Telegram' }))
+    expect(await screen.findByRole('heading', { name: 'Подтвердите в Telegram' })).toBeInTheDocument()
     expect(sent[0]?.body).toMatchObject({ clinicName: 'Стоматолог Айгерим', from: 'instagram' })
   } finally {
     window.history.replaceState(null, '', '/')
@@ -207,26 +222,27 @@ test('регистрация через Telegram завершается в бо�
   open.mockRestore()
 })
 
-test('ошибки: поле под полем, номер уже в клинике — «Войти»; SMS выключены — только Telegram', async () => {
-  backend({ sms: true, telegram: false, email: false })
+test('ошибки: поле под полем, номер уже в клинике — «Войти»; без Telegram — сразу почта', async () => {
+  backend({ telegram: false, email: true })
   const user = userEvent.setup()
   show()
   const form = await manualForm()
-  expect(within(form).getByRole('button', { name: 'Получить код по SMS' })).toBeEnabled()
+  expect(within(form).getByRole('button', { name: 'Получить письмо' })).toBeEnabled()
   expect(within(form).queryByRole('button', { name: 'Подтвердить через Telegram' })).not.toBeInTheDocument()
-  await user.click(within(form).getByRole('button', { name: 'Получить код по SMS' }))
+  await user.type(within(form).getByRole('textbox', { name: 'Почта' }), 'aigerim.test@gmail.com')
+  await user.click(within(form).getByRole('button', { name: 'Получить письмо' }))
   expect(await within(form).findByText('Название клиники — до 100 символов')).toBeInTheDocument()
 
   await user.type(within(form).getByRole('textbox', { name: 'Название клиники' }), 'Стоматолог Айгерим')
   await user.type(within(form).getByRole('textbox', { name: 'Ваш телефон' }), '700 000 011')
-  await user.click(within(form).getByRole('button', { name: 'Получить код по SMS' }))
+  await user.click(within(form).getByRole('button', { name: 'Получить письмо' }))
   const alert = await within(form).findByRole('alert')
   expect(alert).toHaveTextContent('Этот номер уже в клинике «Стоматология Тест» — войдите')
   expect(within(alert).getByRole('link', { name: 'Войти в Tish' })).toHaveAttribute('href', '/login')
 })
 
-test('как на сервере по умолчанию (SIGNUP_SMS_ENABLED и SIGNUP_EMAIL_ENABLED выключены) — только Telegram, ни SMS, ни почты', async () => {
-  backend({ sms: false, telegram: true, email: false })
+test('почта на сервере выключена (SIGNUP_EMAIL_ENABLED=false) — только Telegram, ни SMS, ни почты', async () => {
+  backend({ telegram: true, email: false })
   show()
   const form = await manualForm()
   expect(within(form).getByRole('button', { name: 'Подтвердить через Telegram' })).toBeInTheDocument()
@@ -236,14 +252,14 @@ test('как на сервере по умолчанию (SIGNUP_SMS_ENABLED и 
 })
 
 test('регистрация выключена на сервере — понятное сообщение и путь «помогите подключить»', async () => {
-  backend({ sms: false, telegram: false, email: false })
+  backend({ telegram: false, email: false })
   show()
   expect(await screen.findByText(/Регистрация сейчас недоступна/)).toBeInTheDocument()
   expect(screen.getByRole('link', { name: 'Оставьте заявку' })).toHaveAttribute('href', '/join#form')
 })
 
 test('вернулись из Telegram после «Да, это я» (страница открылась заново) — «Готово — клиника создана» и вход', async () => {
-  const { sent } = backend({ sms: true, telegram: true, email: false }, 'confirmed')
+  const { sent } = backend({ telegram: true, email: false }, 'confirmed')
   server.use(http.post('*/web/signup', async ({ request }) => {
     sent.push({ path: 'register', body: await request.json() as Record<string, unknown>, header: request.headers.get('X-Dental-Web') })
     await new Promise((r) => setTimeout(r, 50))
@@ -267,19 +283,6 @@ test('бот не смог создать клинику — причина на
   expect(await screen.findByRole('alert', {}, { timeout: 8000 })).toHaveTextContent('Этот номер уже в клинике «Стоматология Тест» — войдите')
   expect(onDone).not.toHaveBeenCalled()
   vi.restoreAllMocks()
-})
-
-test('SMS не ушла (503), Telegram есть — кнопку SMS прячем, отправляем в Telegram', async () => {
-  backend()
-  server.use(http.post('*/web/signup/code', () =>
-    HttpResponse.json({ detail: 'SMS не отправилась — попробуйте ещё раз через минуту' }, { status: 503 })))
-  const user = userEvent.setup()
-  show()
-  const form = await fill(user)
-  await user.click(within(form).getByRole('button', { name: 'Получить код по SMS' }))
-  expect(await within(form).findByRole('alert')).toHaveTextContent('SMS сейчас не отправляются — подтвердите номер через Telegram')
-  expect(within(form).queryByRole('button', { name: 'Получить код по SMS' })).not.toBeInTheDocument()
-  expect(within(form).getByRole('button', { name: 'Подтвердить через Telegram' })).toBeEnabled()
 })
 
 test('на компьютере шаг «Подтвердите в Telegram» показывает QR-код той же ссылки; «Обновить код» — новая ссылка', async () => {

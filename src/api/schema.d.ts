@@ -1172,22 +1172,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/me/phone": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["get_2"];
-        put: operations["set_4"];
-        post?: never;
-        delete: operations["remove_1"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/me/password": {
         parameters: {
             query?: never;
@@ -1227,10 +1211,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_3"];
-        put: operations["set_5"];
+        get: operations["get_2"];
+        put: operations["set_4"];
         post?: never;
-        delete: operations["remove_2"];
+        delete: operations["remove_1"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1275,7 +1259,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_4"];
+        get: operations["get_3"];
         put: operations["update_18"];
         post?: never;
         delete: operations["delete_15"];
@@ -1307,7 +1291,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_5"];
+        get: operations["get_4"];
         put: operations["update_19"];
         post?: never;
         delete: operations["delete_16"];
@@ -1356,7 +1340,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["set_6"];
+        put: operations["set_5"];
         post?: never;
         delete?: never;
         options?: never;
@@ -1387,7 +1371,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_6"];
+        get: operations["get_5"];
         put: operations["setDetails"];
         post?: never;
         delete?: never;
@@ -1547,8 +1531,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_7"];
-        put: operations["set_7"];
+        get: operations["get_6"];
+        put: operations["set_6"];
         post?: never;
         delete?: never;
         options?: never;
@@ -1691,8 +1675,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_8"];
-        put: operations["set_8"];
+        get: operations["get_7"];
+        put: operations["set_7"];
         post?: never;
         delete?: never;
         options?: never;
@@ -1966,7 +1950,7 @@ export interface paths {
         get?: never;
         put: operations["update_28"];
         post?: never;
-        delete: operations["remove_3"];
+        delete: operations["remove_2"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2196,22 +2180,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/web/signup/code": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["code"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/web/review/{token}": {
         parameters: {
             query?: never;
@@ -2381,39 +2349,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["code_1"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/web/login/oauth/{provider}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["login_2"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/web/login/oauth/nonce": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["nonce"];
+        post: operations["code"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2446,22 +2382,6 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["register_1"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/web/invite/code": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["code_2"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4804,22 +4724,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/me/phone/code": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["code_3"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/me/password/confirm": {
         parameters: {
             query?: never;
@@ -4845,7 +4749,7 @@ export interface paths {
         };
         get: operations["codePending"];
         put?: never;
-        post: operations["code_4"];
+        post: operations["code_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4868,22 +4772,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/me/identities/{provider}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["link_2"];
-        delete: operations["unlink"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/me/email/code": {
         parameters: {
             query?: never;
@@ -4893,7 +4781,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["code_5"];
+        post: operations["code_2"];
         delete?: never;
         options?: never;
         head?: never;
@@ -5595,7 +5483,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_9"];
+        get: operations["get_8"];
         put?: never;
         post: operations["rotate"];
         delete: operations["delete_19"];
@@ -6635,7 +6523,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_10"];
+        get: operations["get_9"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6923,7 +6811,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_11"];
+        get: operations["get_10"];
         put?: never;
         post?: never;
         delete?: never;
@@ -7083,7 +6971,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_12"];
+        get: operations["get_11"];
         put?: never;
         post?: never;
         delete?: never;
@@ -7099,7 +6987,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_13"];
+        get: operations["get_12"];
         put?: never;
         post?: never;
         delete?: never;
@@ -7259,7 +7147,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_14"];
+        get: operations["get_13"];
         put?: never;
         post?: never;
         delete?: never;
@@ -7467,7 +7355,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_15"];
+        get: operations["get_14"];
         put?: never;
         post?: never;
         delete?: never;
@@ -7659,7 +7547,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_16"];
+        get: operations["get_15"];
         put?: never;
         post?: never;
         delete: operations["unsign"];
@@ -7691,7 +7579,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["link_3"];
+        get: operations["link_2"];
         put?: never;
         post?: never;
         delete?: never;
@@ -7963,7 +7851,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_17"];
+        get: operations["get_16"];
         put?: never;
         post?: never;
         delete?: never;
@@ -8100,6 +7988,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/phone": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_17"];
+        put?: never;
+        post?: never;
+        delete: operations["remove_3"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me/net-month": {
         parameters: {
             query?: never;
@@ -8108,22 +8012,6 @@ export interface paths {
             cookie?: never;
         };
         get: operations["mine"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/me/identities": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["mine_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -9151,22 +9039,6 @@ export interface paths {
         put?: never;
         post?: never;
         delete: operations["forget_2"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/web/invite/pending": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete: operations["forget_3"];
         options?: never;
         head?: never;
         patch?: never;
@@ -10936,20 +10808,6 @@ export interface components {
             groupDue: boolean;
             used?: string[];
         };
-        MyPhoneControllerPhoneConfirm: {
-            phone?: string;
-            code?: string;
-        };
-        MyPhoneControllerMyPhone: {
-            phone?: string;
-            phoneOnly: boolean;
-            sms: boolean;
-            telegram: boolean;
-        };
-        MyPhoneControllerPhoneConfirmed: {
-            state?: components["schemas"]["MyPhoneControllerMyPhone"];
-            setupToken?: string;
-        };
         PasswordControllerPasswordChange: {
             currentPassword?: string;
             setupToken?: string;
@@ -11886,13 +11744,6 @@ export interface components {
             /** Format: int64 */
             resendSeconds: number;
         };
-        SignupControllerCodeSent: {
-            phoneMasked: string;
-            /** Format: int64 */
-            secondsLeft: number;
-            /** Format: int64 */
-            resendSeconds: number;
-        };
         ReviewLinkControllerRate: {
             /** Format: int32 */
             rating?: number;
@@ -12037,26 +11888,11 @@ export interface components {
         PhoneLoginControllerCodeRequest: {
             phone?: string;
             /** @enum {string} */
-            channel?: "auto" | "sms" | "mail";
+            channel?: "auto" | "mail";
             login?: string;
-        };
-        ExternalLoginControllerTokenRequest: {
-            idToken: string;
-        };
-        ExternalLoginControllerNonce: {
-            nonce: string;
-            /** Format: int64 */
-            secondsLeft: number;
         };
         InviteControllerTokenRequest: {
             token?: string;
-        };
-        InviteControllerCodeStep: {
-            phoneMasked: string;
-            /** Format: int64 */
-            secondsLeft: number;
-            /** Format: int64 */
-            resendSeconds: number;
         };
         InviteControllerInviteView: {
             /** @enum {string} */
@@ -12068,22 +11904,15 @@ export interface components {
             /** Format: date-time */
             expiresAt: string;
             botUsername?: string;
-            codeRequired: boolean;
-            pending?: components["schemas"]["InviteControllerCodeStep"];
         };
         InviteControllerRegisterRequest: {
             token?: string;
             phone?: string;
             password?: string;
-            code?: string;
         };
         InviteControllerRegistered: {
             fullName: string;
             roleText: string;
-        };
-        InviteControllerCodeRequest: {
-            token?: string;
-            phone?: string;
         };
         DemoControllerEnter: {
             /** @enum {string} */
@@ -13057,28 +12886,11 @@ export interface components {
             /** Format: int64 */
             secondsLeft: number;
         };
-        MyPhoneControllerCodeRequest: {
-            phone?: string;
-        };
         PasswordControllerCodeConfirm: {
             code?: string;
         };
         PasswordControllerSetupToken: {
             setupToken?: string;
-        };
-        PasswordControllerCodeRequest: {
-            channel?: string;
-        };
-        ExternalLoginControllerIdentityView: {
-            /** @enum {string} */
-            provider: "google";
-            available: boolean;
-            linked: boolean;
-            email?: string;
-            /** Format: date-time */
-            linkedAt?: string;
-            /** Format: date-time */
-            lastLoginAt?: string;
         };
         MyEmailControllerEmailCode: {
             email: string;
@@ -13703,7 +13515,6 @@ export interface components {
             error?: string;
         };
         SignupControllerAvailability: {
-            sms: boolean;
             telegram: boolean;
             email: boolean;
         };
@@ -13773,12 +13584,10 @@ export interface components {
         };
         WebAuthControllerConfig: {
             botUsername?: string;
-            smsLogin: boolean;
             passwordLogin: boolean;
             telegramCode: boolean;
             telegramLogin: boolean;
             mailCode: boolean;
-            googleClientId?: string;
         };
         DirectoryControllerClinic: {
             name?: string;
@@ -15365,13 +15174,17 @@ export interface components {
             expiresAt?: string;
             expired: boolean;
         };
+        MyPhoneControllerMyPhone: {
+            phone?: string;
+            phoneOnly: boolean;
+            telegram: boolean;
+        };
         PasswordControllerPasswordState: {
             phoneLogin: boolean;
             passwordSet: boolean;
             temporary: boolean;
             /** Format: date-time */
             setAt?: string;
-            sms: boolean;
             telegram: boolean;
             telegramCode: boolean;
             username?: string;
@@ -18837,68 +18650,6 @@ export interface operations {
             };
         };
     };
-    get_2: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["MyPhoneControllerMyPhone"];
-                };
-            };
-        };
-    };
-    set_4: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["MyPhoneControllerPhoneConfirm"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["MyPhoneControllerPhoneConfirmed"];
-                };
-            };
-        };
-    };
-    remove_1: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description No Content */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
     state: {
         parameters: {
             query?: never;
@@ -18985,7 +18736,7 @@ export interface operations {
             };
         };
     };
-    get_3: {
+    get_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -19005,7 +18756,7 @@ export interface operations {
             };
         };
     };
-    set_5: {
+    set_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -19029,7 +18780,7 @@ export interface operations {
             };
         };
     };
-    remove_2: {
+    remove_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -19097,7 +18848,7 @@ export interface operations {
             };
         };
     };
-    get_4: {
+    get_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -19211,7 +18962,7 @@ export interface operations {
             };
         };
     };
-    get_5: {
+    get_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -19351,7 +19102,7 @@ export interface operations {
             };
         };
     };
-    set_6: {
+    set_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -19403,7 +19154,7 @@ export interface operations {
             };
         };
     };
-    get_6: {
+    get_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -19799,7 +19550,7 @@ export interface operations {
             };
         };
     };
-    get_7: {
+    get_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -19819,7 +19570,7 @@ export interface operations {
             };
         };
     };
-    set_7: {
+    set_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -20115,7 +19866,7 @@ export interface operations {
             };
         };
     };
-    get_8: {
+    get_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -20135,7 +19886,7 @@ export interface operations {
             };
         };
     };
-    set_8: {
+    set_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -20784,7 +20535,7 @@ export interface operations {
             };
         };
     };
-    remove_3: {
+    remove_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -21221,30 +20972,6 @@ export interface operations {
             };
         };
     };
-    code: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SignupControllerSignupRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SignupControllerCodeSent"];
-                };
-            };
-        };
-    };
     page: {
         parameters: {
             query?: never;
@@ -21497,7 +21224,7 @@ export interface operations {
             };
         };
     };
-    code_1: {
+    code: {
         parameters: {
             query?: never;
             header?: never;
@@ -21517,52 +21244,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": Record<string, never>;
-                };
-            };
-        };
-    };
-    login_2: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                provider: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["ExternalLoginControllerTokenRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": Record<string, never>;
-                };
-            };
-        };
-    };
-    nonce: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ExternalLoginControllerNonce"];
                 };
             };
         };
@@ -21611,30 +21292,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InviteControllerRegistered"];
-                };
-            };
-        };
-    };
-    code_2: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["InviteControllerCodeRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["InviteControllerCodeStep"];
                 };
             };
         };
@@ -26106,28 +25763,6 @@ export interface operations {
             };
         };
     };
-    code_3: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["MyPhoneControllerCodeRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
     confirm_1: {
         parameters: {
             query?: never;
@@ -26172,18 +25807,14 @@ export interface operations {
             };
         };
     };
-    code_4: {
+    code_1: {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["PasswordControllerCodeRequest"];
-            };
-        };
+        requestBody?: never;
         responses: {
             /** @description OK */
             200: {
@@ -26212,55 +25843,7 @@ export interface operations {
             };
         };
     };
-    link_2: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                provider: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["ExternalLoginControllerTokenRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ExternalLoginControllerIdentityView"][];
-                };
-            };
-        };
-    };
-    unlink: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                provider: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ExternalLoginControllerIdentityView"][];
-                };
-            };
-        };
-    };
-    code_5: {
+    code_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -27695,7 +27278,7 @@ export interface operations {
             };
         };
     };
-    get_9: {
+    get_8: {
         parameters: {
             query?: never;
             header?: never;
@@ -29409,7 +28992,7 @@ export interface operations {
             };
         };
     };
-    get_10: {
+    get_9: {
         parameters: {
             query?: never;
             header?: never;
@@ -29803,7 +29386,7 @@ export interface operations {
             };
         };
     };
-    get_11: {
+    get_10: {
         parameters: {
             query: {
                 month: string;
@@ -30039,7 +29622,7 @@ export interface operations {
             };
         };
     };
-    get_12: {
+    get_11: {
         parameters: {
             query?: never;
             header?: never;
@@ -30061,7 +29644,7 @@ export interface operations {
             };
         };
     };
-    get_13: {
+    get_12: {
         parameters: {
             query?: never;
             header?: never;
@@ -30277,7 +29860,7 @@ export interface operations {
             };
         };
     };
-    get_14: {
+    get_13: {
         parameters: {
             query?: never;
             header?: never;
@@ -30583,7 +30166,7 @@ export interface operations {
             };
         };
     };
-    get_15: {
+    get_14: {
         parameters: {
             query?: never;
             header?: never;
@@ -30872,7 +30455,7 @@ export interface operations {
             };
         };
     };
-    get_16: {
+    get_15: {
         parameters: {
             query?: {
                 doctorId?: number;
@@ -30938,7 +30521,7 @@ export interface operations {
             };
         };
     };
-    link_3: {
+    link_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -31300,7 +30883,7 @@ export interface operations {
             };
         };
     };
-    get_17: {
+    get_16: {
         parameters: {
             query?: never;
             header?: never;
@@ -31495,6 +31078,44 @@ export interface operations {
             };
         };
     };
+    get_17: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyPhoneControllerMyPhone"];
+                };
+            };
+        };
+    };
+    remove_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     mine: {
         parameters: {
             query?: never;
@@ -31511,26 +31132,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["NetMonthMine"];
-                };
-            };
-        };
-    };
-    mine_1: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ExternalLoginControllerIdentityView"][];
                 };
             };
         };
@@ -32953,26 +32554,6 @@ export interface operations {
         };
     };
     forget_2: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": Record<string, never>;
-                };
-            };
-        };
-    };
-    forget_3: {
         parameters: {
             query?: never;
             header?: never;

@@ -61,7 +61,7 @@ export function MemberPanel({ me, member: m, hiddenDoctor, onClose }: { me: Me; 
         <h3 className="group-title">Вход</h3>
         <p className="tone-ok">{m.phoneOnly ? '✓ Входит по номеру (без Telegram)' : '✓ Telegram привязан'}</p>
         <StaffPhone telegramId={m.telegramId} phone={m.phone} phoneOnly={m.phoneOnly} name={name} />
-        {/* Вход по номеру без SMS: временный пароль даёт руководитель (себе — нет: свой меняют в «Моём профиле») */}
+        {/* Вход по номеру без Telegram: временный пароль даёт руководитель (себе — нет: свой меняют в «Моём профиле») */}
         {m.phoneOnly && !m.me && <TemporaryPassword telegramId={m.telegramId} name={name} />}
       </section>
 

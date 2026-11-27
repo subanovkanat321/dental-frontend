@@ -7,7 +7,7 @@ import { passwordProblem } from '../lib/password'
 import { USERNAME_RULES, usernameProblem } from '../lib/username'
 import { shortDate } from '../lib/time'
 import { CodeInput, ResendLink } from '../layout/CodeStep'
-import { sentText, useCountdown } from '../lib/otp'
+import { SENT_TELEGRAM, useCountdown } from '../lib/otp'
 import { NewPasswordFields, PasswordInput, ShowPassword } from '../layout/PasswordFields'
 import { Spinner } from '../layout/Loading'
 import { HelpHint } from '../help/HelpHint'
@@ -15,6 +15,9 @@ import { HelpHint } from '../help/HelpHint'
 type Mode = 'current' | 'code'
 
 /** Сотруднику с Telegram: пароль — только запасной вход по номеру. */
+/** Кода в Telegram нет (у человека нет Telegram): здесь — только по текущему паролю; забыли — код на почту со страницы входа. */
+export const NO_CODE_HERE = 'Код здесь приходит только в Telegram, а его у вас нет. Не помните пароль — выйдите и нажмите «Забыли пароль?» на странице входа (код на почту) или попросите руководителя задать временный пароль.'
+
 const OPTIONAL_HINT = 'Необязательно. Логин и пароль нужны, только если вы входите без Telegram — по логину или номеру телефона.'
 
 /** Путь «по коду»: «Получить код» → код → «Подтвердить» (пропуск) → новый пароль. */
@@ -25,8 +28,8 @@ type CodeStep = 'send' | 'code' | 'new'
  * вписать на странице входа вместо номера («Логин или телефон»), ниже — пароль. Сотрудник с Telegram входит через
  * Telegram (на сайте — «Войти через Telegram» и подтвердить в боте), пароль ему не нужен: блок — с тихой
  * подписью «Необязательно…», кнопка неброская. Без Telegram пароль — его вход по номеру.
- * Сменить — по текущему паролю. Не помню текущий или пароля ещё нет — «Получить код» (сервер шлёт в
- * Telegram, если номер привязан к вашему Telegram, иначе SMS) → код → «Подтвердить» → только потом новый
+ * Сменить — по текущему паролю. Не помню текущий или пароля ещё нет — «Получить код» (в Telegram, если номер привязан к
+ * вашему Telegram; SMS убраны 2026-11-27) → код → «Подтвердить» → только потом новый
  * пароль: сервер выдаёт одноразовый пропуск на 10 минут, с ним и сохраняем. После смены другие
  * устройства выходят (сервер поднимает версию пароля), этот браузер остаётся.
  * <p>
@@ -42,7 +45,6 @@ export function PasswordSection({ platform = false }: { platform?: boolean } = {
   const [current, setCurrent] = useState('')
   const [shown, setShown] = useState(false)
   const [code, setCode] = useState('')
-  const [bySms, setBySms] = useState(false)
   const [token, setToken] = useState('')
   const [wait, restart] = useCountdown()
   const [fresh, setFresh] = useState({ password: '', repeat: '' })
@@ -63,10 +65,9 @@ export function PasswordSection({ platform = false }: { platform?: boolean } = {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- один раз, когда пришёл ответ
   }, [pending.data])
 
-  const sendCode = useMutation<unknown, ApiError, 'auto' | 'sms'>({
-    mutationFn: (channel) => unwrap(api.POST('/api/me/password/code', { body: channel === 'sms' ? { channel } : {} })),
-    onSuccess: (_r, channel) => {
-      setBySms(channel === 'sms')
+  const sendCode = useMutation<unknown, ApiError, 'auto'>({
+    mutationFn: () => unwrap(api.POST('/api/me/password/code')),
+    onSuccess: () => {
       setCode('')
       setStep('code')
       restart()
@@ -103,7 +104,7 @@ export function PasswordSection({ platform = false }: { platform?: boolean } = {
   const s = state.data
   const canCurrent = Boolean(s?.passwordSet && !s.temporary)
   const byTelegram = Boolean(s?.telegramCode)
-  const anyCode = byTelegram || Boolean(s?.sms)
+  const anyCode = byTelegram
 
   const submit = () => {
     const problem = passwordProblem(fresh.password, fresh.repeat, '', state.data?.username ?? '')
@@ -181,9 +182,8 @@ export function PasswordSection({ platform = false }: { platform?: boolean } = {
               </>
             ) : step === 'send' ? (
               <>
-                <p className="hint">{!anyCode ? 'Коды по SMS пока не подключены. Попросите руководителя клиники задать логин и временный пароль.'
-                  : `${byTelegram && s.sms ? 'Пришлём код: бесплатно в Telegram от бота клиники, если номер привязан к вашему Telegram, иначе — SMS на ваш номер.'
-                    : byTelegram ? 'Пришлём код в Telegram от бота клиники.' : 'Пришлём код по SMS на ваш номер.'} Подтвердите его — и придумаете новый пароль.`}</p>
+                <p className="hint">{!anyCode ? NO_CODE_HERE
+                  : 'Пришлём код в Telegram от бота клиники. Подтвердите его — и придумаете новый пароль.'}</p>
                 {anyCode && (
                   <div className="actions">
                     <button type="submit" className="btn" disabled={sendCode.isPending}>
@@ -194,10 +194,9 @@ export function PasswordSection({ platform = false }: { platform?: boolean } = {
               </>
             ) : step === 'code' ? (
               <>
-                <p className="hint" role="status">{sentText(bySms, byTelegram, Boolean(s.sms))} Код действует 5 минут.</p>
+                <p className="hint" role="status">{SENT_TELEGRAM} Код действует 5 минут.</p>
                 <CodeInput value={code} onChange={setCode} />
-                <ResendLink wait={wait} sms={Boolean(s.sms)} busy={sendCode.isPending}
-                  onSms={() => sendCode.mutate('sms')} onAgain={() => sendCode.mutate('auto')} />
+                <ResendLink wait={wait} busy={sendCode.isPending} onAgain={() => sendCode.mutate('auto')} />
               </>
             ) : (
               <p className="hint">Код подтверждён. Придумайте новый пароль.</p>

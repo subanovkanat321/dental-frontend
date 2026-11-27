@@ -2,8 +2,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type ReactNode } from 'react'
 
 import { api, ApiError, botUsername, unwrap, WEB_CONFIG_KEY, webConfig, type Schemas } from '../api/client'
-import { PhoneInput } from '../clinic/PhoneInput'
-import { phoneFromInput } from '../clinic/phone'
 import { ask, notify } from '../lib/confirm'
 import { DoctorPanel } from '../team/DoctorPanel'
 import { AddSelf } from '../team/AddSelf'
@@ -13,14 +11,11 @@ import { SubHeader } from './SubHeader'
 import { Loading, Spinner } from '../layout/Loading'
 import { CodeInput, ResendLink } from '../layout/CodeStep'
 import { useCountdown } from '../lib/otp'
-import { NewPasswordFields } from '../layout/PasswordFields'
-import { passwordProblem } from '../lib/password'
+import { Icon } from '../layout/Icon'
 import { telegram } from '../lib/telegram'
 import { PasswordSection } from './PasswordSection'
 import { showsPlatform } from '../platform/platformAccess'
-import { ExternalLoginsSection } from './ExternalLoginsSection'
 import { HelpHint } from '../help/HelpHint'
-import { Icon } from '../layout/Icon'
 import { RowMenu } from '../patients/CalmList'
 import { SaveBar } from '../layout/SaveBar'
 import { useDirty } from '../lib/unsaved'
@@ -63,8 +58,7 @@ export function ProfilePage({ me, onBack, footer }: { me: Me; onBack: () => void
         : admin.error ? <p className="error">{admin.error.message}</p>
           : own ? <DoctorPanel key={own.id} doctor={own} me={me} onClose={onBack} inline afterProfile={<MyPhone />} />
             : <><MyPhone /><p className="hint">Профиль не найден — обновите страницу.</p></>}
-      {/* Внизу, не «надо сделать»: быстрый вход без пароля (Google) и логин с паролем — для входа без Telegram */}
-      <ExternalLoginsSection />
+      {/* Внизу, не «надо сделать»: логин с паролем — для входа без Telegram */}
       <PasswordSection platform={showsPlatform(me)} />
       {footer}
     </section>
@@ -116,6 +110,9 @@ type MyPhoneState = Schemas['MyPhoneControllerMyPhone']
 
 /** Бот берёт номер аккаунта Telegram и ставит его вместо текущего (раньше — «Сменить на номер Telegram»). */
 const TAKE_FROM_TELEGRAM = 'Взять номер из Telegram'
+
+/** Без Telegram номер не подтвердить самому: SMS убраны (2026-11-27) — номер и пароль выдаёт руководитель. */
+export const NO_TELEGRAM_PHONE = 'Номер подтверждается кнопкой в Telegram. Telegram нет — номер меняет руководитель («Клиника → Персонал»), а пароль — «Логин и пароль» ниже (забыли — «Забыли пароль?» на странице входа: код на почту).'
 
 /**
  * «Телефон» в «Моём профиле»: свой номер для входа на сайте. Привязывается только подтверждённым:
@@ -248,7 +245,7 @@ function MyEmailCard({ state }: { state: MyEmailState }) {
           <p className="hint" role="status">Отправили письмо с кодом на <b>{sentTo}</b>. Код действует 10 минут; письма нет — проверьте «Спам».</p>
           <CodeInput value={code} onChange={setCode} />
           {error && <p className="error" role="alert">{error.fieldErrors.code ?? error.fieldErrors.email ?? error.message}</p>}
-          <ResendLink wait={wait} sms={false} busy={sendCode.isPending} onSms={() => sendCode.mutate(sentTo)} onAgain={() => sendCode.mutate(sentTo)} />
+          <ResendLink wait={wait} busy={sendCode.isPending} onAgain={() => sendCode.mutate(sentTo)} />
           <div className="actions">
             <button type="submit" className="btn primary" disabled={confirm.isPending || code.length !== 6}>
               {confirm.isPending ? <><Spinner />Проверяем…</> : 'Подтвердить'}</button>
@@ -260,147 +257,44 @@ function MyEmailCard({ state }: { state: MyEmailState }) {
   )
 }
 
+/**
+ * «Телефон» в «Моём профиле»: номер для входа на сайте по номеру (или логину) и паролю. Подтверждается только кнопкой в
+ * Telegram («📱 Поделиться номером» — Telegram сам отдаёт номер аккаунта); подтверждения кодом из SMS нет (убрано
+ * 2026-11-27). Сотруднику без Telegram номер задаёт руководитель («Клиника → Персонал»), пароль — «Логин и пароль».
+ */
 function MyPhoneCard({ state }: { state: MyPhoneState }) {
   const client = useQueryClient()
-  const [open, setOpen] = useState(false)
-  const [value, setValue] = useState('')
-  const [sentTo, setSentTo] = useState('')
-  const [code, setCode] = useState('')
-  const [wait, restart] = useCountdown()
-  // Пропуск после «Подтвердить»: с ним — шаг «Придумайте пароль» (вторая SMS не нужна)
-  const [token, setToken] = useState('')
-  const [fresh, setFresh] = useState({ password: '', repeat: '' })
-  const [problem, setProblem] = useState('')
   const refresh = () => {
     void client.invalidateQueries({ queryKey: ['me-phone'] })
     void client.invalidateQueries({ queryKey: ['me-password'] })
     // Почта живёт у номера входа: номер появился или убран — блок «Почта» меняется
     void client.invalidateQueries({ queryKey: ['me-email'] })
   }
-  const sendCode = useMutation<unknown, ApiError, string>({
-    mutationFn: (p) => unwrap(api.POST('/api/me/phone/code', { body: { phone: p } })),
-    onSuccess: (_r, p) => { setSentTo(p); setCode(''); restart() },
-  })
-  const confirm = useMutation<Schemas['MyPhoneControllerPhoneConfirmed'], ApiError>({
-    mutationFn: () => unwrap(api.PUT('/api/me/phone', { body: { phone: sentTo, code } })),
-    onSuccess: (r) => {
-      if (!r.setupToken) {
-        refresh()
-        void notify('Номер подтверждён.')
-        return
-      }
-      // Номер уже привязан; карточку не перерисовываем, пока не пройден шаг пароля
-      setToken(r.setupToken)
-      setFresh({ password: '', repeat: '' })
-    },
-  })
-  const savePassword = useMutation<unknown, ApiError>({
-    mutationFn: () => unwrap(api.PUT('/api/me/password', { body: { setupToken: token, newPassword: fresh.password } })),
-    onSuccess: () => {
-      refresh()
-      void notify('Номер подтверждён, пароль задан. Теперь можно входить на сайте по номеру и паролю.')
-    },
-  })
-  const skipPassword = () => {
-    refresh()
-    void notify('Номер подтверждён. Пароль для входа по номеру можно задать позже — «Логин и пароль».')
-  }
   const remove = useMutation<unknown, ApiError>({ mutationFn: () => unwrap(api.DELETE('/api/me/phone')), onSuccess: refresh })
   const viaTelegram = useTelegramShare(state.phone ?? null, refresh)
-  const close = () => {
-    setOpen(false)
-    setSentTo('')
-    setCode('')
-    sendCode.reset()
-    confirm.reset()
-  }
-  const error = confirm.error ?? sendCode.error
-  const phoneDigits = sentTo.replace(/\D/g, '')
 
   return (
     <div className="card-block phone-card">
-      {!open ? (
-        <>
-          <div className="setting-line">
-            <div className="setting-what">
-              {state.phone ? <p className="phone-number num">{phoneText(state.phone)}</p> : <p className="hint">Телефон не указан.</p>}
-              <p className="hint setting-sub">{state.phoneOnly ? 'Ваш вход без Telegram — номер и пароль' : 'Для входа без Telegram — с паролем'}{' '}
-                <HelpHint title="Номер для входа">{PHONE_HINT}{state.phoneOnly ? ' Без Telegram это ваш единственный вход: номер можно сменить, но не убрать.' : ''}</HelpHint></p>
-            </div>
-            <div className="setting-actions">
-              {state.phone ? (
-                <>
-                  {state.sms
-                    ? <button type="button" className="btn" onClick={() => setOpen(true)}><Icon name="edit" />Изменить</button>
-                    : state.telegram && <button type="button" className="btn" disabled={viaTelegram.busy} onClick={viaTelegram.start}>
-                      {viaTelegram.busy ? <><Spinner />Ждём номер…</> : TAKE_FROM_TELEGRAM}</button>}
-                  <RowMenu label="Ещё действия с номером" items={[
-                    ...(state.telegram && state.sms ? [{ label: TAKE_FROM_TELEGRAM, onSelect: viaTelegram.start, disabled: viaTelegram.busy }] : []),
-                    ...(!state.phoneOnly ? [{ label: 'Убрать номер', tone: 'bad' as const, disabled: remove.isPending,
-                      onSelect: () => void ask('Убрать свой телефон? Входить по номеру будет нельзя, через Telegram — как раньше.').then((ok) => ok && remove.mutate()) }] : []),
-                  ]} />
-                </>
-              ) : (
-                <>
-                  {state.telegram && (
-                    <button type="button" className="btn primary" disabled={viaTelegram.busy} onClick={viaTelegram.start}>
-                      {viaTelegram.busy ? <><Spinner />Ждём номер…</> : 'Подтвердить через Telegram'}</button>
-                  )}
-                  {state.sms && <button type="button" className="btn" onClick={() => setOpen(true)}>{state.telegram ? 'Указать по SMS' : 'Указать телефон'}</button>}
-                </>
-              )}
-            </div>
-          </div>
-          {!state.sms && !state.telegram && <p className="hint">Номер подтверждается кнопкой в Telegram. Telegram нет — номер и пароль для входа выдаст руководитель («Клиника → Персонал» → «Логин и пароль»).</p>}
-          {viaTelegram.busy && state.phone && state.sms && <p className="hint" role="status"><Spinner />Ждём номер из Telegram…</p>}
-          {remove.error && <p className="error" role="alert">{remove.error.message}</p>}
-          {viaTelegram.note && <p className="hint" role="status">{viaTelegram.note}</p>}
-        </>
-      ) : !sentTo ? (
-        <form className="form narrow" aria-label="Мой телефон" onSubmit={(e) => { e.preventDefault(); sendCode.mutate(phoneFromInput(value)) }}>
-          <label className="field"><span>Новый номер</span>
-            <PhoneInput label="Телефон" value={value} onChange={setValue} />
-          </label>
-          <p className="hint">Пришлём код на этот номер — им подтвердите, что номер ваш.</p>
-          {error && <p className="error" role="alert">{error.fieldErrors.phone ?? error.message}</p>}
-          <div className="actions">
-            <button type="submit" className="btn primary" disabled={sendCode.isPending || !value.trim()}>
-              {sendCode.isPending ? <><Spinner />Отправляем…</> : 'Получить код'}</button>
-            <button type="button" className="btn ghost" onClick={close}>Отмена</button>
-          </div>
-        </form>
-      ) : !token ? (
-        <form className="form narrow" aria-label="Подтвердить номер" onSubmit={(e) => { e.preventDefault(); confirm.mutate() }}>
-          <p className="hint" role="status">Отправили SMS с кодом на {phoneText(sentTo.replace(/\s/g, ''))}. Код действует 5 минут.</p>
-          <CodeInput value={code} onChange={setCode} />
-          {error && <p className="error" role="alert">{error.fieldErrors.code ?? error.fieldErrors.phone ?? error.message}</p>}
-          <ResendLink wait={wait} sms={false} busy={sendCode.isPending} onSms={() => sendCode.mutate(sentTo)} onAgain={() => sendCode.mutate(sentTo)} />
-          <div className="actions">
-            <button type="submit" className="btn primary" disabled={confirm.isPending || code.length !== 6}>
-              {confirm.isPending ? <><Spinner />Проверяем…</> : 'Подтвердить'}</button>
-            <button type="button" className="btn ghost" onClick={close}>Отмена</button>
-          </div>
-        </form>
-      ) : (
-        <form className="form narrow" aria-label="Придумайте пароль для входа по номеру" onSubmit={(e) => {
-          e.preventDefault()
-          const p = passwordProblem(fresh.password, fresh.repeat, phoneDigits)
-          setProblem(p)
-          if (!p) savePassword.mutate()
-        }}>
-          <h3>Придумайте пароль для входа по номеру</h3>
-          <p className="hint">Номер {phoneText(sentTo.replace(/\s/g, ''))} подтверждён. Паролем будете входить на сайте по номеру.</p>
-          <NewPasswordFields password={fresh.password} repeat={fresh.repeat} phone={phoneDigits} label="Пароль для входа по номеру"
-            onPassword={(v) => setFresh({ ...fresh, password: v })} onRepeat={(v) => setFresh({ ...fresh, repeat: v })} />
-          {(problem || savePassword.error) && <p className="error" role="alert">{problem
-            || (savePassword.error && (savePassword.error.fieldErrors.newPassword ?? savePassword.error.fieldErrors.setupToken ?? savePassword.error.message))}</p>}
-          <div className="actions">
-            <button type="submit" className="btn primary" disabled={savePassword.isPending}>
-              {savePassword.isPending ? <><Spinner />Сохраняем…</> : 'Сохранить пароль'}</button>
-            <button type="button" className="btn ghost" onClick={skipPassword}>Пропустить</button>
-          </div>
-        </form>
-      )}
+      <div className="setting-line">
+        <div className="setting-what">
+          {state.phone ? <p className="phone-number num">{phoneText(state.phone)}</p> : <p className="hint">Телефон не указан.</p>}
+          <p className="hint setting-sub">{state.phoneOnly ? 'Ваш вход без Telegram — номер и пароль' : 'Для входа без Telegram — с паролем'}{' '}
+            <HelpHint title="Номер для входа">{PHONE_HINT}{state.phoneOnly ? ' Без Telegram это ваш единственный вход: номер меняет руководитель, убрать его нельзя.' : ''}</HelpHint></p>
+        </div>
+        <div className="setting-actions">
+          {state.telegram && (
+            <button type="button" className={state.phone ? 'btn' : 'btn primary'} disabled={viaTelegram.busy} onClick={viaTelegram.start}>
+              {viaTelegram.busy ? <><Spinner />Ждём номер…</> : state.phone ? TAKE_FROM_TELEGRAM : 'Подтвердить через Telegram'}</button>
+          )}
+          {state.phone && !state.phoneOnly && (
+            <RowMenu label="Ещё действия с номером" items={[{ label: 'Убрать номер', tone: 'bad' as const, disabled: remove.isPending,
+              onSelect: () => void ask('Убрать свой телефон? Входить по номеру будет нельзя, через Telegram — как раньше.').then((ok) => ok && remove.mutate()) }]} />
+          )}
+        </div>
+      </div>
+      {!state.telegram && <p className="hint">{NO_TELEGRAM_PHONE}</p>}
+      {remove.error && <p className="error" role="alert">{remove.error.message}</p>}
+      {viaTelegram.note && <p className="hint" role="status">{viaTelegram.note}</p>}
     </div>
   )
 }
@@ -434,7 +328,7 @@ function useTelegramShare(current: string | null, refresh: () => void) {
     }
     app.requestContact((shared) => {
       if (!shared) {
-        setNote('Номер не отправлен. Можно указать его по SMS или позже.')
+        setNote('Номер не отправлен. Можно подтвердить позже — той же кнопкой или командой /phone в боте.')
         return
       }
       setBusy(true)

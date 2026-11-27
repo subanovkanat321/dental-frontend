@@ -13,7 +13,7 @@ test('не вошли (401) — вход по логину или номеру �
   let posted: unknown = null
   server.use(
     http.get('*/api/patient/me', () => (session ? HttpResponse.json(me) : HttpResponse.json({ detail: 'Войдите' }, { status: 401 }))),
-    http.get('*/web/config', () => HttpResponse.json({ botUsername: 'tish_test_bot', smsLogin: false, passwordLogin: true, telegramCode: true })),
+    http.get('*/web/config', () => HttpResponse.json({ botUsername: 'tish_test_bot', passwordLogin: true, telegramCode: true })),
     http.post('*/web/login/phone/password', async ({ request }) => {
       posted = await request.json()
       session = true

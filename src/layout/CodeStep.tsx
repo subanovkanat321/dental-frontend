@@ -2,19 +2,12 @@ import { useState } from 'react'
 
 import { codeFromText } from '../lib/otp'
 
-/**
- * Под полем кода: первые 60 секунд — только отсчёт, потом ссылка. SMS подключены — «Не пришло? Отправить по
- * SMS» (явно SMS, даже если номер привязан к Telegram); нет — «Отправить код ещё раз».
- */
-export function ResendLink({ wait, sms, busy, onSms, onAgain }: {
-  wait: number; sms: boolean; busy: boolean; onSms: () => void; onAgain: () => void
-}) {
+/** Под полем кода: первые 60 секунд — только отсчёт, потом «Отправить код ещё раз» (тем же способом). */
+export function ResendLink({ wait, busy, onAgain }: { wait: number; busy: boolean; onAgain: () => void }) {
   if (wait > 0) {
-    return <p className="hint small">{sms ? `Не пришло? Через ${wait} с можно отправить по SMS.` : `Отправить ещё раз — через ${wait} с.`}</p>
+    return <p className="hint small">{`Отправить ещё раз — через ${wait} с.`}</p>
   }
-  return sms
-    ? <button type="button" className="link" disabled={busy} onClick={onSms}>Не пришло? Отправить по SMS</button>
-    : <button type="button" className="link" disabled={busy} onClick={onAgain}>Отправить код ещё раз</button>
+  return <button type="button" className="link" disabled={busy} onClick={onAgain}>Отправить код ещё раз</button>
 }
 
 /** Буфер обмена можно прочитать (https, современный браузер); на iOS — только по нажатию. */
@@ -23,7 +16,7 @@ function canPaste(): boolean {
 }
 
 /**
- * Поле «Код подтверждения»: 6 цифр, автозаполнение из SMS (one-time-code). Код из Telegram копируют одним
+ * Поле «Код подтверждения»: 6 цифр (one-time-code — браузер подскажет код из письма или сообщения). Код из Telegram копируют одним
  * нажатием — рядом кнопка «Вставить код»: буфер читаем только по её нажатию (никогда сами), и только где
  * браузер это умеет.
  */

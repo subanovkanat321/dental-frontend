@@ -7,7 +7,7 @@ import {
 import { phoneFromInput, phoneFromText } from '../clinic/phone'
 import { phoneText } from '../team/texts'
 import { CodeInput, ResendLink } from './CodeStep'
-import { sentText, useCountdown } from '../lib/otp'
+import { SENT_TELEGRAM, useCountdown } from '../lib/otp'
 import { NewPasswordFields, PasswordInput, ShowPassword } from './PasswordFields'
 import { passwordProblem } from '../lib/password'
 import { isUsername } from '../lib/username'
@@ -37,8 +37,8 @@ function enteredOf(text: string): Entered {
   return text.includes('@') ? 'email' : isUsername(text) ? 'login' : 'phone'
 }
 
-/** Код без SMS (SMS_LOGIN_CODES выключены, 2026-11-26): куда идти, если Telegram у человека нет или номер не привязан. */
-export const TELEGRAM_ONLY = 'Код приходит только в Telegram — от бота клиники, если номер привязан к вашему Telegram (в боте: «📱\u00a0Поделиться номером»). Нет Telegram — попросите руководителя клиники выдать временный пароль («Клиника → Персонал»).'
+/** Почта не настроена на сервере: код только в Telegram — куда идти, если Telegram нет или номер не привязан. */
+export const TELEGRAM_ONLY = 'Код приходит в Telegram — от бота клиники, если номер привязан к вашему Telegram (в боте: «📱\u00a0Поделиться номером»). Нет Telegram — попросите руководителя клиники выдать временный пароль («Клиника → Персонал»).'
 
 /** 503 без текста от сервера. */
 const NO_CODE = 'Код сейчас не отправить — попросите руководителя клиники выдать временный пароль'
@@ -47,36 +47,31 @@ const NO_CODE = 'Код сейчас не отправить — попроси�
 const CODE_EXPIRED = 'Время на ввод кода вышло'
 
 /**
- * Вход на сайт — по логину или номеру телефона и паролю:
+ * Вход на сайт — по логину или номеру телефона и паролю (решение владельца 2026-11-27: на странице входа только
+ * «Войти через Telegram» и эта форма; SMS-коды убраны):
  * <ul>
  * <li>обычно — «логин или телефон» + пароль: одно поле, сервер сам поймёт (есть латинская буква — логин);</li>
- * <li>первый вход или забыли пароль — логин или номер (почта настроена — «логин, телефон или почта») → «Получить код» → код → «Подтвердить» → только потом
- * «Придумайте пароль» → вход. Канал выбирает сервер: Telegram (бот сотрудников, бесплатно), если номер к
- * нему привязан и бот доставил; SMS — только если на сервере включены SMS-коды ({@code sms}, SMS_LOGIN_CODES; по
- * умолчанию нет — тогда ни «По SMS», ни «Отправить по SMS», ни «иначе — SMS» на экране нет);</li>
+ * <li>первый вход или забыли пароль — «Забыли пароль? / Первый вход» → логин или номер (почта настроена — «логин,
+ * телефон или почта») → код → «Подтвердить» → только потом «Придумайте пароль» → вход. Код — в Telegram (бот
+ * сотрудников, если номер к нему привязан) или на почту из «Моего профиля» ({@code mail}: после номера — выбор «В
+ * Telegram» / «На почту»; вписали почту — сразу письмо). Адреса почты (даже маской) не показываем: он выдал бы, что у
+ * номера есть почта, а значит и сам номер;</li>
  * <li>временный пароль от админа — входит им и сразу придумывает свой.</li>
- * <li>почта на сервере настроена ({@code mail}) — после номера выбор канала: «В Telegram» (сервер сам: Telegram,
- * иначе SMS), «По SMS», «На почту из „Моего профиля“». Адреса (даже маской) не показываем: он выдал бы, что у номера
- * есть почта, а значит и сам номер; после отправки — нейтрально «если к номеру добавлена почта». Вписали почту — выбора
- * канала нет: сразу «код отправлен на почту, если она добавлена в Tish» (сервер шлёт, только если это подтверждённая почта
- * одного работающего сотрудника). Почта не настроена — поле «Логин или телефон», о почте ни слова.</li>
  * </ul>
- * Сервер не говорит, есть ли такой номер, задан ли пароль и куда ушёл код: ответ на «Получить код» всегда
- * один. Поэтому под кодом — оба варианта («в Telegram, если номер привязан, иначе SMS»), а через 60 секунд —
- * «Не пришло? Отправить по SMS». Логин, номер и пароль не сохраняем ни в адресе, ни в localStorage.
+ * Сервер не говорит, есть ли такой номер, задан ли пароль и куда ушёл код: ответ на «Получить код» всегда один.
+ * Логин, номер и пароль не сохраняем ни в адресе, ни в localStorage.
  * <p>
  * Шаг переживает перезагрузку (iOS выгружает вкладку или PWA, пока человек копирует код в Telegram): при
  * открытии спрашиваем сервер ({@link loginPending}) — он помнит шаг в HttpOnly-cookie и отдаёт номер только
  * маской. Тогда номера на странице нет: код, повтор и пароль уходят без него, сервер подставит свой.
  *
- * @param sms коды по SMS подключены
  * @param telegram код в Telegram включён (бот настроен)
  * @param password вход по паролю включён
  * @param mail код можно получить на почту (MAIL_* на сервере настроены)
  * @param secondary над формой — главный «Войти через Telegram»
  */
-export function PhoneLogin({ onDone, sms, telegram = true, password: byPassword = true, mail = false, secondary = false }:
-  { onDone: () => void; sms: boolean; telegram?: boolean; password?: boolean; mail?: boolean
+export function PhoneLogin({ onDone, telegram = true, password: byPassword = true, mail = false, secondary = false }:
+  { onDone: () => void; telegram?: boolean; password?: boolean; mail?: boolean
     /** Над формой — «Войти через Telegram»: он главный, кнопка «Войти» здесь не яркая */
     secondary?: boolean }) {
   const first: Step = byPassword ? 'password' : 'phone'
@@ -100,7 +95,7 @@ export function PhoneLogin({ onDone, sms, telegram = true, password: byPassword 
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [wait, restart] = useCountdown()
-  const canRecover = telegram || sms || mail
+  const canRecover = telegram || mail
 
   useEffect(() => {
     let alive = true
@@ -303,10 +298,7 @@ export function PhoneLogin({ onDone, sms, telegram = true, password: byPassword 
             {busy ? <><Spinner />Отправляем…</> : 'Получить код'}</button>
         )}
         {mail && <p className="hint small">Вписали почту — код сразу придёт письмом, если она добавлена и подтверждена в «Мой профиль» → «Почта».</p>}
-        {telegram && !mail && (sms ? (
-          <p className="hint small">Код бесплатно придёт в Telegram от бота клиники, если номер привязан к вашему Telegram
-            (в боте: «📱&nbsp;Поделиться номером»), иначе — SMS на этот номер.</p>
-        ) : <p className="hint small">{TELEGRAM_ONLY}</p>)}
+        {telegram && !mail && <p className="hint small">{TELEGRAM_ONLY}</p>}
         {!canRecover && <p className="hint">Коды сейчас не отправляются — попросите руководителя задать временный пароль.</p>}
         {error && <p className="error" role="alert">{error}</p>}
         {byPassword && <button type="button" className="link" onClick={() => go('password')}>Назад: вход по паролю</button>}
@@ -325,13 +317,10 @@ export function PhoneLogin({ onDone, sms, telegram = true, password: byPassword 
           {telegram && (
             <button type="button" className="btn primary" disabled={busy} onClick={() => void getCode('auto')}>В Telegram</button>
           )}
-          {sms && <button type="button" className="btn" disabled={busy} onClick={() => void getCode('sms')}>По SMS</button>}
           <button type="button" className="btn" disabled={busy} onClick={() => void getCode('mail')}>На почту из «Моего профиля»</button>
         </div>
         {busy && <p className="hint small" role="status"><Spinner />Отправляем…</p>}
-        {telegram && sms && (
-          <p className="hint small">В Telegram — бесплатно, от бота клиники, если номер привязан к вашему Telegram (не привязан — придёт SMS).</p>
-        )}
+        {telegram && <p className="hint small">В Telegram — от бота клиники, если номер привязан к вашему Telegram (в боте: «📱&nbsp;Поделиться номером»).</p>}
         <p className="hint small">На почту — если вы добавили и подтвердили её в «Мой профиль» → «Почта».</p>
         <p className="hint small">{NO_MAIL}</p>
         {error && <p className="error" role="alert">{error}</p>}
@@ -353,14 +342,13 @@ export function PhoneLogin({ onDone, sms, telegram = true, password: byPassword 
           <p className="hint" role="status">Если к номеру добавлена почта — код уже в письме (проверьте «Спам»). Код действует {lasts}</p>
         ) : (
           <p className="hint" role="status">{masked && sentTo === 'phone' && <>Код отправлен на <b>{masked}</b>. </>}
-            {sentText(channel === 'sms', telegram, sms)} Код действует {lasts}</p>
+            {SENT_TELEGRAM} Код действует {lasts}</p>
         )}
         <CodeInput value={code} onChange={setCode} />
         <button type="submit" className="btn primary" disabled={busy || code.length !== 6}>{busy ? <><Spinner />Проверяем…</> : 'Подтвердить'}</button>
         {error && <p className="error" role="alert">{error}</p>}
         <div className="actions">
-          <ResendLink wait={wait} sms={sms && !byMail} busy={busy} onSms={() => void getCode('sms')}
-            onAgain={() => void getCode(byMail ? 'mail' : 'auto')} />
+          <ResendLink wait={wait} busy={busy} onAgain={() => void getCode(byMail ? 'mail' : 'auto')} />
           {mail && !byEmail && <button type="button" className="link" disabled={busy} onClick={() => go('channel')}>Другой способ</button>}
           <button type="button" className="link" onClick={anotherNumber}>{anotherLabel}</button>
         </div>
@@ -370,7 +358,7 @@ export function PhoneLogin({ onDone, sms, telegram = true, password: byPassword 
         {telegram && !byMail && wait === 0 && (
           <p className="hint small">Не приходит код? Если вы работаете в Tish через Telegram, сначала привяжите номер: в боте
             нажмите «📱&nbsp;Поделиться номером» или в приложении — нажмите на себя внизу меню → «Мой профиль» → «Телефон».
-            {!sms && ' Нет Telegram — попросите руководителя клиники выдать временный пароль.'}</p>
+            {mail ? ' Или «Другой способ» — код на почту.' : ' Нет Telegram — попросите руководителя клиники выдать временный пароль.'}</p>
         )}
       </form>
     )

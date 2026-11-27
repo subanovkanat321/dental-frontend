@@ -21,7 +21,7 @@ const SAFARI = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebK
 
 type Sent = { path: string; body: Record<string, unknown> }
 
-function backend(ways: Schemas['SignupControllerAvailability'] = { sms: true, telegram: true, email: true }) {
+function backend(ways: Schemas['SignupControllerAvailability'] = { telegram: true, email: true }) {
   const sent: Sent[] = []
   let connect: Schemas['TelegramConnectControllerConnectStatus']['state'] = 'waiting'
   const push = async (path: string, request: Request) => {
@@ -64,28 +64,28 @@ async function fill(user: ReturnType<typeof userEvent.setup>) {
   return form
 }
 
-test('/start во встроенном браузере Instagram: Telegram главный с подсказкой, SMS и почта — мелкими ссылками', async () => {
+test('/start во встроенном браузере Instagram: Telegram главный с подсказкой, почта — мелкой ссылкой, SMS нет', async () => {
   backend()
   withClient(<SignupPage userAgent={INSTAGRAM_IOS} />)
   const form = await manualForm()
   expect(within(form).getByRole('button', { name: 'Подтвердить через Telegram' })).toHaveClass('tg-login')
   expect(within(form).getByText('Через Telegram удобнее: Tish останется у вас в Telegram — кнопка «Открыть день»')).toBeInTheDocument()
-  expect(within(form).getByRole('button', { name: 'или по SMS' })).toHaveClass('link')
-  expect(within(form).queryByRole('button', { name: 'Получить код по SMS' })).not.toBeInTheDocument()
+  expect(within(form).queryByRole('button', { name: /SMS/ })).not.toBeInTheDocument()
   expect(within(form).getByRole('button', { name: 'или подтвердить по почте' })).toHaveClass('link')
 })
 
 test('/start в обычном браузере — без подсказки; почта не настроена — ссылки на почту нет', async () => {
-  backend({ sms: true, telegram: true, email: false })
+  backend({ telegram: true, email: false })
   withClient(<SignupPage userAgent={SAFARI} />)
   const form = await manualForm()
   expect(within(form).queryByText(/Через Telegram удобнее/)).not.toBeInTheDocument()
-  expect(within(form).getByRole('button', { name: 'Получить код по SMS' })).toBeInTheDocument()
+  expect(within(form).queryByRole('button', { name: /SMS/ })).not.toBeInTheDocument()
   expect(within(form).queryByRole('button', { name: 'или подтвердить по почте' })).not.toBeInTheDocument()
+  expect(within(form).getByRole('button', { name: 'Подтвердить через Telegram' })).toBeInTheDocument()
 })
 
 test('по почте: поле «Почта» → письмо → код и пароль здесь же → «Что дальше»', async () => {
-  const { sent } = backend({ sms: false, telegram: true, email: true })
+  const { sent } = backend({ telegram: true, email: true })
   const user = userEvent.setup()
   const onDone = vi.fn()
   withClient(<SignupPage onDone={onDone} userAgent={INSTAGRAM_IOS} />)

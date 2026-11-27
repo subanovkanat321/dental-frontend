@@ -1,26 +1,13 @@
 import { useEffect, useState } from 'react'
 
-/** «Не пришло? Отправить по SMS» — не раньше, чем через минуту: так же считает сервер (раз в минуту на номер). */
+/** «Отправить код ещё раз» — не раньше, чем через минуту: так же считает сервер (раз в минуту на номер). */
 export const RESEND_SECONDS = 60
 
-/** Что пишем после «Получить код»: куда ушёл код, сервер не говорит (защита), поэтому — оба варианта. */
-export const SENT_AUTO = 'Отправили код: в Telegram (от бота клиники), если номер привязан к вашему Telegram, иначе — SMS на этот номер.'
-
-const SENT_TELEGRAM = 'Отправили код в Telegram (от бота клиники), если номер привязан к вашему Telegram.'
-
-const SENT_SMS = 'Отправили SMS с кодом на этот номер.'
-
 /**
- * Текст после отправки кода.
- *
- * @param bySms код запросили явно по SMS
- * @param telegram код в Telegram возможен (бот настроен; у человека есть Telegram)
- * @param sms SMS подключены
+ * Что пишем после «Получить код» в Telegram: куда ушёл код, сервер не говорит (защита) — поэтому «если номер привязан».
+ * SMS убраны из входа 2026-11-27: код приходит только в Telegram или на почту.
  */
-export function sentText(bySms: boolean, telegram: boolean, sms: boolean): string {
-  if (bySms || (!telegram && sms)) return SENT_SMS
-  return sms ? SENT_AUTO : SENT_TELEGRAM
-}
+export const SENT_TELEGRAM = 'Отправили код в Telegram (от бота клиники), если номер привязан к вашему Telegram.'
 
 /**
  * Обратный отсчёт до повторной отправки: {@link RESEND_SECONDS} секунд после каждой отправки; после

@@ -16,7 +16,7 @@ function backend(state: State) {
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json({ ...me, doctorId: undefined, admin: false, reception: true })),
     http.get('*/api/me/password', () => HttpResponse.json(state)),
-    http.get('*/api/me/phone', () => HttpResponse.json({ phone: state.phoneLogin ? '+996700000031' : undefined, phoneOnly: false, sms: false, telegram: false })),
+    http.get('*/api/me/phone', () => HttpResponse.json({ phone: state.phoneLogin ? '+996700000031' : undefined, phoneOnly: false, telegram: false })),
     http.post('*/api/me/password/code', async ({ request }) => {
       channels.push(await request.json().catch(() => null))
       codes++
@@ -48,7 +48,7 @@ afterEach(() => {
 })
 
 test('«Логин и пароль»: сменить по текущему паролю; неверный текущий — ошибка под формой', async () => {
-  const { changes } = backend({ phoneLogin: true, passwordSet: true, temporary: false, sms: true, setAt: '2026-11-01T06:00:00Z', telegram: false, telegramCode: false })
+  const { changes } = backend({ phoneLogin: true, passwordSet: true, temporary: false, setAt: '2026-11-01T06:00:00Z', telegram: false, telegramCode: false })
   const user = userEvent.setup()
   renderApp()
   const section = await screen.findByRole('region', { name: 'Логин и пароль' })
@@ -68,7 +68,7 @@ test('«Логин и пароль»: сменить по текущему па�
 })
 
 test('логин: задать, занят (409) — текст сервера под полем, неверный формат — подсказка до отправки, убрать', async () => {
-  backend({ phoneLogin: true, passwordSet: true, temporary: false, sms: false, telegram: false, telegramCode: false })
+  backend({ phoneLogin: true, passwordSet: true, temporary: false, telegram: false, telegramCode: false })
   const sent: unknown[] = []
   server.use(http.put('*/api/me/username', async ({ request }) => {
     const body = await request.json() as Schemas['PasswordControllerUsernameChange']
@@ -114,8 +114,8 @@ test('логин: задать, занят (409) — текст сервера �
   expect(sent.at(-1)).toEqual({ username: '' })
 })
 
-test('«Не помню текущий» — «Получить код» → код → «Подтвердить» → только потом новый пароль (с пропуском)', async () => {
-  const { changes, codes } = backend({ phoneLogin: true, passwordSet: true, temporary: false, sms: true, telegram: false, telegramCode: false })
+test('«Не помню текущий» — «Получить код» (в Telegram) → код → «Подтвердить» → только потом новый пароль (с пропуском)', async () => {
+  const { changes, codes } = backend({ phoneLogin: true, passwordSet: true, temporary: false, telegram: true, telegramCode: true })
   const user = userEvent.setup()
   renderApp()
   const section = await screen.findByRole('region', { name: 'Логин и пароль' })
@@ -151,30 +151,31 @@ test('«Не помню текущий» — «Получить код» → к�
 })
 
 test('телефон не указан — блока «Логин и пароль» нет', async () => {
-  backend({ phoneLogin: false, passwordSet: false, temporary: false, sms: false, telegram: false, telegramCode: false })
+  backend({ phoneLogin: false, passwordSet: false, temporary: false, telegram: false, telegramCode: false })
   renderApp()
   expect(await screen.findByRole('region', { name: 'Телефон' })).toBeInTheDocument()
   expect(screen.queryByRole('region', { name: 'Логин и пароль' })).not.toBeInTheDocument()
 })
 
-test('сотрудник с Telegram без пароля: одна кнопка «Получить код» (сервер: сначала Telegram), SMS — через 60 с', async () => {
+test('сотрудник с Telegram без пароля: одна кнопка «Получить код» — код только в Telegram, повтор через 60 с, без SMS', async () => {
   vi.useFakeTimers({ shouldAdvanceTime: true })
   try {
-    const { changes, channels } = backend({ phoneLogin: true, passwordSet: false, temporary: false, sms: true, telegram: true, telegramCode: true })
+    const { changes, channels } = backend({ phoneLogin: true, passwordSet: false, temporary: false, telegram: true, telegramCode: true })
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
     renderApp()
     const section = await screen.findByRole('region', { name: 'Логин и пароль' })
     expect(section).toHaveTextContent('Пароль необязателен — только для входа без Telegram')
     await user.click(within(section).getByRole('button', { name: 'Задать пароль' }))
-    expect(within(section).queryByRole('button', { name: 'Код в Telegram' })).not.toBeInTheDocument()
+    expect(section).toHaveTextContent('Пришлём код в Telegram от бота клиники.')
     expect(within(section).queryByRole('button', { name: 'Код по SMS' })).not.toBeInTheDocument()
     await user.click(within(section).getByRole('button', { name: 'Получить код' }))
     await within(section).findByRole('textbox', { name: 'Код подтверждения' })
-    expect(section).toHaveTextContent('Отправили код: в Telegram (от бота клиники), если номер привязан к вашему Telegram, иначе — SMS на этот номер.')
-    expect(within(section).queryByRole('button', { name: 'Не пришло? Отправить по SMS' })).not.toBeInTheDocument()
+    expect(section).toHaveTextContent('Отправили код в Telegram (от бота клиники), если номер привязан к вашему Telegram.')
+    expect(within(section).queryByRole('button', { name: 'Отправить код ещё раз' })).not.toBeInTheDocument()
     for (let i = 0; i < 60; i++) await act(async () => { vi.advanceTimersByTime(1000) })
-    await user.click(within(section).getByRole('button', { name: 'Не пришло? Отправить по SMS' }))
-    expect(await within(section).findByText(/Отправили SMS с кодом/)).toBeInTheDocument()
+    await user.click(within(section).getByRole('button', { name: 'Отправить код ещё раз' }))
+    await waitFor(() => expect(channels).toHaveLength(2))
+    expect(section).not.toHaveTextContent(/SMS/)
 
     await user.type(within(section).getByRole('textbox', { name: 'Код подтверждения' }), '123456')
     await user.click(within(section).getByRole('button', { name: 'Подтвердить' }))
@@ -182,15 +183,28 @@ test('сотрудник с Telegram без пароля: одна кнопка 
     await user.type(within(section).getByLabelText('Повторите пароль'), 'Новый-пароль-3')
     await user.click(within(section).getByRole('button', { name: 'Сохранить пароль' }))
     expect(await screen.findByText(/Пароль сохранён/)).toBeInTheDocument()
-    expect(channels).toEqual([{}, { channel: 'sms' }])
+    // Тело запроса кода пустое: канала больше не выбираем
+    expect(channels).toEqual([null, null])
     expect(changes).toEqual([{ setupToken: 'tok-9', newPassword: 'Новый-пароль-3' }])
   } finally {
     vi.useRealTimers()
   }
 })
 
+test('без Telegram — кода здесь нет: «Не помню текущий» не предлагаем, подсказка «Забыли пароль?» на странице входа', async () => {
+  const { codes } = backend({ phoneLogin: true, passwordSet: false, temporary: false, telegram: false, telegramCode: false })
+  const user = userEvent.setup()
+  renderApp()
+  const section = await screen.findByRole('region', { name: 'Логин и пароль' })
+  await user.click(within(section).getByRole('button', { name: 'Задать пароль' }))
+  expect(section).toHaveTextContent('«Забыли пароль?» на странице входа (код на почту)')
+  expect(within(section).queryByRole('button', { name: 'Получить код' })).not.toBeInTheDocument()
+  expect(section).not.toHaveTextContent(/SMS/)
+  expect(codes()).toBe(0)
+})
+
 test('сотруднику с Telegram без пароля в CRM ничего про пароль не показываем (плашки «задайте пароль» нет)', async () => {
-  backend({ phoneLogin: true, passwordSet: false, temporary: false, sms: false, telegram: true, telegramCode: true })
+  backend({ phoneLogin: true, passwordSet: false, temporary: false, telegram: true, telegramCode: true })
   window.location.hash = ''
   renderApp()
   expect(await screen.findByRole('navigation', { name: 'Разделы' })).toBeInTheDocument()
@@ -198,7 +212,7 @@ test('сотруднику с Telegram без пароля в CRM ничего �
 })
 
 test('с Telegram «Логин и пароль» — внизу профиля, тихой строкой «Необязательно…» и «?», кнопка как у «Телефона»', async () => {
-  backend({ phoneLogin: true, passwordSet: false, temporary: false, sms: false, telegram: true, telegramCode: true })
+  backend({ phoneLogin: true, passwordSet: false, temporary: false, telegram: true, telegramCode: true })
   renderApp()
   const section = await screen.findByRole('region', { name: 'Логин и пароль' })
   expect(section).toHaveTextContent('Пароль необязателен — только для входа без Telegram')
@@ -215,7 +229,7 @@ test('с Telegram «Логин и пароль» — внизу профиля, 
 })
 
 test('перезагрузили, пока ходили за кодом в Telegram, — «Логин и пароль» сразу на шаге кода', async () => {
-  const { changes, codes } = backend({ phoneLogin: true, passwordSet: true, temporary: false, sms: true, telegram: false, telegramCode: false })
+  const { changes, codes } = backend({ phoneLogin: true, passwordSet: true, temporary: false, telegram: true, telegramCode: true })
   server.use(http.get('*/api/me/password/code', () => HttpResponse.json(
     { pending: true, secondsLeft: 200, resendSeconds: 20 } satisfies Schemas['PasswordControllerCodePending'])))
   const user = userEvent.setup()
@@ -223,7 +237,7 @@ test('перезагрузили, пока ходили за кодом в Teleg
   const section = await screen.findByRole('region', { name: 'Логин и пароль' })
   const code = await within(section).findByRole('textbox', { name: 'Код подтверждения' })
   // Отсчёт — оставшийся, код заново не запрашивали
-  expect(section).toHaveTextContent(/Через (20|19) с можно отправить по SMS/)
+  expect(section).toHaveTextContent(/Отправить ещё раз — через (20|19) с/)
   await user.type(code, '123456')
   await user.click(within(section).getByRole('button', { name: 'Подтвердить' }))
   await user.type(await within(section).findByLabelText('Новый пароль'), 'Новый-пароль-3')
@@ -235,7 +249,7 @@ test('перезагрузили, пока ходили за кодом в Teleg
 })
 
 test('владелец платформы с коротким паролем: подсказка «от 12 символов», после смены пароля «Платформа» открывается без нового входа', async () => {
-  backend({ phoneLogin: true, passwordSet: true, temporary: false, sms: true, setAt: '2026-11-01T06:00:00Z', telegram: false, telegramCode: false })
+  backend({ phoneLogin: true, passwordSet: true, temporary: false, setAt: '2026-11-01T06:00:00Z', telegram: false, telegramCode: false })
   let changed = false
   let platformCalls = 0
   server.use(

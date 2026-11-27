@@ -19,7 +19,7 @@ function backend() {
   const queries: string[] = []
   const sent: Record<string, unknown>[] = []
   server.use(
-    http.get('*/web/signup', () => HttpResponse.json({ sms: false, telegram: true, email: false } satisfies Schemas['SignupControllerAvailability'])),
+    http.get('*/web/signup', () => HttpResponse.json({ telegram: true, email: false } satisfies Schemas['SignupControllerAvailability'])),
     http.get('*/web/signup/telegram/status', () => HttpResponse.json({ state: 'none', secondsLeft: 0 } satisfies Schemas['SignupControllerTelegramStatus'])),
     http.get('*/web/signup/clinics', ({ request }) => {
       const q = new URL(request.url).searchParams.get('q') ?? ''

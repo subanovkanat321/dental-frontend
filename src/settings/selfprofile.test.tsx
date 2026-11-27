@@ -8,7 +8,7 @@ import { server } from '../test/server'
 
 /** Всё о себе сотрудник заполняет сам (админ только приглашает). Имена и номера — вымышленные. */
 const reception: Schemas['BookingViewsMe'] = { ...me, doctorId: undefined, admin: false, reception: true }
-const phone = { phoneOnly: false, sms: true, telegram: true } satisfies Schemas['MyPhoneControllerMyPhone']
+const phone = { phoneOnly: false, telegram: true } satisfies Schemas['MyPhoneControllerMyPhone']
 
 beforeEach(() => {
   localStorage.clear()
@@ -25,7 +25,7 @@ test('«Мой профиль» у регистратуры: сверху сво
   let sent: unknown = null
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(reception)),
-    http.get('*/api/me/password', () => HttpResponse.json({ phoneLogin: true, passwordSet: true, temporary: false, sms: false, telegram: false, telegramCode: false } satisfies Schemas['PasswordControllerPasswordState'])),
+    http.get('*/api/me/password', () => HttpResponse.json({ phoneLogin: true, passwordSet: true, temporary: false, telegram: false, telegramCode: false } satisfies Schemas['PasswordControllerPasswordState'])),
     http.get('*/api/me/name', () => HttpResponse.json({ fullName: 'Айпери', editable: true } satisfies Schemas['StaffMembersOwnName'])),
     http.put('*/api/me/name', async ({ request }) => {
       sent = await request.json()

@@ -23,7 +23,7 @@ export function siteInviteText(name: string): string {
 }
 
 /**
- * Сотрудник без Telegram (вход по SMS) — вместо Telegram id у него «синтетический»: отрицательное
+ * Сотрудник без Telegram (вход по номеру и паролю) — вместо Telegram id у него «синтетический»: отрицательное
  * число не больше −10^15 (бэкенд, shared.PhoneIds). Так же считает сервер.
  */
 export function isPhoneLogin(id?: number | null): boolean {

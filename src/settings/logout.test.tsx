@@ -14,8 +14,8 @@ function backend(session = true) {
   const calls: Call[] = []
   server.use(
     http.get('*/api/patient/me', () => (session ? HttpResponse.json(me) : HttpResponse.json({ detail: 'Войдите' }, { status: 401 }))),
-    http.get('*/api/me/password', () => HttpResponse.json({ phoneLogin: false, passwordSet: false, temporary: false, sms: false, telegram: true })),
-    http.get('*/web/config', () => HttpResponse.json({ botUsername: 'tish_test_bot', smsLogin: false, passwordLogin: true, telegramCode: true })),
+    http.get('*/api/me/password', () => HttpResponse.json({ phoneLogin: false, passwordSet: false, temporary: false, telegram: true })),
+    http.get('*/web/config', () => HttpResponse.json({ botUsername: 'tish_test_bot', passwordLogin: true, telegramCode: true })),
     http.post('*/web/logout', ({ request }) => {
       calls.push({ path: 'logout', header: request.headers.get('X-Dental-Web') })
       return new HttpResponse(null, { status: 204 })
